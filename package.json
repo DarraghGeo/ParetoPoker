@@ -1,0 +1,27 @@
+{
+  "name": "pareto-poker",
+  "version": "0.1.0",
+  "description": "Indifference-math poker engine, scored against postflop-solver",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "node --test",
+    "build:solver": "cargo build --release --manifest-path solver-bridge/Cargo.toml",
+    "play": "node bin/play.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DarraghGeo/ParetoPoker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DarraghGeo/ParetoPoker/issues"
+  },
+  "homepage": "https://github.com/DarraghGeo/ParetoPoker#readme",
+  "dependencies": {
+    "poker-bitvaljs": "^1.13.0",
+    "poker-rangeman": "^3.8.1"
+  },
+  "type": "module",
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}

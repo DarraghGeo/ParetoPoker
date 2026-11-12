@@ -1,0 +1,157 @@
+# ParetoPoker
+
+A small Node.js engine that plays heads-up postflop poker at game-theory frequencies without
+solving anything, and a harness that scores it exactly against
+[postflop-solver](https://github.com/b-inary/postflop-solver).
+
+The engine gets the *how often* right from indifference math: how often to bet, what share of a
+bet is bluffs, how often to continue against a bet or raise, and how much of that is a raise.
+It does not get the *which hands* right. Hands are ranked by equity and dealt into those
+frequencies, which is reasonable but is not what a solver would choose, so it loses to one.
+
+## Setup
+
+```bash
+npm install
+npm run build:solver   # builds the Rust bridge to postflop-solver (needs cargo)
+npm test
+npm run play           # engine vs solver on a river spot
+```
+
+## The engine
+
+`ParetoEngine` has one method per situation. Each takes the price of the spot and returns
+frequencies. It never looks at cards.
+
+```js
+import { ParetoEngine } from './src/index.js';
+
+const engine = new ParetoEngine({ maxRaises: 3 });
+
+// Pot was 100, villain bet 50, we have 500 behind
+engine.inPositionFacingBet({ street: 'river', pot: 150, toCall: 50, stack: 500 });
+// { fold: 0.333, call: 0.565, raise: 0.102, alpha: 0.333, mdf: 0.667, potOdds: 0.25,
+//   sizes: [{ to: 125, value: 0.08, bluff: 0.022, bluffShare: 0.214, ... }] }
+```
+
+| Method | Situation | Returns |
+|---|---|---|
+| `outOfPositionOpen(spot)` | first to act | `check`, `bet`, `sizes` |
+| `inPositionFacingCheck(spot)` | checked to | `check`, `bet`, `sizes` |
+| `inPositionFacingBet(spot)`, `outOfPositionFacingBet(spot)` | facing a bet | `fold`, `call`, `raise`, `sizes` |
+| `inPositionFacingRaise(spot)`, `outOfPositionFacingRaise(spot)` | facing a raise or re-raise | `fold`, `call`, `raise`, `sizes` |
+| `respond(position, spot)` | picks one of the above | |
+
+A spot is `{ street, pot, stack, toCall, invested, facing, raises, options }`. `pot` is every
+chip in the middle; `invested` is what hero already put in on this street; `facing` is the
+chips the opponent added with their last action (needed for a 3-bet or later; otherwise it is
+worked out); `raises` is the number of raises so far on the street; `options` are the sizes
+hero may use, as street totals.
+
+### The math
+
+- **Defence.** A wager that risks `r` to win what is already in the middle, `P`, breaks even
+  as a pure bluff when it folds out `alpha = r / (r + P)`. The engine continues `1 - alpha`
+  (the minimum defence frequency), for bets and raises alike.
+- **Bluffs.** A bet or raise that leaves the opponent needing `potOdds` equity to call is
+  bluffs for exactly `potOdds` of its range on the river, which makes a bluff catcher's call
+  worth zero. On the flop and turn a called bluff can bet again, so the value share is
+  multiplied by `(1 + s) / (1 + 2s)` for each later bet of pot fraction `s` (`barrelSize`).
+- **Bet frequency.** Value hands times `1 / (1 - bluffShare)`. The share of the range that is
+  value is an input (`{ valueShare }`); `RangeStrategist` works it out from equity.
+- **Raises.** Come out of the continuing range, each size balanced with its own bluffs, and
+  stop at `maxRaises` per street.
+- **Sizing.** By default the option nearest the geometric size, the bet that gets stacks in
+  by the river with equal pot fractions. Also `'smallest'`, `'largest'`, `'mixed'` or a function.
+
+### Settings
+
+`betSizes`, `raiseSizes` (used when a spot has no `options`), `maxRaises`, `sizing`,
+`raiseFrequency` (fixes raises as a share of the continuing range), `betValueShare`,
+`raiseValueShare`, `barrelSize`, `multiStreetBluffs`. Any of them can be set per position:
+
+```js
+new ParetoEngine({ maxRaises: 2, raiseSizes: [3, 'allin'], inPosition: { sizing: 'largest' } });
+```
+
+## Choosing hands
+
+`RangeStrategist` turns the frequencies into a strategy for every combo, given both ranges
+and the board. Equity comes from `Equity` (exact, built on
+[poker-bitvaljs](https://www.npmjs.com/package/poker-bitvaljs)); ranges are parsed with
+[poker-rangeman](https://www.npmjs.com/package/poker-rangeman).
+
+```js
+import { Range, RangeStrategist, cards } from './src/index.js';
+
+const board = cards.parseCards('Td9d6hQc7s');
+const node = {
+  position: 'ip',
+  spot: { street: 'river', pot: 175, toCall: 75, stack: 500 },
+  board,
+  hero: Range.from('QQ-22,AQs-A2s,KJo+').without(board).weights,
+  villain: Range.from('66+,A8s+,AJo+,KQo').without(board).weights,
+  actions: [{ type: 'fold' }, { type: 'call' }, { type: 'raise', to: 190 }],
+};
+const strategist = new RangeStrategist();
+strategist.decide(node);              // { frequencies, strategy[action][combo] }
+strategist.act(node, 'KsJs').sample(); // one action for one holding
+```
+
+The strongest hands (ahead of the range that continues) bet or raise for value, the next
+strongest call, the weakest bluff, the rest check or fold. Hands on a boundary are mixed so
+the totals equal the engine's frequencies. `valueThreshold` (default 0.5) and `callFloor`
+(default 0.5: a hand needs half the pot odds in equity to count as a bluff catcher) are the
+two hand-selection settings.
+
+## Against the solver
+
+`SolverMatch` writes the engine's strategy into the solver's game tree (node locking) and
+reads back exact expected values, so there is no sampling noise:
+
+```js
+import { SolverMatch } from './src/index.js';
+
+const sizes = { bet: '33%,75%,150%', raise: '2.5x' };
+const result = await new SolverMatch({
+  oopRange: '66+,A8s+,AJo+,KQo', ipRange: 'QQ-22,AQs-A2s,KJo+',
+  board: 'Td9d6hQc7s', pot: 100, stack: 200,
+  betSizes: { river: { oop: sizes, ip: sizes } },
+}).play('ip');
+// result.ev   { gto, versusGto, exploited }   in chips
+// result.loss { versusGto, exploited }         as a share of the pot
+// result.lines  engine and solver frequencies on the first decisions
+```
+
+- `gto`: both players at equilibrium.
+- `versusGto`: the engine against the solver's equilibrium strategy.
+- `exploited`: the engine against the solver's best response to it, the worst case.
+
+Bet sizes use postflop-solver's syntax (`60%`, `2.5x`, `100c`, `e` geometric, `a` all-in).
+`node bin/play.js` takes `--board --oop --ip --pot --stack --hero --bet --raise
+--max-raises --sizing --iterations`.
+
+### What to expect
+
+In the textbook nuts-or-air game (AA and QQ against KK, one pot-sized bet) the engine matches
+the solver in both seats: zero loss against equilibrium and zero when exploited. That is a test.
+
+With real ranges, default settings, bets of 33%, 75% and 150% pot and 2.5x raises:
+
+| Spot | Loss vs solver's GTO | Loss when fully exploited |
+|---|---|---|
+| River `Td9d6hQc7s`, stack 2x pot | 0.5% (IP), 2.4% (OOP) of the pot | 7.1%, 5.9% |
+| Turn `Td9d6hQc`, bets 50%/100%, stack 3x pot | 2.3%, 3.2% | 21.3%, 19.6% |
+| Average of 4 rivers and 2 turns, both seats, stack 2.5x pot | about 2% | about 17% |
+
+The gap is hand selection, as intended: the frequencies hold, but a best-responding solver
+finds the hands the engine puts in the wrong bucket (it traps the engine's thin value bets
+and folds exactly the hands the engine's bluffs beat).
+
+### Limits
+
+- The engine tracks the opponent's range by assuming they play the engine's own strategy.
+- Flop trees work but grow fast: one bet size and one raise size takes about 15 seconds.
+- No rake, heads-up only, postflop only.
+- postflop-solver is AGPL-3.0 and no longer maintained by its author; `solver-bridge` links it
+  and is AGPL-3.0 as well. The JavaScript only talks to it over a pipe.
