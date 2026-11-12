@@ -41,7 +41,8 @@ export class RangeStrategist {
    * @param {number[]} node.board Card ids.
    * @param {Float64Array} node.hero Hero's weight per combo at this node.
    * @param {Float64Array} node.villain Villain's weight per combo at this node.
-   * @param {Float64Array} [node.villainPrior] Used instead when `villain` is empty.
+   * @param {Float64Array} [node.villainPrior] Villain's range before any action. Used instead when
+   *   `villain` is empty, and passed to the selector.
    * @param {{ type: 'fold'|'check'|'call'|'bet'|'raise'|'allin', to?: number }[]} node.actions
    *   What hero may do. `to` is hero's street total after a bet or raise.
    * @returns {{ frequencies: Object, played: number[], strategy: Float64Array[], actions: Object[] }}
@@ -59,7 +60,7 @@ export class RangeStrategist {
     const passive = facing ? index('fold') : index('check');
     if (passive < 0) throw new Error(`actions must include ${facing ? 'fold' : 'check'}`);
 
-    const context = new SelectionContext({ equity: this.equity, position, spot, board, hero, villain, actions });
+    const context = new SelectionContext({ equity: this.equity, position, spot, board, hero, villain, villainPrior, actions });
     const total = sumOf(hero);
 
     // The engine asks how much of the range is value at each size; the selector's candidates say

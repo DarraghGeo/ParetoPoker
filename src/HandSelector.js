@@ -28,6 +28,8 @@ import { Range } from './Range.js';
  * @property {number} [share] The share of hero's range that takes this role, instead of the
  *   engine's number. For value, the engine sizes the bluffs from it. Leave it out to keep the
  *   engine's frequencies.
+ * @property {Float64Array} [limit] With scores: the most each combo may take the role, 0 to 1
+ *   per combo id.
  *
  * @typedef {Object} HandSelector
  * @property {(context: SelectionContext, wager: Object) => Candidates | null | undefined} [value]
@@ -76,7 +78,7 @@ export class EquitySelector {
  * What a selector is told about the decision. Equity is computed on first use and shared.
  */
 export class SelectionContext {
-  constructor({ equity, position, spot, board, hero, villain, actions }) {
+  constructor({ equity, position, spot, board, hero, villain, villainPrior = null, actions }) {
     this.calculator = equity;
     /** @type {'ip'|'oop'} */
     this.position = position;
@@ -88,6 +90,8 @@ export class SelectionContext {
     /** Hero's and villain's weight per combo id. */
     this.hero = hero;
     this.villain = villain;
+    /** Villain's range before any action on the hand (board cards removed), when the caller knows it. */
+    this.villainPrior = villainPrior;
     /** The actions hero may take. */
     this.actions = actions;
     /** True when hero faces a bet or raise. */
@@ -101,6 +105,15 @@ export class SelectionContext {
   /** Each combo's equity against villain's range. */
   get strength() {
     return (this.cachedStrength ??= this.calculator.against(this.board, this.villain));
+  }
+
+  /**
+   * Each combo's equity against the range villain started the hand with. `strength` rests on a
+   * model of how villain got here; this does not. The same as `strength` when no prior is known.
+   */
+  get priorStrength() {
+    if (!this.villainPrior) return this.strength;
+    return (this.cachedPriorStrength ??= this.calculator.against(this.board, this.villainPrior, this.hero));
   }
 
   /** Each villain combo's equity against hero's range. */
@@ -133,15 +146,17 @@ export class SelectionContext {
  */
 export function normalizeCandidates(answer, tiebreak) {
   let share;
+  let cap = null;
   if (answer && typeof answer === 'object' && !Array.isArray(answer) && !ArrayBuffer.isView(answer) && 'hands' in answer) {
     share = answer.share;
+    cap = answer.limit ?? null;
     answer = answer.hands;
   }
   const scores = new Float64Array(NUM_COMBOS).fill(NaN);
 
   if ((ArrayBuffer.isView(answer) || Array.isArray(answer)) && answer.length === NUM_COMBOS && typeof answer[0] === 'number') {
     scores.set(answer);
-    return { scores, limit: null, share };
+    return { scores, limit: cap, share };
   }
   const limit = new Float64Array(NUM_COMBOS);
   if (Array.isArray(answer)) {

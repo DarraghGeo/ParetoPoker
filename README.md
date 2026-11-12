@@ -149,8 +149,60 @@ villain's range), `villainStrength`, `equityAgainst(range)`, `continuingRange(wa
 `mdf`, `bluffShare`. Combo ids and names convert with `cards.parseCombo('AhKd')` and
 `cards.comboName(id)`.
 
-`EquitySelector` is the default and takes the two equity settings, which can also be passed
-straight to `RangeStrategist`: `valueThreshold` (default 0.5) and `callFloor` (default 0.5: a
+### The selectors
+
+A selector is its own object, passed to the strategist. Two are included:
+
+```js
+import { EquitySelector, NapkinSelector, RangeStrategist } from './src/index.js';
+
+new RangeStrategist({ engine, selector: new EquitySelector() }); // the default
+new RangeStrategist({ engine, selector: new NapkinSelector() });
+```
+
+**`NapkinSelector`** follows the napkinpoker hand-selection guide (issue #271):
+
+| Role | Rule |
+|---|---|
+| Value bets | Hands that beat more than half of his continues. Flat value first (equity that holds against his strong hands), then value that does not block his calls. Out of position on the river, thin value (50-70% against his range) checks, and so do some of the nuts, taken from the very top, as a sixth of the value that checks. |
+| River bluffs | Air first (no pair, under 20% equity), the hands that block his calls ahead; then the weakest of the rest. |
+| Turn bluffs | Six roles (air, overcards, made, gutshot, draw, nut draw), each ordered by its own mark. Draws go first when he is ahead in range or stacks are deep, pure bluffs when we are ahead or stacks are shallow. |
+| Flop bluffs | Draws first, then blockers to his strong hands. |
+| River calls | Hands that beat half his value, then bluff-catchers (beat half his bluffs) by the marks below. Hands that beat neither fold. |
+| Turn and flop calls | By class: draws (when a hit can collect another bet), top pair or better, weaker pairs by equity, high cards last. On the flop, board pairs and pocket pairs above the bottom card move up with top pair. |
+| Bluff-catcher marks | Margin of equity over the price, equity against his value, blocking his value, and on the turn the rivers that help against those that hurt. |
+| River raises | Newman: 80% against his betting range for half a pot, 90% for a pot, 97% for three pots. Bluff raises are the weakest hands. |
+| Turn and flop raises | Value by equity against his value; bluff raises are draws first. |
+
+Three things in it are not in the guide, and are marked in the code:
+
+- The weights that combine the marks. The bluff-catcher weights are each mark's gap between
+  must-calls and must-folds in the guide's table; the rest are in `NapkinSelector.WEIGHTS`.
+- `priorStrength`: one more bluff-catcher mark, equity against the range he started the hand
+  with. Without it the engine called a river raise with ace high and folded straights, because
+  both "only beat his bluffs" in its model of his range. `new NapkinSelector({ priorStrength: 0 })`
+  uses the guide's marks alone.
+- A draw is only called ahead of made hands when chips are left behind after the call, and
+  bluff raises fall back to the weakest hands when the draws run out, so the raise keeps the
+  engine's frequency.
+
+Not implemented: "avoid hands that leave him raises" and implied odds as a mark (both need a
+model of his raising range), and the order inside the made role, which the guide lists as open.
+
+Loss when fully exploited, as a share of the pot, over 4 rivers and 4 turns, both seats
+(bets 33%, 75%, 150% pot, 2.5x raises, stack 2.5x pot, one pair of ranges):
+
+| Selector | Rivers | Turns |
+|---|---|---|
+| `EquitySelector` | 10.7% | 26.1% |
+| `NapkinSelector` | 6.7% | 25.5% |
+| `NapkinSelector({ priorStrength: 0 })` | 15.2% | 27.0% |
+
+Against the solver's equilibrium the two are level: 1.4% and 1.5% on rivers, 3.5% and 3.6% on
+turns. `node bin/play.js --selector napkin` runs one spot.
+
+`EquitySelector` takes the two equity settings, which can also be passed straight to
+`RangeStrategist`: `valueThreshold` (default 0.5) and `callFloor` (default 0.5: a
 hand needs half the pot odds in equity to count as a bluff catcher). The same selector is
 used when playing the solver: `new SolverMatch(game, { strategist })`.
 
@@ -179,7 +231,7 @@ const result = await new SolverMatch({
 
 Bet sizes use postflop-solver's syntax (`60%`, `2.5x`, `100c`, `e` geometric, `a` all-in).
 `node bin/play.js` takes `--board --oop --ip --pot --stack --hero --bet --raise
---max-raises --sizing --iterations`.
+--max-raises --sizing --selector --iterations`.
 
 ### What to expect
 
