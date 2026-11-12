@@ -98,11 +98,61 @@ strategist.decide(node);              // { frequencies, strategy[action][combo] 
 strategist.act(node, 'KsJs').sample(); // one action for one holding
 ```
 
-The strongest hands (ahead of the range that continues) bet or raise for value, the next
-strongest call, the weakest bluff, the rest check or fold. Hands on a boundary are mixed so
-the totals equal the engine's frequencies. `valueThreshold` (default 0.5) and `callFloor`
-(default 0.5: a hand needs half the pot odds in equity to count as a bluff catcher) are the
-two hand-selection settings.
+By default hands are chosen on equity alone: the hands with the most equity (ahead of the
+range that continues) bet or raise for value, the next best call, the hands with the least
+equity bluff, the rest check or fold. Hands on a boundary are mixed so the totals equal the
+engine's frequencies. `played` in the result is the share of the range that ends up taking
+each action.
+
+### Sending it your own hands
+
+The hand selector is the connector for this. Pass a `selector` with any of three methods;
+each returns the hands that may take that role, and the engine's frequencies are dealt out
+over them. Whatever you leave out (or return `null` for) is still chosen on equity.
+
+```js
+const strategist = new RangeStrategist({
+  selector: {
+    // Hands that may bet or raise this size for value
+    value: (context, wager) => (context.street === 'river' ? 'KJs,J8s,TT-99' : null),
+    // Hands that may call
+    call: (context) => ['QQ', 'JJ', 'AQs', '88:0.5'],
+    // Hands that may bluff with this size
+    bluff: (context, wager) => 'A5s-A2s,K5s',
+  },
+});
+```
+
+An answer can be:
+
+| Form | Meaning |
+|---|---|
+| `'QQ+,AKs,JTs:0.5'` | Range notation. A weight caps how often the hand takes the role. Taken in equity order. |
+| `{ AhKh: 1, QsQd: 0.5 }` | The same, as an object of weights. |
+| `['AhKh', 'QQ', '76s']` | A priority list: earlier entries are taken first. |
+| `Float64Array(1326)` | A score per combo id: higher is taken first, `NaN` is not a candidate. |
+| `{ hands, share }` | Any of the above, plus the share of the range that takes the role, instead of the engine's number. |
+
+How the frequencies follow from the hands:
+
+- **Value**: every candidate is value, so the candidates set the value frequency. The engine
+  then adds the bluffs that much value supports at the size.
+- **Calls**: the engine's call frequency is taken from the front of the candidates. If there
+  are too few, the range calls less.
+- **Bluffs**: the engine's bluff frequency is taken from the front of the candidates.
+
+`context` describes the decision: `position`, `street`, `spot`, `board`, `actions`, `facing`,
+`potOdds`, `hero` and `villain` (weights per combo id), `frequencies` (the engine's answer,
+available in `call` and `bluff`), and equity helpers: `strength` (each combo's equity against
+villain's range), `villainStrength`, `equityAgainst(range)`, `continuingRange(wager)` and
+`equityVersusContinuing(wager)`. `wager` is the size being filled: `to`, `add`, `potOdds`,
+`mdf`, `bluffShare`. Combo ids and names convert with `cards.parseCombo('AhKd')` and
+`cards.comboName(id)`.
+
+`EquitySelector` is the default and takes the two equity settings, which can also be passed
+straight to `RangeStrategist`: `valueThreshold` (default 0.5) and `callFloor` (default 0.5: a
+hand needs half the pot odds in equity to count as a bluff catcher). The same selector is
+used when playing the solver: `new SolverMatch(game, { strategist })`.
 
 ## Against the solver
 
