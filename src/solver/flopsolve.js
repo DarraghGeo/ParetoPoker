@@ -86,9 +86,14 @@ export function decisionAt(fs, solution, nodes, id) {
     const reply = solution.strategyAt(edge.child, 0);
     const fold = reply.actions.findIndex((label) => label === 'fold');
     const passive = reply.actions.findIndex((label) => label === 'check');
+    const call = reply.actions.findIndex((label) => label === 'call');
     const m = reply.actions.length;
     const byCombo = new Map();
-    reply.combos.forEach((combo, i) => { byCombo.set(combo, { fold: fold >= 0 ? reply.probs[i * m + fold] : 0, check: passive >= 0 ? reply.probs[i * m + passive] : 0 }); });
+    reply.combos.forEach((combo, i) => {
+      const at = (k) => (k >= 0 ? reply.probs[i * m + k] : 0);
+      // what he does next: fold, check behind, call, or put more in (a bet after a check, or a raise)
+      byCombo.set(combo, { fold: at(fold), check: at(passive), call: at(call), more: Math.max(0, 1 - at(fold) - at(passive) - at(call)) });
+    });
     return byCombo;
   });
   const villain = [];

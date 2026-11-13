@@ -32,7 +32,7 @@ const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ c
 const worker = new Worker(new URL('./worker.js', import.meta.url));
 worker.onmessage = ({ data }) => {
   if (data.job !== state.job || state.mode !== 'spot') return;
-  if (data.type === 'progress') { state.status = `${data.iterations}`; $('state').textContent = state.status; }
+  if (data.type === 'progress') { state.status = `solving ${data.iterations}`; $('state').textContent = state.status; }
   if (data.type === 'error') { state.status = ''; $('state').textContent = ''; $('f-error').textContent = data.message; openSetup(); }
   if (data.type === 'solved') { state.nodes = data.nodes; state.stats = data.stats; state.status = `${data.exploit.toFixed(2)}%`; go(state.nodes[state.keep]?.kind === 'decision' ? state.keep : 0); state.keep = 0; }
   if (data.type === 'decision') show(data.decision);
@@ -42,7 +42,7 @@ function solve(reshaped = false) {
   state.job++;
   if (reshaped) state.keep = state.node;
   else { state.nodes = null; state.decision = null; state.survey = null; state.spot = null; state.hand = null; state.cell = null; state.keep = 0; state.base.clear(); state.baseQ = { oop: null, ip: null }; state.dials.oop = neutral(); state.dials.ip = neutral(); render(); }
-  state.status = '0'; $('state').textContent = state.status;
+  state.status = 'solving'; $('state').textContent = state.status;
   worker.postMessage({ type: 'solve', job: state.job, config: { ...state.config, dials: { oop: state.dials.oop, ip: state.dials.ip } } });
   if (reshaped) return;
   const board = state.config.board.match(/[2-9TJQKA][shdc]/g) ?? [];
@@ -77,7 +77,6 @@ function cellOf(name) {
 }
 function render() {
   const spot = state.mode === 'spot';
-  $('mode-spot').setAttribute('aria-pressed', String(spot)); $('mode-warp').setAttribute('aria-pressed', String(!spot));
   const grid = spot && state.view === 'grid';
   $('board').hidden = !spot; $('curve').hidden = spot; $('combos').hidden = !spot; $('range').hidden = !grid; $('dist').hidden = !spot || grid; $('dials').hidden = !spot || grid;
   document.querySelector('.spot-only').hidden = !spot;
@@ -88,7 +87,7 @@ function render() {
   $('rule').innerHTML = d ? bar(state.survey.mix, strata) : '';
   renderLine(strata);
   renderStrip(strata);
-  if (grid) renderGrid(strata); else if (spot) { if (grabbed == null) renderDist(); renderDials(); } else renderCurve();
+  if (grid) renderGrid(strata); else if (spot) { if (grabbed == null) renderDist(); renderDials(); }
   if (spot) renderCombos(strata);
   renderWhy();
 }
@@ -134,7 +133,7 @@ function renderCombos(strata) {
 /** The two equity curves at this decision: the player to act and, in the other colour, the other range. */
 function renderDist() {
   const s = state.survey; if (!s) { $('dist').innerHTML = ''; return; }
-  const d = state.decision; const DH = 330;
+  const d = state.decision; const DH = 490;
   // the same horizontal scale as the strip above: the full width
   const Xd = (x) => x * W;
   const Yd = (y) => DH - PAD - y * (DH - 2 * PAD);
@@ -172,11 +171,9 @@ function renderStrip(strata) {
   const s = state.survey; const el = $('strip');
   if (!s) { el.innerHTML = ''; return; }
   const hands = handsInOrder(s);
-  // a column is as tall as its hand is present: full when the whole hand is in the range here
-  const most = Math.max(...hands.map((r) => r.hand.weight), 1e-9);
   const column = (row) => {
     const parts = [0, 0, 0, 0, 0]; row.hand.strategy.forEach((p, a) => { parts[strata[a]] += p; });
-    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:${Math.max(3, Math.round((100 * row.hand.weight) / most))}%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</b></button>`;
+    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:100%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</b></button>`;
   };
   const names = state.decision.categories;
   if (!state.split || !names) { el.className = 'strip'; el.innerHTML = hands.map(column).join(''); return; }
@@ -193,25 +190,44 @@ function renderStrip(strata) {
 }
 /** The hands of the range to act, weakest first: the order of the strategy chart and of the equity curve above it. */
 const handsInOrder = (s) => [...s.rows].sort((a, b) => a.hand.strength - b.hand.strength || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
-/** Under the equity chart: what one range looks like, as four numbers that can be dragged to reshape it. */
+/**
+ * Under the equity chart, one line: whose range, and what it looks like as four numbers. Drag a
+ * number sideways (or use the arrow keys) to reshape the range; the spot is solved again.
+ */
+const SCRUB = { edge: { name: 'Equity', min: -1, max: 1, step: 0.05, rest: 0 }, polar: { name: 'Polar', min: -1, max: 1, step: 0.05, rest: 0 }, nuts: { name: 'Nuts', min: 0, max: 2, step: 0.1, rest: 1 }, cap: { name: 'Cap', min: 0.5, max: 1, step: 0.02, rest: 1 } };
 function renderDials() {
   const who = state.dials.who; const d = state.dials[who]; const st = state.stats?.[who];
-  const held = document.activeElement?.dataset?.dial;
-  if (held && $('dials').querySelector('[data-dial]')) {
-    // a dial is in hand: refresh the numbers only, so the drag is not interrupted
-    const set = (key, text) => { const o = $('dials').querySelector(`[data-dial="${key}"]`)?.previousElementSibling; if (o) o.textContent = text; };
-    if (st) { set('edge', pct(st.equity)); set('polar', pct(st.polar)); set('nuts', pct(st.nuts)); }
-    set('cap', d.cap < 1 ? pct(d.cap) : '\u2014');
-    return;
-  }
-  const dial = (key, name, value, min, max, step, at) => `<label class="dial"><span class="cap">${name}</span><output>${value}</output><input type="range" data-dial="${key}" min="${min}" max="${max}" step="${step}" value="${at}" aria-label="${name}"></label>`;
+  const shown = { edge: st ? pct(st.equity) : '', polar: st ? pct(st.polar) : '', nuts: st ? pct(st.nuts) : '', cap: d.cap < 1 ? pct(d.cap) : '\u2014' };
   const changed = !isNeutral(state.dials.oop) || !isNeutral(state.dials.ip);
-  $('dials').innerHTML = `<div class="who"><div class="seg" role="group" aria-label="Range"><button type="button" data-who="oop" aria-pressed="${who === 'oop'}">OOP</button><button type="button" data-who="ip" aria-pressed="${who === 'ip'}">IP</button></div>${changed ? '<button type="button" class="undo" id="undo">Reset</button>' : ''}</div>`
-    + dial('edge', 'Equity', st ? pct(st.equity) : '', -100, 100, 5, Math.round(100 * d.edge))
-    + dial('polar', 'Polar', st ? pct(st.polar) : '', -100, 100, 5, Math.round(100 * d.polar))
-    + dial('nuts', 'Nuts', st ? pct(st.nuts) : '', 0, 200, 10, Math.round(100 * d.nuts))
-    + dial('cap', 'Cap', d.cap < 1 ? pct(d.cap) : '\u2014', 50, 100, 2, Math.round(100 * d.cap));
+  $('dials').innerHTML = `<button type="button" class="who" id="who" aria-label="Range to reshape"><b>${who === 'oop' ? 'OOP' : 'IP'}</b></button>`
+    + Object.entries(SCRUB).map(([key, def]) => `<button type="button" class="scrub${d[key] !== def.rest ? ' moved' : ''}" data-dial="${key}" role="slider" aria-label="${def.name}" aria-valuemin="${def.min}" aria-valuemax="${def.max}" aria-valuenow="${d[key]}">${def.name} <b>${shown[key]}</b></button>`).join('')
+    + (changed ? '<button type="button" id="undo">Reset</button>' : '');
 }
+let dialTimer = null;
+let scrub = null;
+const setDial = (key, value) => {
+  const def = SCRUB[key]; const who = state.dials.who;
+  const next = Math.min(def.max, Math.max(def.min, Math.round(value / def.step) * def.step));
+  if (next === state.dials[who][key]) return;
+  state.dials[who][key] = Math.round(next * 100) / 100;
+  clearTimeout(dialTimer); dialTimer = setTimeout(() => solve(true), 160);
+};
+$('dials').addEventListener('pointerdown', (ev) => {
+  const el = ev.target.closest('[data-dial]'); if (!el) return;
+  ev.preventDefault(); const key = el.dataset.dial;
+  scrub = { key, x: ev.clientX, from: state.dials[state.dials.who][key] };
+});
+window.addEventListener('pointermove', (ev) => { if (!scrub) return; const def = SCRUB[scrub.key]; setDial(scrub.key, scrub.from + ((ev.clientX - scrub.x) / 160) * (def.max - def.min)); });
+const endScrub = () => { if (!scrub) return; scrub = null; clearTimeout(dialTimer); solve(true); };
+window.addEventListener('pointerup', endScrub); window.addEventListener('pointercancel', endScrub);
+$('dials').addEventListener('keydown', (ev) => {
+  const el = ev.target.closest('[data-dial]'); const dir = ev.key === 'ArrowRight' || ev.key === 'ArrowUp' ? 1 : ev.key === 'ArrowLeft' || ev.key === 'ArrowDown' ? -1 : 0; if (!el || !dir) return;
+  ev.preventDefault(); const key = el.dataset.dial; setDial(key, state.dials[state.dials.who][key] + dir * SCRUB[key].step);
+});
+$('dials').addEventListener('click', (ev) => {
+  if (ev.target.closest('#who')) { state.dials.who = state.dials.who === 'oop' ? 'ip' : 'oop'; renderDist(); renderDials(); return; }
+  if (ev.target.id === 'undo') { state.dials.oop = neutral(); state.dials.ip = neutral(); solve(true); }
+});
 // Dragging the curve: a handle moves up or down, the range is reweighted to match and solved again
 let grabbed = null;
 const grabTo = (clientY) => {
@@ -230,17 +246,6 @@ window.addEventListener('pointerup', release); window.addEventListener('pointerc
 $('dist').addEventListener('keydown', (ev) => {
   const k = ev.target.dataset?.grab; const step = ev.key === 'ArrowUp' ? 0.02 : ev.key === 'ArrowDown' ? -0.02 : 0; if (k == null || !step) return;
   ev.preventDefault(); const who = state.dials.who; state.dials[who].curve[+k] = Math.round(100 * (state.dials[who].curve[+k] + step)) / 100; solve(true);
-});
-let dialTimer = null;
-$('dials').addEventListener('input', (ev) => {
-  const key = ev.target.dataset?.dial; if (!key) return;
-  state.dials[state.dials.who][key] = Number(ev.target.value) / 100;
-  clearTimeout(dialTimer); dialTimer = setTimeout(() => solve(true), 180);
-});
-$('dials').addEventListener('click', (ev) => {
-  const who = ev.target.closest('[data-who]');
-  if (who) { state.dials.who = who.dataset.who; renderDist(); renderDials(); return; }
-  if (ev.target.id === 'undo') { state.dials.oop = neutral(); state.dials.ip = neutral(); solve(true); }
 });
 function renderWhy() {
   const s = state.survey; const told = s && state.hand ? explain(s, state.hand) : null;
@@ -297,7 +302,6 @@ function setMode(mode) {
   state.mode = mode; state.node = 0; state.hand = null; state.cell = null; state.decision = null; state.survey = null;
   if (mode === 'spot') solve(); else { state.job++; solveWarp(); }
 }
-$('mode-spot').onclick = () => setMode('spot'); $('mode-warp').onclick = () => setMode('warp');
 $('line').addEventListener('click', (ev) => {
   if (ev.target.closest('#split')) { state.split = !state.split; remember(); render(); $('split')?.focus(); return; }
   if (ev.target.closest('#view')) { state.view = state.view === 'grid' ? 'curve' : 'grid'; remember(); render(); $('view')?.focus(); return; }

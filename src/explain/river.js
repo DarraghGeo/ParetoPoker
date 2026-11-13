@@ -2,16 +2,15 @@
  * Why a hand does what it does on the river.
  *
  * Takes one decision as a solver left it (each hand's strategy and what each action is worth to
- * it, the other range and its answers) and returns reasons, each with the number behind it and
- * where that number comes from:
+ * it, the other range and its answers) and says what decides the hand's play: where it stands
+ * against the line that separates one action from another, what happens to it next under each
+ * action, and whether its cards set it apart from hands of the same strength.
  *
- *   solver   read straight from the solution (what an action is worth, what he does next)
+ * Every sentence carries the number behind it and where that number comes from:
+ *
+ *   solver   read from the solution (what an action is worth, what he does next)
  *   count    counted from the two ranges (what the hand beats, what its cards remove)
  *   formula  the indifference maths (the price of a call, the folds a bluff needs)
- *
- * A hand on the river is its strength: hands of equal strength are interchangeable unless their
- * cards remove different parts of his range. So the explanation is built from four things: the
- * price, what the hand beats, what the rest of its strength level does, and its blockers.
  *
  * @typedef {Object} Decision
  * @property {'oop'|'ip'} seat
@@ -19,7 +18,7 @@
  * @property {number} toCall
  * @property {{ kind: string, label: string, add: number }[]} actions
  * @property {{ id: any, name: string, cards?: number[], weight: number, strength: number, strategy: number[], values: number[]|null }[]} hands
- * @property {{ id: any, cards?: number[], weight: number, strength: number, answers: ({ fold: number, check: number }|null)[] }[]} villain
+ * @property {{ id: any, cards?: number[], weight: number, strength: number, answers: ({ fold: number, check: number, call: number, more: number }|null)[] }[]} villain
  */
 
 /** An action costing more than this share of the pot is a mistake for the hand. */
@@ -27,7 +26,6 @@ export const MISTAKE = 0.005;
 const AGGRESSIVE = new Set(['bet', 'raise', 'allin']);
 const pct = (x) => `${Math.round(100 * x)}%`;
 const shares = (a, b) => (a === b ? false : !!a && !!b && (a[0] === b[0] || a[0] === b[1] || a[1] === b[0] || a[1] === b[1]));
-
 /** A bluff: a bet that loses to most of what calls, by a hand that would rarely win by checking. */
 const BLUFF = 1 / 3;
 const isBluff = (row, a) => (row.whenCalled[a] ?? row.equity) < 0.5 && row.equity < BLUFF;
@@ -37,9 +35,9 @@ export function survey(decision) {
   const { hands, villain, actions, pot, toCall } = decision;
   const facing = toCall > 0;
   const rows = hands.map((hand) => {
-    // Against every hand of his that it can face: what it beats, in all and among what continues
-    let mass = 0, win = 0, better = 0, worse = 0, blockedBetter = 0, blockedWorse = 0, allBetter = 0, allWorse = 0;
-    const called = actions.map(() => ({ mass: 0, win: 0, folds: 0 }));
+    let mass = 0, win = 0, worse = 0, blockedBetter = 0, blockedWorse = 0, allBetter = 0, allWorse = 0;
+    // What he does next against this hand, action by action
+    const next = actions.map(() => ({ fold: 0, check: 0, callWorse: 0, callBetter: 0, more: 0, mass: 0, win: 0, cont: 0, showdown: 0, showdownWin: 0 }));
     for (const his of villain) {
       const stronger = his.strength > hand.strength;
       const weaker = his.strength < hand.strength;
@@ -51,12 +49,20 @@ export function survey(decision) {
       mass += his.weight;
       const result = weaker ? 1 : stronger ? 0 : 0.5;
       win += his.weight * result;
-      if (stronger) better += his.weight; else if (weaker) worse += his.weight;
+      if (weaker) worse += his.weight;
       his.answers.forEach((answer, a) => {
         if (!answer) return;
-        called[a].folds += his.weight * answer.fold;
-        called[a].mass += his.weight * (1 - answer.fold);
-        called[a].win += his.weight * (1 - answer.fold) * result;
+        const n = next[a];
+        n.mass += his.weight;
+        n.fold += his.weight * answer.fold;
+        n.check += his.weight * answer.check;
+        n.more += his.weight * answer.more;
+        n.callWorse += his.weight * answer.call * result;
+        n.callBetter += his.weight * answer.call * (1 - result);
+        n.cont += his.weight * (1 - answer.fold);
+        n.win += his.weight * (1 - answer.fold) * result;
+        n.showdown += his.weight * (answer.check + answer.call);
+        n.showdownWin += his.weight * (answer.check + answer.call) * result;
       });
     }
     const best = hand.values ? Math.max(...hand.values) : null;
@@ -67,14 +73,14 @@ export function survey(decision) {
       beats: mass > 0 ? worse / mass : 0,
       gaps,
       fine: gaps ? gaps.map((g) => g <= MISTAKE) : actions.map(() => true),
-      folds: called.map((c, a) => (villain[0]?.answers[a] && mass > 0 ? c.folds / mass : null)),
-      whenCalled: called.map((c) => (c.mass > 1e-9 ? c.win / c.mass : null)),
-      // How much of what beats it, and of what it beats, its own cards take out of his range
+      // per action: what he does next, as shares of the times the hand takes it
+      next: next.map((n) => (n.mass > 0 ? { fold: n.fold / n.mass, check: n.check / n.mass, callWorse: n.callWorse / n.mass, callBetter: n.callBetter / n.mass, more: n.more / n.mass, showdownWin: n.showdown > 0 ? n.showdownWin / n.showdown : null } : null)),
+      folds: next.map((n) => (n.mass > 0 ? n.fold / n.mass : null)),
+      whenCalled: next.map((n) => (n.cont > 1e-9 ? n.win / n.cont : null)),
       removesBetter: allBetter > 0 ? blockedBetter / allBetter : 0,
       removesWorse: allWorse > 0 ? blockedWorse / allWorse : 0,
     };
   });
-  // Strength levels: the hands that tie
   const levels = new Map();
   for (const row of rows) {
     let level = levels.get(row.hand.strength);
@@ -86,7 +92,6 @@ export function survey(decision) {
   for (const level of levels.values()) level.mix = level.mix.map((x) => x / level.weight);
   const total = rows.reduce((t, r) => t + r.hand.weight, 0);
   const mix = actions.map((_, a) => rows.reduce((t, r) => t + r.hand.weight * r.hand.strategy[a], 0) / total);
-  // Each bet or raise: how much of it is a bluff (a hand that loses to most of what calls)
   const sizes = actions.map((action, a) => {
     if (!AGGRESSIVE.has(action.kind)) return null;
     let all = 0, bluffs = 0;
@@ -95,7 +100,7 @@ export function survey(decision) {
       all += w;
       if (isBluff(row, a)) bluffs += w;
     }
-    const s = action.add > toCall ? (action.add - toCall) / (pot + toCall) : 0; // the bet as a share of the pot it is made into
+    const s = action.add > toCall ? (action.add - toCall) / (pot + toCall) : 0;
     return { frequency: all / total, bluffShare: all > 0 ? bluffs / all : 0, s, wanted: s / (1 + 2 * s), needsFolds: s / (1 + s) };
   });
   const need = facing ? toCall / (pot + toCall) : 0;
@@ -107,7 +112,7 @@ export function survey(decision) {
  *
  * @param {ReturnType<typeof survey>} s
  * @param {string} name The hand, as the decision names it.
- * @returns {{ name: string, strategy: number[], status: 'forced'|'optional'|'unknown', line: string, reasons: { id: string, text: string, basis: 'solver'|'count'|'formula' }[] }}
+ * @returns {{ name: string, strategy: number[], status: 'forced'|'optional'|'unknown', equity: number, line: string, reasons: { id: string, text: string, basis: 'solver'|'count'|'formula' }[] }}
  */
 export function explain(s, name) {
   const row = s.byName.get(name);
@@ -115,10 +120,9 @@ export function explain(s, name) {
   const { decision, facing } = s;
   const { actions, pot, toCall } = decision;
   const { hand } = row;
-  const main = hand.strategy.indexOf(Math.max(...hand.strategy));
   const level = s.levels.get(hand.strength);
   const reasons = [];
-  const say = (id, basis, text, short = null) => reasons.push({ id, basis, text, short });
+  const say = (id, basis, text) => reasons.push({ id, basis, text });
   const label = (a) => actions[a].label;
   const fold = actions.findIndex((x) => x.kind === 'fold');
   const call = actions.findIndex((x) => x.kind === 'call');
@@ -126,99 +130,115 @@ export function explain(s, name) {
   const bets = actions.map((x, a) => (AGGRESSIVE.has(x.kind) ? a : -1)).filter((a) => a >= 0);
   const betting = bets.reduce((t, a) => t + hand.strategy[a], 0);
   const mainBet = bets.length ? bets.reduce((best, a) => (hand.strategy[a] > hand.strategy[best] ? a : best), bets[0]) : -1;
-
-  // 1. Does the choice matter to this hand?
-  let status = 'unknown';
-  if (row.gaps) {
-    const allowed = row.fine.filter(Boolean).length;
-    status = allowed > 1 ? 'optional' : 'forced';
-    if (status === 'forced') {
-      const next = Math.min(...row.gaps.filter((g, a) => a !== main && g > MISTAKE));
-      say('forced', 'solver', `Only ${label(main)} is right for this hand. The next best action gives up ${(100 * next).toFixed(1)}% of the pot.`);
-    } else {
-      const ok = actions.filter((_, a) => row.fine[a]).map((x) => x.label);
-      const list = ok.join(', ').replace(/, ([^,]*)$/, ' and $1');
-      say('optional', 'solver', `${list} are worth the same to this hand (within ${(100 * MISTAKE).toFixed(1)}% of the pot). Its mix is the range's choice, not the hand's.`, `Indifferent: ${list} are worth the same to it.`);
-    }
-  }
+  const move = (r) => (facing ? 1 - r.hand.strategy[fold] : bets.reduce((t, a) => t + r.hand.strategy[a], 0));
+  // What the hands a little stronger and a little weaker do: where the line falls
+  const near = (from, to) => { let w = 0, m = 0; for (const r of s.rows) { const d = r.equity - row.equity; if (d > from && d <= to) { w += r.hand.weight; m += r.hand.weight * move(r); } } return w > 0 ? m / w : null; };
+  const above = near(0.015, 0.1);
+  const below = near(-0.1, -0.015);
+  const verb = facing ? 'continue' : 'bet';
+  const around = above != null && below != null ? `Hands a little stronger ${verb} ${pct(above)} of the time; a little weaker, ${pct(below)}.` : '';
+  const whatNext = (a) => {
+    const n = row.next[a];
+    if (!n) return '';
+    if (actions[a].kind === 'check') return `After ${label(a)} he checks behind ${pct(n.check)} of the time and bets ${pct(n.more)}.`;
+    return `Against ${label(a)} he folds ${pct(n.fold)}, calls with worse ${pct(n.callWorse)}, calls with better ${pct(n.callBetter)}${n.more > 0.005 ? ` and raises ${pct(n.more)}` : ''}.`;
+  };
+  let line = '';
 
   if (facing) {
-    // 2. The price
     const edge = row.equity - s.need;
-    const price = `It beats ${pct(row.equity)} of his range here. Calling ${fmt(toCall)} to win ${fmt(pot)} needs ${pct(s.need)}.`;
-    const short = `Beats ${pct(row.equity)} of his range; a call needs ${pct(s.need)}.`;
+    const price = `it beats ${pct(row.equity)} of his betting range and a call needs ${pct(s.need)}`;
+    const raising = mainBet >= 0 && betting > 0.1;
+    const called = mainBet >= 0 ? row.whenCalled[mainBet] : null;
+    if (raising && called != null && called >= 0.5) {
+      line = `Raises for value: it still beats ${pct(called)} of what continues against ${label(mainBet)}.`;
+      say('raise', 'solver', `${line} ${whatNext(mainBet)}`);
+    } else if (raising) {
+      line = `Raises as a bluff: he folds ${pct(row.folds[mainBet] ?? 0)} to ${label(mainBet)}, and calling would win only ${pct(row.equity)}.`;
+      say('raise', 'solver', `${line} A raise this size needs him to fold ${pct(s.sizes[mainBet].needsFolds)}.`);
+    }
     if (Math.abs(edge) <= 0.02) {
       const continues = 1 - s.mix[fold];
-      say('catcher', 'count', `${price} That is the price almost exactly: a bluff-catcher.`, `Bluff-catcher: beats ${pct(row.equity)}, and a call needs ${pct(s.need)}.`);
-      const bet = toCall / (pot - toCall);
-      if (status !== 'forced') say('defence', 'formula', `The range continues ${pct(continues)} of the time in all. Hands like this one supply whatever share keeps his bluffs from profiting; the plain rule of thumb for a bet this size is ${pct(1 / (1 + bet))}.`);
-    } else if (edge > 0) say('price', 'count', `${price} It is ${Math.round(100 * edge)} points clear, so it never folds.`, short);
-    else say('price', 'count', `${price} It is ${Math.round(-100 * edge)} points short, so calling loses.`, short);
-
-    // 3. Raising
-    if (mainBet >= 0) {
-      const called = row.whenCalled[mainBet];
-      if (betting > 0.1 && called != null) {
-        if (called >= 0.5) say('raise-value', 'solver', `It raises for value: against ${label(mainBet)} he continues with hands it beats ${pct(called)} of the time.`, `Raises for value: beats ${pct(called)} of what continues.`);
-        else say('raise-bluff', 'solver', `It raises as a bluff: he folds ${pct(row.folds[mainBet] ?? 0)} to ${label(mainBet)}, and the hand gives up little, since calling wins only ${pct(row.equity)}.`);
-      } else if (betting <= 0.1 && row.equity > 0.7 && called != null && called < 0.5) {
-        say('no-raise', 'solver', `It does not raise: what continues against ${label(mainBet)} beats it more often than not (it wins ${pct(called)}).`);
-      }
+      const text = `A bluff-catcher at the price: ${price}. It beats his bluffs and loses to his value, so calling and folding are worth the same.`;
+      if (!line) line = `At the price: ${price}.`;
+      say('price', 'count', text);
+      say('defence', 'formula', `His bluffs must not profit, so the range continues ${pct(continues)} in all. Bluff-catchers make up the difference after the hands that always continue, which is why some call and some fold.`);
+    } else if (edge > 0) {
+      if (!line) line = `Calls: ${price}.`;
+      say('price', 'count', `It is ${Math.round(100 * edge)} points clear of the price: ${price}.`);
+      if (!raising && called != null && row.equity > 0.7) say('no-raise', 'solver', `It does not raise. Against ${label(mainBet)} he would continue with hands that beat it ${pct(1 - called)} of the time: a raise folds out what it beats.`);
+    } else {
+      if (!line) line = `Folds: ${price}.`;
+      say('price', 'count', `It is ${Math.round(-100 * edge)} points short of the price: ${price}.`);
     }
+    if (around) say('line', 'count', around);
   } else {
-    // First to act
+    const called = mainBet >= 0 ? row.whenCalled[mainBet] : null;
+    const afterCheck = check >= 0 ? row.next[check] : null;
+    const facesBet = afterCheck ? afterCheck.more : null;
     if (betting > 0.1 && mainBet >= 0) {
+      const n = row.next[mainBet];
       const size = s.sizes[mainBet];
-      const called = row.whenCalled[mainBet] ?? row.equity;
-      if (called >= 0.5) {
-        say('value', 'solver', `It bets for value: it beats ${pct(called)} of what calls ${label(mainBet)}.`, `Bets for value: beats ${pct(called)} of what calls.`);
-      } else if (!isBluff(row, mainBet)) {
-        say('merged', 'solver', `It bets (${label(mainBet)}) with a middling hand: it beats ${pct(row.equity)} of his range, and ${pct(called)} of what calls. That is neither a value bet nor a bluff; the bet is worth what a check is, and the range uses hands like this to fill out the size.`, `Bets a middling hand: beats ${pct(row.equity)} of his range and ${pct(called)} of what calls.`);
+      if (called != null && called >= 0.55) {
+        line = `Value bet: called by ${label(mainBet)}, it wins ${pct(called)} of the time.`;
+        say('value', 'solver', `${line} ${whatNext(mainBet)}`);
+      } else if (called != null && called >= 0.45) {
+        line = `On the value line: called by ${label(mainBet)}, it wins ${pct(called)}, a coin flip. That is where betting stops paying.`;
+        say('value', 'solver', `${line} ${whatNext(mainBet)}`);
+      } else if (isBluff(row, mainBet)) {
+        line = `Bluff: checked, it wins ${pct(row.equity)}; he folds ${pct(n?.fold ?? 0)} to ${label(mainBet)} and the bet needs ${pct(size.needsFolds)}.`;
+        say('bluff', 'solver', line);
+        say('quota', 'formula', `Bluffs are ${pct(size.bluffShare)} of the range's ${label(mainBet)} bets; the price he is laid allows ${pct(size.wanted)}. The weakest hands bluff first because they give up nothing by not checking.`);
       } else {
-        say('bluff', 'solver', `It bets as a bluff: checked, it wins ${pct(row.equity)} at showdown; he folds ${pct(row.folds[mainBet] ?? 0)} to ${label(mainBet)}, and a bluff of this size needs ${pct(size.needsFolds)}.`, `Bluffs: wins ${pct(row.equity)} if checked; he folds ${pct(row.folds[mainBet] ?? 0)}, and it needs ${pct(size.needsFolds)}.`);
-        say('quota', 'formula', `Bluffs are ${pct(size.bluffShare)} of the range's ${label(mainBet)} bets. The price he gets to call allows ${pct(size.wanted)}.`);
+        // A bet that is neither: what does checking expose it to?
+        line = `Bets so as not to face a bet: after ${check >= 0 ? label(check) : 'a check'} he bets ${pct(facesBet ?? 0)} of the time. Called, it wins only ${pct(called ?? 0)}.`;
+        say('block', 'solver', `${line} ${whatNext(mainBet)}`);
+        say('block-why', 'solver', `Betting sets the price itself: he raises ${label(mainBet)} ${pct(n?.more ?? 0)} of the time, where after a check he bets ${pct(facesBet ?? 0)} and picks the size.`);
       }
     }
     if (check >= 0 && hand.strategy[check] > 0.1) {
       const probe = mainBet >= 0 ? mainBet : bets[0];
-      const called = probe >= 0 ? row.whenCalled[probe] : null;
-      if (row.equity >= 0.75 && called != null && called >= 0.5) {
-        const after = decision.villain.reduce((t, v) => t + v.weight * (1 - (v.answers[check]?.check ?? 1)), 0) / decision.villain.reduce((t, v) => t + v.weight, 0);
-        say('protect', 'solver', `It is strong enough to bet, and it checks ${pct(hand.strategy[check])} of the time. Hands of its strength check ${pct(level.mix[check])} in all, so that a check is not always weak. ${decision.villain[0]?.answers[check] ? `After a check he bets ${pct(after)} of the time.` : ''}`.trim(), 'Strong enough to bet; it also checks, so that a check is not always weak.');
-      } else if (called != null && row.equity >= 0.35) {
-        say('showdown', 'count', `It checks: it beats ${pct(row.equity)} of his range but only ${pct(called)} of what would call ${label(probe)}. A bet folds out the hands it beats.`, `Checks: beats ${pct(row.equity)} of his range but only ${pct(called)} of what would call.`);
-      } else if (row.equity < 0.35) {
+      const wouldWin = probe >= 0 ? row.whenCalled[probe] : null;
+      if (row.equity >= 0.75 && wouldWin != null && wouldWin >= 0.5) {
+        const text = `Checks a hand strong enough to bet: after ${label(check)} he bets ${pct(facesBet ?? 0)} of the time, into it. Hands of its strength check ${pct(level.mix[check])} in all, which is what stops him betting freely.`;
+        if (!line) line = `Checks to let him bet: after ${label(check)} he bets ${pct(facesBet ?? 0)} of the time.`;
+        say('trap', 'solver', text);
+      } else if (row.equity >= BLUFF) {
+        const text = `Checks for showdown: it beats ${pct(row.equity)} of his range but only ${pct(wouldWin ?? 0)} of what would call ${probe >= 0 ? label(probe) : 'a bet'}. A bet folds out what it beats and is called by what beats it.`;
+        if (!line) line = `Checks for showdown: beats ${pct(row.equity)} of his range but only ${pct(wouldWin ?? 0)} of what would call.`;
+        say('showdown', 'count', `${text} ${whatNext(check)}`);
+      } else {
         const size = probe >= 0 ? s.sizes[probe] : null;
-        say('give-up', 'formula', `It checks and gives up: it wins ${pct(row.equity)} at showdown.${size ? ` The range already bluffs with ${pct(size.bluffShare)} of its ${label(probe)} bets, against the ${pct(size.wanted)} the price allows.` : ''}`, `Checks and gives up: wins ${pct(row.equity)} at showdown.`);
+        if (!line) line = `Gives up: it wins ${pct(row.equity)} at showdown and the range has its bluffs already.`;
+        say('give-up', 'formula', `Gives up: it wins ${pct(row.equity)} at showdown.${size ? ` The range already bluffs with ${pct(size.bluffShare)} of its ${label(probe)} bets, against the ${pct(size.wanted)} the price allows, and weaker hands than this one go first.` : ''}`);
       }
     }
+    if (around) say('line', 'count', around);
   }
 
-  // 4. Its strength level, and its blockers
+  // What the choice costs, from the solver's values
+  let status = 'unknown';
+  if (row.gaps) {
+    const ok = actions.filter((_, a) => row.fine[a]);
+    status = ok.length > 1 ? 'optional' : 'forced';
+    const worst = row.gaps.map((g, a) => ({ g, a })).filter((x) => x.g > MISTAKE).sort((x, y) => x.g - y.g)[0];
+    if (status === 'forced' && worst) say('cost', 'solver', `The next best action, ${label(worst.a)}, gives up ${(100 * worst.g).toFixed(1)}% of the pot.`);
+    else if (status === 'optional' && worst) say('cost', 'solver', `${ok.map((x) => x.label).join(' and ')} are worth the same to it; ${label(worst.a)} would give up ${(100 * worst.g).toFixed(1)}% of the pot.`);
+  }
+
+  // Hands of exactly its strength, and what its cards change
   if (level.rows.length > 1) {
-    const mine = facing ? 1 - hand.strategy[fold] : betting;
     const others = level.rows.filter((r) => r !== row);
-    const theirs = others.reduce((t, r) => t + r.hand.weight * (facing ? 1 - r.hand.strategy[fold] : bets.reduce((x, a) => x + r.hand.strategy[a], 0)), 0) / others.reduce((t, r) => t + r.hand.weight, 0);
-    const what = facing ? 'continues' : 'bets';
+    const mine = move(row);
+    const theirs = others.reduce((t, r) => t + r.hand.weight * move(r), 0) / others.reduce((t, r) => t + r.hand.weight, 0);
     const meanBetter = others.reduce((t, r) => t + r.removesBetter, 0) / others.length;
     const meanWorse = others.reduce((t, r) => t + r.removesWorse, 0) / others.length;
     const differs = Math.abs(row.removesBetter - meanBetter) + Math.abs(row.removesWorse - meanWorse) >= 0.02;
-    if (Math.abs(mine - theirs) > 0.15 && hand.cards && !differs) {
-      say('arbitrary', 'count', `${others.length} other hands have exactly its strength and ${what === 'continues' ? 'continue' : 'bet'} ${pct(theirs)}; it ${what} ${pct(mine)}. Its cards remove the same parts of his range as theirs, so which of them supplies the share does not matter.`);
+    if (Math.abs(mine - theirs) > 0.15 && hand.cards && differs) {
+      say('blockers', 'count', `Its cards set it apart from the ${others.length} other hands of its strength, which ${verb} ${pct(theirs)} against its ${pct(mine)}: it removes ${pct(row.removesBetter)} of the hands that beat it (they remove ${pct(meanBetter)}) and ${pct(row.removesWorse)} of the hands it beats (they remove ${pct(meanWorse)}).`);
     } else if (Math.abs(mine - theirs) > 0.15 && hand.cards) {
-      say('blockers', 'count', `${others.length} other hands have exactly its strength and ${what === 'continues' ? 'continue' : 'bet'} ${pct(theirs)}; it ${what} ${pct(mine)}. The difference is its cards: they remove ${pct(row.removesBetter)} of the hands that beat it (the others remove ${pct(meanBetter)}) and ${pct(row.removesWorse)} of the hands it beats (the others ${pct(meanWorse)}).`);
-    } else {
-      say('level', 'count', `It plays like the ${others.length} other hands of exactly its strength, which ${what === 'continues' ? 'continue' : 'bet'} ${pct(theirs)}. On the river a hand is its strength; these are interchangeable.`);
+      say('arbitrary', 'count', `The ${others.length} other hands of its strength ${verb} ${pct(theirs)} against its ${pct(mine)}, yet their cards remove the same parts of his range. The split between them carries no meaning: any of them could take the other's share.`);
     }
   }
-
-  // The one-line answer: the reason for what the hand mostly does
-  const wanted = AGGRESSIVE.has(actions[main].kind) ? ['raise-value', 'raise-bluff', 'value', 'bluff'] : [];
-  const mixed = status === 'optional' && Math.max(...hand.strategy) < 0.85;
-  const first = (mixed ? reasons.find((r) => r.id === 'optional') : null) ?? reasons.find((r) => r.short && wanted.includes(r.id)) ?? reasons.find((r) => r.short && r.id !== 'optional') ?? reasons[0];
-  return { name, strategy: hand.strategy, status, equity: row.equity, line: first ? first.short ?? first.text : '', reasons };
-}
-
-function fmt(chips) {
-  return Number.isInteger(chips) ? String(chips) : chips.toFixed(1);
+  return { name, strategy: hand.strategy, status, equity: row.equity, line, reasons };
 }

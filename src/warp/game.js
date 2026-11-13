@@ -75,7 +75,7 @@ export function warpGame({ equities, pot, stack, bets, raise, iterations = 300 }
         const reply = profileAt(child.id);
         const fold = child.edges.findIndex((e) => e.kind === 'fold');
         const check = child.edges.findIndex((e) => e.kind === 'check');
-        return { reply, fold, check };
+        return { reply, fold, check, call: child.edges.findIndex((e) => e.kind === 'call') };
       });
       const hands = [];
       const villain = [];
@@ -85,7 +85,7 @@ export function warpGame({ equities, pot, stack, bets, raise, iterations = 300 }
           rank++;
           if (mine[i] > 1e-9) hands.push({ id: i, name: `${rank}`, weight: mine[i], strength: i, equityAtStart: levels.equity[i], strategy: profile.map((p) => p[i]), values: null });
         } else if (levels.owner[i] !== me && his[i] > 1e-9) {
-          villain.push({ id: i, weight: his[i], strength: i, answers: answers.map((a) => (a ? { fold: a.fold >= 0 ? a.reply[a.fold][i] : 0, check: a.check >= 0 ? a.reply[a.check][i] : 0 } : null)) });
+          villain.push({ id: i, weight: his[i], strength: i, answers: answers.map((a) => { if (!a) return null; const fold = a.fold >= 0 ? a.reply[a.fold][i] : 0; const check = a.check >= 0 ? a.reply[a.check][i] : 0; const k = a.call ?? -1; const call = k >= 0 ? a.reply[k][i] : 0; return { fold, check, call, more: Math.max(0, 1 - fold - check - call) }; }) });
         }
       }
       const mineIn = node.invested[me];
