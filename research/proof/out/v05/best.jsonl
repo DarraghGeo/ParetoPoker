@@ -1,0 +1,6 @@
+{"spot":"turn two-tone wide","exploit":0.19,"decisions":24,"values":12708,"seconds":3,"worst":{"average":"4.0e-13","order":"4.0e-13","root":"4.3e-14","mirror":"0.0e+0","exploitability":"5.9e-8"}}
+{"spot":"turn rainbow BB v BTN","exploit":0.19,"decisions":21,"values":15222,"seconds":2,"worst":{"average":"5.1e-13","order":"2.4e-13","root":"5.7e-14","mirror":"0.0e+0","exploitability":"2.5e-7"}}
+{"spot":"turn flush board","exploit":0.28,"decisions":24,"values":18923,"seconds":3,"worst":{"average":"4.3e-13","order":"4.3e-13","root":"1.8e+2","mirror":"1.1e-14","exploitability":"2.2e-7"}}
+{"spot":"turn paired","exploit":0.23,"decisions":22,"values":14643,"seconds":1,"worst":{"average":"4.8e-13","order":"2.8e-13","root":"1.7e+2","mirror":"2.1e-14","exploitability":"1.1e-7"}}
+{"spot":"turn tight ranges deep","exploit":0.3,"decisions":21,"values":3314,"seconds":1,"worst":{"average":"5.1e-13","order":"4.5e-13","root":"2.8e-14","mirror":"0.0e+0","exploitability":"2.5e-7"}}
+{"spot":"turn two flush draws","exploit":0.17,"decisions":22,"values":10683,"seconds":1,"worst":{"average":"4.8e-13","order":"4.8e-13","root":"9.0e+1","mirror":"1.4e-14","exploitability":"1.3e-7"}}

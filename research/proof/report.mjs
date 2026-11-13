@@ -89,6 +89,9 @@ best-response traversal, the one its exploitability is computed from.
 ${best.map((r) => `| ${r.spot} | ${r.decisions} | ${n(r.values)} | ${r.worst.average} | ${r.worst.order} | ${r.worst.root} |`).join('\n')}
 
 (% of the starting pot. "Ever worth less" is the largest amount by which a best reply fell short: rounding only.)
+On the newer solver version the root vector is laid out differently on boards with a symmetry of their own, so
+there the comparison is made on the whole game instead: both players' best-reply values, averaged, must be the
+solver's own exploitability (see "Run again" below).
 This also corrected the river, where "the next best play loses X" had been using the untrained values.
 
 ## Proof 4. Every conclusion made at page accuracy is true in two far finer solves
@@ -180,7 +183,7 @@ fresh sets and the accounting proofs were run again on it:
 
 | Check | Result |
 |---|---|
-${r1 ? `| Fresh random river spots (${r1.spots.length}) | ${n(r1.conclusions.made)} conclusions, **${r1.conclusions.failed} false** |\n` : ''}${r2 ? `| Fresh random turn spots (${r2.spots.length}) | ${n(r2.conclusions.made)} conclusions, **${r2.conclusions.failed} false** |\n` : ''}${b.length ? `| Best reply against the solver's own best response (${b.length} turn spots) | largest difference ${big(b, (r) => [r.worst.average, r.worst.root])}% of the pot |\n` : ''}${i.length ? `| Accounting identities and independent play-out (${i.length} turn spots) | largest error ${big(i, (r) => Object.values(r.worst))}% of the pot |\n` : ''}
+${r1 ? `| Fresh random river spots (${r1.spots.length}) | ${n(r1.conclusions.made)} conclusions, **${r1.conclusions.failed} false** |\n` : ''}${r2 ? `| Fresh random turn spots (${r2.spots.length}) | ${n(r2.conclusions.made)} conclusions, **${r2.conclusions.failed} false** |\n` : ''}${b.length ? `| Best reply: same values as the solver when the hand follows its strategy (${b.length} turn spots) | largest difference ${big(b, (r) => [r.worst.average])}% of the pot |\n| Best reply: both players' values for the whole game, averaged, against the solver's own exploitability | largest difference ${big(b, (r) => [r.worst.exploitability])} points of exploitability |\n` : ''}${i.length ? `| Accounting identities and independent play-out (${i.length} turn spots) | largest error ${big(i, (r) => Object.values(r.worst))}% of the pot |\n` : ''}
 `; })()}
 ## What the page says, and what each sentence rests on
 

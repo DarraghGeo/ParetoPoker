@@ -38,6 +38,8 @@ test('best reply: the same as the solver when the hand follows its strategy, nev
     for (let a = 0; a < solved.length; a++) { assert.ok(Math.abs(average[a][c] - solved[a][c]) < 1e-8); assert.ok(top[a][c] >= solved[a][c] - 1e-8); }
     assert.ok(Math.abs(Math.max(...top.map((v) => v[c])) - raw[slots[f.stored[c]]] / (f.mass[c] * scale)) < 1e-8);
   }
+  // the whole game, for both players: their best-reply values averaged are the solver's own exploitability
+  { const start = [0, 1].map((p) => solution.reachAt(0, 0, p)); const mine = (100 * (best.gameValue(0, start) + best.gameValue(1, start))) / 2 / pot0; assert.ok(Math.abs(mine - run.exploitabilityPercent()) < 1e-5, `${mine} against ${run.exploitabilityPercent()}`); }
   // looked at closely, an action's parts are its whole
   for (let a = 0; a < top.length; a++) { const x = best.closely(f, a, null); for (let c = 0; c < fs.COMBOS; c++) if (!Number.isNaN(top[a][c])) { assert.ok(Math.abs(x.value[c] - top[a][c]) < 1e-8); if (x.replies) assert.ok(Math.abs(x.replies.reduce((t, r) => t + r.value[c], 0) - top[a][c]) < 1e-8); } }
 });

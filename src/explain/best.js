@@ -186,5 +186,22 @@ export function evaluator(fs, solution, nodes) {
     plan = null;
     return { value, replies, holdings, cards };
   }
-  return Object.assign(valuesOf, { closely });
+  /**
+   * What the whole game is worth to a player who plays the best reply throughout, chips a hand,
+   * given both starting ranges (`start[p]`: weights by combination). The two players' figures,
+   * averaged, are the solution's exploitability: a check on this walk against the solver's own number.
+   */
+  function gameValue(me, start) {
+    const board = [...spot.board]; const used = new Uint8Array(52); for (const c of board) used[c] = 1;
+    const heroes = []; const villains = [];
+    for (let c = 0; c < N; c++) { if (used[A[c]] || used[B[c]]) continue; if (start[me][c] > 0) heroes.push(c); if (start[1 - me][c] > 0) villains.push(c); }
+    const reach = new Float64Array(N); for (const v of villains) reach[v] = start[1 - me][v];
+    plan = null;
+    const raw = walk(0, board, me, heroes, villains, reach, 'best', {});
+    const { all, per } = tally(reach, villains);
+    let total = 0, mass = 0;
+    for (const h of heroes) { total += start[me][h] * raw[h]; mass += start[me][h] * (all - per[A[h]] - per[B[h]] + reach[h]); }
+    return total / mass;
+  }
+  return Object.assign(valuesOf, { closely, gameValue });
 }

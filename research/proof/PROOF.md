@@ -78,6 +78,9 @@ best-response traversal, the one its exploitability is computed from.
 | flop paired | 13 | 8,849 | 4.1e-13 | 4.1e-13 | 8.5e-14 |
 
 (% of the starting pot. "Ever worth less" is the largest amount by which a best reply fell short: rounding only.)
+On the newer solver version the root vector is laid out differently on boards with a symmetry of their own, so
+there the comparison is made on the whole game instead: both players' best-reply values, averaged, must be the
+solver's own exploitability (see "Run again" below).
 This also corrected the river, where "the next best play loses X" had been using the untrained values.
 
 ## Proof 4. Every conclusion made at page accuracy is true in two far finer solves
@@ -114,9 +117,10 @@ Lines at least half of each range takes:
 | River | random (40) | 0.01% vs 0.002% | 20,109 | **0** | 4,393 / 0 | 9,068 / 0 | 4,915 / 0 | 1,733 / 0 | — | 33,527 | 152 | 0.249 |
 | River | fresh random (60) | 0.01% vs 0.002% | 28,250 | **0** | 16,064 / 0 | 5,299 / 0 | 4,821 / 0 | 2,066 / 0 | — | 48,496 | 19 | 0.504 |
 | Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
-| Flop | fresh random, first gates (9) | 0.3% vs 0.02% | 6,761 | **0** | 2,213 / 0 | 1,667 / 0 | 1,539 / 0 | 353 / 0 | 989 / 0 | 10,476 | 157 | 2.07 |
+| Flop | fresh random, first gates (13) | 0.3% vs 0.02% | 9,124 | **1** | 2,957 / 0 | 2,356 / 1 | 2,164 / 0 | 600 / 0 | 1,047 / 0 | 15,207 | 167 | 2.798 |
+| Flop | fresh random, final gates (4) | 0.3% vs 0.02% | 3,202 | **0** | 681 / 0 | 864 / 0 | 931 / 0 | 334 / 0 | 392 / 0 | 5,853 | 83 | 1.452 |
 
-All sets together on those lines: **109,624 conclusions, 0 false.**
+All sets together on those lines: **115,189 conclusions, 1 false.**
 "Largest reversed gap" is the largest difference in worth, at page accuracy, whose direction a reference
 reversed: the gate for calling an action worse is 2% of the pot on these lines, several times that figure.
 
@@ -173,9 +177,9 @@ least half of each range takes), on 30 of the fresh random turn spots, three riv
 A flop cannot be solved in a browser tab much finer than 0.3% of the pot, so that is the page accuracy
 tested, against references at 0.02%. Flop decisions, and turn decisions after a card has come, on lines at
 least half of each range takes. Gates were fixed beforehand from one flop spot measured in full. After the
-first seventeen spots, in which a finer solve reversed a difference of 2.07% of the pot, the gate for calling an action
+first seventeen spots, in which a finer solve reversed a difference of 2.798% of the pot, the gate for calling an action
 worse was raised from 3% to 5%; the last set was run after that and is the test of the gates as they stand.
-**8,640 conclusions on 11 spots, 0 false.** The numbers are another matter at this accuracy: 722 of 12,897
+**14,205 conclusions on 19 spots, 1 false.** The numbers are another matter at this accuracy: 815 of 23,481
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 
@@ -187,6 +191,10 @@ fresh sets and the accounting proofs were run again on it:
 | Check | Result |
 |---|---|
 | Fresh random river spots (60) | 51,717 conclusions, **0 false** |
+| Fresh random turn spots (30) | 30,711 conclusions, **0 false** |
+| Best reply: same values as the solver when the hand follows its strategy (6 turn spots) | largest difference 5.1e-13% of the pot |
+| Best reply: both players' values for the whole game, averaged, against the solver's own exploitability | largest difference 2.5e-7 points of exploitability |
+| Accounting identities and independent play-out (6 turn spots) | largest error 1.2e-12% of the pot |
 
 
 ## What the page says, and what each sentence rests on
@@ -223,7 +231,7 @@ fresh sets and the accounting proofs were run again on it:
 4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
    the two references differed by four points about the equity of hands against that range. Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
-   takes, 380 of 79,817 equities fell outside the tolerance (1 to 2 points) of a reference.
+   takes, 452 of 85,481 equities fell outside the tolerance (1 to 2 points) of a reference.
 
 ## Not proven: said nowhere on the page, to be proved later or dropped
 
@@ -234,7 +242,7 @@ fresh sets and the accounting proofs were run again on it:
 | Why a hand bets 60% and not 40% | Finding 3 | `tolerance.mjs` |
 | Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
 | River decisions after a deal on lines under half of either range; anything two deals deep (a river inside a flop spot) | Not tried | — |
-| Conclusions about flop decisions | Tested at the accuracy a browser reaches (0.3%): see the table. No false conclusion so far, but on few spots: each flop takes the better part of an hour to test. | `accept.mjs "held flop" 0.3 0.02` |
+| Conclusions about flop decisions | Tested at the accuracy a browser reaches (0.3%): see the table. False conclusions were found. | `accept.mjs "held flop" 0.3 0.02` |
 | "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
 | Which of his hands fold, call or raise, by made hand | Not measured; the split by holding above suggests it will not be stable | — |
