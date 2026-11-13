@@ -3,7 +3,7 @@
 // every decision it explains is then checked against the same hand measured in two references (0.01%
 // of the pot, discounted CFR and CFR+). One failure is a failure.
 //   node accept.mjs <spot name prefix> <page accuracy> [reference accuracy]
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, readFileSync } from 'node:fs';
 import { fs, solveSpot, decisions } from './lib.mjs';
 import { TURNS, FLOPS, HELD_TURNS, HELD_FLOPS, HELD2_TURNS, RIVERS, HELD_RIVERS, randomTurns, randomRivers, freshSpots, freshFlops, config } from './spots.mjs';
 import { study, measure, claims, holds, tolerance, ON_TRIAL } from '../../src/explain/street.js';
@@ -12,7 +12,8 @@ const [only = 'held turn', levelText = '0.02', fineTarget = '0.01'] = process.ar
 const level = +levelText; const DEEPER = +(process.env.DEEPER ?? 0); const ONLY_DEEPER = process.env.ONLY_DEEPER === '1'; // also (or only) the decisions after one more deal
 const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS, ...HELD2_TURNS, ...RIVERS, ...HELD_RIVERS, ...randomTurns(+(process.env.RANDOM_SPOTS ?? 40)), ...randomRivers(+(process.env.RANDOM_SPOTS ?? 40)), ...freshSpots(+(process.env.FRESH ?? 60), 4, 4401), ...freshSpots(+(process.env.FRESH ?? 60), 5, 5501), ...freshFlops(+(process.env.FRESH_FLOPS ?? 6), 3301, (x) => { try { fs.defineSpot(config(x)); return true; } catch { return false; } }),
   // a second batch, small enough to run many: names 'more flop NN'
-  ...freshFlops(12, 3302, (x) => { try { return fs.defineSpot(config(x)).estimate.bytes < 160 * 2 ** 20; } catch { return false; } }).map((x, i) => ({ ...x, name: `more flop ${String(i + 1).padStart(2, '0')}` }))].filter((s) => s.name.startsWith(only));
+  ...freshFlops(12, 3302, (x) => { try { return fs.defineSpot(config(x)).estimate.bytes < 160 * 2 ** 20; } catch { return false; } }).map((x, i) => ({ ...x, name: `more flop ${String(i + 1).padStart(2, '0')}` })),
+  ...freshFlops(24, 3303, (x) => { try { return fs.defineSpot(config(x)).estimate.bytes < 160 * 2 ** 20; } catch { return false; } }).map((x, i) => ({ ...x, name: `extra flop ${String(i + 1).padStart(2, '0')}` }))].filter((s) => s.name.startsWith(only));
 const other = (s, algorithm, target) => { const spot = fs.defineSpot(config(s)); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 3), algorithm }); let e = Infinity; while (e > target && run.completed < 40000) { run.step(spot.board.length === 3 ? 5 : 20); e = run.exploitabilityPercent(); } return { spot, run, solution: run.snapshot(), exploit: e }; };
 const tally = {}; const failures = []; let hands = 0, decisionsSeen = 0, silent = 0;
 const flip = { gap: 0, where: '' }; const flips = {}; // the largest gap, at page accuracy, whose sign a reference reverses
@@ -51,6 +52,7 @@ for (const s of spots) {
 const total = Object.values(tally).reduce((t, x) => t + x.made, 0); const failed = Object.values(tally).reduce((t, x) => t + x.failed, 0);
 const conclusions = Object.values(tally).filter((t) => !t.number); const numbers = Object.values(tally).filter((t) => t.number);
 const sum = (list, k) => list.reduce((t, x) => t + x[k], 0);
-const result = { proof: 'claims hold in both references', conclusions: { made: sum(conclusions, 'made'), failed: sum(conclusions, 'failed') }, numbers: { made: sum(numbers, 'made'), outsideTolerance: sum(numbers, 'failed') }, spots: spots.map((s) => s.name), pageAccuracy: level, referenceAccuracy: +fineTarget, decisionsExplained: decisionsSeen, decisionsLeftSilent: silent, hands, claims: total, failed, largestReversedGap: flip, largestReversedGapByLine: flips, byKind: tally };
+const solverVersion = JSON.parse(readFileSync(new URL('../../node_modules/poker-flopsolve/package.json', import.meta.url), 'utf8')).version;
+const result = { proof: 'claims hold in both references', solver: solverVersion, conclusions: { made: sum(conclusions, 'made'), failed: sum(conclusions, 'failed') }, numbers: { made: sum(numbers, 'made'), outsideTolerance: sum(numbers, 'failed') }, spots: spots.map((s) => s.name), pageAccuracy: level, referenceAccuracy: +fineTarget, decisionsExplained: decisionsSeen, decisionsLeftSilent: silent, hands, claims: total, failed, largestReversedGap: flip, largestReversedGapByLine: flips, byKind: tally };
 console.log(JSON.stringify(result));
 if (failures.length) writeFileSync(new URL(`./out/failures-${only.replace(/\W+/g, '-')}-${levelText}.json`, import.meta.url), JSON.stringify(failures, null, 1));

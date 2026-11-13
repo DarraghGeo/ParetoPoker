@@ -114,8 +114,10 @@ export const ON_TRIAL = {
   ...TOLERANCE,
   // Flop spots at the accuracy a browser reaches (0.3%): the flop itself, and the turn once a card has come.
   // Gates are twice the largest differences measured on the one flop spot measured in full.
-  flop: [{ upTo: 0.3, lines: [{ from: 0.5, eq: 1, folds: 2, gap: 2.8, sign: 3, cmp: 5, lift: 0.8, rest: 1.4 }] }],
-  'turn after a deal': [{ upTo: 0.3, lines: [{ from: 0.5, eq: 2, folds: 2, gap: 2.4, sign: 3, cmp: 3.6, lift: 1, rest: 2 }] }],
+  // (the gate for 'worse' was raised from 3 to 5 after the first seventeen flop spots, where a finer solve reversed a
+  // difference of 2.1; the 'extra' flop set was run after that and is the test of these gates as they stand)
+  flop: [{ upTo: 0.3, lines: [{ from: 0.5, eq: 1, folds: 2, gap: 2.8, sign: 5, cmp: 5, lift: 0.8, rest: 1.4 }] }],
+  'turn after a deal': [{ upTo: 0.3, lines: [{ from: 0.5, eq: 2, folds: 2, gap: 2.4, sign: 5, cmp: 3.6, lift: 1, rest: 2 }] }],
 };
 /** The tolerances that apply: `street` is 'turn' or 'flop' (where the decision is), `exploit` the solve's accuracy in % of the pot. */
 export function tolerance(street, exploit, lineReach, table = TOLERANCE) {

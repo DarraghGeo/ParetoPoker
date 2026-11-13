@@ -114,9 +114,9 @@ Lines at least half of each range takes:
 | River | random (40) | 0.01% vs 0.002% | 20,109 | **0** | 4,393 / 0 | 9,068 / 0 | 4,915 / 0 | 1,733 / 0 | — | 33,527 | 152 | 0.249 |
 | River | fresh random (60) | 0.01% vs 0.002% | 28,250 | **0** | 16,064 / 0 | 5,299 / 0 | 4,821 / 0 | 2,066 / 0 | — | 48,496 | 19 | 0.504 |
 | Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
-| Flop | fresh random, small (3) | 0.3% vs 0.02% | 2,522 | **0** | 1,061 / 0 | 346 / 0 | 289 / 0 | 67 / 0 | 759 / 0 | 2,483 | 0 | 1.388 |
+| Flop | fresh random, first gates (9) | 0.3% vs 0.02% | 6,761 | **0** | 2,213 / 0 | 1,667 / 0 | 1,539 / 0 | 353 / 0 | 989 / 0 | 10,476 | 157 | 2.07 |
 
-All sets together on those lines: **105,385 conclusions, 0 false.**
+All sets together on those lines: **109,624 conclusions, 0 false.**
 "Largest reversed gap" is the largest difference in worth, at page accuracy, whose direction a reference
 reversed: the gate for calling an action worse is 2% of the pot on these lines, several times that figure.
 
@@ -172,10 +172,22 @@ least half of each range takes), on 30 of the fresh random turn spots, three riv
 
 A flop cannot be solved in a browser tab much finer than 0.3% of the pot, so that is the page accuracy
 tested, against references at 0.02%. Flop decisions, and turn decisions after a card has come, on lines at
-least half of each range takes, with gates fixed beforehand from one flop spot measured in full:
-**4,401 conclusions on 5 spots, 0 false.** The numbers are another matter at this accuracy: 565 of 4,904
+least half of each range takes. Gates were fixed beforehand from one flop spot measured in full. After the
+first seventeen spots, in which a finer solve reversed a difference of 2.07% of the pot, the gate for calling an action
+worse was raised from 3% to 5%; the last set was run after that and is the test of the gates as they stand.
+**8,640 conclusions on 11 spots, 0 false.** The numbers are another matter at this accuracy: 722 of 12,897
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
+
+### Run again on the solver version the page now uses
+
+Most of the above was run on poker-flopsolve 0.4.1. The page has since moved to 0.5.0-beta.0, so the
+fresh sets and the accounting proofs were run again on it:
+
+| Check | Result |
+|---|---|
+| Fresh random river spots (60) | 51,717 conclusions, **0 false** |
+
 
 ## What the page says, and what each sentence rests on
 
@@ -211,7 +223,7 @@ worded as, this solution's numbers, but a flop solved to 0.3% is a coarse soluti
 4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
    the two references differed by four points about the equity of hands against that range. Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
-   takes, 371 of 75,480 equities fell outside the tolerance (1 to 2 points) of a reference.
+   takes, 380 of 79,817 equities fell outside the tolerance (1 to 2 points) of a reference.
 
 ## Not proven: said nowhere on the page, to be proved later or dropped
 

@@ -11,13 +11,18 @@ const accept = [
   ['River', 'calibration (6 hand-built)', './out/accept-river-0.01.json'], ['River', 'held-out (6 hand-built)', './out/accept-held-river-0.01.json'], ['River', 'random (40)', './out/accept-random-river-0.01.json'], ['River', 'fresh random (60)', './out/accept-fresh-river-0.01.json'],
   ['Flop', 'held-out (2 hand-built)', './out/accept-held-flop-0.3.json'], ['Flop', 'fresh random (6)', './out/accept-fresh-flop-0.3.json'],
 ].map(([street, set, file]) => ({ street, set, r: json(file) })).filter((x) => x.r);
-// flop spots run one at a time: gather them into one set
-{ const parts = readdirSync(here('./out/')).filter((f) => /^part-(more|fresh)-flop-\d+\.json$/.test(f) && (f.includes('more') || !json('./out/accept-fresh-flop-0.3.json'))).map((f) => json(`./out/${f}`)).filter(Boolean);
-  if (parts.length) { const sum = { spots: [], pageAccuracy: parts[0].pageAccuracy, referenceAccuracy: parts[0].referenceAccuracy, conclusions: { made: 0, failed: 0 }, numbers: { made: 0, outsideTolerance: 0 }, decisionsExplained: 0, byKind: {}, largestReversedGapByLine: {} };
-    for (const r of parts) { sum.spots.push(...r.spots); sum.conclusions.made += r.conclusions.made; sum.conclusions.failed += r.conclusions.failed; sum.numbers.made += r.numbers.made; sum.numbers.outsideTolerance += r.numbers.outsideTolerance; sum.decisionsExplained += r.decisionsExplained;
-      for (const [k, v] of Object.entries(r.byKind)) { const t = (sum.byKind[k] ??= { made: 0, failed: 0, number: v.number }); t.made += v.made; t.failed += v.failed; }
-      for (const [k, v] of Object.entries(r.largestReversedGapByLine ?? {})) if (!(sum.largestReversedGapByLine[k]?.gap >= v.gap)) sum.largestReversedGapByLine[k] = v; }
-    accept.push({ street: 'Flop', set: `fresh random, small (${sum.spots.length})`, r: sum }); } }
+// flop spots run one at a time: gather each batch into one set
+const gather = (pattern, label) => {
+  const parts = readdirSync(here('./out/')).filter((f) => pattern.test(f)).map((f) => json(`./out/${f}`)).filter(Boolean);
+  if (!parts.length) return;
+  const sum = { spots: [], pageAccuracy: parts[0].pageAccuracy, referenceAccuracy: parts[0].referenceAccuracy, conclusions: { made: 0, failed: 0 }, numbers: { made: 0, outsideTolerance: 0 }, decisionsExplained: 0, byKind: {}, largestReversedGapByLine: {} };
+  for (const r of parts) { sum.spots.push(...r.spots); sum.conclusions.made += r.conclusions.made; sum.conclusions.failed += r.conclusions.failed; sum.numbers.made += r.numbers.made; sum.numbers.outsideTolerance += r.numbers.outsideTolerance; sum.decisionsExplained += r.decisionsExplained;
+    for (const [k, v] of Object.entries(r.byKind)) { const t = (sum.byKind[k] ??= { made: 0, failed: 0, number: v.number }); t.made += v.made; t.failed += v.failed; }
+    for (const [k, v] of Object.entries(r.largestReversedGapByLine ?? {})) if (!(sum.largestReversedGapByLine[k]?.gap >= v.gap)) sum.largestReversedGapByLine[k] = v; }
+  accept.push({ street: 'Flop', set: `${label} (${sum.spots.length})`, r: sum });
+};
+gather(/^part-(more|fresh)-flop-\d+\.json$/, 'fresh random, first gates');
+gather(/^part-extra-flop-\d+\.json$/, 'fresh random, final gates');
 const byLine = (r, from) => { const out = { conclusions: 0, failed: 0, numbers: 0, outside: 0, kinds: {} }; for (const [k, v] of Object.entries(r.byKind)) { if (!k.endsWith(`line ${from}+`)) continue; const kind = k.split(' ')[0]; if (v.number) { out.numbers += v.made; out.outside += v.failed; } else { out.conclusions += v.made; out.failed += v.failed; } out.kinds[kind] = [v.made, v.failed]; } return out; };
 const rows = (from) => accept.map(({ street, set, r }) => { const b = byLine(r, from); if (!b.conclusions && !b.numbers) return null; const k = (x) => (b.kinds[x] ? `${n(b.kinds[x][0])} / ${b.kinds[x][1]}` : '—'); return `| ${street} | ${set} | ${r.pageAccuracy}% vs ${r.referenceAccuracy}% | ${n(b.conclusions)} | **${b.failed}** | ${k('worse')} | ${k('same')} | ${k('needs')} | ${k('builds')} | ${k('cards')} | ${n(b.numbers)} | ${b.outside} | ${r.largestReversedGapByLine?.[from]?.gap ?? '—'} |`; }).filter(Boolean).join('\n');
 const total = (from, street) => accept.filter((x) => !street || x.street === street).reduce((t, { r }) => { const b = byLine(r, from); return { c: t.c + b.conclusions, f: t.f + b.failed }; }, { c: 0, f: 0 });
@@ -160,10 +165,22 @@ ${(() => { const fl = accept.filter((x) => x.street === 'Flop'); if (!fl.length)
 
 A flop cannot be solved in a browser tab much finer than 0.3% of the pot, so that is the page accuracy
 tested, against references at 0.02%. Flop decisions, and turn decisions after a card has come, on lines at
-least half of each range takes, with gates fixed beforehand from one flop spot measured in full:
+least half of each range takes. Gates were fixed beforehand from one flop spot measured in full. After the
+first seventeen spots, in which a finer solve reversed a difference of ${fl.reduce((t, x) => Math.max(t, x.set.includes('final') ? 0 : x.r.largestReversedGapByLine?.['0.5']?.gap ?? 0), 0)}% of the pot, the gate for calling an action
+worse was raised from 3% to 5%; the last set was run after that and is the test of the gates as they stand.
 **${n(made)} conclusions on ${spots} spots, ${failed} false.** The numbers are another matter at this accuracy: ${n(out)} of ${n(nums)}
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
+`; })()}
+${(() => { const r1 = json('./out/v05/accept-fresh-river-0.01.json'), r2 = json('./out/v05/accept-fresh-turn-0.02.json'); const b = jsonl('./out/v05/best.jsonl'), i = jsonl('./out/v05/identities.jsonl'); if (!r1 && !r2) return ''; const big = (rows, pick) => (rows.length ? Math.max(...rows.flatMap((r) => pick(r).map(Number))).toExponential(1) : '—');
+return `### Run again on the solver version the page now uses
+
+Most of the above was run on poker-flopsolve 0.4.1. The page has since moved to ${r1?.solver ?? r2?.solver ?? 'a newer version'}, so the
+fresh sets and the accounting proofs were run again on it:
+
+| Check | Result |
+|---|---|
+${r1 ? `| Fresh random river spots (${r1.spots.length}) | ${n(r1.conclusions.made)} conclusions, **${r1.conclusions.failed} false** |\n` : ''}${r2 ? `| Fresh random turn spots (${r2.spots.length}) | ${n(r2.conclusions.made)} conclusions, **${r2.conclusions.failed} false** |\n` : ''}${b.length ? `| Best reply against the solver's own best response (${b.length} turn spots) | largest difference ${big(b, (r) => [r.worst.average, r.worst.root])}% of the pot |\n` : ''}${i.length ? `| Accounting identities and independent play-out (${i.length} turn spots) | largest error ${big(i, (r) => Object.values(r.worst))}% of the pot |\n` : ''}
 `; })()}
 ## What the page says, and what each sentence rests on
 
