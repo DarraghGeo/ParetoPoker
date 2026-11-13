@@ -1,0 +1,74 @@
+  solved turn two-tone wide: 80 iterations, 0.214%, 0.8s
+  solved turn two-tone wide: 200 iterations, 0.046%, 2.0s
+  solved turn two-tone wide: 340 iterations, 0.019%, 3.7s
+  dcfr turn two-tone wide: 500 its 0.0099% 5s
+  cfr+ turn two-tone wide: 1320 its 0.0099% 13s
+  turn two-tone wide node 0 [] round 0 done, 10s
+  turn two-tone wide node 1 [] round 0 done, 17s
+  turn two-tone wide node 30 [] round 0 done, 20s
+  turn two-tone wide node 60 [] round 0 done, 21s
+  turn two-tone wide node 84 [] round 0 done, 23s
+  turn two-tone wide node 108 [] round 0 done, 24s
+  turn two-tone wide node 120 [] round 0 done, 26s
+  turn two-tone wide node 150 [] round 0 done, 28s
+  turn two-tone wide node 174 [] round 0 done, 30s
+  turn two-tone wide node 198 [] round 0 done, 30s
+{"spot":"turn two-tone wide","levels":[0.3,0.05,0.02],"exploit":[0.2139,0.0463,0.0194,0.0099,0.0099],"lines":2095,"seconds":30}
+  solved turn rainbow BB v BTN: 60 iterations, 0.296%, 0.5s
+  solved turn rainbow BB v BTN: 200 iterations, 0.044%, 1.7s
+  solved turn rainbow BB v BTN: 320 iterations, 0.020%, 2.8s
+  dcfr turn rainbow BB v BTN: 500 its 0.0096% 4s
+  cfr+ turn rainbow BB v BTN: 1260 its 0.0099% 11s
+  turn rainbow BB v BTN node 0 [] round 0 done, 4s
+  turn rainbow BB v BTN node 1 [] round 0 done, 7s
+  turn rainbow BB v BTN node 18 [] round 0 done, 8s
+  turn rainbow BB v BTN node 36 [] round 0 done, 9s
+  turn rainbow BB v BTN node 48 [] round 0 done, 11s
+{"spot":"turn rainbow BB v BTN","levels":[0.3,0.05,0.02],"exploit":[0.2955,0.0438,0.0197,0.0096,0.0099],"lines":1607,"seconds":11}
+  solved turn flush board: 80 iterations, 0.265%, 1.3s
+  solved turn flush board: 400 iterations, 0.048%, 6.6s
+  solved turn flush board: 640 iterations, 0.019%, 10.7s
+  dcfr turn flush board: 860 its 0.0099% 15s
+  cfr+ turn flush board: 1880 its 0.0100% 33s
+  turn flush board node 0 [] round 0 done, 13s
+  turn flush board node 1 [] round 0 done, 21s
+  turn flush board node 30 [] round 0 done, 24s
+  turn flush board node 60 [] round 0 done, 26s
+  turn flush board node 112 [] round 0 done, 30s
+  turn flush board node 142 [] round 0 done, 31s
+{"spot":"turn flush board","levels":[0.3,0.05,0.02],"exploit":[0.2649,0.0484,0.0188,0.0099,0.01],"lines":1821,"seconds":31}
+  solved turn paired: 60 iterations, 0.228%, 0.4s
+  solved turn paired: 160 iterations, 0.042%, 0.9s
+  solved turn paired: 260 iterations, 0.020%, 1.5s
+  dcfr turn paired: 420 its 0.0095% 3s
+  cfr+ turn paired: 1180 its 0.0098% 7s
+  turn paired node 0 [] round 0 done, 4s
+  turn paired node 1 [] round 0 done, 6s
+  turn paired node 18 [] round 0 done, 8s
+  turn paired node 30 [] round 0 done, 9s
+  turn paired node 42 [] round 0 done, 10s
+  turn paired node 54 [] round 0 done, 11s
+{"spot":"turn paired","levels":[0.3,0.05,0.02],"exploit":[0.228,0.0423,0.0198,0.0095,0.0098],"lines":1815,"seconds":11}
+  solved turn tight ranges deep: 120 iterations, 0.280%, 0.7s
+  solved turn tight ranges deep: 280 iterations, 0.049%, 2.1s
+  solved turn tight ranges deep: 420 iterations, 0.019%, 2.9s
+  dcfr turn tight ranges deep: 560 its 0.0095% 4s
+  cfr+ turn tight ranges deep: 1240 its 0.0099% 9s
+  turn tight ranges deep node 0 [] round 0 done, 11s
+  turn tight ranges deep node 188 [] round 0 done, 14s
+  turn tight ranges deep node 236 [] round 0 done, 15s
+  turn tight ranges deep node 260 [] round 0 done, 15s
+  turn tight ranges deep node 268 [] round 0 done, 17s
+{"spot":"turn tight ranges deep","levels":[0.3,0.05,0.02],"exploit":[0.2796,0.0488,0.0186,0.0095,0.0099],"lines":268,"seconds":17}
+  solved turn two flush draws: 60 iterations, 0.164%, 0.2s
+  solved turn two flush draws: 120 iterations, 0.044%, 0.5s
+  solved turn two flush draws: 200 iterations, 0.017%, 0.7s
+  dcfr turn two flush draws: 280 its 0.0090% 1s
+  cfr+ turn two flush draws: 960 its 0.0098% 3s
+  turn two flush draws node 0 [] round 0 done, 3s
+  turn two flush draws node 1 [] round 0 done, 5s
+  turn two flush draws node 18 [] round 0 done, 6s
+  turn two flush draws node 30 [] round 0 done, 7s
+  turn two flush draws node 34 [] round 0 done, 8s
+  turn two flush draws node 46 [] round 0 done, 8s
+{"spot":"turn two flush draws","levels":[0.3,0.05,0.02],"exploit":[0.1636,0.044,0.0166,0.009,0.0098],"lines":1350,"seconds":8}

@@ -196,3 +196,5 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .theirs .paint b{cursor:default;padding:0}
 .drawer .link{align-self:flex-start;border:0;padding:0;color:var(--accent);font:500 13px/18px var(--sans)}
 .drawer.sub .link{display:none}
+
+.why p.quiet{color:var(--ink-3);font-size:13px;line-height:19px}

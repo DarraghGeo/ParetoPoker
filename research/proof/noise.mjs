@@ -24,12 +24,13 @@ for (const file of files) {
       const live = r.actions.map((_, a) => a).filter((a) => on[a]);
       // gaps among the actions on the path, from the best of them
       const gap = (v) => { const best = Math.max(...live.map((a) => v[a])); return v.map((x) => best - x); };
-      if (live.length > 1) { const gi = gap(r.value[i]); const gj = gap(r.value[j]); for (const a of live) add(k('value gap, on-path actions (% pot)'), Math.abs(gi[a] - gj[a])); }
       if (r.best && live.length > 1) { const gi = gap(r.best[i]); const gj = gap(r.best[j]); for (const a of live) add(k('best-reply gap, on-path actions (% pot)'), Math.abs(gi[a] - gj[a])); }
-      { const all = (v) => { const best = Math.max(...v); return v.map((x) => best - x); }; const gi = all(r.value[i]); const gj = all(r.value[j]); r.actions.forEach((_, a) => { if (!on[a]) add(k('value gap, off-path action (% pot)'), Math.abs(gi[a] - gj[a])); }); }
       r.actions.forEach((_, a) => add(k('strategy (points)'), 100 * Math.abs(r.sigma[i][a] - r.sigma[j][a])));
       add(k('equity (points)'), 100 * Math.abs(r.equity[i] - r.equity[j]));
       for (const a of live) { const rep = r.reply[i][a]; if (!rep) continue; rep.forEach((x, e) => { add(k('his reply share (points)'), 100 * Math.abs(x[0] - r.reply[j][a][e][0])); add(k('reply value part (% pot)'), Math.abs(x[1] - r.reply[j][a][e][1])); }); }
+      if (r.card) for (const a of live) { const ci = r.card[i][a]; const cj = r.card[j][a]; if (ci && cj && ci[0] > 0) { add(k('next card: value on the cards that lift the hand (% pot)'), Math.abs(ci[1] - cj[1])); add(k('next card: value on the other cards (% pot)'), Math.abs(ci[3] - cj[3])); } }
+      // when he does not fold: what the action is then worth, per time it happens
+      for (const a of live) { const cont = (s) => { const rep = r.reply[s][a]; if (!rep) return null; let share = 0, value = 0; rep.forEach((x, e) => { if (r.replyKinds?.[a]?.[e] === 'fold') return; share += x[0]; value += x[1]; }); return share > 0.05 ? value / share : null; }; const ci = cont(i), cj = cont(j); if (ci != null && cj != null) add(k('worth when he continues (% pot)'), Math.abs(ci - cj)); }
       for (let x = 0; x < live.length; x++) for (let y = x + 1; y < live.length; y++) for (const g of Object.keys(r.holding[i][live[x]])) {
         const d = (s) => (r.holding[s][live[x]][g]?.[1] ?? 0) - (r.holding[s][live[y]][g]?.[1] ?? 0);
         add(k('holding part of a gap (% pot)'), Math.abs(d(i) - d(j)));

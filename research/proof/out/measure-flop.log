@@ -1,0 +1,44 @@
+  solved flop two-tone: 60 iterations, 0.254%, 21.1s
+  solved flop two-tone: 100 iterations, 0.093%, 33.2s
+  dcfr flop two-tone: 395 its 0.0194% 130s
+  cfr+ flop two-tone: 715 its 0.0198% 225s
+  flop two-tone node 0 [] round 0 done, 513s
+  flop two-tone node 1 [] round 0 done, 879s
+  flop two-tone node 3 [31] round 1 done, 882s
+  flop two-tone node 4 [31] round 1 done, 885s
+  flop two-tone node 21 [31] round 1 done, 886s
+  flop two-tone node 33 [31] round 1 done, 887s
+  flop two-tone node 3 [14] round 1 done, 891s
+  flop two-tone node 4 [14] round 1 done, 893s
+  flop two-tone node 21 [14] round 1 done, 894s
+  flop two-tone node 69 [] round 0 done, 1080s
+  flop two-tone node 72 [27] round 1 done, 1083s
+  flop two-tone node 73 [27] round 1 done, 1085s
+  flop two-tone node 90 [27] round 1 done, 1086s
+  flop two-tone node 72 [51] round 1 done, 1089s
+  flop two-tone node 145 [] round 0 done, 1282s
+  flop two-tone node 148 [45] round 1 done, 1285s
+  flop two-tone node 149 [45] round 1 done, 1287s
+  flop two-tone node 166 [45] round 1 done, 1287s
+  flop two-tone node 178 [45] round 1 done, 1288s
+  flop two-tone node 182 [45] round 1 done, 1289s
+  flop two-tone node 194 [45] round 1 done, 1289s
+  flop two-tone node 148 [47] round 1 done, 1292s
+  flop two-tone node 149 [47] round 1 done, 1294s
+  flop two-tone node 166 [47] round 1 done, 1294s
+  flop two-tone node 178 [47] round 1 done, 1295s
+  flop two-tone node 182 [47] round 1 done, 1296s
+  flop two-tone node 194 [47] round 1 done, 1296s
+  flop two-tone node 198 [] round 0 done, 1352s
+  flop two-tone node 201 [3] round 1 done, 1353s
+  flop two-tone node 202 [3] round 1 done, 1354s
+  flop two-tone node 213 [3] round 1 done, 1354s
+  flop two-tone node 217 [3] round 1 done, 1355s
+  flop two-tone node 201 [51] round 1 done, 1356s
+  flop two-tone node 202 [51] round 1 done, 1357s
+  flop two-tone node 213 [51] round 1 done, 1357s
+  flop two-tone node 217 [51] round 1 done, 1357s
+{"spot":"flop two-tone","levels":[0.3,0.1],"exploit":[0.2537,0.0929,0.0194,0.0198],"lines":7501,"seconds":1357}
+  solved flop rainbow dry: 75 iterations, 0.275%, 60.8s
+  solved flop rainbow dry: 130 iterations, 0.098%, 99.8s
+  dcfr flop rainbow dry: 325 its 0.0198% 238s

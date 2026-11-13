@@ -5,7 +5,7 @@
 // the equilibrium itself not being unique. Records go to out/stability-<spot>.jsonl for analysis.
 import { writeFileSync } from 'node:fs';
 import { fs, solveSpot, decisions } from './lib.mjs';
-import { TURNS, FLOPS } from './spots.mjs';
+import { TURNS, FLOPS, HELD_TURNS, HELD_FLOPS } from './spots.mjs';
 import { frameAt, actionValues, byReply, byHolding } from '../../src/explain/account.js';
 import { features, groupOf } from '../../src/explain/features.js';
 import { equityVs } from '../../src/solver/flopsolve.js';
@@ -13,7 +13,8 @@ import { evaluator } from '../../src/explain/best.js';
 
 const [only, levelText = '0.3,0.05,0.02', fineTarget = '0.01'] = process.argv.slice(2);
 export const LEVELS = levelText.split(',').map(Number);
-const spots = [...TURNS, ...FLOPS].filter((s) => !only || s.name.includes(only));
+const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS].filter((s) => !only || s.name.startsWith(only));
+const MINLINE = +(process.env.MINLINE ?? 0.005);
 const other = (s, algorithm, target) => { const spot = fs.defineSpot({ pot: 100, stack: 200, ...Object.fromEntries(Object.entries(s).filter(([k]) => k !== 'name')) }); const run = fs.createRun(spot, { workers: 3, algorithm }); let e = Infinity; const t = Date.now(); while (e > target && run.completed < 40000) { run.step(spot.board.length === 3 ? 5 : 20); e = run.exploitabilityPercent(); } console.error(`  ${algorithm} ${s.name}: ${run.completed} its ${e.toFixed(4)}% ${((Date.now() - t) / 1000).toFixed(0)}s`); return { spot, run, solution: run.snapshot(), exploit: e }; };
 for (const s of spots) {
   // the page's candidates (the default algorithm at each accuracy), then two references by different algorithms
@@ -30,7 +31,7 @@ for (const s of spots) {
     const startMass = [total(start[0]), total(start[1])];
     // how much of each range takes this line, in every solve: [mine, his]
     const lineReach = frames.map((f) => [+(total(f.mine) / startMass[ref.me]).toFixed(4), +(total(f.his) / startMass[1 - ref.me]).toFixed(4)]);
-    if (Math.min(...lineReach[R]) < 0.005) continue;
+    if (Math.min(...lineReach[R]) < MINLINE) continue;
     const key = ref.board.join(','); let feats = featureCache.get(key); if (!feats) { feats = new Map(); featureCache.set(key, feats); }
     const group = (c) => { let g = feats.get(c); if (!g) { g = groupOf(features(fs, ref.board, c)); feats.set(c, g); } return g; };
     const improves = new Map(); // does a card lift this hand's made category
@@ -46,6 +47,7 @@ for (const s of spots) {
       if (!(start[ref.me][c] > 0) || !(ref.mass[c] > 0) || per.some((p) => !(p.f.mine[c] > 0))) continue;
       const rec = { id, dealt, round: node.round, seat: ref.me, hand: fs.formatCombo(c), reach: per.map((p) => +(p.f.mine[c] / start[ref.me][c]).toFixed(5)), lineReach,
         actions: node.edges.map((e) => e.label), kinds: node.edges.map((e) => e.kind),
+        replyKinds: node.edges.map((e) => { const ch = solves[0].nodes[e.child]; return ch.kind === 'decision' ? ch.edges.map((x) => x.kind) : null; }),
         sigma: per.map((p) => node.edges.map((_, a) => +p.strat(c, a).toFixed(4))),
         equity: per.map((p) => +p.equity[c].toFixed(4)),
         best: per.map((p) => p.close.map((x) => +((100 * x.value[c]) / pot0).toFixed(4))),

@@ -134,49 +134,54 @@ export function evaluator(fs, solution, nodes) {
    *   value: Float64Array,
    *   replies: null | { kind, label, share: Float64Array, value: Float64Array }[],   his reply, when the action hands him the move
    *   holdings: Map<string, { share: Float64Array, value: Float64Array }>,           by `groupOf(combo)` of his hand
-   *   cards: null | { card, value: Float64Array, then: Float64Array }[],             the next card, when the action ends the street
+   *   cards: null | { card, value: Float64Array, then: Float64Array, weight: Float64Array }[],             the next card, when the action ends the street
    * }}
    */
   function closely(f, a, groupOf) {
     const { heroes, villains } = listsOf(f);
     const edge = f.node.edges[a]; const child = nodes[edge.child];
-    plan = new Map();
-    const kept = plan;
-    const value = perHand(f, heroes, walk(edge.child, f.board, f.me, heroes, villains, Float64Array.from(f.his), 'best', {}));
-    const fixed = (id, board, hs, vs, reach) => { plan = kept; return walk(id, board, f.me, hs, vs, reach, 'fixed', {}); };
+    const full = Float64Array.from(f.his);
     const shareOf = (reach, vs) => { const { all, per } = tally(reach, vs); const out = new Float64Array(N).fill(NaN); for (const h of heroes) out[h] = (all - per[A[h]] - per[B[h]] + reach[h]) / f.mass[h]; return out; };
-    // by what he does next
-    let replies = null;
+    const add = (into, raw, hs, scale = 1) => { for (const h of hs) into[h] += raw[h] * scale; };
+    let replies = null; let cards = null;
+    const total = new Float64Array(N);
+    plan = null;
     if (child.kind === 'decision') {
+      // by what he does next: the hand's best play after each of his replies is its best play, so the parts are the whole
       const st = strategyAt(child.id, f.board);
       replies = child.edges.map((e, k) => {
         const reach = new Float64Array(N);
         for (const v of villains) { const i = st.rowOf(v); if (i >= 0) reach[v] = f.his[v] * st.probs[i * st.n + k]; }
-        return { kind: e.kind, label: e.label, share: shareOf(reach, villains), value: perHand(f, heroes, fixed(e.child, f.board, heroes, villains, reach)) };
+        const raw = walk(e.child, f.board, f.me, heroes, villains, reach, 'best', {});
+        add(total, raw, heroes);
+        return { kind: e.kind, label: e.label, share: shareOf(reach, villains), value: perHand(f, heroes, raw) };
       });
-    }
-    // by what he holds
-    const holdings = new Map();
-    if (groupOf) {
-      const groups = new Map();
-      for (const v of villains) { const g = groupOf(v); if (g == null) continue; if (!groups.has(g)) groups.set(g, new Float64Array(N)); groups.get(g)[v] = f.his[v]; }
-      for (const [g, reach] of groups) holdings.set(g, { share: shareOf(reach, villains), value: perHand(f, heroes, fixed(edge.child, f.board, heroes, villains, reach)) });
-    }
-    // by the card that comes
-    let cards = null;
-    if (child.kind === 'chance') {
+    } else if (child.kind === 'chance') {
+      // by the card that comes: likewise, the best play on each card
       const n = 52 - f.board.length - 4; const used = new Uint8Array(52); for (const c of f.board) used[c] = 1;
       cards = [];
       for (let x = 0; x < 52; x++) {
         if (used[x]) continue;
         const hs = heroes.filter((h) => A[h] !== x && B[h] !== x); const vs = villains.filter((v) => A[v] !== x && B[v] !== x);
         const reach = new Float64Array(N); for (const v of vs) reach[v] = f.his[v];
-        const raw = fixed(child.edges[0].child, [...f.board, x], hs, vs, reach);
+        const raw = walk(child.edges[0].child, [...f.board, x], f.me, hs, vs, reach, 'best', {});
+        add(total, raw, hs, 1 / n);
         const { all, per } = tally(reach, vs);
         const part = new Float64Array(N).fill(NaN); const then = new Float64Array(N).fill(NaN);
-        for (const h of hs) { part[h] = raw[h] / n / f.mass[h]; const left = all - per[A[h]] - per[B[h]] + reach[h]; then[h] = left > 0 ? raw[h] / left : NaN; }
-        cards.push({ card: x, value: part, then });
+        const weight = new Float64Array(N).fill(NaN); // how much of the time this card comes, for each hand: the weights add to 1
+        for (const h of hs) { part[h] = raw[h] / n / f.mass[h]; const left = all - per[A[h]] - per[B[h]] + reach[h]; then[h] = left > 0 ? raw[h] / left : NaN; weight[h] = left / n / f.mass[h]; }
+        cards.push({ card: x, value: part, then, weight });
       }
+    } else add(total, walk(edge.child, f.board, f.me, heroes, villains, full, 'best', {}), heroes);
+    const value = perHand(f, heroes, total);
+    // by what he holds: the same later play, valued against each part of his range (asked for only when wanted: it walks the tree again)
+    const holdings = new Map();
+    if (groupOf) {
+      plan = new Map(); const kept = plan;
+      walk(edge.child, f.board, f.me, heroes, villains, full, 'best', {});
+      const groups = new Map();
+      for (const v of villains) { const g = groupOf(v); if (g == null) continue; if (!groups.has(g)) groups.set(g, new Float64Array(N)); groups.get(g)[v] = f.his[v]; }
+      for (const [g, reach] of groups) { plan = kept; holdings.set(g, { share: shareOf(reach, villains), value: perHand(f, heroes, walk(edge.child, f.board, f.me, heroes, villains, reach, 'fixed', {})) }); }
     }
     plan = null;
     return { value, replies, holdings, cards };

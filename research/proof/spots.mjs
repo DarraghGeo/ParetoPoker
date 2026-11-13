@@ -19,4 +19,41 @@ export const FLOPS = [
   { name: 'flop monotone tight', board: 'Qs8s4s', oop: TIGHT_OOP, ip: TIGHT_IP, betSizes: [[0.5], [0.5], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 },
   { name: 'flop paired', board: '8h8c3d', oop: BB, ip: BTN, betSizes: [[0.33], [0.66], [0.66]], raiseSizes: [{ times: 3 }], maxRaises: 2 },
 ];
+// Held back: never used to choose a threshold, only to test the finished claims.
+const CO = '22+,A2s+,A9o+,K8s+,KTo+,Q9s+,QJo,J9s+,T8s+,97s+,86s+,76s,65s,54s'; const SB3 = 'TT+,AQs+,AKo,A5s-A4s,KQs,KJs,QJs,JTs,T9s';
+export const HELD_TURNS = [
+  { name: 'held turn ace-high dry', board: 'Ah8c3s5d', oop: BB, ip: CO, betSizes: [[0.33, 0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 },
+  { name: 'held turn connected', board: '9s8s7d2h', oop: WIDE_OOP, ip: BTN, betSizes: [[0.5, 1]], raiseSizes: [{ times: 2.5 }], maxRaises: 2 },
+  { name: 'held turn broadway', board: 'KdQhJs4c', oop: SB3, ip: TIGHT_IP, stack: 300, betSizes: [[0.33, 0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2, allowAllIn: true },
+  { name: 'held turn low paired', board: '6d6c2s9h', oop: BB, ip: CO, betSizes: [[0.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 },
+  { name: 'held turn monotone', board: 'Kh9h5h2s', oop: WIDE_OOP, ip: WIDE_IP, betSizes: [[0.33, 0.75]], raiseSizes: [{ times: 3 }], maxRaises: 1 },
+  { name: 'held turn three sizes', board: 'Tc7d4s2h', oop: BB, ip: BTN, stack: 150, betSizes: [[0.33, 0.75, 1.5]], raiseSizes: [{ times: 2.5 }], maxRaises: 2 },
+];
+// A second set held back, for the verdict after the first set had been used to restate two claims.
+export const HELD2_TURNS = [
+  { name: 'final turn king-high two-tone', board: 'Kc8c4d6h', oop: BB, ip: BTN, betSizes: [[0.33, 0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 },
+  { name: 'final turn double paired', board: 'TsTd5h5c', oop: BB, ip: CO, betSizes: [[0.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 },
+  { name: 'final turn wheel cards', board: '5d4s3hKs', oop: WIDE_OOP, ip: WIDE_IP, betSizes: [[0.33, 1]], raiseSizes: [{ times: 2.5 }], maxRaises: 2 },
+  { name: 'final turn ace on the turn', board: 'Jd9s5cAh', oop: SB3, ip: BTN, stack: 250, betSizes: [[0.5, 1.25]], raiseSizes: [{ times: 3 }], maxRaises: 2 },
+  { name: 'final turn four to a straight', board: '8d7c6sTh', oop: WIDE_OOP, ip: BTN, betSizes: [[0.66]], raiseSizes: [{ times: 3 }], maxRaises: 2, allowAllIn: true },
+  { name: 'final turn shallow', board: 'Qd7d2sJc', oop: BB, ip: CO, stack: 80, betSizes: [[0.33, 0.75]], raiseSizes: [{ times: 2.5 }], maxRaises: 2, allowAllIn: true },
+];
+export const HELD_FLOPS = [
+  { name: 'held flop ace-high', board: 'Ad7s2c', oop: BB, ip: CO, betSizes: [[0.33], [0.66], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 1 },
+  { name: 'held flop low connected', board: '7h6h4c', oop: WIDE_OOP, ip: WIDE_IP, betSizes: [[0.5], [0.66], [0.66]], raiseSizes: [{ times: 2.5 }], maxRaises: 2 },
+];
 export const config = (s) => ({ pot: 100, stack: 200, ...Object.fromEntries(Object.entries(s).filter(([k]) => k !== 'name')) });
+
+/** Spots drawn at random (a fixed seed, so the set is the same every time): the broad test of a rule once it is fixed. */
+export function randomTurns(count, seed = 20261113) {
+  let state = seed; const rand = (n) => { state = (state * 1103515245 + 12345) & 0x7fffffff; return state % n; };
+  const OOP = [WIDE_OOP, BB, SB3, TIGHT_OOP, 'JJ-22,AQs-A2s,AQo-A9o,KTs+,KJo+,Q9s+,J9s+,T8s+,97s+,86s+,76s,65s', '88+,ATs+,AJo+,KJs+,KQo,QJs,JTs,T9s,98s,A5s-A2s'];
+  const IP = [WIDE_IP, BTN, CO, TIGHT_IP, '99-22,AJs-A2s,KQs-K8s,QJs-Q9s,JTs,J9s,T9s,T8s,98s,87s,76s,65s,54s,AJo-ATo,KQo,KJo', 'TT-33,AQs-A6s,KQs-KTs,QJs,QTs,JTs,T9s,98s,87s,AQo,AJo,KQo'];
+  const SIZES = [[[0.33]], [[0.5]], [[0.75]], [[0.33, 0.75]], [[0.5, 1]], [[0.33, 0.75, 1.5]], [[0.66, 1.25]]];
+  const cards = 'AKQJT98765432'; const suits = 'shdc'; const out = [];
+  while (out.length < count) {
+    const board = []; while (board.length < 4) { const c = cards[rand(13)] + suits[rand(4)]; if (!board.includes(c)) board.push(c); }
+    out.push({ name: `random turn ${String(out.length + 1).padStart(2, '0')}`, board: board.join(''), oop: OOP[rand(OOP.length)], ip: IP[rand(IP.length)], stack: [80, 150, 200, 300, 400][rand(5)], betSizes: SIZES[rand(SIZES.length)], raiseSizes: [{ times: [2.5, 3][rand(2)] }], maxRaises: 1 + [1, 1, 2][rand(3)], allowAllIn: rand(3) === 0 });
+  }
+  return out;
+}
