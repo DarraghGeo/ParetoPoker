@@ -85,11 +85,13 @@ export class KindMixer extends Mixer {
   }
 
   direct(context, frequencies) {
-    const entry = context.facing ? null : this.tables[context.street]?.[context.position];
+    if (context.facing) return this.#facing(context, frequencies);
+    const entry = this.tables[context.street]?.[context.position];
     if (!entry) return null;
     const table = entry.table ?? entry;
     const bands = entry.bands ?? RANKS;
-    const { strengthNow } = context.features;
+    // With no cards to come, strength now is the hand's equity
+    const strengthNow = context.street === 'river' ? context.strength : context.features.strengthNow;
     const draws = context.kinds.draw;
     // Rank of each hand within the range by strength now
     const order = [];
@@ -124,7 +126,74 @@ export class KindMixer extends Mixer {
     for (const i of order) out[i] = Math.min(1, out[i] * scale);
     return out;
   }
+
+  /**
+   * Facing a first bet: `tables.facing[street][position]` is `{ continue, raise }`, each
+   * `[draw][band]`. The continue table is scaled so the range continues as often as the engine
+   * says, the raise table so it raises as often; a hand calls the difference.
+   */
+  #facing(context, frequencies) {
+    const entry = (context.spot.raises ?? 0) === 0 ? this.tables.facing?.[context.street]?.[context.position] : null;
+    if (!entry) return null;
+    const strengthNow = context.street === 'river' ? context.strength : context.features.strengthNow;
+    const draws = context.kinds.draw;
+    const order = [];
+    let total = 0;
+    for (let i = 0; i < NUM_COMBOS; i++) {
+      if (context.hero[i] > 0 && !Number.isNaN(strengthNow[i])) {
+        order.push(i);
+        total += context.hero[i];
+      }
+    }
+    order.sort((a, b) => strengthNow[a] - strengthNow[b]);
+    const band = new Map();
+    let seen = 0;
+    for (const i of order) {
+      const rank = (seen + context.hero[i] / 2) / total;
+      seen += context.hero[i];
+      let k = RANKS.length - 2;
+      while (k > 0 && rank < RANKS[k]) k--;
+      band.set(i, k);
+    }
+    const fit = (table, level) => {
+      const raw = new Float64Array(NUM_COMBOS);
+      for (const i of order) raw[i] = (table[draws[i]] ?? table[0])[band.get(i)];
+      let scale = 1;
+      for (let pass = 0; pass < 20; pass++) {
+        let got = 0;
+        for (const i of order) got += context.hero[i] * Math.min(1, raw[i] * scale);
+        if (got <= 0 || Math.abs(got - level * total) < 1e-6 * total) break;
+        scale *= (level * total) / got;
+      }
+      for (const i of order) raw[i] = Math.min(1, raw[i] * scale);
+      return raw;
+    };
+    const continues = fit(entry.continue, Math.min(1, frequencies.call + frequencies.raise));
+    const aggressive = fit(entry.raise, frequencies.raise);
+    const call = new Float64Array(NUM_COMBOS);
+    for (const i of order) {
+      aggressive[i] = Math.min(aggressive[i], continues[i]);
+      call[i] = continues[i] - aggressive[i];
+    }
+    return { aggressive, call };
+  }
 }
+
+/**
+ * The solver's answer to a first turn bet on the tuning spots, by kind: how often it continues
+ * and how often it raises, `[draw][rank band]` as in TURN_KINDS. Draws continue whatever they
+ * are now; hands with no draw continue from about the middle of the range up.
+ */
+export const TURN_FACING_KINDS = { turn: {
+  oop: {
+    continue: [[0.02, 0.21, 0.43, 0.85, 0.99, 1], [0.29, 0.55, 0.70, 0.88, 1, 1], [0.52, 0.83, 0.84, 1, 1, 1], [1, 1, 1, 1, 1, 1]],
+    raise: [[0, 0.01, 0.05, 0.06, 0.25, 0.46], [0.12, 0.08, 0.03, 0.09, 0.48, 0.48], [0.14, 0.11, 0.09, 0.16, 0.46, 0.46], [0.47, 0.25, 0.22, 0.13, 0.13, 0.13]],
+  },
+  ip: {
+    continue: [[0.03, 0.20, 0.49, 0.83, 0.95, 1], [0.44, 0.64, 0.68, 0.98, 1, 1], [0.53, 0.68, 1, 1, 1, 1], [0.79, 0.86, 1, 1, 1, 1]],
+    raise: [[0.02, 0.02, 0.03, 0.14, 0.19, 0.21], [0.09, 0.10, 0.06, 0.14, 0.39, 0.39], [0.06, 0.08, 0.06, 0.24, 0.76, 0.76], [0.09, 0.11, 0.12, 0.41, 0.41, 0.41]],
+  },
+} };
 
 /**
  * The solver's turn opening play on the tuning spots, relative to how often it bets:

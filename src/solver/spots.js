@@ -65,6 +65,13 @@ export const SPOTS = {
   'turns-held': build('turns', 'held'),
 };
 
+/** Small flop trees (one bet size, 3x raises), for checking that turn and river findings carry to the flop. */
+SPOTS['flops-check'] = [
+  { name: 'C Ks7h2d 1x', pair: 'C', ...PAIRS.C, board: 'Ks7h2d', pot: 100, stack: 100, depth: 1, sizes: { bet: '75%', raise: '3x' } },
+  { name: 'A AhJh8c 1.5x', pair: 'A', ...PAIRS.A, board: 'AhJh8c', pot: 100, stack: 150, depth: 1.5, sizes: { bet: '75%', raise: '3x' } },
+  { name: 'C 8s8d4c 1.5x', pair: 'C', ...PAIRS.C, board: '8s8d4c', pot: 100, stack: 150, depth: 1.5, sizes: { bet: '75%', raise: '3x' } },
+];
+
 /** The game SolverMatch and SolverBridge take, for a spot. */
 export function gameOf(spot) {
   const street = { oop: spot.sizes, ip: spot.sizes };

@@ -2,7 +2,7 @@ export { ParetoEngine } from './ParetoEngine.js';
 export { RangeStrategist } from './RangeStrategist.js';
 export { EquitySelector, SelectionContext } from './HandSelector.js';
 export { NapkinSelector } from './NapkinSelector.js';
-export { Mixer, PureMixer, KindMixer, TURN_KINDS } from './Mixer.js';
+export { Mixer, PureMixer, KindMixer, TURN_KINDS, TURN_FACING_KINDS } from './Mixer.js';
 export { Tuner, NoTuner, fittedTuner, sizeNear, FITTED } from './Tuner.js';
 export { presets, valueChecks, fittedMixer } from './presets.js';
 export { classifyHands, PAIR, DRAW } from './handClass.js';

@@ -33,8 +33,9 @@ export const presets = {
 export function fittedMixer() {
   const open = (street) => (context) => context.position === 'oop' && !context.facing && context.street === street;
   return new KindMixer({
-    // First to act on the turn: how often each kind of hand bets, from the solver (TURN_KINDS)
-    tables: TURN_KINDS,
+    // First to act on the turn: how often each kind of hand bets, from the solver (TURN_KINDS).
+    // The same table serves the flop, where it was checked on four small trees but not fitted.
+    tables: { ...TURN_KINDS, flop: TURN_KINDS.turn },
     rules: [
       // On the turn these caps set how much value is counted, and so how often the range bets;
       // the table then spreads that frequency over the kinds

@@ -1,0 +1,7 @@
+flops-check  engine     napkin                                       oop  4.43 / 16.70 | ip  3.49 / 15.56 | both  3.96 / 16.13  (134s)
+flops-check  engine     fitted                                       oop  4.07 / 13.36 | ip  3.11 / 10.65 | both  3.59 / 12.00  (142s)
+flops-check  engine     fitted + turn table on the flop              oop  4.32 / 12.37 | ip  2.14 /  8.81 | both  3.23 / 10.59  (160s)
+
+real	7m15.475s
+user	11m37.242s
+sys	0m49.589s

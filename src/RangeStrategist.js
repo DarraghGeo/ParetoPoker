@@ -118,7 +118,17 @@ export class RangeStrategist {
     const fill = targets || tuning?.frequency != null;
     // A mixer may say outright how often each hand bets or raises (`direct`): the frequency is
     // then spread over the sizes the engine chose, and nothing is dealt for those actions.
-    const direct = targets ? null : this.mixer.direct?.(context, frequencies);
+    // Facing a bet it may also give how often each hand calls: `{ aggressive, call }`.
+    const answer = targets ? null : this.mixer.direct?.(context, frequencies);
+    const direct = answer ? answer.aggressive ?? answer : null;
+    const directCall = answer?.call ?? null;
+    if (directCall) {
+      const out = strategy[index('call')];
+      for (let i = 0; i < NUM_COMBOS; i++) {
+        out[i] = Math.min(1, Math.max(0, directCall[i]));
+        left[i] -= out[i];
+      }
+    }
     if (direct) {
       const aggressive = frequencies.sizes.reduce((sum, wager) => sum + wager.frequency, 0);
       const shareOf = (wager) => (aggressive > 0 ? wager.frequency / aggressive : wager.weight);
@@ -134,7 +144,7 @@ export class RangeStrategist {
       // More value asked for than the selector has candidates: the next strongest hands make it up
       if (fill && unplaced > 1e-9) give({ scores: context.strength, limit: null }, actionFor(wager), unplaced / total);
     }
-    if (facing) {
+    if (facing && !directCall) {
       const candidates = this.#candidates('call', context);
       const share = own(candidates, frequencies.call);
       if (share > 0) {

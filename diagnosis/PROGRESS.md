@@ -157,3 +157,16 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   not better.
   Next: the same for river opens (a table over rank, no draws) and for the flop tree's flop
   decisions; then facing-a-bet decisions by kind.
+- 06:25 River opens by a rank table (`diagnosis/v27.mjs`): worse than the current order with
+  caps (rivers-tune 4.13 against 3.72; with the level from the spot formula 4.68). Not adopted.
+- 06:50 **Flop check.** `flops-check` (three more small flop trees: C Ks7h2d 1x, A AhJh8c 1.5x,
+  C 8s8d4c 1.5x; one bet size): napkin 16.13 -> fitted 12.00 -> with the turn kind table also
+  used at flop decisions 10.59. F1: 12.08 -> 10.36. Adopted for the flop (checked, not fitted).
+  Facing a turn bet by kind (`TURN_FACING_KINDS`, `diagnosis/facing-hands.mjs`): the solver's
+  draws continue whatever they are now (nut draws 80-100%, strong draws 50-85% even from the
+  bottom fifth of the range); hands with no draw continue from about the middle of the range.
+  `KindMixer` now handles facing a first bet too. Running located test (v30).
+- 07:00 Facing a turn bet by kind: located it is much worse than the order (in position 9.4 ->
+  21.7; out of position 4.3 -> 12.5). Hands of a kind are not interchangeable when calling, as
+  the interchange test said (5.9% within 10 points of equity). Not adopted; `tables.facing`
+  stays as an unused option. Next: the bet level the turn table spreads (scale 0.8 / 1.2).
