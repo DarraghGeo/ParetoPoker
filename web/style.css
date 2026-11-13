@@ -114,6 +114,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .strip button i{display:block;width:100%}
 .curve .grab{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:ns-resize}
 #dist svg{touch-action:none}
+/* the equity chart is wider than tall, in the middle of the square the grid takes */
+#dist:not([hidden]){flex:1;min-height:0;display:flex;align-items:center}
+#dist svg{width:100%;height:auto}
 .strip button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;bottom:-9px;width:5px;height:5px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
 .strip span{flex:1 1 0;min-width:0}
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:10}
@@ -158,8 +161,6 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   .line .view{position:sticky;background:var(--bg);padding:6px 5px}
   #edit{right:52px}#split{right:26px}#view{right:0}
   .box{width:var(--side);height:var(--side);aspect-ratio:auto}
-  .curve svg{height:100%}
-  #dist{flex:1;min-height:0}
   .stripbox{height:132px;flex:none}
   .rows{height:132px;gap:2px}
   .rows .row{flex:1 1 0;min-height:0;max-height:24px}

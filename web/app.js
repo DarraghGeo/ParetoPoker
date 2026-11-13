@@ -157,7 +157,7 @@ function renderCombos(strata) {
 /** The two equity curves at this decision: the player to act and, in the other colour, the other range. */
 function renderDist() {
   const s = state.survey; if (!s) { $('dist').innerHTML = ''; return; }
-  const d = state.decision; const DH = 540;
+  const d = state.decision; const DH = 350;
   // the same horizontal scale as the strip above: the full width
   const Xd = (x) => x * W;
   const Yd = (y) => DH - PAD - y * (DH - 2 * PAD);
@@ -166,6 +166,7 @@ function renderDist() {
   // his hands against the range to act, with the cards each removes
   const his = d.villain.map((v) => { let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
+  const pick = mine.find((r) => r.name === state.hand);
   // The same decision in the version before this one stays as a dotted line
   version().curves.set(state.node, minePts);
   const ghost = state.at > 0 ? state.versions[state.at - 1].curves.get(state.node) : null;
@@ -339,24 +340,27 @@ stage.addEventListener('touchend', (ev) => {
 }, { passive: true });
 
 // ---- the editor: change the ranges with nothing solved, then Save ----
-const SLIDERS = { edge: ['Equity', -100, 100, 5], polar: ['Polar', -100, 100, 5], nuts: ['Nuts', 0, 200, 10], cap: ['Cap', 50, 100, 2] };
+const SLIDERS = { edge: ['Equity', -100, 100, 1], polar: ['Polar', -100, 100, 1], nuts: ['Nuts', 0, 200, 1], cap: ['Cap', 50, 100, 1] };
 const edit = { who: 'oop', oop: '', ip: '', dials: null, view: null, id: 0, timer: null, cells: new Map() };
 const EH = 300;
 const Ye = (y) => EH - PAD - y * (EH - 2 * PAD);
 function openEditor() {
   const v = version();
-  Object.assign(edit, { who: state.decision?.seat ?? 'oop', oop: v.oop, ip: v.ip, dials: JSON.parse(JSON.stringify(v.dials)), view: null });
+  Object.assign(edit, { who: state.decision?.seat ?? 'oop', oop: v.oop, ip: v.ip, dials: JSON.parse(JSON.stringify(v.dials)), view: null, built: null, busy: false, stale: false });
   $('editor').hidden = false; $('editor').focus({ preventScroll: true });
   drawEditor(); preview();
 }
 const closeEditor = () => { $('editor').hidden = true; };
+/** Ask for the picture of the ranges as they stand. One request at a time: while one is out, the latest change waits for it. */
 function preview() {
-  clearTimeout(edit.timer);
-  edit.timer = setTimeout(() => worker.postMessage({ type: 'preview', id: ++edit.id, config: { board: state.config.board, oop: edit.oop, ip: edit.ip, dials: edit.dials } }), 40);
+  if (edit.busy) { edit.stale = true; return; }
+  edit.busy = true; edit.stale = false;
+  worker.postMessage({ type: 'preview', id: ++edit.id, config: { board: state.config.board, oop: edit.oop, ip: edit.ip, dials: edit.dials } });
 }
 function onPreview(data) {
-  if (data.id !== edit.id || data.error) return;
-  edit.view = data.sides; drawEditor();
+  edit.busy = false;
+  if (!data.error) { edit.view = data.sides; drawEditor(); }
+  if (edit.stale) preview();
 }
 function drawEditor() {
   const who = edit.who; const side = edit.view?.[who]; const other = edit.view?.[who === 'oop' ? 'ip' : 'oop'];
@@ -372,7 +376,7 @@ function drawEditor() {
   if (!edit.stroke) $('e-paint').innerHTML = html;
   $('e-count').textContent = `${Math.round(combos)}`;
   // the two curves, the range being edited in full ink with its handles
-  if (side && edit.grab == null) {
+  if (side) {
     const steps = (list) => { const total = list.reduce((t, r) => t + r[0], 0); let x = 0; return list.map((r) => { const w = r[0] / total; const p = `${(x * W).toFixed(1)},${Ye(r[1]).toFixed(1)} ${((x + w) * W).toFixed(1)},${Ye(r[1]).toFixed(1)}`; x += w; return p; }).join(' '); };
     const d = edit.dials[who];
     $('e-curve').innerHTML = `<svg viewBox="0 0 ${W} ${EH}" role="img" aria-label="Equity distribution">`
@@ -381,7 +385,8 @@ function drawEditor() {
       + `<polyline class="ghost" points="${steps(side.base)}"/><polyline class="wait" points="${steps(other.curve)}"/><polyline class="act" points="${steps(side.curve)}"/>`
       + KNOBS.map((x, k) => { const y = Math.min(1, Math.max(0, side.knobs[k] + d.curve[k])); return `<circle class="grab" data-grab="${k}" cx="${(x * W).toFixed(1)}" cy="${Ye(y).toFixed(1)}" r="7" tabindex="0" role="slider" aria-label="Equity at ${Math.round(100 * x)}% of the range" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct(y)}"/>`; }).join('') + '</svg>';
   }
-  if (side && document.activeElement?.dataset?.slider == null) {
+  if (side && edit.built !== who) {
+    edit.built = who;
     const d = edit.dials[who]; const shown = { edge: pct(side.stats.equity), polar: pct(side.stats.polar), nuts: pct(side.stats.nuts), cap: d.cap < 1 ? pct(d.cap) : '\u2014' };
     $('e-sliders').innerHTML = Object.entries(SLIDERS).map(([key, [name, min, max, step]]) => `<label>${name}<output>${shown[key]}</output><input type="range" data-slider="${key}" min="${min}" max="${max}" step="${step}" value="${Math.round(100 * d[key])}" aria-label="${name}"></label>`).join('');
   } else if (side) {
@@ -413,7 +418,7 @@ window.addEventListener('pointermove', (ev) => {
   if (edit.grab != null) {
     const svg = $('e-curve').querySelector('svg'); const box = svg.getBoundingClientRect();
     const y = Math.min(1, Math.max(0, 1 - (((ev.clientY - box.top) / box.height) * EH - PAD) / (EH - 2 * PAD)));
-    edit.dials[edit.who].curve[edit.grab] = Math.round(100 * (y - edit.view[edit.who].knobs[edit.grab])) / 100;
+    edit.dials[edit.who].curve[edit.grab] = Math.round(1000 * (y - edit.view[edit.who].knobs[edit.grab])) / 1000;
     svg.querySelector(`[data-grab="${edit.grab}"]`)?.setAttribute('cy', String(Ye(y)));
     preview();
   }

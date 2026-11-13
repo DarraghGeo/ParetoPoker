@@ -6,6 +6,8 @@ import { KNOBS, describe, reshape } from '../src/warp/reshape.js';
 let solution = null;
 let nodes = null;
 let job = 0;
+let last = null; // the run before this one, to start the next solve from
+let seen = null; // the ranges last previewed, placed once
 const strip = (list) => list.map(({ id, kind, seat, pot, edges, parent, via, invested }) => ({ id, kind, seat, pot, edges, parent, via, invested }));
 
 /** Each combination's equity on a finished board against a range, with the cards it removes. */
@@ -38,19 +40,22 @@ self.onmessage = async ({ data }) => {
       const ranges = [reshape(given[0], placed[0], c.dials?.oop), reshape(given[1], placed[1], c.dials?.ip)];
       const stats = { oop: describe(ranges[0], equities(board, ranges[0], ranges[1])), ip: describe(ranges[1], equities(board, ranges[1], ranges[0])) };
       const spot = fs.defineSpot({ board: c.board, pot: c.pot, stack: c.stack, oop: ranges[0], ip: ranges[1], betSizes: [c.bets], raiseSizes: c.raises.length ? c.raises.map((times) => ({ times })) : undefined, maxRaises: c.raises.length ? c.maxRaises : 0, allowAllIn: !!c.allIn });
-      const run = fs.createRun(spot, {});
+      // Same board as the solve before: carry its regrets over, which is much quicker than starting cold
+      const warm = last && last.board === c.board ? last.run : undefined;
+      const run = fs.createRun(spot, warm ? { warmStart: warm } : {});
       const started = Date.now();
       let exploit = Infinity;
       while (mine === job && exploit > 0.05 && run.completed < 3000 && Date.now() - started < 8000) {
-        run.step(50);
+        run.step(warm ? 10 : 50);
         exploit = run.exploitabilityPercent();
         self.postMessage({ type: 'progress', job: data.job, iterations: run.completed, exploit });
         await new Promise((resolve) => setTimeout(resolve));
       }
       if (mine !== job) return;
       solution = run.snapshot();
+      last = { board: c.board, run };
       nodes = treeOf(fs, spot);
-      self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit, iterations: run.completed, ms: Date.now() - started, stats });
+      self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit, iterations: run.completed, warm: !!warm, ms: Date.now() - started, stats });
     } catch (error) {
       self.postMessage({ type: 'error', job: data.job, message: String(error?.message ?? error) });
     }
@@ -58,9 +63,13 @@ self.onmessage = async ({ data }) => {
     // What two ranges look like before anything is solved: each one's curve, numbers and chart cells
     try {
       const c = data.config;
-      const board = fs.parseCards(c.board);
-      const given = [fs.parseRange(c.oop || 'AA:0'), fs.parseRange(c.ip || 'AA:0')];
-      const placed = [equities(board, given[0], given[1]), equities(board, given[1], given[0])];
+      const key = `${c.board}|${c.oop}|${c.ip}`;
+      if (seen?.key !== key) {
+        const board = fs.parseCards(c.board);
+        const given = [fs.parseRange(c.oop || 'AA:0'), fs.parseRange(c.ip || 'AA:0')];
+        seen = { key, board, given, placed: [equities(board, given[0], given[1]), equities(board, given[1], given[0])] };
+      }
+      const { board, given, placed } = seen;
       const ranges = [reshape(given[0], placed[0], c.dials?.oop), reshape(given[1], placed[1], c.dials?.ip)];
       const after = [equities(board, ranges[0], ranges[1]), equities(board, ranges[1], ranges[0])];
       const curveOf = (weights, equity) => { const list = []; for (let i = 0; i < fs.COMBOS; i++) if (weights[i] > 1e-6 && !Number.isNaN(equity[i])) list.push([Math.round(weights[i] * 1000) / 1000, Math.round(equity[i] * 1000) / 1000]); return list.sort((a, b) => a[1] - b[1]); };
