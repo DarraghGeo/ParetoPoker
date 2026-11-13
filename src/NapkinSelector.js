@@ -47,11 +47,6 @@ export class NapkinSelector {
    *   Default 0.7. The guide says half; measured against the solver's best response, 0.7 loses
    *   about a third less on rivers and turns (the range that really continues is stronger than
    *   the engine's model of it).
-   * @param {number|Object} [options.oopValueChecks] The share of every value hand that checks out
-   *   of position, so that the checking range is not all weak: a share per street, default
-   *   `{ river: 0.2, turn: 0.4 }` (a number sets the river alone). Out of position the solver's
-   *   value hands are interchangeable on the turn and it checks about 40% of each band; on the
-   *   river it checks 30-50% of its strong hands. 0 on the river uses the guide's trap rule.
    * @param {'classes'|'ehs2'|'ehs2-ip'} [options.turnCalls] 'classes' (default): the guide's class
    *   order. 'ehs2': E[HS^2] plus equity against his value, which matches the solver's turn calls
    *   best (0.99) but lost more when exploited out of position; 'ehs2-ip' uses it in position only.
@@ -66,7 +61,7 @@ export class NapkinSelector {
    * @param {[number, number]} [options.thinValue] §1: equity against his range that counts as thin
    *   value, which checks out of position on the river. Default [0.5, 0.7]. null bets it.
    * @param {number} [options.trapShare] §1: nut hands as a share of the value that checks out of
-   *   position on the river, when `oopValueChecks` is 0. Default 1/6. 0 never traps.
+   *   position on the river (the guide says 1/6). Default 0: checking value is the mixer's job.
    * @param {number} [options.airEquity] §2: equity below which a hand with no pair and no draw is air. Default 0.2.
    * @param {number} [options.callFloor] A hand needs this share of the pot odds in equity to call,
    *   and his continues are assumed to as well (as in EquitySelector). Default 0.5.
@@ -75,10 +70,8 @@ export class NapkinSelector {
    * @param {number} [options.priorStrength] Weight, among the bluff-catcher marks, of equity
    *   against the range he started with. See WEIGHTS.priorStrength. 0 uses the guide's marks alone.
    */
-  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 1 / 6, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, oopValueChecks = { river: 0.2, turn: 0.4 }, turnBluffs = 'draws', turnCalls = 'classes' } = {}) {
-    // One number is the river's share; an object gives a share per street
-    if (typeof oopValueChecks === 'number') oopValueChecks = { river: oopValueChecks };
-    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, oopValueChecks, turnBluffs, turnCalls });
+  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 0, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, turnBluffs = 'draws', turnCalls = 'classes' } = {}) {
+    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, turnBluffs, turnCalls });
     this.cache = new WeakMap();
   }
 
@@ -88,7 +81,8 @@ export class NapkinSelector {
     const view = this.#view(context);
     const sized = this.#sized(context, view, wager);
     // Who qualifies: hands that beat more than half of his continues
-    const qualifies = (i) => sized.versusContinues[i] > this.valueThreshold;
+    const threshold = context.tuning?.valueThreshold ?? this.valueThreshold;
+    const qualifies = (i) => sized.versusContinues[i] > threshold;
     return context.facing ? this.#valueRaises(context, view, wager, qualifies) : this.#valueBets(context, view, sized, qualifies);
   }
 
@@ -108,11 +102,6 @@ export class NapkinSelector {
       // not block the hands that call it
       scores[i] = sized.flatness[i] - 0.1 * sized.blocksContinues[i];
     }
-    // Measured on the river: out of position the solver checks a good part of every value band,
-    // strong hands included, so that its checks are not all weak. The hands are interchangeable:
-    // each keeps `oopValueChecks` of its combos back.
-    const checks = context.position === 'oop' ? (this.oopValueChecks[context.street] ?? 0) : 0;
-    if (checks > 0) return { hands: scores, limit: new Float64Array(NUM_COMBOS).fill(1 - checks) };
     if (!thinChecks || !(this.trapShare > 0) || !(checked > 0)) return scores;
 
     // Some of the nuts check too, to check-raise: taken from the very top, sized so that they

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { evaluate } from 'poker-extval';
 import {
-  DRAW, Equity, NapkinSelector, PAIR, ParetoEngine, Range, RangeStrategist, SelectionContext, cards, classifyHands,
+  DRAW, Equity, NapkinSelector, PAIR, ParetoEngine, Range, RangeStrategist, SelectionContext, cards, classifyHands, presets,
 } from '../src/index.js';
 
 const OOP = '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s';
@@ -62,7 +62,7 @@ test('thin value and some of the nuts check out of position on the river', () =>
     return { position, spot, board: c.board, hero: c.hero, villain: c.villain, actions, strength: c.strength };
   };
   // The guide's own rules, without the measured defaults
-  const guide = { valueThreshold: 0.5, oopValueChecks: 0 };
+  const guide = { valueThreshold: 0.5, trapShare: 1 / 6 };
   const decide = (position, options) => new RangeStrategist({ selector: new NapkinSelector({ ...guide, ...options }) }).decide(node(position));
 
   const oop = node('oop');
@@ -82,7 +82,7 @@ test('thin value and some of the nuts check out of position on the river', () =>
   // In position nothing is trapped
   assert.equal(decide('ip').strategy[1][best(node('ip'))], 1);
   // By default every value hand keeps a fifth of its combos back out of position, the nuts included
-  const defaults = new RangeStrategist({ selector: new NapkinSelector() }).decide(node('oop')).strategy;
+  const defaults = new RangeStrategist(presets.napkin()).decide(node('oop')).strategy;
   assert.ok(Math.abs(defaults[0][nuts] - 0.2) < 1e-9);
 });
 
@@ -157,9 +157,9 @@ test('out of position on the turn every value hand keeps two fifths of its combo
   const hero = Range.from(OOP).without(board).weights;
   const villain = Range.from(IP).without(board).weights;
   const node = { position: 'oop', spot: { street: 'turn', pot: 100, stack: 400 }, board, hero, villain, actions: [{ type: 'check' }, { type: 'bet', to: 75 }] };
-  const { strategy } = new RangeStrategist({ selector: new NapkinSelector() }).decide(node);
+  const { strategy } = new RangeStrategist(presets.napkin()).decide(node);
   assert.ok(Math.abs(strategy[0][id('TsTh')] - 0.4) < 1e-9); // top set
-  const always = new RangeStrategist({ selector: new NapkinSelector({ oopValueChecks: 0 }) }).decide(node).strategy;
+  const always = new RangeStrategist({ selector: new NapkinSelector() }).decide(node).strategy;
   assert.equal(always[1][id('TsTh')], 1);
 });
 

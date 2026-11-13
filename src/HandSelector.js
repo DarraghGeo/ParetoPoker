@@ -60,7 +60,8 @@ export class EquitySelector {
   /** Hands ahead of the part of villain's range that continues against this size, best first. */
   value(context, wager) {
     const equity = context.equityVersusContinuing(wager, this.callFloor * wager.potOdds);
-    return equity.map((e) => (e > this.valueThreshold ? e : NaN));
+    const threshold = context.tuning?.valueThreshold ?? this.valueThreshold;
+    return equity.map((e) => (e > threshold ? e : NaN));
   }
 
   /** Hands with enough equity against villain's range to catch a bluff, best first. */
@@ -101,6 +102,53 @@ export class SelectionContext {
     this.potOdds = this.facing ? spot.toCall / (spot.pot + spot.toCall) : 0;
     /** The engine's frequencies. Set once the value hands are known, so not yet in value(). */
     this.frequencies = null;
+    /** The tuner's answer for this decision (see Tuner.js), or null. */
+    this.tuning = null;
+  }
+
+  /**
+   * How the spot is defined, range against range:
+   * - `rangeAdvantage`: hero's average equity minus villain's (positive = hero is ahead).
+   * - `nutShare`, `villainNutShare`: the share of each range with 90% equity or more against
+   *   the other; `nutAdvantage` is the difference.
+   * - `polarization`, `villainPolarization`: 1 = every hand is nuts or air against the other
+   *   range, 0 = every hand has the same equity; `polarizationAdvantage` is the difference.
+   * - `spr`: hero's stack behind over the pot. Plus `street`, `position` and `facing`.
+   */
+  get profile() {
+    if (this.cachedProfile) return this.cachedProfile;
+    const side = (weights, equity) => {
+      let total = 0, sum = 0, squares = 0, nuts = 0;
+      for (let i = 0; i < NUM_COMBOS; i++) {
+        const w = weights[i];
+        const e = equity[i];
+        if (!(w > 0) || Number.isNaN(e)) continue;
+        total += w;
+        sum += w * e;
+        squares += w * e * e;
+        if (e >= 0.9) nuts += w;
+      }
+      const mean = total > 0 ? sum / total : 0.5;
+      const variance = total > 0 ? Math.max(0, squares / total - mean * mean) : 0;
+      return { mean, nuts: total > 0 ? nuts / total : 0, polarization: mean > 0 && mean < 1 ? variance / (mean * (1 - mean)) : 0 };
+    };
+    const hero = side(this.hero, this.strength);
+    const villain = side(this.villain, this.villainStrength);
+    this.cachedProfile = {
+      street: this.street,
+      position: this.position,
+      facing: this.facing,
+      spr: (this.spot.stack ?? Infinity) / this.spot.pot,
+      equity: hero.mean,
+      rangeAdvantage: hero.mean - villain.mean,
+      nutShare: hero.nuts,
+      villainNutShare: villain.nuts,
+      nutAdvantage: hero.nuts - villain.nuts,
+      polarization: hero.polarization,
+      villainPolarization: villain.polarization,
+      polarizationAdvantage: hero.polarization - villain.polarization,
+    };
+    return this.cachedProfile;
   }
 
   /** Each combo's equity against villain's range. */

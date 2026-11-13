@@ -3,7 +3,7 @@
 //   node bin/play.js [--board Td9d6hQc7s] [--pot 100] [--stack 200] [--hero ip|oop|both]
 //                    [--bet 33%,75%,150%] [--raise 2.5x] [--max-raises 3] [--sizing geometric] [--selector equity|napkin]
 import { parseArgs } from 'node:util';
-import { EquitySelector, NapkinSelector, ParetoEngine, RangeStrategist, SolverMatch } from '../src/index.js';
+import { ParetoEngine, RangeStrategist, SolverMatch, presets } from '../src/index.js';
 
 const { values: args } = parseArgs({
   options: {
@@ -38,7 +38,7 @@ const percent = (x) => `${(100 * x).toFixed(1)}%`;
 console.log(`Board ${game.board}, pot ${game.pot}, stack ${game.stack}, bets ${args.bet}, raises ${args.raise}\n`);
 for (const hero of args.hero === 'both' ? ['oop', 'ip'] : [args.hero]) {
   const started = Date.now();
-  const result = await new SolverMatch(game, { strategist: new RangeStrategist({ engine, selector: args.selector === 'napkin' ? new NapkinSelector() : new EquitySelector() }) })
+  const result = await new SolverMatch(game, { strategist: new RangeStrategist({ engine, ...presets[args.selector]() }) })
     .play(hero, { iterations: Number(args.iterations) });
   console.log(`Engine ${hero === 'ip' ? 'in position' : 'out of position'} (${result.lockedNodes} decision nodes, ${((Date.now() - started) / 1000).toFixed(1)}s)`);
   console.log(`  EV at equilibrium            ${result.ev.gto.toFixed(2)}`);

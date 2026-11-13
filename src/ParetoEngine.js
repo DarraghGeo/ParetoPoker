@@ -49,6 +49,9 @@ const POSITION_KEYS = { ip: 'inPosition', oop: 'outOfPosition' };
  * bet, what share of a bet is bluffs, how often to continue against a bet or raise and how much
  * of that is a raise. Choosing which hands fill those frequencies is RangeStrategist's job.
  *
+ * These are the fundamentals and do not change. Each decision also takes an optional `tuning`
+ * (see Tuner.js) that adjusts them for the spot: `{ sizing, value, bluff, defence }`.
+ *
  * Settings can differ by position: `new ParetoEngine({ maxRaises: 2, inPosition: { sizing: 'largest' } })`.
  */
 export class ParetoEngine {
@@ -90,10 +93,10 @@ export class ParetoEngine {
    *
    * @returns {{ check: number, bet: number, sizes: Wager[] }}
    */
-  open(position, spot, { valueShare } = {}) {
+  open(position, spot, { valueShare, tuning } = {}) {
     const config = this.#config(position);
     const s = normalize(spot);
-    const wagers = this.#wagers(config, s, valueShare ?? config.betValueShare);
+    const wagers = this.#wagers(config, s, valueShare ?? config.betValueShare, tuning);
     const bet = sum(wagers, 'frequency');
     return { check: 1 - bet, bet, sizes: wagers };
   }
@@ -108,13 +111,14 @@ export class ParetoEngine {
    *
    * @returns {{ fold: number, call: number, raise: number, alpha: number, mdf: number, potOdds: number, sizes: Wager[] }}
    */
-  defend(position, spot, { valueShare } = {}) {
+  defend(position, spot, { valueShare, tuning } = {}) {
     const config = this.#config(position);
     const s = normalize(spot);
     if (s.toCall <= 0) throw new Error('defend() needs a bet to face: spot.toCall must be positive');
 
     const alpha = Math.min(1, s.facing / s.pot);
-    const mdf = 1 - alpha;
+    // The fundamental is the minimum defence frequency; tuning scales it for the spot
+    const mdf = Math.min(1, (1 - alpha) * (tuning?.defence ?? 1));
     const canRaise = s.raises < config.maxRaises && s.stack > s.toCall;
 
     let wagers = [];
@@ -125,7 +129,7 @@ export class ParetoEngine {
         const total = config.raiseFrequency * mdf;
         share = (wager) => total * (1 - wager.bluffShare);
       }
-      wagers = this.#wagers(config, s, share);
+      wagers = this.#wagers(config, s, share, tuning);
     }
     const raise = sum(wagers, 'frequency');
     const call = Math.max(0, mdf - raise);
@@ -135,6 +139,7 @@ export class ParetoEngine {
       raise,
       alpha,
       mdf,
+      fundamental: { mdf: 1 - alpha },
       potOdds: potOdds(s.toCall, s.pot),
       sizes: wagers,
     };
@@ -174,8 +179,13 @@ export class ParetoEngine {
     return config;
   }
 
-  /** Prices every option, spreads the bets over them and adds the bluffs each size can carry. */
-  #wagers(config, s, valueShare) {
+  /**
+   * Prices every option, spreads the bets over them and adds the bluffs each size can carry.
+   * `tuning` adjusts the fundamentals: `sizing` (a policy name, weights per size, or a function)
+   * replaces the configured choice of size; `value` scales how much value bets; `bluff` scales
+   * the bluffs each value bet carries (1 = balanced).
+   */
+  #wagers(config, s, valueShare, tuning = null) {
     const max = s.invested + s.stack;
     const sizes = (s.options ?? defaultOptions(config, s))
       .map((to) => Math.min(to, max))
@@ -184,18 +194,20 @@ export class ParetoEngine {
     if (!sizes.length) return [];
 
     const wagers = sizes.map((to) => price(config, s, to));
-    const weights = sizeWeights(config, s, wagers);
+    const weights = sizeWeights(tuning?.sizing != null ? { ...config, sizing: tuning.sizing } : config, s, wagers);
+    const valueScale = tuning?.value ?? 1;
+    const bluffScale = tuning?.bluff ?? 1;
 
     let room = 1;
     for (const [i, w] of wagers.entries()) {
       const share = typeof valueShare === 'function' ? valueShare(w) : valueShare;
       w.weight = weights[i];
-      w.value = Math.min(room, Math.max(0, share) * w.weight);
+      w.value = Math.min(room, Math.max(0, share) * w.weight * valueScale);
       room -= w.value;
     }
     // Bluffs fill what is left of the range, biggest size first (it folds out the most)
     for (const w of [...wagers].reverse()) {
-      w.bluff = Math.min(room, w.bluffShare >= 1 ? room : (w.value * w.bluffShare) / (1 - w.bluffShare));
+      w.bluff = Math.min(room, w.bluffShare >= 1 ? room : (bluffScale * w.value * w.bluffShare) / (1 - w.bluffShare));
       room -= w.bluff;
       w.frequency = w.value + w.bluff;
     }
@@ -261,6 +273,11 @@ function geometricTarget(s) {
 function sizeWeights(config, s, wagers) {
   const n = wagers.length;
   const one = (index) => wagers.map((_, i) => (i === index ? 1 : 0));
+  if (Array.isArray(config.sizing)) {
+    // One weight per size, smallest first
+    const total = config.sizing.reduce((a, b) => a + b, 0);
+    return total > 0 && config.sizing.length === n ? config.sizing.map((w) => w / total) : one(0);
+  }
   if (typeof config.sizing === 'function') {
     const weights = config.sizing(s, wagers);
     const total = weights.reduce((a, b) => a + b, 0);

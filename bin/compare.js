@@ -5,7 +5,7 @@
 //   his range + freq    it is also given the solver's action frequencies: hand selection alone
 //   node bin/compare.js [--set rivers|turns|turns-b|flop] [--selectors equity,napkin] [--modes engine,ranges,selection]
 import { parseArgs } from 'node:util';
-import { EquitySelector, NapkinSelector, RangeStrategist, SolverMatch } from '../src/index.js';
+import { RangeStrategist, SolverMatch, presets } from '../src/index.js';
 
 const A = { oopRange: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s', ipRange: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+' };
 const B = { oopRange: '99-22,A9s-A2s,K2s+,Q5s+,J7s+,T7s+,96s+,86s+,75s+,64s+,54s,AJo-A2o,K9o+,Q9o+,J9o+,T9o', ipRange: '22+,A2s+,K5s+,Q8s+,J8s+,T8s+,97s+,87s,76s,65s,A8o+,KTo+,QTo+,JTo' };
@@ -23,20 +23,23 @@ export const MODES = {
   ranges: { label: 'his range', options: { ranges: 'solver' } },
   selection: { label: 'his range + freq', options: { ranges: 'solver', frequencies: 'solver' } },
 };
-export const SELECTORS = {
-  equity: () => new EquitySelector(),
-  napkin: () => new NapkinSelector(),
-};
+/** Sets of parts by name: each returns `{ selector, mixer, tuner }`. */
+export const SELECTORS = presets;
 
-/** Average loss of a selector over a set, per seat: `{ oop: [versusGto, exploited], ip: [...] }`. */
-export async function measure(set, makeSelector, options = {}) {
+/**
+ * Average loss over a set, per seat: `{ oop: [versusGto, exploited], ip: [...] }`. `makeParts`
+ * returns the strategist's parts (`{ selector, mixer, tuner, engine }`), or a selector alone.
+ */
+export async function measure(set, makeParts, options = {}) {
   const boards = set.boards.split(',');
   const street = { oop: set.sizes, ip: set.sizes };
   const out = { oop: [0, 0], ip: [0, 0] };
   for (const board of boards) {
     for (const hero of ['oop', 'ip']) {
       const game = { oopRange: set.oopRange, ipRange: set.ipRange, board, pot: 100, stack: set.stack, betSizes: { flop: street, turn: street, river: street } };
-      const result = await new SolverMatch(game, { strategist: new RangeStrategist({ selector: makeSelector() }) }).play(hero, { iterations: 300, ...options });
+      const made = makeParts();
+      const parts = made.selector || made.mixer || made.tuner || made.engine ? made : { selector: made };
+      const result = await new SolverMatch(game, { strategist: new RangeStrategist(parts) }).play(hero, { iterations: 300, ...options });
       out[hero][0] += result.loss.versusGto / boards.length;
       out[hero][1] += result.loss.exploited / boards.length;
     }

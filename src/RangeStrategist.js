@@ -1,15 +1,19 @@
 import { NUM_COMBOS, parseCombo } from './cards.js';
 import { Equity } from './Equity.js';
 import { EquitySelector, SelectionContext, candidatesInOrder, deal, normalizeCandidates, sumOf } from './HandSelector.js';
+import { PureMixer, capsOf } from './Mixer.js';
 import { ParetoEngine } from './ParetoEngine.js';
+import { NoTuner } from './Tuner.js';
 
 const AGGRESSIVE = new Set(['bet', 'raise', 'allin']);
 
 /**
  * Fills ParetoEngine's frequencies with hands.
  *
- * The engine says how much of the range bets for value, calls and bluffs; a hand selector says
- * which hands those are (see HandSelector.js). The strategist deals the frequencies out over the
+ * Four parts, each its own object: the engine says how much of the range bets for value, calls
+ * and bluffs (the fundamentals); a tuner adjusts that for the spot (Tuner.js); a hand selector
+ * says which hands come first (HandSelector.js); a mixer says how often a hand takes a role it
+ * is dealt (Mixer.js). The strategist deals the frequencies out over the
  * selector's candidates, best first: value bets and raises, then calls, then bluffs, and
  * everything left checks or folds. Hands on a boundary are mixed so the totals match the
  * engine's frequencies exactly, unless the candidates run out.
@@ -24,13 +28,19 @@ export class RangeStrategist {
    * @param {Equity} [options.equity]
    * @param {import('./HandSelector.js').HandSelector} [options.selector] Your hand selection:
    *   any of `value`, `call` and `bluff`. Whatever it leaves out is chosen on equity.
+   * @param {import('./Mixer.js').MixerLike} [options.mixer] How often a hand takes a role it is a
+   *   candidate for. Default: every hand plays pure.
+   * @param {import('./Tuner.js').TunerLike} [options.tuner] Adjusts the engine's frequencies for
+   *   the spot. Default: the fundamentals, untouched.
    * @param {number} [options.valueThreshold] For the equity selector, see EquitySelector.
    * @param {number} [options.callFloor] For the equity selector, see EquitySelector.
    */
-  constructor({ engine = new ParetoEngine(), equity = new Equity(), selector = null, ...equityOptions } = {}) {
+  constructor({ engine = new ParetoEngine(), equity = new Equity(), selector = null, mixer = new PureMixer(), tuner = new NoTuner(), ...equityOptions } = {}) {
     this.engine = engine;
     this.equity = equity;
     this.selector = selector;
+    this.mixer = mixer;
+    this.tuner = tuner;
     this.fallback = new EquitySelector(equityOptions);
   }
 
@@ -66,6 +76,9 @@ export class RangeStrategist {
 
     const context = new SelectionContext({ equity: this.equity, position, spot, board, hero, villain, villainPrior, actions });
     const total = sumOf(hero);
+    // With someone else's frequencies there is nothing left to tune
+    const tuning = targets ? null : this.tuner.tune(context) ?? null;
+    context.tuning = tuning;
 
     // The engine asks how much of the range is value at each size; the selector's candidates say
     const valueHands = new Map();
@@ -79,7 +92,7 @@ export class RangeStrategist {
       }
       return total > 0 ? value / total : 0;
     };
-    const frequencies = this.engine.respond(position, { ...spot, options: sized.map((a) => a.to) }, { valueShare });
+    const frequencies = this.engine.respond(position, { ...spot, options: sized.map((a) => a.to) }, { valueShare, tuning });
     if (targets) {
       // Someone else's frequencies: keep the engine's price of each size, replace the amounts
       for (const wager of frequencies.sizes) {
@@ -158,6 +171,10 @@ export class RangeStrategist {
     const answer = this.selector?.[role]?.(context, wager) ?? this.fallback[role](context, wager);
     // Hands a selector names without ordering are taken on equity: best first, or worst first for bluffs
     const tiebreak = role === 'bluff' ? context.strength.map((e) => -e) : context.strength;
-    return normalizeCandidates(answer, tiebreak);
+    const candidates = normalizeCandidates(answer, tiebreak);
+    // The mixer caps how often each hand takes the role
+    const caps = capsOf(this.mixer.mix(context, role, wager));
+    if (caps) candidates.limit = candidates.limit ? candidates.limit.map((l, i) => Math.min(l, caps[i])) : caps;
+    return candidates;
   }
 }
