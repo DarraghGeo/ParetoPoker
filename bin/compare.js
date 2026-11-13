@@ -3,9 +3,10 @@
 //   engine              the engine tracks ranges itself and uses its own frequencies (the whole engine)
 //   his range           it is given the solver's range for the opponent at every decision, and uses its own frequencies
 //   his range + freq    it is also given the solver's action frequencies: hand selection alone
-//   node bin/compare.js [--set rivers|turns|turns-b|flop] [--selectors equity,napkin] [--modes engine,ranges,selection]
+//   node bin/compare.js [--set rivers|turns|turns-b|flop|rivers-tune|rivers-held|turns-tune|turns-held] [--selectors equity,napkin] [--modes engine,ranges,selection]
 import { parseArgs } from 'node:util';
 import { RangeStrategist, SolverMatch, presets } from '../src/index.js';
+import { SPOTS, gameOf, pool } from '../src/solver/spots.js';
 
 const A = { oopRange: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s', ipRange: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+' };
 const B = { oopRange: '99-22,A9s-A2s,K2s+,Q5s+,J7s+,T7s+,96s+,86s+,75s+,64s+,54s,AJo-A2o,K9o+,Q9o+,J9o+,T9o', ipRange: '22+,A2s+,K5s+,Q8s+,J8s+,T8s+,97s+,87s,76s,65s,A8o+,KTo+,QTo+,JTo' };
@@ -17,6 +18,7 @@ export const SETS = {
   turns: { ...A, boards: 'Ks7h2d5c,JsTs4h8d,Td9d6hQc,Ah8c3d6s', stack: 250, sizes: wide },
   'turns-b': { ...B, boards: 'Kh8s4d2c,QdTd5s9c,9h9c4s7d,6s5s2h8c', stack: 500, sizes: { bet: '50%,100%', raise: '3x' } },
   flop: { ...A, boards: 'Td9d6h', stack: 150, sizes: { bet: '75%', raise: '3x' } },
+  ...SPOTS,
 };
 export const MODES = {
   engine: { label: 'engine', options: {} },
@@ -27,22 +29,24 @@ export const MODES = {
 export const SELECTORS = presets;
 
 /**
- * Average loss over a set, per seat: `{ oop: [versusGto, exploited], ip: [...] }`. `makeParts`
+ * Average loss over a set, per seat: `{ oop: [versusGto, exploited], ip: [...], spots: [...] }`.
+ * `set` is one of the sets above or a list of spots (see src/solver/spots.js). `makeParts`
  * returns the strategist's parts (`{ selector, mixer, tuner, engine }`), or a selector alone.
+ * Four trees are run at a time.
  */
 export async function measure(set, makeParts, options = {}) {
-  const boards = set.boards.split(',');
-  const street = { oop: set.sizes, ip: set.sizes };
-  const out = { oop: [0, 0], ip: [0, 0] };
-  for (const board of boards) {
-    for (const hero of ['oop', 'ip']) {
-      const game = { oopRange: set.oopRange, ipRange: set.ipRange, board, pot: 100, stack: set.stack, betSizes: { flop: street, turn: street, river: street } };
-      const made = makeParts();
-      const parts = made.selector || made.mixer || made.tuner || made.engine ? made : { selector: made };
-      const result = await new SolverMatch(game, { strategist: new RangeStrategist(parts) }).play(hero, { iterations: 300, ...options });
-      out[hero][0] += result.loss.versusGto / boards.length;
-      out[hero][1] += result.loss.exploited / boards.length;
-    }
+  const spots = Array.isArray(set) ? set : set.boards.split(',').map((board) => ({ name: board, ...set, board, pot: 100 }));
+  const jobs = spots.flatMap((spot) => ['oop', 'ip'].map((hero) => ({ spot, hero })));
+  const results = await pool(jobs, async ({ spot, hero }) => {
+    const made = makeParts();
+    const parts = made.selector || made.mixer || made.tuner || made.engine ? made : { selector: made };
+    const result = await new SolverMatch(gameOf(spot), { strategist: new RangeStrategist(parts) }).play(hero, { iterations: 300, ...options });
+    return { spot: spot.name, pair: spot.pair, depth: spot.depth, board: spot.board, hero, versusGto: result.loss.versusGto, exploited: result.loss.exploited };
+  });
+  const out = { oop: [0, 0], ip: [0, 0], spots: results };
+  for (const r of results) {
+    out[r.hero][0] += r.versusGto / spots.length;
+    out[r.hero][1] += r.exploited / spots.length;
   }
   return out;
 }

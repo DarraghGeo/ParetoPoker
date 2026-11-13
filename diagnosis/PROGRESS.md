@@ -33,3 +33,20 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
 
 ## Log
 
+- 03:05 **Step 1 done.** `src/Mixer.js`, `src/Tuner.js`, `src/presets.js`. The engine takes
+  `tuning` (`sizing`, `value`, `bluff`, `defence`); selectors read `context.tuning.valueThreshold`;
+  `context.profile` describes the spot. Value-checking moved from NapkinSelector to a mixer.
+  Results unchanged (R12: Napkin 3.87, equity 9.33). 38 tests pass. Next: step 2, spot sets.
+- 03:25 **Step 2 done.** `src/solver/spots.js`: four range pairs (A, B single-raised, C 3-bet,
+  D blind v blind), rivers at 0.75x/2x/5x pot (72 tune, 48 held), turns at 1.5x/4x (16 tune, 8
+  held). `measure` runs four trees at a time. Baselines, whole engine, loss to best response:
+  rivers-tune Napkin 4.95 / equity 9.55; turns-tune Napkin 14.90 / equity 29.22.
+- 03:35 **Step 3, rivers.** `bin/locate.js`: the engine decides at one kind of decision only,
+  inside the solver's strategy, on the solver's range. rivers-tune, Napkin (oop / ip):
+  open 6.4 / 6.9; facing a bet 2.4 / 9.3; facing a raise 2.1 / 2.4.
+  With the solver's frequencies: open 8.6 / 1.6; facing bet 0.6 / 3.7; facing raise 0.6 / 0.7.
+  With the solver's order too (dealing alone): open 4.4 / 3.0; facing bet 0.5 / 0.8; raise 0.4 / 0.4.
+  Reading: in position the loss is frequency (facing a bet and after a check); out of position
+  opening it is mixing. Saved in diagnosis/locate-rivers-tune.{txt,json}.
+  Turns running in the background -> diagnosis/locate-turns-tune.txt.
+  Next: step 5 for rivers, tuning diagnosis (how the solver departs from the fundamentals by spot).

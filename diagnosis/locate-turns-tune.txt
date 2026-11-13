@@ -1,0 +1,2 @@
+turns-tune, napkin: loss to the best response as a share of the pot when the engine decides at one kind of decision only
+  decision                                            engine   freq given  order given  hands given     (out of position / in position)
