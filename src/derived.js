@@ -178,3 +178,40 @@ export function riverWorth({ equity, board, hero, villain, bet = 0.75 }) {
   for (let i = 0; i < NUM_COMBOS; i++) if (count[i]) out[i] = sum[i] / count[i];
   return out;
 }
+
+/**
+ * How a hand's equity is spread over the next card, for every combo in hero's range: the
+ * average, the standard deviation (`sd`), the gain on its best card (`best`: equity there minus
+ * the average) and the share of its equity that comes from cards where it ends above 0.75
+ * (`high`). On the turn the next card is the river.
+ *
+ * @returns {{ mean: Float64Array, sd: Float64Array, best: Float64Array, high: Float64Array }}
+ */
+export function nextCardSpread({ equity, board, hero, villain }) {
+  const blank = () => new Float64Array(NUM_COMBOS).fill(NaN);
+  const out = { mean: blank(), sd: blank(), best: blank(), high: blank() };
+  const sum = new Float64Array(NUM_COMBOS);
+  const squares = new Float64Array(NUM_COMBOS);
+  const top = new Float64Array(NUM_COMBOS);
+  const above = new Float64Array(NUM_COMBOS);
+  const count = new Float64Array(NUM_COMBOS);
+  for (let card = 0; card < 52; card++) {
+    if (board.includes(card)) continue;
+    const e = equity.against([...board, card], villain, hero);
+    for (let i = 0; i < NUM_COMBOS; i++) {
+      if (!(hero[i] > 0) || Number.isNaN(e[i])) continue;
+      sum[i] += e[i]; squares[i] += e[i] * e[i]; count[i]++;
+      if (e[i] > top[i]) top[i] = e[i];
+      if (e[i] > 0.75) above[i] += e[i];
+    }
+  }
+  for (let i = 0; i < NUM_COMBOS; i++) {
+    if (!count[i]) continue;
+    const mean = sum[i] / count[i];
+    out.mean[i] = mean;
+    out.sd[i] = Math.sqrt(Math.max(0, squares[i] / count[i] - mean * mean));
+    out.best[i] = top[i] - mean;
+    out.high[i] = sum[i] > 0 ? above[i] / sum[i] : 0;
+  }
+  return out;
+}

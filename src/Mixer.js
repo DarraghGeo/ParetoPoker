@@ -1,3 +1,4 @@
+import { nextCardSpread } from './derived.js';
 import { NUM_COMBOS } from './cards.js';
 
 /**
@@ -221,3 +222,82 @@ export const TURN_KINDS = { turn: {
     [1.43, 1.42, 1.01, 1.47, 1.47, 1.47],
   ],
 } };
+
+/**
+ * The cell of each hand in a grid of `cols` bands of `column` (equal shares of the range,
+ * weakest first) by `rows` bands of `row` within each column (lowest first).
+ * @returns {{ col: Int32Array, row: Int32Array }} -1 for hands outside the range.
+ */
+export function gridCells(hero, column, row, cols, rows) {
+  const ids = [];
+  let total = 0;
+  for (let i = 0; i < NUM_COMBOS; i++) if (hero[i] > 0 && !Number.isNaN(column[i])) { ids.push(i); total += hero[i]; }
+  ids.sort((a, b) => column[a] - column[b]);
+  const col = new Int32Array(NUM_COMBOS).fill(-1);
+  const rowOf = new Int32Array(NUM_COMBOS).fill(-1);
+  const members = Array.from({ length: cols }, () => []);
+  let seen = 0;
+  for (const i of ids) {
+    const c = Math.min(cols - 1, Math.floor((cols * (seen + hero[i] / 2)) / total));
+    seen += hero[i];
+    col[i] = c;
+    members[c].push(i);
+  }
+  for (const group of members) {
+    const weight = group.reduce((t, i) => t + hero[i], 0);
+    group.sort((a, b) => (Number.isNaN(row[a]) ? -1 : row[a]) - (Number.isNaN(row[b]) ? -1 : row[b]));
+    let at = 0;
+    for (const i of group) {
+      rowOf[i] = Math.min(rows - 1, Math.floor((rows * (at + hero[i] / 2)) / weight));
+      at += hero[i];
+    }
+  }
+  return { col, row: rowOf };
+}
+
+/**
+ * Mixing by where a hand's equity sits and how it is spread over the next card, for decisions
+ * with cards to come and no bet to face.
+ *
+ * A hand's kind is its band of equity within hero's range (columns) and, within that band, its
+ * band of `by`: 'sd' (how much its equity moves from card to card), 'best' (what its best card
+ * adds) or 'high' (how much of its equity comes from cards where it ends above 0.75). See
+ * `nextCardSpread` in derived.js. `tables[street][position]` is `{ by, table }` with
+ * `table[row][column]`: how often the kind bets relative to how often the range bets, which is
+ * taken from the engine's frequencies as in KindMixer. Hands of a kind bet equally often.
+ */
+export class DistributionMixer extends Mixer {
+  constructor({ tables, rules = [] }) {
+    super(rules);
+    this.tables = tables;
+  }
+
+  direct(context, frequencies) {
+    if (context.facing || context.street === 'river') return null;
+    const entry = this.tables[context.street]?.[context.position];
+    if (!entry) return null;
+    const { table, by } = entry;
+    const spread = nextCardSpread({ equity: context.calculator, board: context.board, hero: context.hero, villain: context.villain });
+    const cells = gridCells(context.hero, context.strength, spread[by], table[0].length, table.length);
+    const level = Math.min(1, Math.max(0, frequencies.bet));
+    const out = new Float64Array(NUM_COMBOS);
+    let total = 0;
+    let sum = 0;
+    for (let i = 0; i < NUM_COMBOS; i++) {
+      if (cells.col[i] < 0) continue;
+      out[i] = table[cells.row[i]][cells.col[i]];
+      total += context.hero[i];
+      sum += context.hero[i] * out[i];
+    }
+    // The table is relative: scale so the range bets `level` in all, no hand more than always
+    let scale = sum > 0 ? (level * total) / sum : 0;
+    for (let pass = 0; pass < 20; pass++) {
+      let got = 0;
+      for (let i = 0; i < NUM_COMBOS; i++) if (cells.col[i] >= 0) got += context.hero[i] * Math.min(1, out[i] * scale);
+      if (got <= 0 || Math.abs(got - level * total) < 1e-6 * total) break;
+      scale *= (level * total) / got;
+    }
+    for (let i = 0; i < NUM_COMBOS; i++) out[i] = cells.col[i] >= 0 ? Math.min(1, out[i] * scale) : 0;
+    return out;
+  }
+}

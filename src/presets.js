@@ -31,12 +31,18 @@ export const presets = {
  * a quarter of the time and calls the rest.
  */
 export function fittedMixer() {
-  const open = (street) => (context) => context.position === 'oop' && !context.facing && context.street === street;
   return new KindMixer({
     // First to act on the turn: how often each kind of hand bets, from the solver (TURN_KINDS).
     // The same table serves the flop, where it was checked on four small trees but not fitted.
     tables: { ...TURN_KINDS, flop: TURN_KINDS.turn },
-    rules: [
+    rules: fittedMixerRules(),
+  });
+}
+
+/** The fitted mixer's rules for every decision its kind table does not cover. */
+export function fittedMixerRules() {
+  const open = (street) => (context) => context.position === 'oop' && !context.facing && context.street === street;
+  return [
       // On the turn these caps set how much value is counted, and so how often the range bets;
       // the table then spreads that frequency over the kinds
       { role: 'value', when: open('turn'), share: 0.45 },
@@ -44,8 +50,7 @@ export function fittedMixer() {
       { role: 'value', when: open('river'), share: (context) => context.strength.map((e) => (e >= 0.9 ? 0.5 : 0.75)) },
       // Facing a turn bet the solver mostly calls with its strongest hands; raising them all loses
       { role: 'value', when: (context) => context.street === 'turn' && context.facing && (context.spot.raises ?? 0) === 0, share: 0.25 },
-    ],
-  });
+  ];
 }
 
 /** A mixer in which every value hand checks `share[street]` of the time when out of position and first to act. */
