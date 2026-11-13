@@ -45,12 +45,16 @@ export class RangeStrategist {
    *   `villain` is empty, and passed to the selector.
    * @param {{ type: 'fold'|'check'|'call'|'bet'|'raise'|'allin', to?: number }[]} node.actions
    *   What hero may do. `to` is hero's street total after a bet or raise.
+   * @param {number[]} [node.targets] The share of hero's range that takes each action, in the
+   *   order of `actions`. When given, these are filled in place of the engine's frequencies (each
+   *   bet or raise still split into value and bluffs at the engine's ratio for its size), so that
+   *   only the choice of hands is the selector's. Used to test hand selection on its own.
    * @returns {{ frequencies: Object, played: number[], strategy: Float64Array[], actions: Object[] }}
    *   `strategy[a][combo]` is the probability that the combo takes `actions[a]`. `frequencies` is
    *   the engine's answer and `played[a]` the share of the range that ends up taking `actions[a]`
    *   (the two differ only when a selector offers too few hands, or sets its own share).
    */
-  decide({ position, spot, board, hero, villain, villainPrior, actions }) {
+  decide({ position, spot, board, hero, villain, villainPrior, actions, targets = null }) {
     // A line villain should never take (by our model of them) leaves no range to compare with
     if (villainPrior && !(sumOf(villain) > 1e-9)) villain = villainPrior;
 
@@ -76,6 +80,16 @@ export class RangeStrategist {
       return total > 0 ? value / total : 0;
     };
     const frequencies = this.engine.respond(position, { ...spot, options: sized.map((a) => a.to) }, { valueShare });
+    if (targets) {
+      // Someone else's frequencies: keep the engine's price of each size, replace the amounts
+      for (const wager of frequencies.sizes) {
+        const share = targets[sized.find((a) => Math.min(a.to, (spot.invested ?? 0) + (spot.stack ?? Infinity)) === wager.to).index];
+        Object.assign(wager, { frequency: share, value: share * (1 - wager.bluffShare), bluff: share * wager.bluffShare });
+      }
+      const aggressive = frequencies.sizes.reduce((sum, wager) => sum + wager.frequency, 0);
+      if (facing) Object.assign(frequencies, { fold: targets[passive], call: targets[index('call')], raise: aggressive });
+      else Object.assign(frequencies, { check: targets[passive], bet: aggressive });
+    }
     context.frequencies = frequencies;
 
     const strategy = actions.map(() => new Float64Array(NUM_COMBOS));
@@ -85,18 +99,23 @@ export class RangeStrategist {
     const give = ({ scores, limit }, out, share) => deal(candidatesInOrder(scores, hero), scores, hero, left, out, share * total, limit);
     const biggestFirst = [...frequencies.sizes].reverse();
 
+    // With targets, a selector's own share is ignored
+    const own = (candidates, share) => (targets ? share : candidates.share ?? share);
     for (const wager of biggestFirst) {
-      if (wager.value > 0) give(valueHands.get(wager.to), actionFor(wager), wager.value);
+      if (!(wager.value > 0)) continue;
+      const unplaced = give(valueHands.get(wager.to), actionFor(wager), wager.value);
+      // More value asked for than the selector has candidates: the next strongest hands make it up
+      if (targets && unplaced > 1e-9) give({ scores: context.strength, limit: null }, actionFor(wager), unplaced / total);
     }
     if (facing) {
       const candidates = this.#candidates('call', context);
-      const share = candidates.share ?? frequencies.call;
+      const share = own(candidates, frequencies.call);
       if (share > 0) give(candidates, strategy[index('call')], share);
     }
     for (const wager of biggestFirst) {
       if (!(wager.bluff > 0)) continue;
       const candidates = this.#candidates('bluff', context, wager);
-      give(candidates, actionFor(wager), candidates.share ?? wager.bluff);
+      give(candidates, actionFor(wager), own(candidates, wager.bluff));
     }
     // Everything else checks or folds (as do combos outside hero's range)
     for (let i = 0; i < NUM_COMBOS; i++) strategy[passive][i] = left[i];

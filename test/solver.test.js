@@ -50,3 +50,29 @@ test('on a real river the engine is scored against the solver', { skip }, async 
   const facing = result.lines.find((line) => line.path === 'bet 33');
   assert.ok(Math.abs(facing.engine[0] - 33 / 133) < 1e-6);
 });
+
+test('with the solver deciding everywhere, nothing is lost; hand selection can be tested alone', { skip }, async () => {
+  const sizes = { bet: '33%,75%', raise: '2.5x' };
+  const game = {
+    oopRange: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s',
+    ipRange: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
+    board: 'Td9d6hQc7s',
+    pot: 100,
+    stack: 200,
+    betSizes: { river: { oop: sizes, ip: sizes } },
+  };
+  // The engine is asked nowhere: the solver's own strategy is locked and loses only its own error
+  const solver = await new SolverMatch(game).play('oop', { iterations: 1000, target: 0.001, ranges: 'solver', where: () => false });
+  assert.ok(Math.abs(solver.loss.versusGto) < 0.002 && solver.loss.exploited < 0.005, JSON.stringify(solver.loss));
+
+  // Hand selection alone: the solver's range for the opponent and the solver's frequencies
+  const selection = await new SolverMatch(game).play('oop', { iterations: 1000, target: 0.001, ranges: 'solver', frequencies: 'solver' });
+  assert.equal(selection.frequencies, 'solver');
+  assert.ok(selection.loss.exploited > 0.005 && selection.loss.exploited < 0.5);
+  // The engine plays the solver's frequencies, with its own hands
+  const root = selection.lines.find((line) => line.path === '');
+  root.engine.forEach((frequency, i) => assert.ok(Math.abs(frequency - root.solver[i]) < 0.01, root.actions[i]));
+  // Asked only on the first decision, it loses no more than when asked everywhere
+  const first = await new SolverMatch(game).play('oop', { iterations: 1000, target: 0.001, ranges: 'solver', frequencies: 'solver', where: (d) => d.depth === 0 });
+  assert.ok(first.loss.exploited <= selection.loss.exploited + 0.01);
+});

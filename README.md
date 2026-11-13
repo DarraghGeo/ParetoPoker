@@ -208,6 +208,11 @@ Loss when fully exploited, as a share of the pot, both seats averaged:
 | 4 turns, other ranges and boards, stack 5x pot | 34.9% | 19.5% |
 | 1 flop `Td9d6h`, one bet size, stack 1.5x pot | 26.8% | 14.9% |
 
+Those are the whole engine, including frequency tunings that live in the selector. With hand
+selection tested alone (the solver's range for the opponent and its frequencies), Napkin loses
+5.7% on the rivers against equity's 8.7%, and 21.9% and 23.8% on the two sets of turns against
+26.2% and 26.4%.
+
 Against the solver's equilibrium Napkin loses 0.6% on those rivers (equity 1.2%), 1.8% and 1.9%
 on the two sets of turns (3.5% and 4.8%) and 5.6% on the flop (6.1%).
 `node bin/play.js --selector napkin` runs one spot.
@@ -285,6 +290,22 @@ const result = await new SolverMatch({
 // result.loss { versusGto, exploited }         as a share of the pot
 // result.lines  engine and solver frequencies on the first decisions
 ```
+
+`play()` takes three settings, for separating what the engine is being tested on:
+
+```js
+await match.play('ip');                                             // the whole engine
+await match.play('ip', { ranges: 'solver' });                       // given the solver's range for the opponent
+await match.play('ip', { ranges: 'solver', frequencies: 'solver' }); // and its frequencies: hand selection alone
+await match.play('ip', { ranges: 'solver', where: (d) => d.street === 'turn' }); // the engine decides on turns only
+```
+
+With `ranges: 'solver'` the engine keeps its own range (it knows what it did) and is handed
+the opponent's from the equilibrium. With `frequencies: 'solver'` it also fills the solver's
+action frequencies, so only its choice of hands is tested. `where` keeps the solver's own
+strategy at the decisions it turns down. `node bin/compare.js --set turns` runs all three for
+both selectors; `node bin/interchange.js` tests whether a group of hands is interchangeable
+by reassigning them inside the solver's own strategy.
 
 - `gto`: both players at equilibrium.
 - `versusGto`: the engine against the solver's equilibrium strategy.

@@ -8,6 +8,66 @@ capping). Add a row when a number changes; do not delete the old result.
 All losses are the share of the pot lost to the solver's best response ("exploited"), both
 seats averaged, unless a row says otherwise. Lower is better.
 
+## How results are measured
+
+`node bin/compare.js --set <name>` reports three settings (`SolverMatch.play` options):
+
+| Setting | The engine is given | What it measures |
+|---|---|---|
+| engine | nothing | The whole engine: its own frequencies, its own estimate of his range. |
+| his range (`ranges: 'solver'`) | The solver's range for the opponent at every decision. | Unreliable beyond one street: with its own bet sizes the engine takes lines the solver never does, where the solver's range for the opponent is not meaningful. |
+| his range + freq (`+ frequencies: 'solver'`) | Also the solver's action frequencies. | **Hand selection alone.** It stays on the solver's lines, and a seat's result no longer depends on a model of the opponent. |
+
+Every result recorded before this section used the first setting. In it, several tunings below
+are frequency changes that live in the selector (`valueThreshold` decides how many hands bet,
+`oopValueChecks` how often they check); in the third setting they have no effect, by design.
+
+Loss to the best response, both seats averaged (against the equilibrium in brackets):
+
+| Set | Selector | engine | his range | his range + freq |
+|---|---|---|---|---|
+| R12 | equity | 9.33 (1.19) | 8.05 (0.65) | 8.72 (0.78) |
+| R12 | Napkin | 3.87 (0.61) | 4.69 (0.66) | 5.66 (0.82) |
+| T4 | equity | 26.09 (3.52) | 32.67 (1.83) | 26.21 (2.01) |
+| T4 | Napkin | 11.70 (1.77) | 27.39 (1.58) | 21.89 (1.45) |
+| T4-B | equity | 34.85 (4.81) | | 26.44 (1.78) |
+| T4-B | Napkin | 19.49 (1.94) | | 23.83 (1.38) |
+
+So Napkin's hand selection, on its own, is worth about 3 points on rivers and 3-4 on turns over
+equity's. The rest of its turn result in the first setting (11.7 against 26.1) comes from the
+frequency tunings, fitted to the engine's own model.
+
+Hand selection alone, rule by rule:
+
+| Rule | R12 | T4 | T4-B |
+|---|---|---|---|
+| Napkin as it is | 5.66 | 21.89 | 23.83 |
+| river bluffs the guide's way (`riverBluffs: 'air'`) | 6.02 | | |
+| turn bluffs the guide's way (`turnBluffs: 'roles'`) | | 23.18 | 24.22 |
+| turn calls by E[HS^2] (`turnCalls: 'ehs2'`) | | 22.09 | 22.21 |
+| turn calls by E[HS^2] in position only (`'ehs2-ip'`) | | 21.90 | 22.23 |
+| no `priorStrength` | 12.54 | 24.57 | 27.86 |
+
+## Interchange tests
+
+`node bin/interchange.js` takes the solver's own strategy, reassigns which hands of a group take
+which action at the first decision (same totals), and measures what the best response gains.
+Out of position, value hands by equity against his range, average loss as a share of the pot
+(the solver's own strategy loses 0.07%):
+
+| Group | Turns (T4): even | strongest first | weakest first | Rivers (first 6 of R12): even | strongest first | weakest first |
+|---|---|---|---|---|---|---|
+| 0.7-1.0 | 4.18 | 7.57 | 13.17 | 4.75 | 9.17 | 16.05 |
+| 0.7-0.8 | 0.80 | 1.40 | 1.65 | 0.14 | 0.23 | 0.09 |
+| 0.8-0.9 | 1.50 | 3.48 | 5.81 | 0.94 | 1.61 | 1.92 |
+| 0.9-1.0 | 0.28 | 0.82 | 0.44 | 0.43 | 0.90 | 1.40 |
+
+Value hands are **not** interchangeable across the value range: mixing them evenly costs 4-5% of
+the pot, and betting the strongest first (what both selectors do) costs 8-9%. Within a band of
+10 points of equity they are closer to it (0.1-1.5%). Which hand takes which action and size
+depends on its strength in a way no characteristic measured so far explains (best correlation
+with the solver's bet frequency out of position on the turn: 0.26).
+
 ## Test sets
 
 | Name | Trees | Ranges | Stack | Bets / raises |
@@ -220,8 +280,10 @@ The gain is out of position (12.7 to 10.5 on T4, 18.4 to 15.5 on T4-B); in posit
 ### 16. Napkin `oopValueChecks.turn` = 0.4
 
 On D-T8 no characteristic separates the solver's out-of-position turn value bets from its value
-checks (best 0.53): the hands are interchangeable, and it bets 36-65% of every band and 28% of
-the nuts. So this is a frequency, applied evenly.
+checks (best 0.53), and it bets 36-65% of every band and 28% of the nuts. This was first recorded
+as "the hands are interchangeable". The interchange test above shows they are not (an even mix
+costs 4.2% of the pot); what is true is that nothing measured so far tells them apart. The
+tuning is a frequency applied evenly, and it is a stand-in for a rule that has not been found.
 
 | Set | 0 | 0.2 | 0.4 |
 |---|---|---|---|
@@ -244,9 +306,10 @@ response it did not carry over:
 | T4, out of position / in position | 10.5 / 16.0 | 30.5 / 14.2 | 10.9 / 14.2 |
 | T4-B | 15.5 / 25.3 | 20.2 / 19.6 | 17.7 / 20.2 |
 
-Out of position it is much worse (it calls draws that then cannot realize their equity, which
-the guide warns about). In position it helps, but combined with `oopValueChecks.turn` the gain
-disappeared on both sets. Left as an option.
+That was the engine setting, where a seat's result also depends on its model of the opponent.
+With hand selection alone (table at the top) `'ehs2'` is level on T4 and 1.6 points better on
+T4-B, and never worse in either seat. The out-of-position collapse above came from the model,
+not from the calls. Still off by default: the gain is on one set.
 
 ## Not yet used
 
