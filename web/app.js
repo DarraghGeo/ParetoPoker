@@ -1,5 +1,6 @@
 import { RangeManager } from 'poker-rangeman';
 import { explain, survey } from '../src/explain/river.js';
+import { outline } from '../src/explain/outline.js';
 import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
 
@@ -12,7 +13,7 @@ const pct = (x) => `${Math.round(100 * x)}`;
 const cardsHtml = (text) => (text.match(/[2-9TJQKA][shdc]/g) ?? []).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join('');
 
 const DEFAULTS = {
-  board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, bets: [0.33, 0.75, 1.5], raises: [2.5], maxRaises: 2, allIn: false,
+  board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, bets: [0.33, 0.75, 1.5], raises: [2.5], maxRaises: 1, allIn: false,
   oop: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s',
   ip: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
 };
@@ -21,6 +22,8 @@ const state = {
   spot: null, job: 0, status: '', stats: null,
   // Every saved edit of the ranges is a version; `at` is the one on screen
   versions: [], at: 0, slide: null,
+  // Past a deal: the cards dealt after the spot's own board, and the deal being chosen (a chance node), if any
+  dealt: [], pick: null, sub: null,
 };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config);
   // an earlier visit saved one raise size as `raise`
@@ -33,27 +36,43 @@ const worker = new Worker(new URL('./worker.js', import.meta.url));
 worker.onmessage = ({ data }) => {
   if (data.type === 'preview') { onPreview(data); return; }
   if (data.job !== state.job) return;
-  if (data.type === 'progress') { state.status = `solving ${data.iterations}`; $('state').textContent = state.status; }
-  if (data.type === 'error') { state.status = ''; $('state').textContent = ''; $('f-error').textContent = data.message; openSetup(); }
-  if (data.type === 'solved') { state.nodes = data.nodes; state.stats = data.stats; state.status = `${data.exploit.toFixed(2)}%`; go(state.nodes[state.keep]?.kind === 'decision' ? state.keep : 0); state.keep = 0; }
+  if (data.type === 'progress') { state.status = `solving ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; }
+  if (data.type === 'error') { state.status = ''; $('state').textContent = ''; delete $('state').dataset.busy; openSetup(state.sub ? { sub: true } : undefined); $('f-error').textContent = data.message; }
+  if (data.type === 'subgame') {
+    // The street re-solved on its own becomes the next version: the cards dealt, the ranges as they arrive
+    state.versions = state.versions.slice(0, state.at + 1);
+    state.versions.push({ id: ++versionId, oop: data.spot.oop, ip: data.spot.ip, dials: { oop: neutral(), ip: neutral() }, curves: new Map(), fixed: true, base: { board: data.spot.board, pot: data.spot.pot, stack: data.spot.stack, ...state.sub }, pos: { node: 0, dealt: [] } });
+    state.sub = null; turnTo(state.versions.length - 1);
+  }
+  if (data.type === 'solved') {
+    state.nodes = data.nodes; state.status = `${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    // back where this version was last looked at, if that place exists in it
+    const pos = version().pos ?? { node: 0, dealt: [] }; const there = state.nodes[pos.node];
+    const ok = there?.kind === 'decision' && pos.dealt.length >= there.round;
+    state.dealt = ok ? [...pos.dealt] : []; state.pick = null; go(ok ? pos.node : 0);
+  }
   if (data.type === 'decision') show(data.decision);
 };
 const version = () => state.versions[state.at];
+let versionId = 0;
+/** The spot of the version on screen: the setup, with what a re-solved street changes. */
+const conf = () => ({ ...state.config, ...(version()?.base ?? {}) });
+const boardCards = (text) => text.match(/[2-9TJQKA][shdc]/g) ?? [];
 /** Solve the version on screen. `keep`: stay on the same decision and hand (another version of the same spot). */
 function solve(keep = false) {
   state.job++;
-  if (keep) state.keep = state.node;
-  else { state.nodes = null; state.decision = null; state.survey = null; state.spot = null; state.hand = null; state.cell = null; state.keep = 0; render(); }
+  if (!keep) { state.nodes = null; state.decision = null; state.survey = null; state.spot = null; state.hand = null; state.cell = null; state.dealt = []; state.pick = null; render(); }
   state.status = 'solving'; $('state').textContent = state.status;
   const v = version();
-  worker.postMessage({ type: 'solve', job: state.job, config: { ...state.config, oop: v.oop, ip: v.ip, dials: v.dials } });
-  const board = state.config.board.match(/[2-9TJQKA][shdc]/g) ?? [];
+  worker.postMessage({ type: 'solve', job: state.job, key: v.id, config: { ...conf(), oop: v.oop, ip: v.ip, dials: v.dials } });
+  const board = boardCards(conf().board);
   const job = state.job;
-  profile(RangeManager, { oop: v.oop, ip: v.ip, board }).then((p) => { if (job === state.job) { state.spot = p; renderWhy(); } });
+  state.spot = null;
+  if (!v.fixed) profile(RangeManager, { oop: v.oop, ip: v.ip, board }).then((p) => { if (job === state.job) { state.spot = p; renderWhy(); } });
 }
 /** A new spot from setup: its ranges as given are the first version. */
 function begin() {
-  state.versions = [{ oop: state.config.oop, ip: state.config.ip, dials: { oop: neutral(), ip: neutral() }, curves: new Map() }];
+  state.versions = [{ id: ++versionId, oop: state.config.oop, ip: state.config.ip, dials: { oop: neutral(), ip: neutral() }, curves: new Map(), pos: { node: 0, dealt: [] } }];
   state.at = 0;
   solve();
 }
@@ -61,19 +80,21 @@ function begin() {
 function turnTo(index) {
   if (index < 0 || index >= state.versions.length || index === state.at) return;
   const forward = index > state.at;
+  version().pos = { node: state.node, dealt: [...state.dealt] };
+  const same = conf().board === ({ ...state.config, ...(state.versions[index].base ?? {}) }).board;
   state.at = index;
   const stage = document.querySelector('.stage');
   stage.classList.add(forward ? 'out-left' : 'out-right');
   state.slide = forward ? 'in-right' : 'in-left';
-  solve(true);
+  solve(same);
 }
 function go(id) {
-  state.node = id;
-  worker.postMessage({ type: 'decision', job: state.job, id });
+  state.node = id; state.pick = null;
+  worker.postMessage({ type: 'decision', job: state.job, id, dealt: state.dealt });
 }
 function show(decision) {
   state.decision = decision;
-  state.survey = decision ? survey(decision) : null;
+  state.survey = !decision ? null : decision.street === 'river' ? survey(decision) : outline(decision);
   if (state.survey && !state.survey.byName.has(state.hand)) {
     // open on the hand whose choice is least obvious
     let best = null; let score = -1;
@@ -99,13 +120,15 @@ function cellOf(name) {
   return a === b ? `${hi},${hi}` : name[1] === name[3] ? `${hi},${lo}` : `${lo},${hi}`;
 }
 function render() {
-  const grid = state.view === 'grid';
-  $('range').hidden = !grid; $('dist').hidden = grid;
+  const grid = state.view === 'grid'; const dealing = state.pick != null;
+  $('range').hidden = !grid || dealing; $('dist').hidden = grid || dealing; $('deal').hidden = !dealing;
+  if (dealing) renderDeal();
   $('state').textContent = state.status;
   $('versions').hidden = state.versions.length < 2;
   $('version').textContent = `${state.at + 1}/${state.versions.length}`;
   $('older').disabled = state.at === 0; $('newer').disabled = state.at >= state.versions.length - 1;
-  $('board').innerHTML = cardsHtml(state.config.board);
+  const round = state.nodes?.[state.node]?.round ?? 0;
+  $('board').innerHTML = cardsHtml(conf().board) + (round ? `<span class="dealt">${cardsHtml(state.dealt.slice(0, round).join(' '))}</span>` : '');
   const d = state.decision;
   const strata = d ? strataOf(d.actions) : [];
   $('rule').innerHTML = d ? bar(state.survey.mix, strata) : '';
@@ -119,17 +142,33 @@ function renderLine(strata) {
   const nodes = state.nodes;
   if (!nodes || !state.decision) { $('line').innerHTML = ''; return; }
   const path = []; let at = state.node;
-  while (nodes[at].parent >= 0) { const parent = nodes[nodes[at].parent]; path.unshift({ label: parent.edges[nodes[at].via].label, back: parent.id }); at = parent.id; }
+  while (nodes[at].parent >= 0) { const parent = nodes[nodes[at].parent]; path.unshift(parent.kind === 'chance' ? { deal: parent.id, card: state.dealt[parent.round] } : { label: parent.edges[nodes[at].via].label, back: parent.id }); at = parent.id; }
+  // an action that ends the street leads to a deal, and on to the next street's first decision
+  const onward = (e) => { const child = nodes[e.child]; if (child.kind === 'decision') return `data-go="${e.child}"`; if (child.kind === 'chance' && nodes[child.edges[0]?.child]?.kind === 'decision') return `data-deal="${child.id}"`; return 'disabled'; };
+  const opensStreet = here => here.parent >= 0 && nodes[here.parent].kind === 'chance';
   const here = nodes[state.node];
-  $('line').innerHTML = path.map((p) => `<button type="button" class="crumb" data-go="${p.back}">${esc(p.label)}</button><span class="sep">/</span>`).join('')
+  $('line').innerHTML = path.map((p) => (p.deal != null ? `<button type="button" class="crumb card" data-deal="${p.deal}" aria-label="Change the card dealt">${cardsHtml(p.card ?? '')}</button>` : `<button type="button" class="crumb" data-go="${p.back}">${esc(p.label)}</button>`) + '<span class="sep">/</span>').join('')
     + `<span class="who">${here.seat === 'oop' ? 'OOP' : 'IP'}</span>`
-    + here.edges.map((e, k) => { const open = nodes[e.child].kind === 'decision'; return `<button type="button" class="act" ${open ? `data-go="${e.child}"` : 'disabled'}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)} ${pct(state.survey.mix[k])}</button>`; }).join('')
-    + (true ? `<button type="button" class="icon view" id="edit" aria-label="Edit ranges"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button><button type="button" class="icon view" id="split" aria-pressed="${state.split}" aria-label="${state.split ? 'One bar' : 'By made hand'}">${state.split
+    + here.edges.map((e, k) => { return `<button type="button" class="act" ${onward(e)}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)} ${pct(state.survey.mix[k])}</button>`; }).join('')
+    + (opensStreet(here) ? '<button type="button" class="icon view" id="resolve" aria-label="Re-solve from this street"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v2.4h-2.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' : '')
+    + (version().fixed ? '' : `<button type="button" class="icon view" id="edit" aria-label="Edit ranges"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>`) + `<button type="button" class="icon view" id="split" aria-pressed="${state.split}" aria-label="${state.split ? 'One bar' : 'By made hand'}">${state.split
       ? '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 6.5h12v3H2z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'
       : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</button><button type="button" class="icon view" id="view" aria-label="${state.view === 'grid' ? 'Equity distribution' : 'Grid'}">${state.view === 'grid'
       ? '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 13c3 0 3-4 6-5s3-5 6-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
-      : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'}</button>` : '');
+      : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'}</button>`;
 }
+/** Choosing the card dealt: every card still in the deck, a row a suit. */
+function renderDeal() {
+  const chance = state.nodes[state.pick]; const gone = new Set([...boardCards(conf().board), ...state.dealt.slice(0, chance.round)]);
+  const now = state.dealt[chance.round];
+  $('deal').innerHTML = ['s', 'h', 'd', 'c'].map((suit) => `<div>${[...RANKS].map((rank) => { const card = rank + suit; return `<button type="button" class="s-${suit}" data-card="${card}" ${gone.has(card) ? 'disabled' : ''} aria-pressed="${card === now}" aria-label="${card}">${rank}${GLYPH[suit]}</button>`; }).join('')}</div>`).join('');
+}
+$('deal').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-card]'); if (!b || state.pick == null) return;
+  const chance = state.nodes[state.pick];
+  state.dealt = [...state.dealt.slice(0, chance.round), b.dataset.card];
+  state.hand = null; state.cell = null; go(chance.edges[0].child);
+});
 function renderGrid(strata) {
   const cells = new Map();
   if (state.survey) for (const row of state.survey.rows) {
@@ -151,7 +190,7 @@ function renderGrid(strata) {
 /** Under the chart: the combinations of the picked cell (grid) or of the picked strength (curve). */
 function renderCombos(strata) {
   const s = state.survey; const picked = s?.byName.get(state.hand);
-  const rows = !s || !picked ? [] : state.view === 'grid' ? s.rows.filter((r) => cellOf(r.hand.name) === state.cell) : s.levels.get(picked.hand.strength).rows;
+  const rows = !s || !picked ? [] : state.view === 'grid' ? s.rows.filter((r) => cellOf(r.hand.name) === state.cell) : s.levels.get(picked.hand.strength)?.rows ?? s.rows.filter((r) => cellOf(r.hand.name) === cellOf(picked.hand.name));
   $('combos').innerHTML = [...rows].sort((x, y) => y.hand.weight - x.hand.weight).map((r) => `<button type="button" data-hand="${r.hand.name}" aria-pressed="${state.hand === r.hand.name}"><span>${cardsHtml(r.hand.name)}</span><span class="bar">${bar(r.hand.strategy, strata)}</span></button>`).join('');
 }
 /** The two equity curves at this decision: the player to act and, in the other colour, the other range. */
@@ -164,7 +203,7 @@ function renderDist() {
   const steps = (list) => { const total = list.reduce((t, r) => t + r.w, 0); let x = 0; const pts = []; for (const r of list) { const w = r.w / total; pts.push(`${Xd(x).toFixed(1)},${Yd(r.e).toFixed(1)} ${Xd(x + w).toFixed(1)},${Yd(r.e).toFixed(1)}`); r.mid = x + w / 2; x += w; } return pts.join(' '); };
   const mine = handsInOrder(s).map((r) => ({ w: r.hand.weight, e: r.equity, name: r.hand.name }));
   // his hands against the range to act, with the cards each removes
-  const his = d.villain.map((v) => { let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
+  const his = d.villain.map((v) => { if (v.equity !== undefined) return { w: v.weight, e: Number.isNaN(v.equity) ? 0 : v.equity }; let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
   const pick = mine.find((r) => r.name === state.hand);
   // The same decision in the version before this one stays as a dotted line
@@ -206,23 +245,28 @@ function renderStrip(strata) {
   }).join('');
 }
 /** The hands of the range to act, weakest first: the order of the strategy chart and of the equity curve above it. */
-const handsInOrder = (s) => [...s.rows].sort((a, b) => a.hand.strength - b.hand.strength || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
+const handsInOrder = (s) => [...s.rows].sort((a, b) => (a.hand.strength ?? 0) - (b.hand.strength ?? 0) || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
 function renderWhy() {
-  const s = state.survey; const told = s && state.hand ? explain(s, state.hand) : null;
+  const s = state.survey; const row = s?.byName.get(state.hand);
+  // before the river there is the hand and what it does; the reasons are a river matter for now
+  const told = !s || !state.hand ? null : s.outline ? (row ? { name: row.hand.name, strategy: row.hand.strategy, equity: row.equity, line: '', reasons: [] } : null) : explain(s, state.hand);
   if (!told) { $('why').innerHTML = ''; return; }
   const d = state.decision; const strata = strataOf(d.actions);
   const title = d.abstract ? `${pct(told.equity)}%` : cardsHtml(told.name);
   const reasons = [...told.reasons];
-  if (state.spot?.text && !d.abstract) reasons.push({ basis: 'spot', text: state.spot.text });
+  // the spot sentence is about the ranges as they start, so it stays with the street they start on
+  if (state.spot?.text && !d.abstract && !(state.nodes?.[state.node]?.round > 0)) reasons.push({ basis: 'spot', text: state.spot.text });
   $('why').innerHTML = `<h2>${title}</h2>`
     + `<div class="mix"><span class="bar">${bar(told.strategy, strata)}</span><div class="nums">${d.actions.map((a, k) => (told.strategy[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(told.strategy[k])}</span>` : '')).join('')}</div></div>`
-    + `<p class="lead">${esc(told.line)}</p>`
+    + (told.line ? `<p class="lead">${esc(told.line)}</p>` : '')
     + `<ol>${reasons.map((r) => `<li><small>${esc(r.basis)}</small><span>${esc(r.text)}</span></li>`).join('')}</ol>`;
 }
 
 const W = 560, PAD = 8;
 $('line').addEventListener('click', (ev) => {
   if (ev.target.closest('#edit')) { openEditor(); return; }
+  if (ev.target.closest('#resolve')) { openSetup({ sub: true }); return; }
+  const deal = ev.target.closest('[data-deal]'); if (deal) { state.pick = +deal.dataset.deal; render(); return; }
   if (ev.target.closest('#split')) { state.split = !state.split; remember(); render(); $('split')?.focus(); return; }
   if (ev.target.closest('#view')) { state.view = state.view === 'grid' ? 'curve' : 'grid'; remember(); render(); $('view')?.focus(); return; }
   const b = ev.target.closest('[data-go]'); if (b) go(+b.dataset.go);
@@ -297,29 +341,36 @@ window.addEventListener('pointerup', endStroke); window.addEventListener('pointe
 $('f-range').addEventListener('input', () => { draft[draft.side] = $('f-range').value; renderPaint(); });
 $('p-oop').onclick = () => showSide('oop'); $('p-ip').onclick = () => showSide('ip');
 $('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); };
-function openSetup() {
-  const c = state.config;
+function openSetup(how) {
+  // from a street's first decision: only the betting is asked, the board and the ranges are what arrived there
+  const sub = !!how?.sub; $('drawer').classList.toggle('sub', sub); $('drawer').dataset.sub = sub ? '1' : '';
+  const c = sub ? conf() : state.config;
   $('f-board').value = c.board; $('f-pot').value = c.pot; $('f-stack').value = c.stack;
-  $('f-bets').value = c.bets.map((b) => Math.round(100 * b)).join(' '); $('f-raise').value = c.raises.join(' '); $('f-max').value = c.maxRaises; $('f-allin').checked = !!c.allIn;
+  $('f-bets').value = (Array.isArray(c.bets[0]) ? c.bets : [c.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(' ')).join(' / '); $('f-raise').value = c.raises.join(' '); $('f-max').value = c.maxRaises; $('f-allin').checked = !!c.allIn;
   draft.oop = c.oop; draft.ip = c.ip; showSide(draft.side);
   $('drawer').hidden = false; $('scrim').hidden = false;
   // Focus the drawer itself, never a field: on a phone a focused field brings up the keyboard and zooms the page
   $('drawer').focus({ preventScroll: true });
 }
 const closeSetup = () => { $('drawer').hidden = true; $('scrim').hidden = true; $('f-error').textContent = ''; };
-$('open-setup').onclick = openSetup; $('board').onclick = openSetup; $('scrim').onclick = closeSetup;
+$('open-setup').onclick = () => openSetup(); $('board').onclick = () => openSetup(); $('scrim').onclick = closeSetup;
+$('state').onclick = () => { if ($('state').dataset.busy) worker.postMessage({ type: 'stop' }); };
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('drawer').hidden) closeSetup(); });
 $('drawer').addEventListener('submit', (ev) => {
   ev.preventDefault();
-  const bets = $('f-bets').value.split(/[\s,]+/).map(Number).filter((x) => x > 0).map((x) => x / 100);
+  // one list of sizes for every street, or one list a street, apart by a slash
+  const lists = $('f-bets').value.split('/').map((part) => part.split(/[\s,]+/).map(Number).filter((x) => x > 0).map((x) => x / 100)).filter((list) => list.length);
+  const bets = lists.length > 1 ? lists : lists[0] ?? [];
   const pot = Number($('f-pot').value); const stack = Number($('f-stack').value);
   const raises = $('f-raise').value.split(/[\s,x]+/i).map(Number).filter((x) => x > 1);
   const maxRaises = Math.max(0, Math.min(4, Math.round(Number($('f-max').value) || 0)));
   const board = ($('f-board').value.match(/[2-9TJQKAtjqka][shdcSHDC]/g) ?? []).map((c) => c[0].toUpperCase() + c[1].toLowerCase());
   if (!(pot > 0) || !(stack >= 0) || !bets.length) { $('f-error').textContent = 'Pot, stack and at least one bet size are needed.'; return; }
-  if (board.length !== 5) { $('f-error').textContent = 'Five board cards are needed.'; return; }
+  const betting = { bets, raises: maxRaises > 0 ? raises : [], maxRaises: raises.length ? maxRaises : 0, allIn: $('f-allin').checked };
+  if ($('drawer').dataset.sub) { state.sub = betting; closeSetup(); state.status = 'solving'; $('state').textContent = state.status; worker.postMessage({ type: 'subgame', job: state.job, id: state.node, dealt: state.dealt }); return; }
+  if (board.length < 3 || board.length > 5 || new Set(board).size !== board.length) { $('f-error').textContent = 'Three, four or five board cards are needed.'; return; }
   if ((!cellsOf(draft.oop)?.size || !cellsOf(draft.ip)?.size)) { $('f-error').textContent = 'Both ranges need hands.'; return; }
-  Object.assign(state.config, { pot, stack, bets, raises: maxRaises > 0 ? raises : [], maxRaises: raises.length ? maxRaises : 0, allIn: $('f-allin').checked, board: board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim() });
+  Object.assign(state.config, { pot, stack, ...betting, board: board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim() });
   remember(); closeSetup(); state.node = 0; state.hand = null;
   begin();
 });
@@ -355,7 +406,7 @@ const closeEditor = () => { $('editor').hidden = true; };
 function preview() {
   if (edit.busy) { edit.stale = true; return; }
   edit.busy = true; edit.stale = false;
-  worker.postMessage({ type: 'preview', id: ++edit.id, config: { board: state.config.board, oop: edit.oop, ip: edit.ip, dials: edit.dials } });
+  worker.postMessage({ type: 'preview', id: ++edit.id, config: { board: conf().board, oop: edit.oop, ip: edit.ip, dials: edit.dials } });
 }
 function onPreview(data) {
   edit.busy = false;
@@ -400,7 +451,7 @@ $('e-save').onclick = () => {
   if (!cellsOf(edit.oop)?.size || !cellsOf(edit.ip)?.size) return;
   // a new version after the one on screen; anything that came after it is dropped
   state.versions = state.versions.slice(0, state.at + 1);
-  state.versions.push({ oop: edit.oop, ip: edit.ip, dials: JSON.parse(JSON.stringify(edit.dials)), curves: new Map() });
+  state.versions.push({ id: ++versionId, oop: edit.oop, ip: edit.ip, dials: JSON.parse(JSON.stringify(edit.dials)), curves: new Map(), base: version().base, pos: { node: state.node, dealt: [...state.dealt] } });
   closeEditor(); turnTo(state.versions.length - 1);
 };
 $('e-sliders').addEventListener('input', (ev) => { const key = ev.target.dataset?.slider; if (!key) return; edit.dials[edit.who][key] = Number(ev.target.value) / 100; preview(); });

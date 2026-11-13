@@ -11,7 +11,7 @@ It sits on top of [poker-flopsolve](https://www.npmjs.com/package/poker-flopsolv
 the solving, and uses [poker-rangeman](https://www.npmjs.com/package/poker-rangeman) to describe
 the spot. It runs in the browser.
 
-River decisions only for now.
+Spots can start on the flop, the turn or the river, and are solved and walked street by street (choose the card dealt; re-solve a street on its own with more bet sizes). The reasons are written for river decisions only for now: earlier streets show the strategy without them.
 
 ## The page
 

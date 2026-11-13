@@ -95,3 +95,38 @@ test('bending the curve: lifting the middle moves weight up, and no hand gains w
   for (const i of order) { seen += lifted[i]; if (seen >= total / 2) { median = equity[i]; break; } }
   assert.ok(Math.abs(median - 0.7) < 0.04, `median ${median}`);
 });
+
+test('a flop spot is read on every street, on the cards dealt', async () => {
+  const fs = await import('poker-flopsolve');
+  const { treeOf, decisionAt, equityVs } = await import('../src/solver/flopsolve.js');
+  const { outline } = await import('../src/explain/outline.js');
+  const spot = fs.defineSpot({ board: 'Td9d6h', pot: 100, stack: 200, oop: 'AA,KK,76s,A5s,QJs', ip: 'QQ,JJ,98s,KQs,87s', betSizes: [[0.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 });
+  const run = fs.createRun(spot, {}); run.step(40);
+  const solution = run.snapshot(); const nodes = treeOf(fs, spot);
+  const flop = decisionAt(fs, solution, nodes, 0);
+  assert.equal(flop.street, 'flop');
+  assert.ok(flop.hands.every((h) => h.strength === null && h.equity >= 0 && h.equity <= 1 && h.values === null));
+  const laid = outline(flop);
+  assert.ok(Math.abs(laid.mix.reduce((t, x) => t + x, 0) - 1) < 1e-9);
+  // check, check, and a turn is dealt
+  const deal = nodes[nodes[nodes[0].edges[0].child].edges[0].child];
+  assert.equal(deal.kind, 'chance');
+  const next = deal.edges[0].child;
+  assert.equal(decisionAt(fs, solution, nodes, next, []), null);
+  // two turns that mirror each other are one stored board: the same range arrives, suits swapped
+  const [a, b] = ['2c', '2s'].map((card) => decisionAt(fs, solution, nodes, next, fs.parseCards(card)));
+  assert.equal(a.street, 'turn');
+  assert.ok(a.hands.every((h) => !h.cards.some((c) => a.board.includes(c))));
+  const weight = (d) => d.hands.reduce((t, h) => t + h.weight, 0);
+  assert.ok(Math.abs(weight(a) - weight(b)) < 1e-9);
+  // and the river under it has made hands and action values again
+  const turn = nodes[next];
+  const river = decisionAt(fs, solution, nodes, nodes[nodes[turn.edges[0].child].edges[0].child].edges[0].child, fs.parseCards('2c 7s'));
+  assert.equal(river.street, 'river');
+  assert.ok(river.hands.every((h) => h.strength > 0 && h.values));
+  // equity on a finished board against one hand is a plain comparison
+  const board = fs.parseCards('Td9d6h2c7s');
+  const eq = equityVs(fs, board, fs.parseRange('AA,54s'), fs.parseRange('KK'));
+  const held = [...eq].filter((x) => !Number.isNaN(x));
+  assert.equal(held.filter((x) => x === 1).length, 6); assert.equal(held.filter((x) => x === 0).length, 4); assert.equal(held.length, 10);
+});

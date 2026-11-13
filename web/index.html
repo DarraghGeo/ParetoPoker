@@ -19,7 +19,7 @@
       <button type="button" class="icon" id="newer" aria-label="Next version"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </nav>
     <span class="grow"></span>
-    <span class="state" id="state" aria-live="polite"></span>
+    <button type="button" class="state" id="state" aria-live="polite" aria-label="Solve state; stops a solve in progress"></button>
     <button type="button" class="icon" id="open-setup" aria-label="Setup">
       <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 4h8M13 4h1M2 8h2M7 8h7M2 12h6M11 12h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.5" cy="4" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="8" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9.5" cy="12" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
     </button>
@@ -30,6 +30,7 @@
       <div class="box">
         <div class="range" id="range"></div>
         <div class="curve" id="dist" hidden></div>
+        <div class="deal" id="deal" hidden role="group" aria-label="Card dealt"></div>
       </div>
       <div class="stripbox"><div class="strip" id="strip"></div></div>
       <div class="combos" id="combos"></div>

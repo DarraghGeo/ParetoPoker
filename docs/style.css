@@ -170,3 +170,16 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   .editor{overflow:hidden}
   .ed-body{grid-template-columns:min(520px,calc(100dvh - 120px)) minmax(0,1fr)}
 }
+
+/* flop and turn spots: the cards dealt, and choosing one */
+.board .dealt{margin-left:.35em;opacity:.75}
+.state{border:0;background:none;padding:0;cursor:default}
+.state[data-busy]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}
+.line .crumb.card{font-family:var(--sans);font-size:13px;color:var(--ink)}
+.deal:not([hidden]){flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.deal div{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
+.deal button{padding:0;aspect-ratio:3/4;font:500 12px/1 var(--sans);border:1px solid var(--line);background:var(--surface);border-radius:var(--r)}
+.deal button:disabled{opacity:.2}
+.deal button[aria-pressed="true"]{border-color:var(--ink)}
+.drawer.sub .spot-only{display:none}
+@media (max-width:600px){.deal button{font-size:10px}}
