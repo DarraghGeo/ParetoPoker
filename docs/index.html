@@ -6,7 +6,7 @@
 <title>Pareto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=f4e099e05a">
+<link rel="stylesheet" href="style.css?v=8b1445ade2">
 </head>
 <body>
 <div class="rule" id="rule"></div>
@@ -39,6 +39,13 @@
   </section>
 </main>
 <div class="scrim" id="scrim" hidden></div>
+<div class="loader" id="loader" hidden role="status" aria-live="polite">
+  <div class="card">
+    <div class="title" id="l-title"></div>
+    <div class="track"><i id="l-fill"></i></div>
+    <div class="meta"><span id="l-now"></span><span class="grow"></span><button type="button" id="l-stop">Stop</button></div>
+  </div>
+</div>
 <div class="deal pop" id="cardpick" hidden role="group" aria-label="Board card"></div>
 <section class="editor" id="editor" hidden aria-label="Edit ranges" tabindex="-1">
   <div class="ed-head">
@@ -88,6 +95,6 @@
   <p class="error" id="f-error" role="alert"></p>
   <button type="submit" class="primary">Solve</button>
 </form>
-<script type="module" src="app.js?v=f4e099e05a"></script>
+<script type="module" src="app.js?v=8b1445ade2"></script>
 </body>
 </html>

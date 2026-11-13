@@ -39,6 +39,13 @@
   </section>
 </main>
 <div class="scrim" id="scrim" hidden></div>
+<div class="loader" id="loader" hidden role="status" aria-live="polite">
+  <div class="card">
+    <div class="title" id="l-title"></div>
+    <div class="track"><i id="l-fill"></i></div>
+    <div class="meta"><span id="l-now"></span><span class="grow"></span><button type="button" id="l-stop">Stop</button></div>
+  </div>
+</div>
 <div class="deal pop" id="cardpick" hidden role="group" aria-label="Board card"></div>
 <section class="editor" id="editor" hidden aria-label="Edit ranges" tabindex="-1">
   <div class="ed-head">

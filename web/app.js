@@ -36,8 +36,8 @@ const worker = new Worker(new URL('./worker.js', import.meta.url));
 worker.onmessage = ({ data }) => {
   if (data.type === 'preview') { onPreview(data); return; }
   if (data.job !== state.job) return;
-  if (data.type === 'progress') { state.status = `solving ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; }
-  if (data.type === 'error') { state.status = ''; $('state').textContent = ''; delete $('state').dataset.busy; openSetup(state.sub ? { sub: true } : undefined); $('f-error').textContent = data.message; }
+  if (data.type === 'progress') { loading(data); state.status = `solving ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; }
+  if (data.type === 'error') { loaded(); state.status = ''; $('state').textContent = ''; delete $('state').dataset.busy; openSetup(state.sub ? { sub: true } : undefined); $('f-error').textContent = data.message; }
   if (data.type === 'subgame') {
     // The street re-solved on its own becomes the next version: the cards dealt, the ranges as they arrive
     state.versions = state.versions.slice(0, state.at + 1);
@@ -45,7 +45,7 @@ worker.onmessage = ({ data }) => {
     state.sub = null; turnTo(state.versions.length - 1);
   }
   if (data.type === 'solved') {
-    state.nodes = data.nodes; state.status = `${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    loaded(); state.nodes = data.nodes; state.status = `${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
     // back where this version was last looked at, if that place exists in it
     const pos = version().pos ?? { node: 0, dealt: [] }; const there = state.nodes[pos.node];
     const ok = there?.kind === 'decision' && pos.dealt.length >= there.round;
@@ -53,6 +53,21 @@ worker.onmessage = ({ data }) => {
   }
   if (data.type === 'decision') show(data.decision);
 };
+// ---- a solve that takes a while says so: what is being solved, how far along, and a way to stop ----
+const load = { started: 0, first: null, timer: null, last: null };
+function loading(data) {
+  if (!load.started) { load.started = Date.now(); load.first = null; load.timer = setTimeout(() => { $('loader').hidden = false; }, 350); }
+  if (data.exploit < Infinity && load.first == null) load.first = Math.max(data.exploit, data.target * 1.01);
+  // accuracy closes in on the target by ratio, so the bar moves on a log scale
+  const done = load.first == null ? 0 : Math.min(1, Math.max(0, Math.log(load.first / data.exploit) / Math.log(load.first / data.target)));
+  load.last = Math.max(load.last ?? 0, done);
+  $('l-title').innerHTML = `Solving the ${data.street} <span>${cardsHtml(conf().board)}</span>`;
+  $('l-fill').style.width = `${(100 * load.last).toFixed(1)}%`;
+  const seconds = Math.round((Date.now() - load.started) / 1000);
+  $('l-now').textContent = data.exploit < Infinity ? `${data.exploit.toFixed(2)}% of pot, aiming for ${data.target}%  \u00b7  ${data.iterations} iterations  \u00b7  ${seconds}s` : 'Building the tree';
+}
+function loaded() { clearTimeout(load.timer); load.started = 0; load.last = null; $('loader').hidden = true; }
+$('l-stop').onclick = () => worker.postMessage({ type: 'stop' });
 const version = () => state.versions[state.at];
 let versionId = 0;
 /** The spot of the version on screen: the setup, with what a re-solved street changes. */

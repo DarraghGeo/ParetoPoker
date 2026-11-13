@@ -51,10 +51,12 @@ self.onmessage = async ({ data }) => {
       const target = river ? 0.05 : 0.3; const patience = river ? 8000 : board.length === 4 ? 45000 : 180000;
       const chunk = river ? (warm ? 10 : 50) : board.length === 4 ? 10 : 2;
       let exploit = Infinity;
+      self.postMessage({ type: 'progress', job: data.job, iterations: 0, exploit: Infinity, target, street: ['flop', 'turn', 'river'][board.length - 3] });
+      await new Promise((resolve) => setTimeout(resolve));
       while (mine === job && !halt && exploit > target && run.completed < 3000 && Date.now() - started < patience) {
         run.step(chunk);
         exploit = run.exploitabilityPercent();
-        self.postMessage({ type: 'progress', job: data.job, iterations: run.completed, exploit });
+        self.postMessage({ type: 'progress', job: data.job, iterations: run.completed, exploit, target, street: ['flop', 'turn', 'river'][board.length - 3] });
         await new Promise((resolve) => setTimeout(resolve));
       }
       if (mine !== job) return;
