@@ -216,8 +216,7 @@ function renderWhy() {
   $('why').innerHTML = `<h2>${title}</h2>`
     + `<div class="mix"><span class="bar">${bar(told.strategy, strata)}</span><div class="nums">${d.actions.map((a, k) => (told.strategy[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(told.strategy[k])}</span>` : '')).join('')}</div></div>`
     + `<p class="lead">${esc(told.line)}</p>`
-    + (state.detail ? `<ol>${reasons.map((r) => `<li><small>${esc(r.basis)}</small><span>${esc(r.text)}</span></li>`).join('')}</ol>` : '')
-    + `<button type="button" class="more" id="more" aria-expanded="${state.detail}">${state.detail ? 'Less' : 'Why'}</button>`;
+    + `<ol>${reasons.map((r) => `<li><small>${esc(r.basis)}</small><span>${esc(r.text)}</span></li>`).join('')}</ol>`;
 }
 
 const W = 560, PAD = 8;
@@ -237,7 +236,6 @@ $('range').addEventListener('click', (ev) => {
   if (hand) { state.hand = hand.dataset.hand; render(); }
 });
 $('combos').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (b) { state.hand = b.dataset.hand; state.cell = cellOf(state.hand); render(); } });
-$('why').addEventListener('click', (ev) => { if (ev.target.id === 'more') { state.detail = !state.detail; remember(); renderWhy(); $('more')?.focus(); } });
 // ---- setup: the ranges are painted on a chart or typed, whichever is at hand ----
 const draft = { side: 'oop', oop: '', ip: '' };
 const cellName = (i, j) => (i === j ? RANKS[i] + RANKS[i] : i < j ? `${RANKS[i]}${RANKS[j]}s` : `${RANKS[j]}${RANKS[i]}o`);

@@ -41,7 +41,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .cell.out span{color:var(--ink-3);opacity:.5}
 .cell[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--ink);z-index:1}
 @media (max-width:600px){.cell span{display:none}.range{grid-template-columns:repeat(5,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 5px repeat(4,auto) 5px repeat(4,auto)}}
-.combos{display:flex;flex-wrap:wrap;gap:4px;min-height:30px}
+.combos{display:flex;flex-wrap:nowrap;gap:4px;min-height:40px;overflow-x:auto;scrollbar-width:none}
+.combos::-webkit-scrollbar,.why::-webkit-scrollbar,.drawer::-webkit-scrollbar,.editor::-webkit-scrollbar{display:none}
+.combos button{flex:none}
+.drawer,.editor,.why{scrollbar-width:none}
 .combos button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
 .combos button[aria-pressed="true"]{border-color:var(--ink)}
 .bar{display:flex;gap:2px;height:6px;width:100%}.bar i{display:block;height:100%}
@@ -56,7 +59,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .why ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
 .why li{display:grid;grid-template-columns:52px 1fr;gap:10px;font:400 14px/21px var(--sans)}
 .why li small{font:400 11px/21px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
-.why .more{align-self:flex-start;border-color:transparent;padding:4px 0;color:var(--ink-3)}
+
 .curve svg{display:block;width:100%;height:auto;touch-action:none}
 .curve .axis{stroke:var(--line-strong);stroke-width:1}.curve .gridl{stroke:var(--line);stroke-width:1}
 /* Both ranges in ink: the player to act at full strength, the other faded */
@@ -140,3 +143,29 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:8px 12px}
 .error{margin:0;color:var(--danger);font:400 12px/16px var(--mono);min-height:16px}
 @media (prefers-reduced-motion:no-preference){.drawer{animation:in .16s ease-out}@keyframes in{from{transform:translateX(16px);opacity:0}}}
+
+/* Screens with room (a tablet on its side, a laptop, a monitor): everything fits the window, and
+   nothing scrolls but the explanation, inside its own box. The chart area is as big as the height allows. */
+@media (min-width:900px) and (min-height:520px){
+  html,body{height:100%;overflow:hidden}
+  main{--side:min(560px,calc(100dvh - 318px));height:100dvh;padding-top:14px;padding-bottom:14px;gap:18px;max-width:none}
+  .stage{flex:1;min-height:0;grid-template-columns:var(--side) minmax(0,1fr);gap:56px;justify-content:start}
+  .left{gap:12px;width:var(--side)}
+  .line{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:4px}
+  .line::-webkit-scrollbar{display:none}
+  .line > *{flex:none}
+  .line .act{padding-left:7px;padding-right:7px}
+  .line .view{position:sticky;background:var(--bg);padding:6px 5px}
+  #edit{right:52px}#split{right:26px}#view{right:0}
+  .box{width:var(--side);height:var(--side);aspect-ratio:auto}
+  .curve svg{height:100%}
+  #dist{flex:1;min-height:0}
+  .stripbox{height:132px;flex:none}
+  .rows{height:132px;gap:2px}
+  .rows .row{flex:1 1 0;min-height:0;max-height:24px}
+  .rows .strip{height:100%}
+  .rows .name{top:50%;transform:translateY(-50%)}
+  .why{overflow-y:auto;min-height:0;max-height:100%;padding-bottom:24px}
+  .editor{overflow:hidden}
+  .ed-body{grid-template-columns:min(520px,calc(100dvh - 120px)) minmax(0,1fr)}
+}

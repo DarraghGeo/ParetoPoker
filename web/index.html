@@ -12,6 +12,7 @@
 <div class="rule" id="rule"></div>
 <main>
   <header>
+    <div class="board" id="board"></div>
     <nav class="versions" id="versions" aria-label="Versions" hidden>
       <button type="button" class="icon" id="older" aria-label="Previous version"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
       <span id="version"></span>
@@ -25,13 +26,12 @@
   </header>
   <section class="stage">
     <div class="left">
-      <div class="board" id="board"></div>
       <nav class="line" id="line" aria-label="Line"></nav>
       <div class="box">
         <div class="range" id="range"></div>
         <div class="curve" id="dist" hidden></div>
       </div>
-      <div class="strip" id="strip"></div>
+      <div class="stripbox"><div class="strip" id="strip"></div></div>
       <div class="combos" id="combos"></div>
     </div>
     <aside class="why" id="why" aria-live="polite"></aside>
