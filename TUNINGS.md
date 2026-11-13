@@ -62,6 +62,40 @@ Out of position, value hands by equity against his range, average loss as a shar
 | 0.8-0.9 | 1.50 | 3.48 | 5.81 | 0.94 | 1.61 | 1.92 |
 | 0.9-1.0 | 0.28 | 0.82 | 0.44 | 0.43 | 0.90 | 1.40 |
 
+The diagnosis now runs this test as its step 3, at every decision it covers and for both seats.
+Every hand of a group is given the group's average strategy; loss as a share of the pot:
+
+| Role | Rivers (R12): whole role | within 10 points of equity | within 2 points | Turns (D-T8): whole role | within 10 points | within 2 points |
+|---|---|---|---|---|---|---|
+| value bets | 9.5 | 1.8 | 0.7 | 10.0 | 3.6 | 1.4 |
+| bluff bets | 2.4 | 0.5 | 0.1 | 9.3 | 6.0 | 3.4 |
+| calls | 22.8 | 2.3 | 0.9 | 36.2 | 5.9 | 2.2 |
+
+Hands of the same equity are close to interchangeable only for river bluffs. On the turn, bluffs
+within 2 points of equity of each other still cost 3.4% when mixed: equity does not make turn
+hands twins.
+
+A first version of this step reported losses near zero. The bridge's `reset` kept earlier
+locks, and the solver's best response treats the responder's locked nodes as fixed, so once
+both seats had been pinned in one session nothing could be exploited. `reset` now rebuilds the
+game. Results recorded before this were not affected: each used one seat per solver.
+
+## Solver precision
+
+`bin/compare.js` and `SolverMatch` stop solving at 0.3% of the pot (at most 300 iterations in
+`compare.js`); the diagnosis and the interchange test at 0.1%. Measured on one river, two turns
+and one flop tree at targets of 0.1%, 0.3%, 1% and 5%:
+
+- Solving is a small part of a run: 0.8 of 3.1 seconds on a turn tree, 3.6 of 42 on the flop.
+  Stopping at 1% saves about 0.4 seconds a turn tree.
+- The whole-engine result barely moves: 8.06, 8.04, 7.92, 7.49 on a turn.
+- Hand selection alone moves a lot, and not in one direction: 26.4, 30.5, 17.2, 20.1 on the same
+  turn, and 13.8 to 18.5 in one seat between 0.03% and 0.3%. It is given the solver's ranges and
+  frequencies, which keep changing long after the value has settled. Napkin beat equity in all 16
+  seat-by-precision cells measured, so the order of two selectors holds; the level does not.
+- The share of first-decision hands the solver plays pure falls from 38% to 14% on a turn between
+  0.1% and 5%: the diagnosis loses its musts and can'ts.
+
 Value hands are **not** interchangeable across the value range: mixing them evenly costs 4-5% of
 the pot, and betting the strongest first (what both selectors do) costs 8-9%. Within a band of
 10 points of equity they are closer to it (0.1-1.5%). Which hand takes which action and size

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { ParetoEngine, RangeStrategist, SolverMatch } from '../src/index.js';
+import { ParetoEngine, RangeStrategist, SolverBridge, SolverMatch } from '../src/index.js';
 
 const binary = fileURLToPath(new URL('../solver-bridge/target/release/solver-bridge', import.meta.url));
 const skip = existsSync(binary) ? false : 'solver bridge not built (npm run build:solver)';
@@ -75,4 +75,24 @@ test('with the solver deciding everywhere, nothing is lost; hand selection can b
   // Asked only on the first decision, it loses no more than when asked everywhere
   const first = await new SolverMatch(game).play('oop', { iterations: 1000, target: 0.001, ranges: 'solver', frequencies: 'solver', where: (d) => d.depth === 0 });
   assert.ok(first.loss.exploited <= selection.loss.exploited + 0.01);
+});
+
+test('reset clears every lock, so a best response is free again', { skip }, async () => {
+  const bridge = new SolverBridge();
+  try {
+    await bridge.init(polar);
+    await bridge.solve({ iterations: 2000, target: 0.0005 });
+    await bridge.snapshot(1);
+    await bridge.reset();
+    await bridge.restore(1); // in position pinned to its equilibrium strategy
+    await bridge.reset();
+    // Out of position now never bets (2 hands x 6 combos, check then all-in). Free again, in
+    // position checks back and wins the pot against QQ, half of the range. Still pinned to its
+    // equilibrium, it would bet into the checked aces and win less.
+    await bridge.lock([], [...Array(12).fill(1), ...Array(12).fill(1e-9)]);
+    const [, inPosition] = await bridge.bestResponseEv();
+    assert.ok(Math.abs(inPosition - 50) < 0.5, `in position gets ${inPosition}`);
+  } finally {
+    bridge.close();
+  }
 });

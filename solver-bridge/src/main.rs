@@ -11,6 +11,7 @@ type Snapshot = Vec<(Vec<usize>, Vec<f32>)>;
 
 struct Bridge {
     game: Option<PostFlopGame>,
+    config: Option<(CardConfig, TreeConfig)>,
     snapshots: [Snapshot; 2],
 }
 
@@ -88,6 +89,7 @@ impl Bridge {
         };
         let starting_pot = tree_config.starting_pot;
         let effective_stack = tree_config.effective_stack;
+        self.config = Some((card_config.clone(), tree_config.clone()));
         let action_tree = ActionTree::new(tree_config)?;
         let mut game = PostFlopGame::with_config(card_config, action_tree)?;
         let (memory, _) = game.memory_usage();
@@ -177,9 +179,13 @@ impl Bridge {
         Ok(json!({"exploitability": exploitability}))
     }
 
-    /// Clears every lock and any solution.
+    /// Clears every lock and any solution. The game is built again: re-allocating its memory
+    /// alone keeps the locks, and a best response then treats the responder's locked nodes as fixed.
     fn reset(&mut self) -> Result<Value, String> {
-        self.game()?.allocate_memory(false);
+        let (card_config, tree_config) = self.config.clone().ok_or("init has not been called")?;
+        let mut game = PostFlopGame::with_config(card_config, ActionTree::new(tree_config)?)?;
+        game.allocate_memory(false);
+        self.game = Some(game);
         Ok(json!({}))
     }
 
@@ -271,7 +277,7 @@ fn collect(game: &mut PostFlopGame, player: usize, history: &mut Vec<usize>, out
 }
 
 fn main() {
-    let mut bridge = Bridge { game: None, snapshots: [Vec::new(), Vec::new()] };
+    let mut bridge = Bridge { game: None, config: None, snapshots: [Vec::new(), Vec::new()] };
     let stdin = io::stdin();
     let mut stdout = io::stdout().lock();
     for line in stdin.lock().lines() {

@@ -225,7 +225,9 @@ solver's own ranges:
 
 1. Is the hand bluff or value? (Does it beat half of the range that continues.)
 2. Is it a must, a can't or optional? (The solver takes the action 85% or more, 15% or less, or mixes.)
-3. Is it interchangeable? (How much of each role the solver mixes.)
+3. Is it interchangeable? (Tested, not inferred: inside the solver's own strategy every hand of a
+   group is given the group's average strategy at one decision, and the loss to the best response
+   is measured, for the whole role and for twins within 10 and 2 points of equity.)
 4. What makes hands twins? (Characteristics measured on every hand.)
 5. How do the characteristics rank? (How well each separates musts from can'ts: within a
    decision, among twins of the same equity, and pooled across decisions.)

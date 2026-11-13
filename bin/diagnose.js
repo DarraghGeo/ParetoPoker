@@ -3,7 +3,8 @@
 // turn or flop tree, in six steps:
 //   1. Is the hand bluff or value?         (does it beat half of the range that continues)
 //   2. Is it a must, a can't or optional?  (the solver takes the action >= 85%, <= 15%, or mixes)
-//   3. Is it interchangeable with others?  (how much of each role the solver mixes)
+//   3. Is it interchangeable with others?  (tested: every hand of a group is given the group's average
+//                                           strategy inside the solver's own, and the best response is measured)
 //   4. What makes hands twins?             (characteristics measured on every hand)
 //   5. How do the characteristics rank?    (how well each separates musts from can'ts)
 //   6. Is it specific to the spot?         (does what the solver does move with range advantage,
@@ -34,6 +35,7 @@ const { values: args } = parseArgs({
     hands: { type: 'string', default: '8' },
     out: { type: 'string' },
     rows: { type: 'string' },
+    'no-interchange': { type: 'boolean', default: false },
   },
 });
 const MUST = 0.85;
@@ -61,6 +63,9 @@ const bridge = new SolverBridge();
 const samples = { 'value bet': [], 'bluff bet': [], 'call': [] };
 /** One row per opening decision: how the spot is defined (poker-rangeman) and what the solver does in it. */
 const spots = [];
+/** Step 3: what it costs to treat a group of hands as interchangeable, per role and group width. */
+const WIDTHS = { 'the whole role': () => 0, 'within 10 points of equity': (e) => Math.floor(e * 10), 'within 2 points of equity': (e) => Math.round(e * 50) };
+const interchange = {};
 
 for (const stack of args.stack.split(',').map(Number)) for (const board of boardList) {
   const sizes = { bet: args.bet, raise: args.raise };
@@ -68,7 +73,8 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
   const both = { oop: sizes, ip: sizes };
   const info = await bridge.init({ oopRange: args.oop, ipRange: args.ip, board, pot, stack, betSizes: { flop: both, turn: both, river: both } });
   const node = (seat) => `${board} ${seat} ${stack}`;
-  await bridge.solve({ iterations: 1000, target: 0.002 });
+  // Tight: which hands are musts and can'ts is read off the strategy, which settles later than the value
+  await bridge.solve({ iterations: 3000, target: 0.001 });
   const ids = info.hands.map((hands) => hands.map(([a, b]) => cards.comboId(a, b)));
   const spread = (player, values) => {
     const out = new Float64Array(cards.NUM_COMBOS);
@@ -86,6 +92,34 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
     };
   };
   const boardIds = cards.parseCards(board);
+  const gto = await bridge.currentEv();
+  const jobs = [{ seat: 0 }, { seat: 1 }]; // the solver's own strategy, for the floor
+  // Gives every hand of a group the group's average strategy at one decision, the rest untouched
+  const mixEvenly = (role, at, member, equityOf) => {
+    if (args['no-interchange']) return;
+    const me = at.player;
+    const weights = at.ranges[me];
+    for (const [width, key] of Object.entries(WIDTHS)) {
+      const groups = new Map();
+      for (let i = 0; i < cards.NUM_COMBOS; i++) {
+        if (!(weights[i] > 1e-4) || !member(i)) continue;
+        const k = key(equityOf[i]);
+        if (!groups.has(k)) groups.set(k, { weight: 0, sum: at.strategy.map(() => 0), hands: [] });
+        const group = groups.get(k);
+        group.weight += weights[i];
+        at.strategy.forEach((probabilities, a) => { group.sum[a] += weights[i] * probabilities[i]; });
+        group.hands.push(i);
+      }
+      const mixed = at.strategy.map((probabilities) => Float64Array.from(probabilities));
+      for (const group of groups.values()) {
+        for (const i of group.hands) group.sum.forEach((total, a) => { mixed[a][i] = total / group.weight; });
+      }
+      const n = ids[me].length;
+      const flat = new Array(mixed.length * n);
+      mixed.forEach((probabilities, a) => ids[me].forEach((id, h) => { flat[a * n + h] = Math.max(probabilities[id], 1e-9); }));
+      jobs.push({ role, width, seat: me, history: at.history, flat });
+    }
+  };
 
   // The two opening decisions (OOP first to act, IP after a check) and the answer to each bet
   for (const history of [[], [0]]) {
@@ -135,6 +169,9 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
       });
     }
 
+    mixEvenly('value bet', open, (i) => versusContinues[i] > 0.5, context.strength);
+    mixEvenly('bluff bet', open, (i) => !(versusContinues[i] > 0.5), context.strength);
+
     // Step 6: how the spot is defined, next to what the solver does in it
     const asRange = (weights) => Object.fromEntries([...weights.keys()].filter((i) => weights[i] > 1e-4).map((i) => [cards.comboName(i), Math.min(1, weights[i])]));
     const report = await new RangeManager(asRange(hero)).against(asRange(villain), board.match(/.{2}/g)).compare();
@@ -180,6 +217,7 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
       const blocksBluffs = blocked(hisBluffs);
       const callScores = Object.fromEntries(Object.entries(selectors).map(([name, s]) => [name, plain(s.call(callContext))]));
       const foldIndex = reply.node.actions.findIndex((a) => a.type === 'fold');
+      mixEvenly('call', reply, () => true, callContext.strength);
       const callForms = handFeatures({ equity, board: boardIds, hero: range, villain: bettor, pot: pot + 2 * bet.to, behind: stack - bet.to });
       const callClasses = classifyHands(boardIds, range);
       for (let i = 0; i < cards.NUM_COMBOS; i++) {
@@ -201,6 +239,21 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
       }
     }
   }
+
+  // Step 3, measured: lock each reassignment into the solver's own strategy and best-respond to it
+  if (!args['no-interchange']) {
+    await bridge.snapshot(0);
+    await bridge.snapshot(1);
+    const floor = [0, 0];
+    for (const job of jobs) {
+      await bridge.reset();
+      await bridge.restore(job.seat);
+      if (job.flat) await bridge.lock(job.history, job.flat);
+      const loss = (gto[job.seat] - (pot - (await bridge.bestResponseEv())[1 - job.seat])) / pot;
+      if (!job.flat) floor[job.seat] = loss;
+      else ((interchange[job.role] ??= {})[job.width] ??= []).push({ seat: POSITIONS[job.seat], loss: loss - floor[job.seat] });
+    }
+  }
 }
 bridge.close();
 
@@ -212,7 +265,20 @@ for (const [role, rows] of Object.entries(samples)) {
   const cants = rows.filter((r) => r.frequency <= CANT);
   const share = (set) => set.reduce((t, r) => t + r.weight, 0) / total;
   console.log(`\n=== ${role}: ${rows.length} hands over ${new Set(rows.map((r) => r.node)).size} decisions`);
-  console.log(`  step 2-3  must ${percent(share(musts))}, can't ${percent(share(cants))}, optional (interchangeable) ${percent(1 - share(musts) - share(cants))}`);
+  console.log(`  step 2    must ${percent(share(musts))}, can't ${percent(share(cants))}, optional (the solver mixes) ${percent(1 - share(musts) - share(cants))}`);
+  if (interchange[role]) {
+    console.log('  step 3    interchange test: every hand given its group\'s average strategy at one decision, inside the solver\'s');
+    console.log('            own strategy. Loss to the best response as a share of the pot (0 = the hands are interchangeable):');
+    summary.interchange ??= {};
+    summary.interchange[role] = {};
+    for (const [width, results] of Object.entries(interchange[role])) {
+      const average = (set) => set.reduce((t, x) => t + x.loss, 0) / (set.length || 1);
+      const bySeat = Object.fromEntries(POSITIONS.map((seat) => [seat, average(results.filter((x) => x.seat === seat))]));
+      const worst = Math.max(...results.map((x) => x.loss));
+      summary.interchange[role][width] = { average: average(results), ...bySeat, worst, decisions: results.length };
+      console.log(`            ${width.padEnd(28)} ${(100 * average(results)).toFixed(2).padStart(5)}% on average (out of position ${(100 * bySeat.oop).toFixed(2)}%, in position ${(100 * bySeat.ip).toFixed(2)}%), ${(100 * worst).toFixed(2)}% at worst`);
+    }
+  }
   console.log('  step 4-5  characteristic            separates  twins  pooled    must   can\'t');
   console.log('            (separates: a must is above a can\'t from the same decision; twins: the same, among hands within');
   console.log('             2 points of equity; pooled: across every decision. 1.00 = always above, 0.00 = always below, 0.50 = no use)');
@@ -227,7 +293,8 @@ for (const [role, rows] of Object.entries(samples)) {
   })).sort((a, b) => Math.abs(b.auc - 0.5) - Math.abs(a.auc - 0.5));
   const two = (x) => (Number.isNaN(x) ? '  - ' : x.toFixed(2));
   for (const f of features) console.log(`            ${f.name.padEnd(30)} ${two(f.auc)}     ${two(f.twin)}   ${two(f.pooled)}    ${f.must.toFixed(2).padStart(5)}  ${f.cant.toFixed(2).padStart(5)}`);
-  summary[role] = Object.fromEntries(features.map((f) => [f.name, { separates: f.auc, twins: f.twin, pooled: f.pooled, must: f.must, cant: f.cant }]));
+  summary.characteristics ??= {};
+  summary.characteristics[role] = Object.fromEntries(features.map((f) => [f.name, { separates: f.auc, twins: f.twin, pooled: f.pooled, must: f.must, cant: f.cant }]));
   console.log('  selectors (the order each would fill in, on the solver\'s ranges)');
   for (const name of Object.keys(selectors)) {
     const score = (r) => (Number.isNaN(r.scores[name]) ? -Infinity : r.scores[name]);
@@ -300,7 +367,7 @@ if (args.rows) {
   console.log(`\n  hands written to ${args.rows}`);
 }
 if (args.out) {
-  writeFileSync(args.out, `${JSON.stringify({ settings: { ...args, boards: boardList.join(','), out: undefined }, characteristics: summary, spots, correlations }, null, 1)}\n`);
+  writeFileSync(args.out, `${JSON.stringify({ settings: { ...args, boards: boardList.join(','), out: undefined }, ...summary, spots, correlations }, null, 1)}\n`);
   console.log(`\n  written to ${args.out}`);
 }
 

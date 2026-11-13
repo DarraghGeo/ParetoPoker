@@ -8,65 +8,137 @@
   "bet": "33%,75%,150%",
   "raise": "2.5x",
   "hands": "8",
+  "no-interchange": false,
   "boards": "Td9d6hQc7s,Ks7h2d5c9s,AhJh8c3d2h,8s8d4c2hKd,QsJd6c3h2s,Ac9c5d5hTs,7h6h5c2dKs,KdQd4s9h3c,Jc8c3c6dAh,Ts7s4d2hQh,AdKh7c7d2s,9s8h3d2cJd"
+ },
+ "interchange": {
+  "value bet": {
+   "the whole role": {
+    "average": 0.09531967480977373,
+    "oop": 0.0751679229736328,
+    "ip": 0.11547142664591471,
+    "worst": 0.18600494384765626,
+    "decisions": 24
+   },
+   "within 10 points of equity": {
+    "average": 0.017813385327657066,
+    "oop": 0.020660810470581055,
+    "ip": 0.014965960184733075,
+    "worst": 0.06788639068603516,
+    "decisions": 24
+   },
+   "within 2 points of equity": {
+    "average": 0.007342395782470702,
+    "oop": 0.008127892812093099,
+    "ip": 0.006556898752848307,
+    "worst": 0.02630100250244141,
+    "decisions": 24
+   }
+  },
+  "bluff bet": {
+   "the whole role": {
+    "average": 0.02437392075856527,
+    "oop": 0.021824973424275713,
+    "ip": 0.026922868092854813,
+    "worst": 0.05631828308105469,
+    "decisions": 24
+   },
+   "within 10 points of equity": {
+    "average": 0.0046757443745930995,
+    "oop": 0.0035644086201985677,
+    "ip": 0.0057870801289876305,
+    "worst": 0.028591880798339842,
+    "decisions": 24
+   },
+   "within 2 points of equity": {
+    "average": 0.0013285271326700851,
+    "oop": 0.001160586675008138,
+    "ip": 0.0014964675903320313,
+    "worst": 0.005854606628417969,
+    "decisions": 24
+   }
+  },
+  "call": {
+   "the whole role": {
+    "average": 0.2281625208173479,
+    "oop": 0.14102885988023542,
+    "ip": 0.3204216912213494,
+    "worst": 0.3868037414550781,
+    "decisions": 70
+   },
+   "within 10 points of equity": {
+    "average": 0.023389081682477674,
+    "oop": 0.014079496595594617,
+    "ip": 0.03324628942153032,
+    "worst": 0.1195290756225586,
+    "decisions": 70
+   },
+   "within 2 points of equity": {
+    "average": 0.008906695229666573,
+    "oop": 0.0031386205885145396,
+    "ip": 0.01501406837912167,
+    "worst": 0.07338939666748047,
+    "decisions": 70
+   }
+  }
  },
  "characteristics": {
   "value bet": {
    "equity vs his range": {
-    "separates": 0.8397249404919334,
-    "twins": 0.7843137254901961,
-    "pooled": 0.7296024408776043,
-    "must": 0.8696327472415941,
-    "cant": 0.7946089195633251
+    "separates": 0.8317872603586889,
+    "twins": 0.6881720430107527,
+    "pooled": 0.7084781123782371,
+    "must": 0.8685384795470743,
+    "cant": 0.8026863053389386
    },
    "equity spread": {
-    "separates": 0.8389314996032795,
-    "twins": 0.7058823529411765,
-    "pooled": 0.7345353433518902,
-    "must": 0.437034339012478,
-    "cant": 0.22974830277933786
+    "separates": 0.8315623770169225,
+    "twins": 0.7043010752688172,
+    "pooled": 0.7113873049813891,
+    "must": 0.4345018514156237,
+    "cant": 0.24482319616124634
    },
    "equity vs his calls": {
-    "separates": 0.8378074583443533,
-    "twins": 0.6339869281045751,
-    "pooled": 0.7450146198398174,
-    "must": 0.7649442138394738,
-    "cant": 0.6476791217980445
-   },
-   "blocks his calls": {
-    "separates": 0.6445054218460725,
-    "twins": 0.6470588235294118,
-    "pooled": 0.6201901613947534,
-    "must": 0.13536694826810886,
-    "cant": 0.10525872991336739
+    "separates": 0.8305504019789735,
+    "twins": 0.8225806451612904,
+    "pooled": 0.7315400530609012,
+    "must": 0.7676171390669839,
+    "cant": 0.6593526282462713
    },
    "blocks his folds": {
-    "separates": 0.35896588204178786,
-    "twins": 0.738562091503268,
-    "pooled": 0.36967203663681597,
-    "must": 0.055193855013109236,
-    "cant": 0.08085492182599681
+    "separates": 0.3532073986619441,
+    "twins": 0.543010752688172,
+    "pooled": 0.37536132889839235,
+    "must": 0.054480945141448134,
+    "cant": 0.07840340806370256
    },
    "unblocks his folds": {
-    "separates": 0.6410341179582121,
-    "twins": 0.26143790849673204,
-    "pooled": 0.630327963363184,
-    "must": -0.055193855013109236,
-    "cant": -0.08085492182599681
+    "separates": 0.6467926013380558,
+    "twins": 0.45698924731182794,
+    "pooled": 0.6246386711016076,
+    "must": -0.054480945141448134,
+    "cant": -0.07840340806370256
    },
-   "high card rank": {
-    "separates": 0.6261571012959535,
-    "twins": 0.6928104575163399,
-    "pooled": 0.5385053172460893,
-    "must": 9.466729147141518,
-    "cant": 9.482649842271293
+   "blocks his calls": {
+    "separates": 0.62081857536403,
+    "twins": 0.3763440860215054,
+    "pooled": 0.6007179555713946,
+    "must": 0.13626258205847572,
+    "cant": 0.11059031514253025
    },
    "equity slope": {
-    "separates": 0.40739883628669665,
-    "twins": 0.630718954248366,
-    "pooled": 0.3680193590922395,
-    "must": 0.8930895407110617,
-    "cant": 0.9792955880613367
+    "separates": 0.4155000843312532,
+    "twins": 0.4166666666666667,
+    "pooled": 0.37934460877484755,
+    "must": 0.8932030551696222,
+    "cant": 0.970187497706835
+   },
+   "high card rank": {
+    "separates": 0.5785967279473773,
+    "twins": 0.47580645161290325,
+    "pooled": 0.5051650233626356,
+    "must": 9.57336956521739,
+    "cant": 9.78415300546448
    },
    "has a pair": {
     "separates": 0.5,
@@ -78,125 +150,125 @@
   },
   "bluff bet": {
    "equity spread": {
-    "separates": 0.9721787468292946,
-    "twins": 0.4632352941176471,
-    "pooled": 0.9641787179049003,
-    "must": 0.7037218454692163,
-    "cant": 0.13501324936120712
+    "separates": 0.9578309078309079,
+    "twins": 0.44082125603864736,
+    "pooled": 0.9466251058262141,
+    "must": 0.6795380557442964,
+    "cant": 0.13967402780483668
    },
    "equity vs his range": {
-    "separates": 0.0964164283015813,
-    "twins": 0.6433823529411765,
-    "pooled": 0.08556334643482719,
-    "must": 0.08629273149021242,
-    "cant": 0.3868742430090941
+    "separates": 0.10908985908985909,
+    "twins": 0.5471014492753623,
+    "pooled": 0.10412969621004717,
+    "must": 0.097319609371464,
+    "cant": 0.3801925429989607
    },
    "equity vs his calls": {
-    "separates": 0.13165848129958443,
-    "twins": 0.6029411764705882,
-    "pooled": 0.11780597150425086,
-    "must": 0.03280962473038545,
-    "cant": 0.18359368406413643
+    "separates": 0.1402055902055902,
+    "twins": 0.5640096618357487,
+    "pooled": 0.1422018449494783,
+    "must": 0.04259725567871333,
+    "cant": 0.18306268938530723
    },
    "has a pair": {
-    "separates": 0.22636137945922608,
+    "separates": 0.24000924000924,
     "twins": 0.5,
-    "pooled": 0.24162376639466826,
-    "must": 0.0702247191011236,
-    "cant": 0.5869771863117871
+    "pooled": 0.2546684478455432,
+    "must": 0.08685446009389672,
+    "cant": 0.5775175644028103
    },
    "blocks his calls": {
-    "separates": 0.2906524906902693,
-    "twins": 0.5992647058823529,
-    "pooled": 0.2828093625838424,
-    "must": 0.06074020428132115,
-    "cant": 0.11033739199526114
+    "separates": 0.28101178101178104,
+    "twins": 0.5096618357487923,
+    "pooled": 0.27761102131917187,
+    "must": 0.05847254809198313,
+    "cant": 0.1091052975987459
    },
    "high card rank": {
-    "separates": 0.4081709752280209,
-    "twins": 0.4889705882352941,
-    "pooled": 0.3828462105353099,
-    "must": 7.643258426966292,
-    "cant": 8.823669201520913
-   },
-   "unblocks his folds": {
-    "separates": 0.5440255815208592,
-    "twins": 0.6636029411764706,
-    "pooled": 0.4978325127098731,
-    "must": -0.12283944558525692,
-    "cant": -0.12293587958886636
+    "separates": 0.39066759066759066,
+    "twins": 0.38405797101449274,
+    "pooled": 0.37114050422755107,
+    "must": 7.492957746478873,
+    "cant": 8.776112412177985
    },
    "blocks his folds": {
-    "separates": 0.45597441847914083,
-    "twins": 0.33639705882352944,
-    "pooled": 0.5021674872901268,
-    "must": 0.12283944558525692,
-    "cant": 0.12293587958886636
+    "separates": 0.46783321783321785,
+    "twins": 0.19806763285024154,
+    "pooled": 0.5117992105639301,
+    "must": 0.12641882043222125,
+    "cant": 0.1246558848508395
+   },
+   "unblocks his folds": {
+    "separates": 0.5321667821667821,
+    "twins": 0.8019323671497585,
+    "pooled": 0.48820078943607,
+    "must": -0.12641882043222125,
+    "cant": -0.1246558848508395
    },
    "equity slope": {
-    "separates": 0.4995952291003292,
-    "twins": 0.4485294117647059,
-    "pooled": 0.5248650243516897,
-    "must": 0.8378146987911379,
-    "cant": 0.9568936826927542
+    "separates": 0.4981519981519982,
+    "twins": 0.44082125603864736,
+    "pooled": 0.5286335499334807,
+    "must": 0.8415688504342563,
+    "cant": 0.9557219515585532
    }
   },
   "call": {
    "equity vs his bets": {
-    "separates": 0.9937711945429376,
-    "twins": 0.877429878230333,
-    "pooled": 0.8191105452475184,
-    "must": 0.5504061252241904,
-    "cant": 0.24392337602549533
+    "separates": 0.995914796726232,
+    "twins": 0.9342310497214164,
+    "pooled": 0.8094581314987161,
+    "must": 0.5377662794762061,
+    "cant": 0.24342736197843196
    },
    "equity vs his starting range": {
-    "separates": 0.966060744736521,
-    "twins": 0.8232033445314726,
-    "pooled": 0.940686945269132,
-    "must": 0.7065991528735545,
-    "cant": 0.22773206065014093
-   },
-   "unblocks his bluffs": {
-    "separates": 0.8569706201255778,
-    "twins": 0.6629854926690356,
-    "pooled": 0.7940167075452647,
-    "must": -0.04849185888418316,
-    "cant": -0.14000404791238075
+    "separates": 0.9613637582584045,
+    "twins": 0.8453861842110938,
+    "pooled": 0.9326910547287895,
+    "must": 0.6934115218643717,
+    "cant": 0.23038650837096844
    },
    "blocks his bluffs": {
-    "separates": 0.14302937987442957,
-    "twins": 0.3370145073309655,
-    "pooled": 0.20598329245408664,
-    "must": 0.04849185888418316,
-    "cant": 0.14000404791238075
+    "separates": 0.154226968452818,
+    "twins": 0.3463601493654061,
+    "pooled": 0.2207222732279138,
+    "must": 0.050790289783755584,
+    "cant": 0.13798831312848286
+   },
+   "unblocks his bluffs": {
+    "separates": 0.8457730315471803,
+    "twins": 0.6536398506345942,
+    "pooled": 0.7792777267695797,
+    "must": -0.050790289783755584,
+    "cant": -0.13798831312848286
    },
    "equity vs his value": {
-    "separates": 0.8094728287214952,
-    "twins": 0.5343586219105314,
-    "pooled": 0.8172581593064372,
-    "must": 0.35883343865896,
-    "cant": 0.0007597979432873085
+    "separates": 0.8171541859938571,
+    "twins": 0.5729172018500033,
+    "pooled": 0.8138055360208069,
+    "must": 0.3447276286643589,
+    "cant": 0.0010777856577130465
    },
    "blocks his value": {
-    "separates": 0.787951265289823,
-    "twins": 0.6042890487561887,
-    "pooled": 0.787995601127307,
-    "must": 0.16194643795223324,
-    "cant": 0.05337579752852159
+    "separates": 0.7732376242429506,
+    "twins": 0.618743524215706,
+    "pooled": 0.7744017721254105,
+    "must": 0.1577833448207844,
+    "cant": 0.05420869661482325
    },
    "equity spread": {
-    "separates": 0.3226373460528123,
-    "twins": 0.15402125098222996,
-    "pooled": 0.5429636720474511,
-    "must": 0.22207860757846068,
-    "cant": 0.21655400294390348
+    "separates": 0.31603344967846153,
+    "twins": 0.10337224693176665,
+    "pooled": 0.538630875800818,
+    "must": 0.2185855381905582,
+    "cant": 0.21517925834617938
    },
    "equity slope": {
-    "separates": 0.4339401089094474,
-    "twins": 0.44547086542396785,
-    "pooled": 0.41714583678299405,
-    "must": 0.9303867870093978,
-    "cant": 0.9511995180007838
+    "separates": 0.4402982020279846,
+    "twins": 0.4477153496372313,
+    "pooled": 0.4199604479626996,
+    "must": 0.9359212325963854,
+    "cant": 0.9528952129277799
    }
   }
  },
@@ -215,12 +287,12 @@
     "our polarization": 0.307425731583
    },
    "solver": {
-    "bets": 0.2665389148138708,
+    "bets": 0.2613851920816739,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.5363114443435162,
-    "thinnest value (equity vs calls)": 0.5217269874288022,
-    "strongest bluff (equity)": 0.1383495145631068,
-    "bluffs in his bets": 0.22975958169786215
+    "strong value that checks": 0.5462849152927278,
+    "thinnest value (equity vs calls)": 0.5224505930580593,
+    "strongest bluff (equity)": 0.13902439024390245,
+    "bluffs in his bets": 0.23025801312657668
    }
   },
   {
@@ -229,20 +301,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.014265295437232817,
-    "nut advantage": 0.19003887374034684,
-    "polarization advantage": 0.19298355906499998,
+    "range advantage": 0.014501303316515779,
+    "nut advantage": 0.19137079158479037,
+    "polarization advantage": 0.18402794950700002,
     "we are capped": 0,
-    "he is capped": 0.7668929814238286,
-    "our polarization": 0.454181884549
+    "he is capped": 0.7869485038941968,
+    "our polarization": 0.449547023817
    },
    "solver": {
-    "bets": 0.44615566463479434,
+    "bets": 0.44875087107885986,
     "main size (pots)": 1.5,
-    "strong value that checks": 0.02761568369304379,
-    "thinnest value (equity vs calls)": 0.5095077706490123,
-    "strongest bluff (equity)": 0.7066380648248065,
-    "bluffs in his bets": 0.36432031522372493
+    "strong value that checks": 0.011742374394155153,
+    "thinnest value (equity vs calls)": 0.7912065568447285,
+    "strongest bluff (equity)": 0.8258618240606692,
+    "bluffs in his bets": 0.4953197409432836
    }
   },
   {
@@ -259,12 +331,12 @@
     "our polarization": 0.33709944753
    },
    "solver": {
-    "bets": 0.40835375758311343,
+    "bets": 0.41157151900944217,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.41563850341341524,
-    "thinnest value (equity vs calls)": 0.5637168603395735,
+    "strong value that checks": 0.41628013568109334,
+    "thinnest value (equity vs calls)": 0.5694004076785746,
     "strongest bluff (equity)": 0.16359447004608296,
-    "bluffs in his bets": 0.2700714406953703
+    "bluffs in his bets": 0.26902428698008696
    }
   },
   {
@@ -273,20 +345,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": -0.018265585059721756,
-    "nut advantage": 0.022704596276851036,
-    "polarization advantage": 0.25376352714100003,
+    "range advantage": -0.018963467377154597,
+    "nut advantage": 0.02081662933294852,
+    "polarization advantage": 0.25153399497600004,
     "we are capped": 0,
-    "he is capped": 0.08784456481920877,
-    "our polarization": 0.494618876318
+    "he is capped": 0.0574420971251135,
+    "our polarization": 0.493382377874
    },
    "solver": {
-    "bets": 0.39290734918519715,
+    "bets": 0.39768487075095527,
     "main size (pots)": 0.75,
-    "strong value that checks": 0.014464105390189497,
-    "thinnest value (equity vs calls)": 0.6269137303698359,
-    "strongest bluff (equity)": 0.004837775447113633,
-    "bluffs in his bets": 0.31930102861119913
+    "strong value that checks": 0.000005968454911409182,
+    "thinnest value (equity vs calls)": 0.6207395287292177,
+    "strongest bluff (equity)": 0.004740489101736185,
+    "bluffs in his bets": 0.31660269667967533
    }
   },
   {
@@ -303,12 +375,12 @@
     "our polarization": 0.331748912898
    },
    "solver": {
-    "bets": 0.2957931057451829,
+    "bets": 0.29356752593547886,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.6515169635368627,
-    "thinnest value (equity vs calls)": 0.5730850807317012,
-    "strongest bluff (equity)": 0.19534883720930232,
-    "bluffs in his bets": 0.23328648436774993
+    "strong value that checks": 0.6590219545736284,
+    "thinnest value (equity vs calls)": 0.5731281474374066,
+    "strongest bluff (equity)": 0.20601851851851852,
+    "bluffs in his bets": 0.225942151735071
    }
   },
   {
@@ -317,20 +389,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.055834865755178376,
-    "nut advantage": 0.059758645563480914,
-    "polarization advantage": 0.182838653997,
+    "range advantage": 0.05774927889858006,
+    "nut advantage": 0.05231098830119913,
+    "polarization advantage": 0.17449008549599998,
     "we are capped": 0,
-    "he is capped": 0.46450405068294176,
-    "our polarization": 0.452624117941
+    "he is capped": 0.4293074952721966,
+    "our polarization": 0.448333823362
    },
    "solver": {
-    "bets": 0.38165207694028663,
+    "bets": 0.3862704568494741,
     "main size (pots)": 1.5,
-    "strong value that checks": -4.877873216457829e-9,
-    "thinnest value (equity vs calls)": 0.5798438996241078,
-    "strongest bluff (equity)": 0.8270894264221395,
-    "bluffs in his bets": 0.48029338659524184
+    "strong value that checks": 1.0753032131383122e-8,
+    "thinnest value (equity vs calls)": 0.5763234423534437,
+    "strongest bluff (equity)": 0.8309858200963295,
+    "bluffs in his bets": 0.4865071822397288
    }
   },
   {
@@ -347,12 +419,12 @@
     "our polarization": 0.351985651798
    },
    "solver": {
-    "bets": 0.3763262544853107,
+    "bets": 0.3803445600947488,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.5060370204528569,
-    "thinnest value (equity vs calls)": 0.5575483098961221,
+    "strong value that checks": 0.5081224328614642,
+    "thinnest value (equity vs calls)": 0.5159625605877274,
     "strongest bluff (equity)": 0.6228448275862069,
-    "bluffs in his bets": 0.3116874066392275
+    "bluffs in his bets": 0.3195010466810053
    }
   },
   {
@@ -361,20 +433,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.02138944426314837,
-    "nut advantage": 0.11694890089235833,
-    "polarization advantage": 0.147843261813,
+    "range advantage": 0.02523059462185312,
+    "nut advantage": 0.1201946188159423,
+    "polarization advantage": 0.13857502940899996,
     "we are capped": 0,
-    "he is capped": 0.7919897460169047,
-    "our polarization": 0.419778107505
+    "he is capped": 0.8682963198994366,
+    "our polarization": 0.415024123484
    },
    "solver": {
-    "bets": 0.41651782424287287,
+    "bets": 0.41345909175477286,
     "main size (pots)": 0.75,
-    "strong value that checks": 0.006208902521300685,
-    "thinnest value (equity vs calls)": 0.6044492079738952,
-    "strongest bluff (equity)": 0.5475478113154423,
-    "bluffs in his bets": 0.32294959153746855
+    "strong value that checks": 0.012792649099300446,
+    "thinnest value (equity vs calls)": 0.5971715232310298,
+    "strongest bluff (equity)": 0.5552644108202466,
+    "bluffs in his bets": 0.3276925067106008
    }
   },
   {
@@ -391,12 +463,12 @@
     "our polarization": 0.402046430206
    },
    "solver": {
-    "bets": 0.4745950063965982,
+    "bets": 0.48080490006537774,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.3377797847146953,
-    "thinnest value (equity vs calls)": 0.6203962471171062,
+    "strong value that checks": 0.34645511320987954,
+    "thinnest value (equity vs calls)": 0.6185053455754179,
     "strongest bluff (equity)": 0.6244444444444445,
-    "bluffs in his bets": 0.34142292028583787
+    "bluffs in his bets": 0.35559338799329404
    }
   },
   {
@@ -405,20 +477,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.03419096992482756,
-    "nut advantage": -0.019243586923903058,
-    "polarization advantage": 0.13022623847700004,
+    "range advantage": 0.03098223573042619,
+    "nut advantage": -0.00941129765848489,
+    "polarization advantage": 0.138047237364,
     "we are capped": 0,
-    "he is capped": 0.30201553314634877,
-    "our polarization": 0.411863307461
+    "he is capped": 0.3570492523674934,
+    "our polarization": 0.417533862808
    },
    "solver": {
-    "bets": 0.4148004734165611,
+    "bets": 0.4154664486170132,
     "main size (pots)": 0.75,
-    "strong value that checks": 0.028929948422400042,
-    "thinnest value (equity vs calls)": 0.6295587165071643,
-    "strongest bluff (equity)": 0.43779844843031746,
-    "bluffs in his bets": 0.3339268312083566
+    "strong value that checks": 9.630615032119039e-7,
+    "thinnest value (equity vs calls)": 0.622685561524503,
+    "strongest bluff (equity)": 0.15498185474840204,
+    "bluffs in his bets": 0.33502680208064983
    }
   },
   {
@@ -435,12 +507,12 @@
     "our polarization": 0.345618625855
    },
    "solver": {
-    "bets": 0.4205955985914998,
+    "bets": 0.4240414503395848,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.45616998104381734,
-    "thinnest value (equity vs calls)": 0.629420533101,
-    "strongest bluff (equity)": 0.638755980861244,
-    "bluffs in his bets": 0.33383243784681593
+    "strong value that checks": 0.4434493039019447,
+    "thinnest value (equity vs calls)": 0.6302438480266933,
+    "strongest bluff (equity)": 0.6390243902439025,
+    "bluffs in his bets": 0.3432842585010275
    }
   },
   {
@@ -449,20 +521,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": -0.06651907481208963,
-    "nut advantage": 0.039128167279408044,
-    "polarization advantage": 0.24882651436199998,
+    "range advantage": -0.0640073047302232,
+    "nut advantage": 0.038990612336438066,
+    "polarization advantage": 0.260217912898,
     "we are capped": 0,
-    "he is capped": 0.03144881185964066,
-    "our polarization": 0.490597701121
+    "he is capped": 0.04756533541141983,
+    "our polarization": 0.497168975707
    },
    "solver": {
-    "bets": 0.41330933862448793,
+    "bets": 0.4012931138287046,
     "main size (pots)": 0.75,
-    "strong value that checks": 0.0857562260969833,
-    "thinnest value (equity vs calls)": 0.6160424507888743,
-    "strongest bluff (equity)": 0.025175482985951046,
-    "bluffs in his bets": 0.314368005219575
+    "strong value that checks": 0.20380051910349672,
+    "thinnest value (equity vs calls)": 0.6277564745475529,
+    "strongest bluff (equity)": 0.023333796387558035,
+    "bluffs in his bets": 0.31902181643696126
    }
   },
   {
@@ -479,12 +551,12 @@
     "our polarization": 0.318405047232
    },
    "solver": {
-    "bets": 0.39641441144047196,
+    "bets": 0.3865469101751143,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.450470983726457,
-    "thinnest value (equity vs calls)": 0.5543132545504732,
-    "strongest bluff (equity)": 0.5301724137931034,
-    "bluffs in his bets": 0.27076599229196646
+    "strong value that checks": 0.4729172666326419,
+    "thinnest value (equity vs calls)": 0.5562637591000272,
+    "strongest bluff (equity)": 0.5324675324675324,
+    "bluffs in his bets": 0.2709932074571424
    }
   },
   {
@@ -493,20 +565,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": -0.039069632586716085,
-    "nut advantage": 0.03548418979778621,
-    "polarization advantage": 0.25232090854,
+    "range advantage": -0.0434746309723823,
+    "nut advantage": 0.03505395032421156,
+    "polarization advantage": 0.24325590714099998,
     "we are capped": 0,
-    "he is capped": 0.5854017030106283,
-    "our polarization": 0.48640316688
+    "he is capped": 0.5800416918229279,
+    "our polarization": 0.481121237065
    },
    "solver": {
-    "bets": 0.38334231828129894,
+    "bets": 0.3839268832817122,
     "main size (pots)": 0.75,
-    "strong value that checks": -3.4934721782065026e-11,
-    "thinnest value (equity vs calls)": 0.6205289927846581,
-    "strongest bluff (equity)": 0.007820382102324547,
-    "bluffs in his bets": 0.3415464069491931
+    "strong value that checks": 1.1761834839418839e-9,
+    "thinnest value (equity vs calls)": 0.6053076520637226,
+    "strongest bluff (equity)": 0.00896636864179677,
+    "bluffs in his bets": 0.3376350470801161
    }
   },
   {
@@ -523,12 +595,12 @@
     "our polarization": 0.385572502338
    },
    "solver": {
-    "bets": 0.4350260566502178,
+    "bets": 0.44945874696702,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.3967136054530235,
-    "thinnest value (equity vs calls)": 0.5784339639199007,
-    "strongest bluff (equity)": 0.6477272727272727,
-    "bluffs in his bets": 0.3560910349401491
+    "strong value that checks": 0.3812942879265019,
+    "thinnest value (equity vs calls)": 0.5782144469785077,
+    "strongest bluff (equity)": 0.6461187214611872,
+    "bluffs in his bets": 0.33634247983084803
    }
   },
   {
@@ -537,20 +609,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.05423844525359445,
-    "nut advantage": 0.030678236685113963,
-    "polarization advantage": 0.11353111683299999,
-    "we are capped": 0.07312480146087297,
+    "range advantage": 0.05958661682508154,
+    "nut advantage": 0.02693050511957437,
+    "polarization advantage": 0.12677232631799995,
+    "we are capped": 0.06842026877689877,
     "he is capped": 0,
-    "our polarization": 0.409664702284
+    "our polarization": 0.41707959709
    },
    "solver": {
-    "bets": 0.42265650761324125,
+    "bets": 0.42571719712376105,
     "main size (pots)": 0.75,
-    "strong value that checks": 0.14444792395567996,
-    "thinnest value (equity vs calls)": 0.6247051756016122,
-    "strongest bluff (equity)": 0.1281664482192957,
-    "bluffs in his bets": 0.31424118277384305
+    "strong value that checks": 0.18730328770370164,
+    "thinnest value (equity vs calls)": 0.6282106141018677,
+    "strongest bluff (equity)": 0.12417029387569409,
+    "bluffs in his bets": 0.3137807660261753
    }
   },
   {
@@ -567,12 +639,12 @@
     "our polarization": 0.350387467146
    },
    "solver": {
-    "bets": 0.4157389512426057,
+    "bets": 0.41613850376017847,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.5038490617242719,
-    "thinnest value (equity vs calls)": 0.5861897626383379,
-    "strongest bluff (equity)": 0.5825242718446602,
-    "bluffs in his bets": 0.2786657336268433
+    "strong value that checks": 0.4957681759868108,
+    "thinnest value (equity vs calls)": 0.5828278325099445,
+    "strongest bluff (equity)": 0.5817307692307693,
+    "bluffs in his bets": 0.2730629555059751
    }
   },
   {
@@ -581,20 +653,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.04015792742000346,
-    "nut advantage": 0.0534189107531427,
-    "polarization advantage": 0.208980341365,
+    "range advantage": 0.04142001789153599,
+    "nut advantage": 0.04615275262369785,
+    "polarization advantage": 0.2111139106,
     "we are capped": 0,
-    "he is capped": 0.43264536735916626,
-    "our polarization": 0.468850845741
+    "he is capped": 0.36974858359716334,
+    "our polarization": 0.469979192685
    },
    "solver": {
-    "bets": 0.4068544965365343,
-    "main size (pots)": 1.5,
-    "strong value that checks": 1.617713740742488e-10,
-    "thinnest value (equity vs calls)": 0.5405745294822948,
-    "strongest bluff (equity)": 0.8306227508498,
-    "bluffs in his bets": 0.5209214698005591
+    "bets": 0.40554393794083105,
+    "main size (pots)": 0.75,
+    "strong value that checks": 0.2814094712165284,
+    "thinnest value (equity vs calls)": 0.6188094641306897,
+    "strongest bluff (equity)": 0.025390669246542572,
+    "bluffs in his bets": 0.321911473748624
    }
   },
   {
@@ -611,12 +683,12 @@
     "our polarization": 0.364694389422
    },
    "solver": {
-    "bets": 0.4232846977406073,
+    "bets": 0.43081925397847376,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.38817456627372626,
-    "thinnest value (equity vs calls)": 0.5243956224255414,
-    "strongest bluff (equity)": 0.603448275862069,
-    "bluffs in his bets": 0.29596106107748205
+    "strong value that checks": 0.3798456567079228,
+    "thinnest value (equity vs calls)": 0.5226028271482903,
+    "strongest bluff (equity)": 0.6244635193133047,
+    "bluffs in his bets": 0.2995662582066462
    }
   },
   {
@@ -625,20 +697,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.026655184477222316,
-    "nut advantage": -0.10749124280732363,
-    "polarization advantage": 0.19573714328199998,
+    "range advantage": 0.02996135817551049,
+    "nut advantage": -0.10652494010092019,
+    "polarization advantage": 0.19742301041100002,
     "we are capped": 0,
-    "he is capped": 0.573066146500833,
-    "our polarization": 0.452430072784
+    "he is capped": 0.5566115404510237,
+    "our polarization": 0.453607727191
    },
    "solver": {
-    "bets": 0.4136208251398579,
+    "bets": 0.41233566391454385,
     "main size (pots)": 0.75,
-    "strong value that checks": 3.3130698029459893e-7,
-    "thinnest value (equity vs calls)": 0.6122101130686192,
-    "strongest bluff (equity)": 0.12214661703228509,
-    "bluffs in his bets": 0.3172919303340571
+    "strong value that checks": 3.539901105575893e-8,
+    "thinnest value (equity vs calls)": 0.6110211190139194,
+    "strongest bluff (equity)": 0.12011510077208995,
+    "bluffs in his bets": 0.3166978952479135
    }
   },
   {
@@ -655,12 +727,12 @@
     "our polarization": 0.374464542265
    },
    "solver": {
-    "bets": 0.3002793202547153,
+    "bets": 0.26766586094284234,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.5697510344729106,
-    "thinnest value (equity vs calls)": 0.7277986445326927,
+    "strong value that checks": 0.596017063154967,
+    "thinnest value (equity vs calls)": 0.7298440659565874,
     "strongest bluff (equity)": 0.5885167464114832,
-    "bluffs in his bets": 0.4213574555283649
+    "bluffs in his bets": 0.3904827657525634
    }
   },
   {
@@ -669,20 +741,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": -0.023652440361234373,
-    "nut advantage": 0.019406637307212107,
-    "polarization advantage": 0.147074047358,
+    "range advantage": -0.026536412227650408,
+    "nut advantage": 0.02393788216520358,
+    "polarization advantage": 0.146243873885,
     "we are capped": 0,
-    "he is capped": 0.5220328685517033,
-    "our polarization": 0.434041820506
+    "he is capped": 0.5388241433981884,
+    "our polarization": 0.433484037404
    },
    "solver": {
-    "bets": 0.43573435067214816,
+    "bets": 0.42451728550947865,
     "main size (pots)": 0.75,
-    "strong value that checks": 0.06308624767857507,
-    "thinnest value (equity vs calls)": 0.6067979260425574,
-    "strongest bluff (equity)": 0.13520405523490858,
-    "bluffs in his bets": 0.27419583468017056
+    "strong value that checks": 0.09203328316629844,
+    "thinnest value (equity vs calls)": 0.6145354514815242,
+    "strongest bluff (equity)": 0.14146522520005883,
+    "bluffs in his bets": 0.27803492123185064
    }
   },
   {
@@ -699,12 +771,12 @@
     "our polarization": 0.357238072781
    },
    "solver": {
-    "bets": 0.37620896476453536,
+    "bets": 0.3814230627582667,
     "main size (pots)": 0.33,
-    "strong value that checks": 0.4776400466129702,
-    "thinnest value (equity vs calls)": 0.5533365687371781,
-    "strongest bluff (equity)": 0.3847926267281106,
-    "bluffs in his bets": 0.2807816753771229
+    "strong value that checks": 0.46909123323719404,
+    "thinnest value (equity vs calls)": 0.5562734530839035,
+    "strongest bluff (equity)": 0.38425925925925924,
+    "bluffs in his bets": 0.2852214878324852
    }
   },
   {
@@ -713,20 +785,20 @@
    "stack": 250,
    "spot": {
     "stack to pot": 2.5,
-    "range advantage": 0.07600745214384519,
-    "nut advantage": 0.08699480588809978,
-    "polarization advantage": 0.136751464777,
+    "range advantage": 0.07721672186183204,
+    "nut advantage": 0.08901899037418844,
+    "polarization advantage": 0.14169589709799996,
     "we are capped": 0,
-    "he is capped": 0.8305517830752808,
-    "our polarization": 0.412447077971
+    "he is capped": 0.8668158682191652,
+    "our polarization": 0.415094083754
    },
    "solver": {
-    "bets": 0.4046877536681832,
+    "bets": 0.40913454807266275,
     "main size (pots)": 0.75,
-    "strong value that checks": 0.01787099478369547,
-    "thinnest value (equity vs calls)": 0.5890435376448702,
-    "strongest bluff (equity)": 0.4826176187401559,
-    "bluffs in his bets": 0.3260039362224519
+    "strong value that checks": 0.013311895990684497,
+    "thinnest value (equity vs calls)": 0.589307523700973,
+    "strongest bluff (equity)": 0.3573284024750983,
+    "bluffs in his bets": 0.32118528182160694
    }
   }
  ],
@@ -734,12 +806,12 @@
   "oop": {
    "bets": {
     "stack to pot": null,
-    "range advantage": 0.501424739446369,
-    "nut advantage": 0.6367708278920904,
-    "polarization advantage": 0.5957837808023564,
-    "we are capped": -0.668706892587593,
-    "he is capped": 0.48756684983180754,
-    "our polarization": 0.5699801969191765
+    "range advantage": 0.4337599211224786,
+    "nut advantage": 0.5728639652469218,
+    "polarization advantage": 0.5708923837480596,
+    "we are capped": -0.5983641930353311,
+    "he is capped": 0.4380041155107398,
+    "our polarization": 0.5399954710017304
    },
    "main size (pots)": {
     "stack to pot": null,
@@ -752,95 +824,95 @@
    },
    "strong value that checks": {
     "stack to pot": null,
-    "range advantage": -0.5089193963403936,
-    "nut advantage": -0.4804036908135944,
-    "polarization advantage": -0.5442293267192054,
-    "we are capped": 0.5207518433827403,
-    "he is capped": -0.4942985921533181,
-    "our polarization": -0.5011017350156919
+    "range advantage": -0.4644867565612226,
+    "nut advantage": -0.47028004816303415,
+    "polarization advantage": -0.5433233282407538,
+    "we are capped": 0.5149510390625196,
+    "he is capped": -0.4556830053171086,
+    "our polarization": -0.5032192706950478
    },
    "thinnest value (equity vs calls)": {
     "stack to pot": null,
-    "range advantage": 0.22682155211742366,
-    "nut advantage": 0.46737396205517706,
-    "polarization advantage": 0.38164278789594386,
-    "we are capped": -0.42914775041169356,
-    "he is capped": 0.2465938241654789,
-    "our polarization": 0.47502480242566736
+    "range advantage": 0.2436508934877655,
+    "nut advantage": 0.4533936789811179,
+    "polarization advantage": 0.3396717528710499,
+    "we are capped": -0.5026305231285125,
+    "he is capped": 0.3111816233028767,
+    "our polarization": 0.4367801695672536
    },
    "strongest bluff (equity)": {
     "stack to pot": null,
-    "range advantage": 0.36068328290791646,
-    "nut advantage": 0.7000823294121316,
-    "polarization advantage": 0.6316114552296782,
-    "we are capped": -0.48737646200392215,
-    "he is capped": 0.18929970828481202,
-    "our polarization": 0.6552103661010054
+    "range advantage": 0.35702910812836736,
+    "nut advantage": 0.7108910887153737,
+    "polarization advantage": 0.6316391365310052,
+    "we are capped": -0.48300880319284356,
+    "he is capped": 0.17579431943263507,
+    "our polarization": 0.6538889257105276
    },
    "bluffs in his bets": {
     "stack to pot": null,
-    "range advantage": 0.2697493334316086,
-    "nut advantage": 0.6695155214323832,
-    "polarization advantage": 0.6933363463723388,
-    "we are capped": -0.5028073252829669,
-    "he is capped": 0.3117142344601647,
-    "our polarization": 0.7510562395323078
+    "range advantage": 0.3604865024206839,
+    "nut advantage": 0.6995408477700971,
+    "polarization advantage": 0.7405485273554393,
+    "we are capped": -0.5073690785101614,
+    "he is capped": 0.28690792165838364,
+    "our polarization": 0.781144126139109
    }
   },
   "ip": {
    "bets": {
     "stack to pot": null,
-    "range advantage": -0.018140955083572656,
-    "nut advantage": 0.2611351274623607,
-    "polarization advantage": -0.43378808975076,
-    "we are capped": 0.1909516258206886,
-    "he is capped": 0.13684471436988901,
-    "our polarization": -0.3987394205984183
+    "range advantage": 0.19370000409446742,
+    "nut advantage": 0.3620693107062412,
+    "polarization advantage": -0.4998339151199969,
+    "we are capped": 0.2715937695933378,
+    "he is capped": 0.23100447573563165,
+    "our polarization": -0.4719950746441747
    },
    "main size (pots)": {
     "stack to pot": null,
-    "range advantage": 0.31111552147028426,
-    "nut advantage": 0.47773305304114705,
-    "polarization advantage": 0.12935432407546654,
-    "we are capped": -0.17407765595569785,
-    "he is capped": 0.21885599436919503,
-    "our polarization": 0.18297657425529754
+    "range advantage": 0.21992999286761086,
+    "nut advantage": 0.5070010584744811,
+    "polarization advantage": -0.0503084320659824,
+    "we are capped": -0.1348399724926484,
+    "he is capped": 0.23366850163058858,
+    "our polarization": -0.005169299679975128
    },
    "strong value that checks": {
     "stack to pot": null,
-    "range advantage": -0.11527660192938842,
-    "nut advantage": -0.02186447746027571,
-    "polarization advantage": -0.34450138262930596,
-    "we are capped": 0.7929495308009139,
-    "he is capped": -0.6161230074783051,
-    "our polarization": -0.2679493943844482
+    "range advantage": -0.07017722749027093,
+    "nut advantage": -0.027908619972859122,
+    "polarization advantage": 0.1401137060729429,
+    "we are capped": 0.3773887249150325,
+    "he is capped": -0.501351942125063,
+    "our polarization": 0.21275744559924947
    },
    "thinnest value (equity vs calls)": {
     "stack to pot": null,
-    "range advantage": -0.27351874526462727,
-    "nut advantage": -0.6540321827088523,
-    "polarization advantage": -0.050284332562672916,
-    "we are capped": 0.23728039043832871,
-    "he is capped": -0.48536903403661935,
-    "our polarization": -0.07105525883092567
+    "range advantage": -0.1288689931232136,
+    "nut advantage": 0.5341307421979808,
+    "polarization advantage": 0.06761954916660531,
+    "we are capped": 0.01703450084512497,
+    "he is capped": 0.1376190745489366,
+    "our polarization": 0.08295219862147205
    },
    "strongest bluff (equity)": {
     "stack to pot": null,
-    "range advantage": 0.6302916941398181,
-    "nut advantage": 0.5226219756157499,
-    "polarization advantage": -0.2896580384487436,
-    "we are capped": -0.22165274826442924,
-    "he is capped": 0.4732748138219756,
-    "our polarization": -0.2829090588145416
+    "range advantage": 0.42778323112377475,
+    "nut advantage": 0.6389659804809885,
+    "polarization advantage": -0.39342035551231186,
+    "we are capped": -0.1432621313496747,
+    "he is capped": 0.5485895263548509,
+    "our polarization": -0.3877290628510213
    },
    "bluffs in his bets": {
     "stack to pot": null,
-    "range advantage": 0.38419006112058945,
-    "nut advantage": 0.2073421977575247,
-    "polarization advantage": 0.17843777035318112,
-    "we are capped": -0.1653122550702708,
-    "he is capped": 0.08143592752120561,
-    "our polarization": 0.21469309744217527
+    "range advantage": 0.2381094308767033,
+    "nut advantage": 0.525061002832981,
+    "polarization advantage": -0.0035163897166596105,
+    "we are capped": -0.1544543441534066,
+    "he is capped": 0.25470409331985094,
+    "our polarization": 0.015618904142018069
    }
   }
  }
