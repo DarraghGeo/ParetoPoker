@@ -5,12 +5,12 @@
 //   node accept.mjs <spot name prefix> <page accuracy> [reference accuracy]
 import { writeFileSync } from 'node:fs';
 import { fs, solveSpot, decisions } from './lib.mjs';
-import { TURNS, FLOPS, HELD_TURNS, HELD_FLOPS, HELD2_TURNS, RIVERS, HELD_RIVERS, randomTurns, randomRivers, freshSpots, config } from './spots.mjs';
+import { TURNS, FLOPS, HELD_TURNS, HELD_FLOPS, HELD2_TURNS, RIVERS, HELD_RIVERS, randomTurns, randomRivers, freshSpots, freshFlops, config } from './spots.mjs';
 import { study, measure, claims, holds, tolerance, ON_TRIAL } from '../../src/explain/street.js';
 
 const [only = 'held turn', levelText = '0.02', fineTarget = '0.01'] = process.argv.slice(2);
 const level = +levelText;
-const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS, ...HELD2_TURNS, ...RIVERS, ...HELD_RIVERS, ...randomTurns(+(process.env.RANDOM_SPOTS ?? 40)), ...randomRivers(+(process.env.RANDOM_SPOTS ?? 40)), ...freshSpots(+(process.env.FRESH ?? 60), 4, 4401), ...freshSpots(+(process.env.FRESH ?? 60), 5, 5501)].filter((s) => s.name.startsWith(only));
+const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS, ...HELD2_TURNS, ...RIVERS, ...HELD_RIVERS, ...randomTurns(+(process.env.RANDOM_SPOTS ?? 40)), ...randomRivers(+(process.env.RANDOM_SPOTS ?? 40)), ...freshSpots(+(process.env.FRESH ?? 60), 4, 4401), ...freshSpots(+(process.env.FRESH ?? 60), 5, 5501), ...freshFlops(+(process.env.FRESH_FLOPS ?? 6), 3301, (x) => { try { fs.defineSpot(config(x)); return true; } catch { return false; } })].filter((s) => s.name.startsWith(only));
 const other = (s, algorithm, target) => { const spot = fs.defineSpot(config(s)); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 3), algorithm }); let e = Infinity; while (e > target && run.completed < 40000) { run.step(spot.board.length === 3 ? 5 : 20); e = run.exploitabilityPercent(); } return { spot, run, solution: run.snapshot(), exploit: e }; };
 const tally = {}; const failures = []; let hands = 0, decisionsSeen = 0, silent = 0;
 const flip = { gap: 0, where: '' }; const flips = {}; // the largest gap, at page accuracy, whose sign a reference reverses

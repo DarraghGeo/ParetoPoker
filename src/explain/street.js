@@ -109,6 +109,10 @@ export const TOLERANCE = {
 export const ON_TRIAL = {
   turn: [{ upTo: 0.02, lines: [{ from: 0.5, eq: 1, folds: 1, gap: 1.1, sign: 2, cmp: 3.5, lift: 0.5, rest: 1.5 }, { from: 0.2, eq: 4, folds: 2, gap: 2.3, sign: 4, cmp: 4.2, lift: 2.6, rest: 4.2 }] }],
   river: [{ upTo: 0.01, lines: [{ from: 0.5, eq: 2, folds: 3, gap: 2.7, sign: 2, cmp: 7.8, lift: null, rest: null }, { from: 0.2, eq: 4, folds: 3, gap: 4, sign: 4, cmp: 10, lift: null, rest: null }] }],
+  // Flop spots at the accuracy a browser reaches (0.3%): the flop itself, and the turn once a card has come.
+  // Gates are twice the largest differences measured on the one flop spot measured in full.
+  flop: [{ upTo: 0.3, lines: [{ from: 0.5, eq: 1, folds: 2, gap: 2.8, sign: 3, cmp: 5, lift: 0.8, rest: 1.4 }] }],
+  'turn after a deal': [{ upTo: 0.3, lines: [{ from: 0.5, eq: 2, folds: 2, gap: 2.4, sign: 3, cmp: 3.6, lift: 1, rest: 2 }] }],
 };
 /** The tolerances that apply: `street` is 'turn' or 'flop' (where the decision is), `exploit` the solve's accuracy in % of the pot. */
 export function tolerance(street, exploit, lineReach, table = TOLERANCE) {
@@ -140,6 +144,10 @@ export function tolerance(street, exploit, lineReach, table = TOLERANCE) {
  *   cards   { a, n, lift, rest }  a call's gain over folding, on the n cards that lift the hand and on the others
  * The last four are made only about actions the hand itself takes (`TAKES` of the time or more).
  */
+/** Below this share of either range, a line is too rare for the solution to mean anything on it. */
+export const RARE = 0.05;
+/** No conclusion passes these gates: only the numbers are said. */
+const NUMBERS_ONLY = { eq: 0, folds: 0, gap: null, sign: null, cmp: null, lift: null, rest: null };
 /** A hand takes an action when it does so at least this often. What an action is worth to a hand that takes it is pinned down far better than to one that does not. */
 export const TAKES = 0.1;
 export function claims(s, m, T) {
@@ -217,11 +225,15 @@ export function explainStreet(s, m, T) {
   if (!m) return null;
   const strategy = m.actions.map((a) => a.sigma);
   const what = describe(m.features);
-  const made = claims(s, m, T);
   const reasons = [];
-  if (!T) {
-    return { name: m.name, strategy, line: `You have ${what}.`, reasons, claims: [], silent: 'Reasons are only given where they have been proven to hold: on lines that at least half of both ranges take, in a solve fine enough. This decision is not one of them yet.' };
+  // Where conclusions are not proven (a thinner line, a coarser solve), the numbers of this solution are still its numbers.
+  // Where the line is hardly ever taken the solution was never trained, and nothing is said.
+  const proven = !!T;
+  if (!T && (Math.min(...s.lineReach) < RARE || m.equity == null)) {
+    return { name: m.name, strategy, line: `You have ${what}.`, reasons, claims: [], silent: 'This line is taken too rarely for the solution to be settled on it, so nothing more is said.' };
   }
+  if (!T) T = NUMBERS_ONLY;
+  const made = claims(s, m, T);
   const label = (i) => m.actions[i].label;
   const facing = s.toCall > 0;
   const street = s.f.board.length === 3 ? 'the turn and river still to come' : s.f.board.length === 4 ? 'the river still to come' : 'no cards to come';
@@ -275,5 +287,5 @@ export function explainStreet(s, m, T) {
       reasons.push({ id: 'behind', text: m.actions[i].sigma >= TAKES ? `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}, and the hand still does both.` : `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}: too close to call it worse.` });
     }
   }
-  return { name: m.name, strategy, line, reasons, claims: made, silent: null };
+  return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: on lines at least half of each range takes, in a solve fine enough.' };
 }

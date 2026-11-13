@@ -89,3 +89,19 @@ export function freshSpots(count, cardsOnBoard, seed) {
   }
   return out;
 }
+
+/** Fresh random flop spots small enough for a browser tab. */
+export function freshFlops(count, seed, fits) {
+  let a = seed >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+  const rand = (n) => Math.floor(rnd() * n);
+  const OOP = [WIDE_OOP, BB, SB3, TIGHT_OOP, '88+,ATs+,AJo+,KJs+,KQo,QJs,JTs,T9s,98s,A5s-A2s']; const IP = [WIDE_IP, BTN, CO, TIGHT_IP, 'TT-33,AQs-A6s,KQs-KTs,QJs,QTs,JTs,T9s,98s,87s,AQo,AJo,KQo'];
+  const SIZES = [[[0.33], [0.66], [0.66]], [[0.5], [0.66], [0.75]], [[0.33], [0.5], [1]], [[0.75], [0.75], [0.75]], [[0.25], [0.66], [1]]];
+  const cards = 'AKQJT98765432'; const suits = 'shdc'; const out = [];
+  let guard = 0;
+  while (out.length < count && guard++ < 500) {
+    const board = []; while (board.length < 3) { const c = cards[rand(13)] + suits[rand(4)]; if (!board.includes(c)) board.push(c); }
+    const spot = { name: `fresh flop ${String(out.length + 1).padStart(2, '0')}`, board: board.join(''), oop: OOP[rand(OOP.length)], ip: IP[rand(IP.length)], stack: [150, 200, 300][rand(3)], betSizes: SIZES[rand(SIZES.length)], raiseSizes: [{ times: [2.5, 3][rand(2)] }], maxRaises: [2, 2, 1][rand(3)], maxBytes: 480 * 2 ** 20 };
+    if (!fits || fits(spot)) out.push(spot);
+  }
+  return out;
+}

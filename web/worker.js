@@ -2,7 +2,7 @@
 import * as fs from 'poker-flopsolve';
 import { decisionAt, equityVs, treeOf } from '../src/solver/flopsolve.js';
 import { KNOBS, describe, isNeutral, reshape } from '../src/warp/reshape.js';
-import { study, measure, tolerance, explainStreet } from '../src/explain/street.js';
+import { study, measure, tolerance, explainStreet, RARE } from '../src/explain/street.js';
 
 let solution = null;
 let nodes = null;
@@ -125,7 +125,7 @@ self.onmessage = async ({ data }) => {
       let st = studies.get(key); if (!st) studies.set(key, st = study(fs, solution, nodes, data.id, dealt));
       const street = ['flop', 'turn', 'river'][st.f.board.length - 3];
       const T = st.f.round === 0 ? tolerance(street, current.exploit, st.lineReach) : tolerance(`${street} after a deal`, current.exploit, st.lineReach);
-      const m = measure(st, data.combo, { worth: !!T });
+      const m = measure(st, data.combo, { worth: !!T || Math.min(...st.lineReach) >= RARE });
       const told = explainStreet(st, m, T);
       self.postMessage({ type: 'told', job: data.job, id: data.id, combo: data.combo, told: told && { name: told.name, strategy: told.strategy, line: told.line, reasons: told.reasons, silent: told.silent } });
     } catch (error) {
