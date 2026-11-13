@@ -443,7 +443,8 @@ was adopted and what was tried and dropped.
 
 - The engine tracks the opponent's range by assuming they play the engine's own strategy. That
   couples the two seats: a rule that is right for one seat can cost the other, which then
-  models its opponent wrongly. Several findings wait on a separate opponent model (TUNINGS.md).
+  models its opponent wrongly. `new SolverMatch(game, { strategist, opponent })` models the
+  opponent with other parts, which is how single-seat rules are tested (TUNINGS.md).
 - The loss grows with stack depth and is largest in 3-bet pots.
 - Flop trees work but grow fast: one bet size and one raise size takes one to three minutes
   with the fitted preset. Nothing was fitted on the flop.

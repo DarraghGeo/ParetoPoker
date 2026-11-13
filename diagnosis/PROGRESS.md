@@ -261,3 +261,9 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   4. Calling order in position facing a turn bet: on a plateau at 9.4 located against 3.8 for
      the solver's own order; nothing in the forms of equity closes it.
   5. The flop has only been checked, never fitted.
+- 10:05 **Separate opponent model tested** (`SolverMatch` option `opponent`, v50.mjs). With the
+  opponent modelled by the fitted preset as it stands, rules that bet more out of position when
+  ahead keep their own seat's gain and no longer cost the other seat (turns-tune 9.91 -> 9.67
+  for the range-bet rule; in position 9.98 both times). The coupling was the cause. The rule's
+  own gain does not carry to held-out boards (held2 9.51 -> 9.52, held 8.43 -> 8.37, alt 9.04
+  -> 9.01), so it is not adopted. The option stays.

@@ -22,11 +22,16 @@ export class SolverMatch {
    * @param {Object} game See SolverBridge#init: oopRange, ipRange, board, pot, stack, betSizes.
    * @param {Object} [options]
    * @param {RangeStrategist} [options.strategist]
+   * @param {RangeStrategist} [options.opponent] The parts used to model the opponent's play when
+   *   tracking his range. Default: the same as `strategist`. Giving another keeps a rule for one
+   *   seat from changing the other seat's picture of its opponent.
    * @param {SolverBridge} [options.bridge]
    */
-  constructor(game, { strategist = new RangeStrategist(), bridge = null } = {}) {
+  constructor(game, { strategist = new RangeStrategist(), opponent = null, bridge = null } = {}) {
     this.game = game;
     this.strategist = strategist;
+    // How the engine pictures the other seat's play when tracking his range. By default a copy of itself.
+    this.opponent = opponent ?? strategist;
     this.bridge = bridge;
     this.ownsBridge = !bridge;
   }
@@ -74,7 +79,7 @@ export class SolverMatch {
     const lines = [];
     const start = { history: [], ranges, priors: ranges, streetBase: 0, last: [0, 0], raises: 0, depth: 0 };
     let locked = 0;
-    if (source === 'solver' || frequencies === 'solver' || hands === 'solver' || where) {
+    if (source === 'solver' || frequencies === 'solver' || hands !== 'engine' || where || this.opponent !== this.strategist) {
       // 2. The engine decides at every node with whatever it is given from the solver, then all of it is locked
       const decisions = [];
       await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, where, decisions, lines });
@@ -247,7 +252,7 @@ export class SolverMatch {
     // The engine's model of him: he plays the engine's own strategy against hero's range
     let his = null;
     if (me !== seat && source !== 'solver') {
-      his = this.strategist.decide({
+      his = this.opponent.decide({
         position: POSITIONS[me], spot, board: node.board, actions: node.actions, hero: state.model, villain: state.own, villainPrior: state.priors[seat],
       }).strategy;
     }

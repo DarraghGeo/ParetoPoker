@@ -97,3 +97,20 @@ test('reset clears every lock, so a best response is free again', { skip }, asyn
     bridge.close();
   }
 });
+
+test('the opponent can be modelled with other parts than the engine plays', { skip }, async () => {
+  const sizes = { bet: '33%,75%', raise: '2.5x' };
+  const game = {
+    oopRange: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s',
+    ipRange: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
+    board: 'Td9d6hQc7s', pot: 100, stack: 200, betSizes: { river: { oop: sizes, ip: sizes } },
+  };
+  const plain = await new SolverMatch(game, { strategist: new RangeStrategist() }).play('ip', { iterations: 300 });
+  // Modelled as a copy of itself, spelled out: the same result
+  const same = await new SolverMatch(game, { strategist: new RangeStrategist(), opponent: new RangeStrategist() }).play('ip', { iterations: 300 });
+  assert.ok(Math.abs(same.loss.exploited - plain.loss.exploited) < 1e-6);
+  // Modelled as an opponent who never bets small: its picture of his range changes, and so does its play
+  const other = new RangeStrategist({ engine: new ParetoEngine({ sizing: 'smallest' }) });
+  const different = await new SolverMatch(game, { strategist: new RangeStrategist(), opponent: other }).play('ip', { iterations: 300 });
+  assert.ok(Math.abs(different.loss.exploited - plain.loss.exploited) > 1e-4);
+});

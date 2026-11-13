@@ -208,6 +208,15 @@ of position, betting more is right for that seat. Letting the cap follow range a
 10.64), because the other seat models its opponent as the engine. Three attempts at this have
 now failed the same way; it needs the opponent model to be separate from the engine's own play.
 
+That was then tested (`SolverMatch`'s `opponent` option, `diagnosis/v50.mjs`): with the opponent
+modelled by the fitted preset as it stands, the same two rules keep their seat's gain and leave
+the other seat untouched (turns-tune: cap following range advantage 9.91 -> 9.75; range bet
+where the formula says 70%+ 9.91 -> 9.67, out of position 9.84 -> 9.37, in position 9.98 both
+times). So the coupling was the cause. The range-bet rule itself does not carry to held-out
+boards, though: turns-held2 9.51 -> 9.52, turns-held 8.43 -> 8.37, turns-alt 9.04 -> 9.01,
+T4-B unchanged. Not adopted; the `opponent` option stays, because it makes single-seat rules
+testable.
+
 
 ### Tried and not adopted
 

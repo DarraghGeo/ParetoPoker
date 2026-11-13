@@ -40,7 +40,9 @@ export async function measure(set, makeParts, options = {}) {
   const results = await pool(jobs, async ({ spot, hero }) => {
     const made = makeParts();
     const parts = made.selector || made.mixer || made.tuner || made.engine ? made : { selector: made };
-    const result = await new SolverMatch(gameOf(spot), { strategist: new RangeStrategist(parts) }).play(hero, { iterations: 300, ...options });
+    // `opponent` parts, when given, are how the engine pictures the other seat (default: itself)
+    const { opponent, ...own } = parts;
+    const result = await new SolverMatch(gameOf(spot), { strategist: new RangeStrategist(own), opponent: opponent ? new RangeStrategist(opponent) : null }).play(hero, { iterations: 300, ...options });
     return { spot: spot.name, pair: spot.pair, depth: spot.depth, board: spot.board, hero, versusGto: result.loss.versusGto, exploited: result.loss.exploited };
   });
   const out = { oop: [0, 0], ip: [0, 0], spots: results };
