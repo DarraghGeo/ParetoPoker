@@ -169,6 +169,20 @@ per spot in `diagnosis/level-sweep-best.csv`. Nothing in the engine was changed.
 - The untuned engine with equity hands loses 1 to 7% with no raise against 4 to 15% with
   raises. Not zero: the folding formula is still off by v, and the hands and mixing are ours.
 
+### Hand selection diagnosis
+
+Full report in `diagnosis/HAND-SELECTION-DIAGNOSIS.md`. Nothing adopted; what it found:
+
+- River: hands of exactly equal equity against his range are interchangeable (0.29%, floor
+  0.30%); blockers add nothing beyond that equity; the order is at the floor and the loss is
+  in the shape laid along it, mostly out of position first to act (9.1% with pure cuts).
+- Turn: hands with the same distribution of river equities are interchangeable (0.49% at 100
+  clusters, floor 0.40%; 100 equity bands 1.22%). Strength now x draw class is worse than plain
+  equity at the same number of groups.
+- Must / may / can't does not find the twins (10% on rivers, 9% on turns), and every level
+  must still be mixed (pure loses about 8% on both streets).
+- The spot moves thresholds and levels, not the ranking of hands.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,

@@ -63,10 +63,11 @@ rebuilt by `node diagnosis/hands.mjs <set> diagnosis/hands/<set>.jsonl`, about a
    to act.** With the solver's frequencies: facing a raise 0.5%, facing a bet 1.4%, in position
    first to act 1.7%, out of position first to act 9.1%. There the strong hands must also check,
    and a single checking share for all value hands only brings it to 6.5%.
-5. **On the turn a hand is its equity on every river card.** Grouping hands by that profile
-   beats grouping by average equity at every resolution, and at 100 groups it is near the floor.
-   Strength now with draw class, the engine's current "kinds", does worse than plain equity
-   at the same number of groups.
+5. **On the turn a hand is the distribution of its river equities.** Hands whose equity over
+   the river cards has the same distribution are twins, whichever cards bring it: 100 such
+   groups lose 0.49% (floor 0.40%) where 100 bands of average equity lose 1.22%. Strength now
+   with draw class, the engine's current "kinds", does worse than plain equity at the same
+   number of groups. As on the river, the groups must still be mixed (pure loses 8%).
 6. **The spot moves the thresholds, not the ranking.** Which feature ranks hands is the same
    everywhere; range and nut advantage move how far down value goes, how far up bluffs go and how
    often the top checks. On rivers the von Neumann thresholds computed from hero's equity curve
@@ -92,9 +93,9 @@ Facing a bet or raise, by the hand's equity minus the pot odds:
 
 | equity minus pot odds | share of range | fold | call | raise |
 |---|---|---|---|---|
-| under -2 points | 19-27% | 0.94-1.00 | 0.00-0.02 | 0.00-0.06 |
+| under -2 points | 19-31% | 0.92-1.00 | 0.00-0.03 | 0.00-0.08 |
 | within 2 points | 44-52% | 0.41-0.56 | 0.41-0.57 | 0.00-0.07 |
-| +2 to +40 points | 13-21% | 0.00-0.04 | 0.88-1.00 | 0.00-0.09 |
+| +2 to +40 points | 10-20% | 0.00-0.04 | 0.88-1.00 | 0.00-0.09 |
 | over +40 points | 9-23% | 0.00 | 0.33-0.79 | 0.21-0.67 |
 
 About half the range facing a bet is a bluff-catcher within two points of the price. Inside
@@ -192,8 +193,8 @@ Rank correlation of each feature with what the action is worth to the hand:
   features, and that line is equity over the pot odds. Blockers correlate (+0.7) because they
   *are* the equity differences among bluff-catchers; given equity their weight is zero.
 - The feature models say the same on other boards: rank in range and the frequencies explain
-  85-87% of the solver's calling and raising; equity, spread, blockers and the spot together add
-  1 to 4 points. For **raising**, the one feature that adds is equity against the range that
+  85-87% of the solver's calling and raising (83-87% for calling, 77-87% for raising); equity, spread,
+  blockers and the spot together add 1 to 5 points. For **raising**, the one feature that adds is equity against the range that
   *calls* the raise (from his solved answer), +2 to +5 points.
 - First to act in position: rank and frequencies 85%, everything else up to 91%. Out of
   position: 61%, rising to 79% with blockers and the spot. The out-of-position open is the
@@ -235,3 +236,227 @@ out of position: the 3-bettor (C) bets 57% and checks its top 32%; the big blind
 button (B) bets 22% and checks its top 71%. The ranking of hands is the same in every spot; the
 spot sets where the cuts fall and how much the top is held back.
 
+## Turn
+
+All turn tests group hands at the turn decisions only and leave the river to the solver, unless
+they say "whole tree". Floor 0.40%.
+
+### 1. Value or bluff, and the shape
+
+First to act, how often each kind bets (strength now as rank in the range, by draw):
+
+| in position | 0-20 | 20-40 | 40-60 | 60-80 | 80-90 | 90-100 |
+|---|---|---|---|---|---|---|
+| no draw | 0.62 | 0.29 | 0.12 | 0.41 | 0.67 | 0.85 |
+| gutshot | 0.53 | 0.41 | 0.24 | 0.49 | 0.86 | 1.00 |
+| strong draw | 0.54 | 0.51 | 0.23 | 0.69 | 0.98 | 0.95 |
+| nut draw | 0.62 | 0.61 | 0.49 | 0.79 | | 0.82 |
+
+| out of position | 0-20 | 20-40 | 40-60 | 60-80 | 80-90 | 90-100 |
+|---|---|---|---|---|---|---|
+| no draw | 0.25 | 0.12 | 0.13 | 0.33 | 0.47 | 0.35 |
+| gutshot | 0.45 | 0.27 | 0.13 | 0.30 | 0.55 | 0.74 |
+| strong draw | 0.63 | 0.32 | 0.06 | 0.35 | 0.42 | 0.49 |
+| nut draw | 0.56 | 0.28 | 0.09 | 0.08 | | 0.06 |
+
+The same U as the river (weak and strong bet, the middle checks), flatter, with draws betting
+more than made hands of the same strength when weak. Out of position the top again bets less
+than the hands under it.
+
+Facing a bet, raw equity over the pot odds is not enough. Hands with no draw need about 10
+points more than the pot odds in position and 15 out of position; strong and nut draws
+continue at the pot odds or below (-2 and 0). Among the hands near the line (10 points under
+to 5 over), in position: no draw continues 5% of the time, gutshots 44%, strong draws 72%, nut
+draws 84%. By quarters of draw equity 0.02 / 0.08 / 0.20 / 0.69, of swing 0.01 / 0.08 / 0.31 /
+0.59, of strength now 0.55 / 0.19 / 0.14 / 0.10. Blockers do nothing there (0.27 / 0.25 / 0.21 /
+0.25).
+
+### 2. Must, may, can't (share of the range)
+
+| decision | must bet or raise | may | can't | must continue | may | can't |
+|---|---|---|---|---|---|---|
+| first to act, in position | 0.14 | 0.65 | 0.21 | | | |
+| first to act, out of position | 0.05 | 0.72 | 0.23 | | | |
+| facing a bet, in position | 0.03 | 0.33 | 0.58 | 0.55 | 0.17 | 0.28 |
+| facing a bet, out of position | 0.04 | 0.28 | 0.65 | 0.49 | 0.15 | 0.35 |
+| facing a raise, in position | 0.03 | 0.18 | 0.39 | 0.60 | 0.08 | 0.32 |
+| facing a raise, out of position | 0.04 | 0.25 | 0.35 | 0.66 | 0.10 | 0.24 |
+
+First to act on the turn, two thirds to three quarters of the range is optional, in every band
+of strength. Only the top tenth in position is mostly must (53%), and a must there costs 5% of
+the pot against 14% to 33% on the river. Per kind (table in `hands/6-turn-shape.txt`), the only
+kinds that are mostly must are strong hands that also hold a draw. The solver plays only about
+half the range pure. This is why fitting the engine to the solver's individual turn opens has
+been unstable: for most hands either action is right for the hand, and the choice is the
+range's.
+
+Continuing against a bet or raise is much more settled: 8% to 17% optional.
+
+### 3. Interchangeable? (the test)
+
+turns-tune, turn decisions only, loss in % of the pot (turns-held2 in brackets):
+
+| grouping | groups | loss |
+|---|---|---|
+| everything alike | 1 | 42.1 |
+| status (same acceptable actions, 0.5%) | | 9.2 |
+| status x draw class | | 7.3 |
+| equity, 10 bands | 10 | 5.90 |
+| equity, 20 bands | 20 | 4.21 (4.20) |
+| equity, 50 bands | 50 | 2.32 (2.50) |
+| equity, 100 bands | 100 | 1.22 |
+| strength now 10 bands x draw class (the engine's kinds, finer) | ~40 | 4.34 |
+| E[HS2], 20 bands | 20 | 4.46 |
+| equity on every river card, 20 clusters | 20 | 3.13 (3.50) |
+| equity on every river card, 50 clusters | 50 | 1.40 (1.46) |
+| equity on every river card, 100 clusters | 100 | 0.63 |
+| **distribution of river equities, 50 clusters** | 50 | **1.04** |
+| **distribution of river equities, 100 clusters** | 100 | **0.49** |
+| the solver itself | | 0.40 |
+
+"Equity on every river card" clusters hands by the vector of their equity on each of the 46
+rivers (k-means from equity bands). "Distribution" sorts that vector first, so that only how
+much equity the hand gets and how it is spread counts, not which cards bring it.
+
+- The distribution does better than the card-by-card profile at the same number of clusters,
+  and reaches the floor at 100. **Which river cards help a hand does not matter; how its equity
+  is distributed over them does.** Two hands with the same distribution are twins.
+- Average equity is one number from that distribution, which is why finer equity bands keep
+  helping but stay about twice as far from the floor.
+- Whole tree (turn by clusters of the profile, river by 50 equity bands): 1.72 against 2.61
+  for 50 equity bands on both streets. Our selector's order with the solver's mixing in 20 bands
+  was 5.07.
+
+The second feature next to equity, 10 equity bands x 5 bands of the feature (50 groups; 10
+equity bands alone 5.90, 50 equity bands 2.32):
+
+| second feature | loss |
+|---|---|
+| best card (equity on its best river) | 2.37 |
+| draw equity | 2.93 |
+| swing | 2.96 |
+| draw class (4 classes) | 3.02 |
+| blockers | 3.32 |
+| implied odds proxy | 3.60 |
+| E[HS2] | 4.14 |
+| strength now | 4.18 |
+
+No single second feature at this resolution beats simply cutting equity five times finer
+(2.32); the best card comes level. Finer equity with a coarse second feature does not either:
+25 equity bands x 2 of draw equity 2.81, x 2 of swing 3.06, 17 x 3 of draw equity 3.03 (all 50
+groups, against 2.32), and 25 equity bands x draw class 1.69 (up to 100 groups, against 1.22). The full distribution is what beats it (1.04). In order of
+use next to equity: the hand's best river, then how much of its equity comes from behind, then
+swing and draw class. Strength now, the axis the engine's kinds are built on, is the least
+useful of them.
+
+By kind of decision, 50 groups:
+
+| turn decisions grouped | equity bands | river-equity profile |
+|---|---|---|
+| first to act | 1.76 | 1.04 |
+| facing a bet | 1.32 | 0.77 |
+| facing a raise | 0.37 | 0.33 |
+
+Facing a raise, average equity is enough. First to act and facing a bet are where the
+distribution matters.
+
+Mixing is as necessary as on the river: each group playing its most frequent action outright
+loses 7.9% (100 equity bands) and 8.2% (100 profile clusters).
+
+### 4 and 5. Which features, in what order
+
+- **Continuing against a bet or raise**: what it is worth to the hand is 95-97% a straight line
+  in the hand's features. The line is equity over the pot odds, with strength now counted
+  *against* the hand at equal equity (weights per SD, in position facing a bet: edge +26, equity
+  +26, strength now -20, spread +11, draw equity -8): of two hands with the same equity, the one
+  whose equity is still to come is worth more than the one that has it now. Feature models on
+  held-out boards: rank and frequencies 70-71% facing a bet, equity adds 10 points, what the
+  hand becomes adds 4 more; nothing else adds.
+- **Raising**: the least determined action (43-67% explained by everything together). It leans
+  on equity against the range that calls the raise and on strength now. By equity rank the
+  solver raises 4% of its weak hands and 31-41% of its best; by draw, 11-12% of no-draw hands and
+  18-37% of strong and nut draws.
+- **Betting first to act**: hand features explain only 21-32% of what betting is worth, because
+  it is worth nearly nothing either way for most hands (sd 1-2% of the pot). Models of the
+  solver's choice reach 49% in position and 67% out of position; out of position the largest
+  single input is how often the range bets.
+
+### 6. What the spot changes
+
+Facing a bet, the extra equity a no-draw hand needs over the pot odds:
+
+| | mean | sd across spots | by pair A / B / C / D |
+|---|---|---|---|
+| facing a bet, in position | +10 | 5 | 10 / 12 / 10 / 10 |
+| facing a bet, out of position | +15 | 6 | 16 / 14 / 20 / 14 |
+| facing a raise, in position | +12 | 10 | 14 / 10 / 10 / 11 |
+| facing a raise, out of position | +15 | 13 | 18 / 10 / 16 / 13 |
+
+It moves weakly with the stack behind (+0.24 to +0.32 facing a bet) and hardly with range or
+nut advantage. For draws the requirement falls with the size of the bet faced (-0.65 to -0.68).
+Position is the clearest effect: five points more out of position.
+
+First to act, how often each kind bets against how often the range bets (rank correlation
+across spots):
+
+| | weak | middle | good | top | strong draws |
+|---|---|---|---|---|---|
+| in position | +0.82 | +0.74 | +0.52 | +0.79 | -0.02 |
+| out of position | +0.80 | +0.87 | +0.95 | +0.97 | +0.75 |
+
+Out of position every kind moves with the range's frequency, which follows range and nut
+advantage (+0.8 to +0.9): the spot sets one level and the kinds scale with it. By pair: the
+3-bettor bets 72% and its top 74%; the big blind against the button bets 9% and its top 17%. In
+position the draws bet about 57% whatever the range does, and bet more with deeper stacks
+(+0.72). The share of the range that is optional is the same in every spot (0.66 and 0.74, sd
+0.10 and 0.16).
+
+## What this says about the selector
+
+Not built; these are what the measurements point to.
+
+1. **River: rank by exact equity against his range and stop looking for other features.** The
+   order is already at the floor. Every point still lost on the river with the right
+   frequencies is in the shape laid along that order, and most of that is out of position first
+   to act.
+2. **River facing a bet or raise: pure cuts are close enough** (0.5% and 1.4% with the right
+   frequencies). Raise from the top, call next; the bluff-catchers are cut by their last
+   fractions of equity, which is what blockers are.
+3. **River out of position first to act needs a checking range that holds strong hands**, and a
+   single checking share is not it. This is the one river shape worth a study of its own.
+4. **Turn: replace strength now x draw class by the distribution of river equities.** The
+   engine already computes equity on every next card for its features. A hand's kind should be
+   where that distribution sits: its mean, its best river and how much comes from behind are the
+   three numbers that carry most of it.
+5. **Turn calling: equity over the pot odds, discounted for hands with nothing to come.** About
+   10 points in position and 15 out of position for a hand with no draw, none for strong draws.
+6. **Do not fit turn opens hand by hand.** Two thirds of the range is optional there. What has
+   to be right is the mix of each kind, and the kinds have to be the right ones (point 4).
+7. **Must / may / can't is not a hand-selection tool.** It says where a mistake is expensive
+   for one hand. It does not say which hands can stand in for each other.
+
+## From the papers
+
+- **Ferguson and Ferguson, "On the Borel and von Neumann Poker Models"** (read in full). The
+  thresholds of section 5.3 were tested above. Two of its statements match what the solver does:
+  the bettor is indifferent only at the thresholds while the caller is indifferent over a whole
+  band (the 44-52% of bluff-catchers), and with two bet sizes the worst hands bluff with the big
+  size while the small size takes the merged middle (the out-of-position river sizes).
+- **The 65 MB file (`modern-poker-theory-acevedo-michael.pdf`)** returned no text through Drive
+  and has not been read.
+
+## Files
+
+| file | what |
+|---|---|
+| `diagnosis/hands.mjs` | builds the per-hand data |
+| `diagnosis/hands_load.py` | loads it; defines must / may / can't |
+| `diagnosis/hands_1_status.py` | step 2, by equity rank |
+| `diagnosis/hands_2_features.py` | feature models on held-out boards |
+| `diagnosis/hands_3_river_shape.py` | river shape, thresholds, von Neumann |
+| `diagnosis/hands_4_advantage.py` | what each action is worth, features and spot interactions |
+| `diagnosis/hands_5_ties.py` | tied equities and mixing on rivers |
+| `diagnosis/hands_6_turn_shape.py`, `hands_7_turn_spots.py` | turn shape and spot dependence |
+| `diagnosis/v54.mjs` | interchange test by any grouping |
+| `diagnosis/v55.mjs` | pure cuts on equity (rivers) |
+| `diagnosis/hands/*.txt` | every output quoted here |

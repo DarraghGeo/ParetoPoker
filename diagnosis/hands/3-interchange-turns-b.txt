@@ -1,0 +1,30 @@
+turns-tune   [turn only] equity x10, E[HS2] x5                        oop  0.23 /  4.22 | ip  0.25 /  4.07 | both  0.24 /  4.14
+turns-tune   [turn only] equity x10, swing x5                         oop  0.17 /  3.32 | ip  0.15 /  2.59 | both  0.16 /  2.96
+turns-tune   [turn only] runout distribution x50                      oop  0.04 /  0.97 | ip  0.05 /  1.11 | both  0.05 /  1.04
+turns-tune   [turn only] equity x10, blockers x5                      oop  0.31 /  3.49 | ip  0.30 /  3.15 | both  0.30 /  3.32
+turns-tune   [turn only] equity x10, draw class                       oop  0.17 /  3.27 | ip  0.16 /  2.77 | both  0.17 /  3.02
+turns-tune   [turn only] E[HS2] x20                                   oop  0.25 /  4.20 | ip  0.35 /  4.72 | both  0.30 /  4.46
+turns-tune   [turn only] equity x10, implied odds x5                  oop  0.24 /  3.81 | ip  0.24 /  3.39 | both  0.24 /  3.60
+turns-tune   [turn only] equity x10, best card x5                     oop  0.15 /  2.32 | ip  0.17 /  2.42 | both  0.16 /  2.37
+turns-tune   [turn only, open] equity x50                                   oop  0.05 /  1.55 | ip  0.06 /  1.97 | both  0.05 /  1.76
+turns-tune   [turn only, open] runout profile x50                           oop  0.02 /  0.77 | ip  0.03 /  1.31 | both  0.02 /  1.04
+turns-tune   [turn only, bet] equity x50                                   oop  0.14 /  1.02 | ip  0.14 /  1.62 | both  0.14 /  1.32
+turns-tune   [turn only, bet] runout profile x50                           oop  0.04 /  0.67 | ip  0.07 /  0.88 | both  0.06 /  0.77
+turns-tune   [turn only, raise] equity x50                                   oop  0.01 /  0.31 | ip  0.01 /  0.42 | both  0.01 /  0.37
+turns-tune   [turn only, raise] runout profile x50                           oop  0.00 /  0.28 | ip  0.01 /  0.39 | both  0.01 /  0.33
+turns-held2  [turn only] equity x50                                   oop  0.25 /  2.80 | ip  0.23 /  2.20 | both  0.24 /  2.50
+turns-held2  [turn only] runout profile x50                           oop  0.07 /  1.27 | ip  0.11 /  1.65 | both  0.09 /  1.46
+turns-held2  [turn only] equity x20                                   oop  0.42 /  4.64 | ip  0.37 /  3.76 | both  0.40 /  4.20
+turns-held2  [turn only] runout profile x20                           oop  0.23 /  3.48 | ip  0.30 /  3.51 | both  0.26 /  3.50
+turns-tune   runout profile x50                           oop  0.16 /  1.51 | ip  0.20 /  1.92 | both  0.18 /  1.72
+turns-tune   equity x50                                   oop  0.33 /  2.53 | ip  0.31 /  2.69 | both  0.32 /  2.61
+turns-tune   [turn only] runout profile x100, pure                    oop -0.02 /  8.69 | ip  0.01 /  7.66 | both -0.01 /  8.17
+turns-tune   [turn only] equity x100, pure                            oop  0.03 /  8.60 | ip  0.06 /  7.10 | both  0.04 /  7.85
+turns-tune   [turn only] runout distribution x100                     oop  0.01 /  0.46 | ip  0.02 /  0.51 | both  0.01 /  0.49
+turns-tune   [turn only] status 0.5%, draw class                      oop  0.20 /  6.59 | ip  0.19 /  8.05 | both  0.20 /  7.32
+DONE
+turns-tune   [turn only] equity x25, draw equity x2                   oop  0.22 /  3.02 | ip  0.20 /  2.59 | both  0.21 /  2.81
+turns-tune   [turn only] equity x25, swing x2                         oop  0.24 /  3.42 | ip  0.20 /  2.71 | both  0.22 /  3.06
+turns-tune   [turn only] equity x17, draw equity x3                   oop  0.19 /  3.38 | ip  0.19 /  2.68 | both  0.19 /  3.03
+turns-tune   [turn only] equity x25, draw class                       oop  0.08 /  1.74 | ip  0.07 /  1.64 | both  0.08 /  1.69
+DONE
