@@ -217,7 +217,7 @@ export class SolverMatch {
         const dead = (range) => range.map((w, i) => (COMBO_A[i] === card || COMBO_B[i] === card ? 0 : w));
         await this.#walkSolverRanges({
           ...state, history: [...state.history, card], own: dead(state.own), model: dead(state.model), priors: state.priors.map(dead),
-          streetBase: node.bets[0], last: [0, 0], raises: 0, dealt: true,
+          streetBase: node.bets[0], last: [0, 0], raises: 0, dealt: true, path: `${state.path ?? ''} /`,
         }, options);
       }
       return;
@@ -239,7 +239,7 @@ export class SolverMatch {
       if (asked) {
         const solved = node.actions.map((_, a) => spread(this.hands[me], strategy.slice(a * n, (a + 1) * n)));
         const base = {
-          position: POSITIONS[me], spot, board: node.board, actions: node.actions, hero: state.own, villainPrior: state.priors[1 - me],
+          position: POSITIONS[me], spot, board: node.board, actions: node.actions, hero: state.own, villainPrior: state.priors[1 - me], line: state.path ?? '',
           // His range: the solver's, or the engine's own model of it
           villain: source === 'solver' ? spread(this.hands[1 - me], weights[1 - me]) : state.model,
         };
@@ -302,7 +302,7 @@ export class SolverMatch {
     let his = null;
     if (me !== seat && source !== 'solver') {
       his = this.opponent.decide({
-        position: POSITIONS[me], spot, board: node.board, actions: node.actions, hero: state.model, villain: state.own, villainPrior: state.priors[seat],
+        position: POSITIONS[me], spot, board: node.board, actions: node.actions, hero: state.model, villain: state.own, villainPrior: state.priors[seat], line: state.path ?? '',
       }).strategy;
     }
 
@@ -342,6 +342,7 @@ export class SolverMatch {
           streetBase: node.bets[0],
           last: [0, 0],
           raises: 0,
+          path: `${state.path ?? ''} /`,
         }, { visit, dryRun, prune });
       }
       return;
@@ -359,6 +360,8 @@ export class SolverMatch {
       villain: state.ranges[them],
       villainPrior: state.priors[them],
       actions: node.actions,
+      // The actions of the hand so far, streets separated by '/': 'check bet 33 call / check'
+      line: state.path ?? '',
     });
     await visit(node, state, decision);
 

@@ -11,5 +11,7 @@ const ROWS = [
   ['curve profile, his range given', profile(), { ranges: 'solver', where: () => true }],
   ['curve profile, whole engine', profile(), {}],
   ['curve profile, whole engine, 1000 iterations', profile({ iterations: 1000 }), {}],
+  ['two-street curve profile, whole engine', profile({ turn: true }), {}],
+  ['two-street curve profile, 600 iterations', profile({ turn: true, turnIterations: 600 }), {}],
 ];
 for (const i of (rows ?? '0,1,2,3').split(',').map(Number)) { const t = Date.now(); console.log(`${set.padEnd(12)} ${ROWS[i][0].padEnd(46)} ${format(await measure(spots, ROWS[i][1], ROWS[i][2]))}  ${((Date.now() - t) / 1000).toFixed(0)}s`); }
