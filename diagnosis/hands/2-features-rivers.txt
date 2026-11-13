@@ -1,0 +1,5 @@
+fitted on ['rivers-tune'], scored on ['rivers-held']
+
+== facing-bet ip: continue (call or raise)   (137 decisions to fit, 94 to score; solver average 0.61)
+   rank within range + the frequencies                                                R2 0.856   cost 0.15%
+   + equity (absolute, and against his best quarter)                                  R2 0.860   cost 0.11%

@@ -85,6 +85,33 @@ it at the turn decisions themselves. So of the engine's 9.5-9.9 on turns, about 
 order at this resolution and about half is frequencies and mixing. The fitted order is ahead
 of the equity order by 0.7 to 1.1 points.
 
+### Frequency and mixing, each on its own
+
+`diagnosis/v53.mjs`, results in `diagnosis/isolate-result.txt`. His range is the solver's
+throughout. Loss to the solver's best response, % of the pot (to its equilibrium in brackets).
+
+| | rivers-tune | rivers-held | turns-tune | turns-held2 |
+|---|---|---|---|---|
+| the solver itself | 0.30 | 0.30 | 0.40 | 0.43 |
+| everything ours | 3.77 (0.45) | 4.24 (0.50) | 12.68 (1.56) | 12.90 (1.51) |
+| solver's frequencies, solver's order, no mixing | 3.87 | 3.67 | 11.21 (0.64) | 11.17 (0.59) |
+| solver's frequencies, our order, solver's mixing (20 bands) | 1.35 (0.25) | 1.34 (0.25) | 5.07 (0.59) | 5.44 (0.60) |
+| solver's frequencies, our order, no mixing | 5.09 (0.68) | 5.26 (0.69) | 10.54 (1.55) | 12.73 (1.69) |
+| solver's frequencies, our order, our caps | 4.96 (0.61) | 5.14 (0.60) | 10.20 (1.47) | 12.40 (1.63) |
+| solver's frequencies, our order, our caps and kind tables | 4.96 | 5.14 | 8.75 (1.26) | 10.58 (1.31) |
+| our frequencies, solver's hands and mixing stretched to them | 9.01 (0.65) | 8.71 (0.64) | 20.00 (2.08) | 19.15 (1.54) |
+| the fundamentals untuned, solver's hands stretched to them | 18.96 | 17.68 | 33.18 | 32.49 |
+
+- Mixing is the largest cost that can be isolated cleanly: along the same order, ours loses
+  3.6 to 3.8 points more than the solver's on rivers and 3.7 to 5.1 on turns. The solver's own
+  order dealt all-or-nothing does no better than our engine.
+- Our frequencies are fitted to our own hands: giving the engine the solver's frequencies makes
+  it worse on rivers (3.77 to 4.96) and out of position on turns, and better in position on
+  turns (16.6 to 7.7 on turns-tune).
+- The stretched rows are not a clean frequency figure. Our bet sizes differ from the solver's
+  (we bet 75% of the pot where it mostly bets 33% far more often), and its hands for one size
+  do not belong in another.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,

@@ -6,3 +6,5 @@ diagnosis/level-sweep.jsonl
 diagnosis/level-sweep.jsonl.errors
 diagnosis/order-turns.txt
 diagnosis/isolate.txt
+diagnosis/hands/*.jsonl
+diagnosis/hands/extract.log

@@ -1,0 +1,96 @@
+sets ['rivers-tune']: 621 decisions, 146157 hands; a mistake = an action costing over 0.5% of the pot
+
+== river facing-bet ip: 137 decisions; range bets/raises 0.19, calls 0.40
+   bet/raise:  must 0.18 optional 0.18 cant 0.43
+   continue:   must 0.52 optional 0.20 cant 0.28
+   hands the solver plays pure for bet/raise (over 95% or under 5%): 0.80
+   by equity rank within the range (weakest first): share that must / may / can't bet-or-raise | solver's frequency | cost of the wrong action for a must (share of pot)
+       0-10%  must 0.06 opt 0.18 cant 0.55 | agg 0.06 call 0.00 | continue: must 0.06 opt 0.18 cant 0.77 | must-cost 0.012
+      10-20%  must 0.06 opt 0.15 cant 0.57 | agg 0.05 call 0.04 | continue: must 0.06 opt 0.16 cant 0.78 | must-cost 0.011
+      20-30%  must 0.05 opt 0.20 cant 0.54 | agg 0.05 call 0.18 | continue: must 0.05 opt 0.30 cant 0.65 | must-cost 0.009
+      30-40%  must 0.06 opt 0.27 cant 0.45 | agg 0.06 call 0.37 | continue: must 0.18 opt 0.44 cant 0.38 | must-cost 0.009
+      40-50%  must 0.06 opt 0.29 cant 0.43 | agg 0.08 call 0.52 | continue: must 0.44 opt 0.39 cant 0.17 | must-cost 0.011
+      50-60%  must 0.04 opt 0.25 cant 0.50 | agg 0.07 call 0.67 | continue: must 0.65 opt 0.28 cant 0.06 | must-cost 0.015
+      60-70%  must 0.07 opt 0.14 cant 0.57 | agg 0.09 call 0.79 | continue: must 0.86 opt 0.14 cant 0.01 | must-cost 0.027
+      70-80%  must 0.23 opt 0.13 cant 0.43 | agg 0.26 call 0.69 | continue: must 0.95 opt 0.05 cant 0.00 | must-cost 0.070
+      80-90%  must 0.45 opt 0.14 cant 0.20 | agg 0.50 call 0.49 | continue: must 0.98 opt 0.02 cant 0.00 | must-cost 0.125
+     90-100%  must 0.68 opt 0.04 cant 0.06 | agg 0.70 call 0.30 | continue: must 1.00 opt 0.00 cant 0.00 | must-cost 0.235
+
+== river facing-bet oop: 148 decisions; range bets/raises 0.09, calls 0.36
+   bet/raise:  must 0.08 optional 0.11 cant 0.48
+   continue:   must 0.38 optional 0.20 cant 0.42
+   hands the solver plays pure for bet/raise (over 95% or under 5%): 0.89
+   by equity rank within the range (weakest first): share that must / may / can't bet-or-raise | solver's frequency | cost of the wrong action for a must (share of pot)
+       0-10%  must 0.00 opt 0.02 cant 0.65 | agg 0.00 call 0.01 | continue: must 0.00 opt 0.03 cant 0.96 | must-cost 0.035
+      10-20%  must 0.00 opt 0.04 cant 0.63 | agg 0.00 call 0.04 | continue: must 0.00 opt 0.08 cant 0.92 | must-cost 0.009
+      20-30%  must 0.00 opt 0.06 cant 0.61 | agg 0.01 call 0.08 | continue: must 0.00 opt 0.15 cant 0.85 | must-cost 0.009
+      30-40%  must 0.00 opt 0.06 cant 0.61 | agg 0.01 call 0.16 | continue: must 0.02 opt 0.31 cant 0.67 | must-cost 0.008
+      40-50%  must 0.01 opt 0.13 cant 0.54 | agg 0.02 call 0.28 | continue: must 0.09 opt 0.48 cant 0.43 | must-cost 0.012
+      50-60%  must 0.02 opt 0.18 cant 0.48 | agg 0.03 call 0.46 | continue: must 0.30 opt 0.43 cant 0.27 | must-cost 0.014
+      60-70%  must 0.04 opt 0.22 cant 0.41 | agg 0.05 call 0.64 | continue: must 0.55 opt 0.32 cant 0.13 | must-cost 0.015
+      70-80%  must 0.05 opt 0.25 cant 0.38 | agg 0.07 call 0.75 | continue: must 0.82 opt 0.17 cant 0.01 | must-cost 0.018
+      80-90%  must 0.16 opt 0.14 cant 0.37 | agg 0.19 call 0.76 | continue: must 0.97 opt 0.03 cant 0.00 | must-cost 0.094
+     90-100%  must 0.51 opt 0.06 cant 0.11 | agg 0.53 call 0.47 | continue: must 1.00 opt 0.00 cant 0.00 | must-cost 0.212
+
+== river facing-raise ip: 83 decisions; range bets/raises 0.02, calls 0.49
+   bet/raise:  must 0.02 optional 0.03 cant 0.54
+   continue:   must 0.36 optional 0.26 cant 0.39
+   hands the solver plays pure for bet/raise (over 95% or under 5%): 0.97
+   by equity rank within the range (weakest first): share that must / may / can't bet-or-raise | solver's frequency | cost of the wrong action for a must (share of pot)
+       0-10%  must 0.00 opt 0.02 cant 0.56 | agg 0.01 call 0.00 | continue: must 0.00 opt 0.02 cant 0.98 | must-cost 0.026
+      10-20%  must 0.00 opt 0.02 cant 0.57 | agg 0.00 call 0.00 | continue: must 0.00 opt 0.02 cant 0.98 | must-cost 0.026
+      20-30%  must 0.00 opt 0.04 cant 0.54 | agg 0.01 call 0.11 | continue: must 0.00 opt 0.12 cant 0.88 | must-cost 0.027
+      30-40%  must 0.01 opt 0.04 cant 0.54 | agg 0.02 call 0.29 | continue: must 0.03 opt 0.39 cant 0.58 | must-cost 0.035
+      40-50%  must 0.01 opt 0.02 cant 0.55 | agg 0.01 call 0.48 | continue: must 0.07 opt 0.62 cant 0.31 | must-cost 0.029
+      50-60%  must 0.00 opt 0.04 cant 0.54 | agg 0.01 call 0.62 | continue: must 0.24 opt 0.66 cant 0.10 | must-cost 0.012
+      60-70%  must 0.00 opt 0.04 cant 0.54 | agg 0.01 call 0.75 | continue: must 0.50 opt 0.48 cant 0.02
+      70-80%  must 0.01 opt 0.02 cant 0.56 | agg 0.01 call 0.87 | continue: must 0.77 opt 0.23 cant 0.00 | must-cost 0.026
+      80-90%  must 0.00 opt 0.01 cant 0.58 | agg 0.01 call 0.98 | continue: must 0.97 opt 0.03 cant 0.00 | must-cost 0.031
+     90-100%  must 0.16 opt 0.02 cant 0.40 | agg 0.17 call 0.83 | continue: must 1.00 opt 0.00 cant 0.00 | must-cost 0.235
+
+== river facing-raise oop: 109 decisions; range bets/raises 0.02, calls 0.51
+   bet/raise:  must 0.02 optional 0.05 cant 0.38
+   continue:   must 0.39 optional 0.28 cant 0.34
+   hands the solver plays pure for bet/raise (over 95% or under 5%): 0.97
+   by equity rank within the range (weakest first): share that must / may / can't bet-or-raise | solver's frequency | cost of the wrong action for a must (share of pot)
+       0-10%  must 0.00 opt 0.03 cant 0.42 | agg 0.00 call 0.00 | continue: must 0.00 opt 0.03 cant 0.97 | must-cost 0.016
+      10-20%  must 0.00 opt 0.03 cant 0.42 | agg 0.00 call 0.00 | continue: must 0.00 opt 0.03 cant 0.97 | must-cost 0.010
+      20-30%  must 0.00 opt 0.01 cant 0.44 | agg 0.00 call 0.22 | continue: must 0.01 opt 0.22 cant 0.77 | must-cost 0.009
+      30-40%  must 0.00 opt 0.05 cant 0.40 | agg 0.00 call 0.36 | continue: must 0.03 opt 0.57 cant 0.41 | must-cost 0.009
+      40-50%  must 0.00 opt 0.08 cant 0.36 | agg 0.00 call 0.51 | continue: must 0.15 opt 0.70 cant 0.15 | must-cost 0.009
+      50-60%  must 0.00 opt 0.09 cant 0.37 | agg 0.00 call 0.58 | continue: must 0.31 opt 0.64 cant 0.06
+      60-70%  must 0.00 opt 0.07 cant 0.38 | agg 0.01 call 0.74 | continue: must 0.56 opt 0.42 cant 0.03
+      70-80%  must 0.00 opt 0.06 cant 0.39 | agg 0.04 call 0.89 | continue: must 0.88 opt 0.12 cant 0.01 | must-cost 0.011
+      80-90%  must 0.03 opt 0.04 cant 0.38 | agg 0.05 call 0.94 | continue: must 0.97 opt 0.03 cant 0.00 | must-cost 0.221
+     90-100%  must 0.12 opt 0.04 cant 0.30 | agg 0.13 call 0.87 | continue: must 1.00 opt 0.00 cant 0.00 | must-cost 0.234
+
+== river open ip: 72 decisions; range bets/raises 0.50, calls 0.00
+   bet/raise:  must 0.43 optional 0.15 cant 0.41
+   hands the solver plays pure for bet/raise (over 95% or under 5%): 0.82
+   by equity rank within the range (weakest first): share that must / may / can't bet-or-raise | solver's frequency | cost of the wrong action for a must (share of pot)
+       0-10%  must 0.78 opt 0.17 cant 0.05 | agg 0.89 | must-cost 0.080
+      10-20%  must 0.35 opt 0.35 cant 0.30 | agg 0.52 | must-cost 0.026
+      20-30%  must 0.03 opt 0.14 cant 0.83 | agg 0.07 | must-cost 0.015
+      30-40%  must 0.00 opt 0.02 cant 0.97 | agg 0.01 | must-cost 0.016
+      40-50%  must 0.00 opt 0.05 cant 0.94 | agg 0.01 | must-cost 0.009
+      50-60%  must 0.06 opt 0.20 cant 0.74 | agg 0.11 | must-cost 0.013
+      60-70%  must 0.34 opt 0.39 cant 0.27 | agg 0.52 | must-cost 0.027
+      70-80%  must 0.77 opt 0.19 cant 0.04 | agg 0.90 | must-cost 0.073
+      80-90%  must 0.98 opt 0.01 cant 0.00 | agg 1.00 | must-cost 0.140
+     90-100%  must 1.00 opt 0.00 cant 0.00 | agg 1.00 | must-cost 0.331
+
+== river open oop: 72 decisions; range bets/raises 0.36, calls 0.00
+   bet/raise:  must 0.24 optional 0.34 cant 0.42
+   hands the solver plays pure for bet/raise (over 95% or under 5%): 0.63
+   by equity rank within the range (weakest first): share that must / may / can't bet-or-raise | solver's frequency | cost of the wrong action for a must (share of pot)
+       0-10%  must 0.48 opt 0.43 cant 0.10 | agg 0.62 | must-cost 0.042
+      10-20%  must 0.14 opt 0.45 cant 0.41 | agg 0.22 | must-cost 0.032
+      20-30%  must 0.03 opt 0.23 cant 0.74 | agg 0.06 | must-cost 0.010
+      30-40%  must 0.01 opt 0.15 cant 0.84 | agg 0.03 | must-cost 0.006
+      40-50%  must 0.03 opt 0.18 cant 0.79 | agg 0.08 | must-cost 0.013
+      50-60%  must 0.22 opt 0.29 cant 0.49 | agg 0.32 | must-cost 0.015
+      60-70%  must 0.49 opt 0.33 cant 0.18 | agg 0.64 | must-cost 0.015
+      70-80%  must 0.38 opt 0.47 cant 0.16 | agg 0.66 | must-cost 0.012
+      80-90%  must 0.35 opt 0.43 cant 0.21 | agg 0.58 | must-cost 0.012
+     90-100%  must 0.29 opt 0.43 cant 0.28 | agg 0.42 | must-cost 0.016
+

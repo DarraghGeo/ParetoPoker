@@ -69,8 +69,8 @@ export class SolverBridge {
   node(history) { return this.request('node', { history }); }
   /** Fixes the acting player's strategy at `history`: `strategy[action * hands + hand]`. */
   lock(history, strategy) { return this.request('lock', { history, strategy }); }
-  /** The acting player's strategy at `history` and both players' reach weights. */
-  strategy(history) { return this.request('strategy', { history }); }
+  /** The acting player's strategy at `history` and both players' reach weights. With `evs`: also each action's expected value per hand. */
+  strategy(history, { evs = false } = {}) { return this.request('strategy', { history, evs }); }
   /** Solves, respecting locks. `target` is the exploitability to stop at, as a share of the pot. */
   solve({ iterations = 1000, target = 0.003 } = {}) { return this.request('solve', { iterations, target }); }
   /** Clears every lock and any solution. */

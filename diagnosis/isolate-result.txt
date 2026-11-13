@@ -1,0 +1,45 @@
+rivers-tune  the solver itself                                          oop  0.03 /  0.28 | ip  0.02 /  0.32 | both  0.02 /  0.30
+rivers-tune  everything ours (his range given)                          oop  0.61 /  3.21 | ip  0.29 /  4.32 | both  0.45 /  3.77
+rivers-tune  FREQUENCY ours (fitted)                                    oop  0.92 / 10.45 | ip  0.38 /  7.58 | both  0.65 /  9.01
+rivers-tune  FREQUENCY ours (fundamentals, no tuning)                   oop  1.72 / 21.05 | ip  0.55 / 16.88 | both  1.13 / 18.96
+rivers-tune  MIXING none, the solver's order                            oop  0.00 /  4.52 | ip -0.02 /  3.22 | both -0.01 /  3.87
+rivers-tune  MIXING the solver's, our order (20 bands)                  oop  0.27 /  1.37 | ip  0.22 /  1.33 | both  0.25 /  1.35
+rivers-tune  MIXING none, our order                                     oop  1.21 /  6.22 | ip  0.16 /  3.96 | both  0.68 /  5.09
+rivers-tune  MIXING ours (caps), our order                              oop  1.06 /  5.96 | ip  0.16 /  3.96 | both  0.61 /  4.96
+rivers-tune  MIXING ours (caps and kind tables), our order              oop  1.06 /  5.96 | ip  0.16 /  3.96 | both  0.61 /  4.96
+rivers-held  the solver itself                                          oop  0.03 /  0.28 | ip  0.02 /  0.33 | both  0.02 /  0.30
+rivers-held  everything ours (his range given)                          oop  0.61 /  3.31 | ip  0.39 /  5.18 | both  0.50 /  4.24
+rivers-held  FREQUENCY ours (fitted)                                    oop  0.83 /  9.34 | ip  0.45 /  8.08 | both  0.64 /  8.71
+rivers-held  FREQUENCY ours (fundamentals, no tuning)                   oop  1.72 / 19.58 | ip  0.64 / 15.77 | both  1.18 / 17.68
+rivers-held  MIXING none, the solver's order                            oop -0.02 /  4.07 | ip  0.03 /  3.27 | both  0.01 /  3.67
+rivers-held  MIXING the solver's, our order (20 bands)                  oop  0.27 /  1.31 | ip  0.23 /  1.37 | both  0.25 /  1.34
+rivers-held  MIXING none, our order                                     oop  1.17 /  6.74 | ip  0.21 /  3.78 | both  0.69 /  5.26
+rivers-held  MIXING ours (caps), our order                              oop  0.99 /  6.50 | ip  0.21 /  3.78 | both  0.60 /  5.14
+rivers-held  MIXING ours (caps and kind tables), our order              oop  0.99 /  6.50 | ip  0.21 /  3.78 | both  0.60 /  5.14
+turns-tune   the solver itself                                          oop  0.03 /  0.40 | ip  0.02 /  0.40 | both  0.03 /  0.40
+turns-tune   everything ours (his range given)                          oop  2.00 /  8.77 | ip  1.12 / 16.60 | both  1.56 / 12.68
+turns-tune   FREQUENCY ours (fitted)                                    oop  2.35 / 18.95 | ip  1.81 / 21.05 | both  2.08 / 20.00
+turns-tune   FREQUENCY ours (fundamentals, no tuning)                   oop  1.39 / 30.37 | ip  1.03 / 36.00 | both  1.21 / 33.18
+turns-tune   FREQUENCY ours (fitted), turn decisions only               oop  1.38 / 14.74 | ip  1.10 / 10.66 | both  1.24 / 12.70
+turns-tune   FREQUENCY ours (fitted), river decisions only              oop  0.80 / 12.37 | ip  0.64 / 16.07 | both  0.72 / 14.22
+turns-tune   MIXING none, the solver's order                            oop  0.85 / 12.73 | ip  0.42 /  9.69 | both  0.64 / 11.21
+turns-tune   MIXING the solver's, our order (20 bands)                  oop  0.63 /  4.55 | ip  0.55 /  5.59 | both  0.59 /  5.07
+turns-tune   MIXING none, our order                                     oop  1.88 / 12.09 | ip  1.23 /  8.99 | both  1.55 / 10.54
+turns-tune   MIXING ours (caps), our order                              oop  1.73 / 11.50 | ip  1.21 /  8.91 | both  1.47 / 10.20
+turns-tune   MIXING ours (caps and kind tables), our order              oop  1.52 /  9.81 | ip  0.99 /  7.69 | both  1.26 /  8.75
+turns-tune   MIXING ours (caps and kinds), turn decisions only          oop  0.42 / 11.61 | ip  0.46 / 12.13 | both  0.44 / 11.87
+turns-tune   MIXING none, our order, turn decisions only                oop  0.47 / 16.83 | ip  0.44 / 14.45 | both  0.46 / 15.64
+turns-held2  the solver itself                                          oop  0.04 /  0.45 | ip  0.02 /  0.41 | both  0.03 /  0.43
+turns-held2  everything ours (his range given)                          oop  1.88 /  8.88 | ip  1.13 / 16.93 | both  1.51 / 12.90
+turns-held2  FREQUENCY ours (fitted)                                    oop  1.95 / 18.31 | ip  1.13 / 20.00 | both  1.54 / 19.15
+turns-held2  FREQUENCY ours (fundamentals, no tuning)                   oop  1.41 / 32.49 | ip  0.77 / 32.49 | both  1.09 / 32.49
+turns-held2  FREQUENCY ours (fitted), turn decisions only               oop  0.98 / 13.02 | ip  0.47 / 10.44 | both  0.73 / 11.73
+turns-held2  FREQUENCY ours (fitted), river decisions only              oop  0.69 / 13.04 | ip  0.57 / 15.91 | both  0.63 / 14.48
+turns-held2  MIXING none, the solver's order                            oop  0.79 / 12.58 | ip  0.38 /  9.77 | both  0.59 / 11.17
+turns-held2  MIXING the solver's, our order (20 bands)                  oop  0.59 /  5.59 | ip  0.61 /  5.29 | both  0.60 /  5.44
+turns-held2  MIXING none, our order                                     oop  2.00 / 14.26 | ip  1.37 / 11.20 | both  1.69 / 12.73
+turns-held2  MIXING ours (caps), our order                              oop  1.89 / 13.63 | ip  1.37 / 11.17 | both  1.63 / 12.40
+turns-held2  MIXING ours (caps and kind tables), our order              oop  1.61 / 11.20 | ip  1.00 /  9.97 | both  1.31 / 10.58
+turns-held2  MIXING ours (caps and kinds), turn decisions only          oop  0.49 / 15.35 | ip  0.52 / 12.75 | both  0.51 / 14.05
+turns-held2  MIXING none, our order, turn decisions only                oop  0.47 / 20.95 | ip  0.57 / 15.80 | both  0.52 / 18.38
+DONE

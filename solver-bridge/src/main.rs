@@ -163,10 +163,19 @@ impl Bridge {
         if game.is_terminal_node() || game.is_chance_node() {
             return Err("no strategy at a terminal or chance node".into());
         }
+        // With `evs`: the expected value of each action for each hand of the acting player, in
+        // chips, laid out like the strategy. Only the differences between actions mean anything.
+        let evs = if req.get("evs").and_then(Value::as_bool).unwrap_or(false) {
+            game.cache_normalized_weights();
+            Some(game.expected_values_detail(game.current_player()))
+        } else {
+            None
+        };
         Ok(json!({
             "player": game.current_player(),
             "strategy": game.strategy(),
             "weights": [game.weights(0).to_vec(), game.weights(1).to_vec()],
+            "evs": evs,
         }))
     }
 
