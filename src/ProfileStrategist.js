@@ -16,11 +16,12 @@ import { RangeStrategist } from './RangeStrategist.js';
  *   multiple of the bet) taken to be available later in the hand. Default: his bets are like the
  *   ones offered at this decision, and a raise is 2.5 times the bet.
  * @param {number} [options.iterations] Default 300.
+ * @param {boolean} [options.blockers] On the river, count card removal (hand by hand) in place of the two curves. Default: off.
  */
 export class ProfileStrategist extends RangeStrategist {
-  constructor({ menu = null, iterations = 300, turn = false, turnIterations = 300, pure = false, ...rest } = {}) {
+  constructor({ menu = null, iterations = 300, turn = false, turnIterations = 300, pure = false, blockers = false, ...rest } = {}) {
     super(rest);
-    Object.assign(this, { menu, iterations, turn, turnIterations, pure });
+    Object.assign(this, { menu, iterations, turn, turnIterations, pure, blockers });
     // The turn being played, with the rivers behind it: solved once at its first decision
     this.turns = new Map();
     // The river being played: solved once at its first decision, read at the later ones
@@ -46,7 +47,7 @@ export class ProfileStrategist extends RangeStrategist {
     const toCall = spot.toCall ?? 0;
     const invested = spot.invested ?? 0;
     const key = `${[...board].sort((a, b) => a - b).join(',')}|${Math.round(spot.streetPot ?? spot.pot)}`;
-    const args = { equity: this.equity, board, hero, villain, spot, actions, menu: this.menu, iterations: this.iterations };
+    const args = { equity: this.equity, board, hero, villain, spot, actions, menu: this.menu, iterations: this.iterations, blockers: this.blockers };
     let strategy = null;
     if (position === 'oop' && toCall === 0 && invested === 0) {
       // The first decision of the street: solve the whole river from here

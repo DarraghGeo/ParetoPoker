@@ -1,4 +1,4 @@
-import { NUM_COMBOS } from './cards.js';
+import { COMBO_A, COMBO_B, NUM_COMBOS } from './cards.js';
 
 /**
  * The river as a game between two strength curves.
@@ -222,13 +222,127 @@ export function riverProfile({ equity, board, hero, villain, spot, actions, chec
 }
 
 /**
+ * The same game hand by hand, with card removal: two hands that share a card are never dealt
+ * together, so a hand's worth depends on which of his hands its own cards rule out. With this
+ * the river is solved as it is played; without it (the curves) hands of one strength are one.
+ *
+ * @param {Object} input
+ * @param {{ ids: number[], values: Int32Array|number[], weights: number[] }} input.first Combo ids, strengths and weights of the player to act.
+ * @param {{ ids: number[], values: Int32Array|number[], weights: number[] }} input.second
+ * @param {{ root: Object, nodes: Object[] }} input.tree
+ * @param {number} [input.iterations]
+ * @returns {{ at: (node: Object) => Float64Array[] }} `at(node)[action][hand index of the player to act]`.
+ */
+export function solveHands({ first, second, tree, iterations = 300 }) {
+  const players = [first, second];
+  const count = players.map((p) => p.ids.length);
+  const order = players.map((p) => p.ids.map((_, i) => i).sort((x, y) => p.values[x] - p.values[y]));
+  // The same combo in the other player's range, if he holds it
+  const twin = players.map((p, k) => { const where = new Map(players[1 - k].ids.map((id, j) => [id, j])); return p.ids.map((id) => where.get(id) ?? -1); });
+  const regret = tree.nodes.map((node) => node.actions.map(() => new Float64Array(count[node.player])));
+  const average = tree.nodes.map((node) => node.actions.map(() => new Float64Array(count[node.player])));
+  const matched = (r, n) => {
+    const k = r.length;
+    const out = r.map(() => new Float64Array(n));
+    for (let i = 0; i < n; i++) {
+      let sum = 0;
+      for (let a = 0; a < k; a++) sum += r[a][i];
+      for (let a = 0; a < k; a++) out[a][i] = sum > 0 ? r[a][i] / sum : 1 / k;
+    }
+    return out;
+  };
+  const settle = (node, player, reach) => {
+    const me = players[player];
+    const him = players[1 - player];
+    const n = count[player];
+    const out = new Float64Array(n);
+    const mine = node.added[player];
+    const his = node.added[1 - player];
+    // His reach in all and per card, for the hands a card rules out
+    let all = 0;
+    const perCard = new Float64Array(52);
+    for (let j = 0; j < reach.length; j++) { all += reach[j]; perCard[COMBO_A[him.ids[j]]] += reach[j]; perCard[COMBO_B[him.ids[j]]] += reach[j]; }
+    const valid = (i) => { const id = me.ids[i]; const t = twin[player][i]; return all - perCard[COMBO_A[id]] - perCard[COMBO_B[id]] + (t >= 0 ? reach[t] : 0); };
+    if (node.terminal === 'fold') {
+      const value = node.folder === player ? -mine : node.dead + his;
+      for (let i = 0; i < n; i++) out[i] = value * valid(i);
+      return out;
+    }
+    const win = node.dead + his;
+    const tie = (node.dead + mine + his) / 2 - mine;
+    // Sweep both ranges by strength: what of his is below, and what is at or below, each hand
+    const mineOrder = order[player];
+    const hisOrder = order[1 - player];
+    let low = 0; let lowSum = 0; const lowCard = new Float64Array(52);
+    let high = 0; let highSum = 0; const highCard = new Float64Array(52);
+    for (const i of mineOrder) {
+      const v = me.values[i];
+      while (low < hisOrder.length && him.values[hisOrder[low]] < v) { const j = hisOrder[low++]; lowSum += reach[j]; lowCard[COMBO_A[him.ids[j]]] += reach[j]; lowCard[COMBO_B[him.ids[j]]] += reach[j]; }
+      while (high < hisOrder.length && him.values[hisOrder[high]] <= v) { const j = hisOrder[high++]; highSum += reach[j]; highCard[COMBO_A[him.ids[j]]] += reach[j]; highCard[COMBO_B[him.ids[j]]] += reach[j]; }
+      const id = me.ids[i];
+      const a = COMBO_A[id];
+      const b = COMBO_B[id];
+      const same = twin[player][i] >= 0 ? reach[twin[player][i]] : 0;
+      const below = lowSum - lowCard[a] - lowCard[b];
+      const atOrBelow = highSum - highCard[a] - highCard[b] + same;
+      const total = all - perCard[a] - perCard[b] + same;
+      out[i] = win * below + tie * (atOrBelow - below) - mine * (total - atOrBelow);
+    }
+    return out;
+  };
+  const walk = (node, player, own, other, weight) => {
+    if (node.terminal) return settle(node, player, other);
+    const k = node.actions.length;
+    const n = count[player];
+    const value = new Float64Array(n);
+    if (node.player === player) {
+      const reg = regret[node.index];
+      const sigma = matched(reg, n);
+      const utils = [];
+      for (let a = 0; a < k; a++) {
+        const next = new Float64Array(n);
+        for (let i = 0; i < n; i++) next[i] = own[i] * sigma[a][i];
+        utils.push(walk(node.children[a], player, next, other, weight));
+        for (let i = 0; i < n; i++) value[i] += sigma[a][i] * utils[a][i];
+      }
+      const avg = average[node.index];
+      for (let a = 0; a < k; a++) for (let i = 0; i < n; i++) {
+        reg[a][i] = Math.max(0, reg[a][i] + utils[a][i] - value[i]);
+        avg[a][i] += weight * own[i] * sigma[a][i];
+      }
+      return value;
+    }
+    const m = count[1 - player];
+    const sigma = matched(regret[node.index], m);
+    for (let a = 0; a < k; a++) {
+      const next = new Float64Array(m);
+      for (let j = 0; j < m; j++) next[j] = other[j] * sigma[a][j];
+      const u = walk(node.children[a], player, own, next, weight);
+      for (let i = 0; i < n; i++) value[i] += u[i];
+    }
+    return value;
+  };
+  const start = players.map((p) => Float64Array.from(p.weights));
+  for (let t = 1; t <= iterations; t++) for (const player of [0, 1]) walk(tree.root, player, start[player], start[1 - player], t);
+  return {
+    at(node) {
+      const n = count[node.player];
+      const avg = average[node.index];
+      const last = matched(regret[node.index], n);
+      return avg.map((row, a) => Float64Array.from({ length: n }, (_, i) => { let sum = 0; for (const other of avg) sum += other[i]; return sum > 1e-12 ? row[i] / sum : last[a][i]; }));
+    },
+  };
+}
+
+/**
  * A whole river solved once from its first decision: the profile of every decision that follows,
  * for both players. Later decisions are read off it (`at`), so that the answer to a line the
  * other player was not expected to take is still part of one consistent plan.
  *
  * @param {Object} input As `riverProfile`, at the first decision of the street (out of position, nothing bet).
+ * @param {boolean} [input.blockers] Count card removal: the river hand by hand (`solveHands`) in place of the two curves.
  */
-export function solveRiver({ equity, board, hero, villain, spot, actions, menu = null, iterations = 400 }) {
+export function solveRiver({ equity, board, hero, villain, spot, actions, menu = null, iterations = 400, blockers = false }) {
   const values = equity.madeValues(board);
   const levels = [...new Set(Array.from({ length: NUM_COMBOS }, (_, i) => i).filter((i) => (hero[i] > 1e-9 || villain[i] > 1e-9) && values[i] >= 0).map((i) => values[i]))].sort((a, b) => a - b);
   const levelOf = new Map(levels.map((v, k) => [v, k]));
@@ -243,7 +357,11 @@ export function solveRiver({ equity, board, hero, villain, spot, actions, menu =
   const sized = actions.filter((a) => a.to != null);
   if (!menu?.bet && sized.length) guessed.bet = sized.map((a) => a.to / spot.pot);
   const tree = buildTree({ pot: spot.pot, toCall: 0, stack: spot.stack ?? Infinity, invested: 0, rootActions: actions, menu: guessed });
-  const solved = solveCurves({ first, second, tree, iterations });
+  // With card removal the game is played hand by hand; without, on the two curves
+  const handsOf = (range) => { const ids = []; for (let i = 0; i < NUM_COMBOS; i++) if (range[i] > 1e-9 && values[i] >= 0) ids.push(i); return { ids, values: ids.map((i) => values[i]), weights: ids.map((i) => range[i]) }; };
+  const exact = blockers ? { players: [handsOf(hero), handsOf(villain)] } : null;
+  if (exact) exact.solved = solveHands({ first: exact.players[0], second: exact.players[1], tree, iterations });
+  const solved = exact ? null : solveCurves({ first, second, tree, iterations });
   return {
     /**
      * The profile per combo at a later decision, or null when the tree here has no such
@@ -254,9 +372,15 @@ export function solveRiver({ equity, board, hero, villain, spot, actions, menu =
       const node = tree.nodes.find((n) => n.player === seat && close(n.wager[seat], wagerMine) && close(n.wager[1 - seat], wagerHis) && n.actions.length === nodeActions.length
         && n.actions.every((a, k) => (nodeActions[k].to == null ? a.type === nodeActions[k].type : a.type === 'raise' && close(n.wager[seat] + a.add, nodeActions[k].to))));
       if (!node) return null;
-      const profile = solved.at(node);
       const strategy = nodeActions.map(() => new Float64Array(NUM_COMBOS));
       const passive = nodeActions.findIndex((a) => a.type === 'fold' || a.type === 'check');
+      if (exact) {
+        const profile = exact.solved.at(node);
+        strategy[passive].fill(1);
+        exact.players[seat].ids.forEach((id, h) => { nodeActions.forEach((_, a) => { strategy[a][id] = profile[a][h]; }); });
+        return strategy;
+      }
+      const profile = solved.at(node);
       for (let i = 0; i < NUM_COMBOS; i++) {
         const level = values[i] >= 0 ? levelOf.get(values[i]) : undefined;
         if (level === undefined) { strategy[passive][i] = 1; continue; }
