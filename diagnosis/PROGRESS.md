@@ -50,3 +50,21 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   opening it is mixing. Saved in diagnosis/locate-rivers-tune.{txt,json}.
   Turns running in the background -> diagnosis/locate-turns-tune.txt.
   Next: step 5 for rivers, tuning diagnosis (how the solver departs from the fundamentals by spot).
+- 04:05 **Step 5, rivers, part 1.** `bin/diagnose-tuning.js` + `diagnosis/fit.mjs`: the solver's
+  departures from the fundamentals on rivers-tune (diagnosis/tuning-rivers-tune.json):
+  - facing a bet it continues at 0.84 (oop) / 0.89 (ip) of MDF, tracking range advantage
+    (defence = 1.14 + 1.09 RA oop, r2 0.67; 1.12 + 0.93 RA ip, r2 0.45); facing a raise 0.99 / 1.01.
+  - oop bets 41%: 0.34 + 1.44 RA - 0.50 nutAdv + 1.07 polAdv (r2 0.91), 67% of bets on the
+    smallest size; ip bets 50% (0.48 + 0.28 RA), mid sizes, bluffs balanced (1.06).
+  - raises as a share of continuing: ip 0.29 = -0.25 + 1.47 polarization; oop 0.15.
+  Found and fixed while testing (diagnosis/try.mjs, worst.mjs, lines.mjs):
+  - bluff raises were unbounded (one spot raised 100%): the engine now caps bluff raises at the
+    defence frequency. 4.95 -> 4.64 on rivers-tune.
+  - the selector vetoed frequency: with few "qualifying" bluff catchers it folded 83-88% to a bet
+    in the 3-bet pot. With a tuner active the frequency is now always filled (calls made up from
+    the next strongest hands, no selector floor); under-defending is the tuner's `defence`.
+  - `fittedTuner`: defence 0.95 flat (the fitted slope in range advantage loses more to the best
+    response than a flat factor), raise rule as fitted, hisDefence 1.
+  rivers-tune whole engine: 4.95 at the start of the run -> 4.22. Located "facing a bet":
+  5.84 -> 3.36; "facing a raise": 2.25 -> 0.77.
+  Next: river opens (sizing, bet frequency), then mixing out of position, then held-out check.

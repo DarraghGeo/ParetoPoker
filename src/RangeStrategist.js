@@ -114,11 +114,13 @@ export class RangeStrategist {
 
     // With targets, a selector's own share is ignored
     const own = (candidates, share) => (targets ? share : candidates.share ?? share);
+    // A frequency that does not come from counting the selector's candidates has to be filled anyway
+    const fill = targets || tuning?.frequency != null;
     for (const wager of biggestFirst) {
       if (!(wager.value > 0)) continue;
       const unplaced = give(valueHands.get(wager.to), actionFor(wager), wager.value);
       // More value asked for than the selector has candidates: the next strongest hands make it up
-      if (targets && unplaced > 1e-9) give({ scores: context.strength, limit: null }, actionFor(wager), unplaced / total);
+      if (fill && unplaced > 1e-9) give({ scores: context.strength, limit: null }, actionFor(wager), unplaced / total);
     }
     if (facing) {
       const candidates = this.#candidates('call', context);
@@ -126,7 +128,7 @@ export class RangeStrategist {
       if (share > 0) {
         const unplaced = give(candidates, strategy[index('call')], share);
         // More calls asked for than the selector has candidates: the next strongest hands make it up
-        if (targets && unplaced > 1e-9) give({ scores: context.strength, limit: null }, strategy[index('call')], unplaced / total);
+        if ((targets || tuning) && unplaced > 1e-9) give({ scores: context.strength, limit: null }, strategy[index('call')], unplaced / total);
       }
     }
     for (const wager of biggestFirst) {

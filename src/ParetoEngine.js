@@ -130,6 +130,17 @@ export class ParetoEngine {
         share = (wager) => total * (1 - wager.bluffShare);
       }
       wagers = this.#wagers(config, s, share, tuning);
+      // Bluff raises come out of the hands that would fold, to reach the defence frequency. Past
+      // it they defend nothing more: his bluffs already make nothing. Only value may exceed it.
+      const value = sum(wagers, 'value');
+      const spare = Math.max(0, mdf - value);
+      const bluffs = sum(wagers, 'bluff');
+      if (bluffs > spare) {
+        for (const w of wagers) {
+          w.bluff *= spare / bluffs;
+          w.frequency = w.value + w.bluff;
+        }
+      }
     }
     const raise = sum(wagers, 'frequency');
     const call = Math.max(0, mdf - raise);
@@ -183,7 +194,8 @@ export class ParetoEngine {
    * Prices every option, spreads the bets over them and adds the bluffs each size can carry.
    * `tuning` adjusts the fundamentals: `sizing` (a policy name, weights per size, or a function)
    * replaces the configured choice of size; `value` scales how much value bets; `bluff` scales
-   * the bluffs each value bet carries (1 = balanced).
+   * the bluffs each value bet carries (1 = balanced); `frequency` sets how much of the range bets
+   * or raises in all, in place of counting the value hands.
    */
   #wagers(config, s, valueShare, tuning = null) {
     const max = s.invested + s.stack;
@@ -202,12 +214,18 @@ export class ParetoEngine {
     for (const [i, w] of wagers.entries()) {
       const share = typeof valueShare === 'function' ? valueShare(w) : valueShare;
       w.weight = weights[i];
-      w.value = Math.min(room, Math.max(0, share) * w.weight * valueScale);
+      w.candidates = Math.max(0, share);
+      // A tuned frequency sets how much bets in all; the size's balance splits it into value and bluffs
+      w.value = tuning?.frequency != null
+        ? Math.min(room, Math.max(0, tuning.frequency) * w.weight * (1 - Math.min(1, bluffScale * w.bluffShare)))
+        : Math.min(room, w.candidates * w.weight * valueScale);
       room -= w.value;
     }
     // Bluffs fill what is left of the range, biggest size first (it folds out the most)
     for (const w of [...wagers].reverse()) {
-      w.bluff = Math.min(room, w.bluffShare >= 1 ? room : (bluffScale * w.value * w.bluffShare) / (1 - w.bluffShare));
+      const share = Math.min(1, tuning?.frequency != null ? bluffScale * w.bluffShare : w.bluffShare);
+      const carried = tuning?.frequency != null ? 1 : bluffScale;
+      w.bluff = Math.min(room, share >= 1 ? room : (carried * w.value * share) / (1 - share));
       room -= w.bluff;
       w.frequency = w.value + w.bluff;
     }

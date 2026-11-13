@@ -59,14 +59,14 @@ export class EquitySelector {
 
   /** Hands ahead of the part of villain's range that continues against this size, best first. */
   value(context, wager) {
-    const equity = context.equityVersusContinuing(wager, this.callFloor * wager.potOdds);
+    const equity = context.equityVersusContinuing(wager, context.floor(this.callFloor, wager.potOdds));
     const threshold = context.tuning?.valueThreshold ?? this.valueThreshold;
     return equity.map((e) => (e > threshold ? e : NaN));
   }
 
   /** Hands with enough equity against villain's range to catch a bluff, best first. */
   call(context) {
-    const floor = this.callFloor * context.potOdds;
+    const floor = context.floor(this.callFloor, context.potOdds);
     return context.strength.map((e) => (e >= floor ? e : NaN));
   }
 
@@ -192,7 +192,17 @@ export class SelectionContext {
    * to the wager's defence frequency, leaving out hands with less than `floor` equity.
    */
   continuingRange(wager, floor = 0) {
-    return topShare(this.villain, this.villainStrength, wager.mdf, floor);
+    // The fundamental is the minimum defence frequency; a tuner may say he defends more or less
+    return topShare(this.villain, this.villainStrength, Math.min(1, wager.mdf * (this.tuning?.hisDefence ?? 1)), floor);
+  }
+
+  /**
+   * The equity a hand needs before a selector's own floor lets it call or count as continuing:
+   * `share` of the pot odds. With a tuner there is no floor: how often to defend is the tuner's
+   * to say, and the selector only orders the hands.
+   */
+  floor(share, potOdds) {
+    return this.tuning ? 0 : share * potOdds;
   }
 
   /** Each combo's equity against continuingRange(wager, floor). */

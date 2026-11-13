@@ -252,7 +252,7 @@ export class NapkinSelector {
     const view = this.#view(context);
     const { hero, strength, classes } = view;
     const weights = NapkinSelector.WEIGHTS.catcher;
-    const floor = this.callFloor * context.potOdds;
+    const floor = context.floor(this.callFloor, context.potOdds);
     const rivers = context.street === 'turn' ? this.#riverSwings(context, view) : null;
     const scores = new Float64Array(NUM_COMBOS).fill(NaN);
 
@@ -275,8 +275,9 @@ export class NapkinSelector {
         tier = 5;
       } else if (context.street === 'river') {
         const catcher = Number.isNaN(view.versusHisBluffs[i]) || view.versusHisBluffs[i] >= 0.5;
-        if (!catcher) continue; // weak: beats neither
-        tier = 2;
+        // Weak hands beat neither. Without a tuner they never call; with one they come last
+        if (!catcher && !context.tuning) continue;
+        tier = catcher ? 2 : 1;
       } else if (context.street === 'turn' && (this.turnCalls === 'ehs2' || (this.turnCalls === 'ehs2-ip' && context.position === 'ip'))) {
         // Measured on the turn: the hands the solver must call have the highest E[HS^2] (they
         // end up strong often, whatever they are now) and the most equity against his value
@@ -370,7 +371,7 @@ export class NapkinSelector {
   #sized(context, view, wager) {
     let sized = view.sized.get(wager.to);
     if (sized) return sized;
-    const continues = context.continuingRange(wager, this.callFloor * wager.potOdds);
+    const continues = context.continuingRange(wager, context.floor(this.callFloor, wager.potOdds));
     const folds = context.villain.map((w, i) => w - continues[i]);
     const versusContinues = context.equityAgainst(continues);
     const versusFolds = context.equityAgainst(folds);
