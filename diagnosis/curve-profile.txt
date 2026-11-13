@@ -7,3 +7,5 @@ rivers-alt   fitted preset                                  oop  0.78 /  3.65 | 
 rivers-alt   curve profile, whole engine                    oop  0.41 /  5.70 | ip  0.34 /  6.71 | both  0.38 /  6.21  68s
 rivers-tune  curve profile, whole engine, 1000 iterations   oop  0.35 /  1.11 | ip  0.23 /  1.09 | both  0.29 /  1.10  103s
 rivers-alt   curve profile, whole engine                    oop  0.38 /  1.18 | ip  0.29 /  1.22 | both  0.34 /  1.20  36s
+rivers-tune  curve profile played pure (no mixing)          oop  0.20 / 16.63 | ip  0.11 / 11.02 | both  0.15 / 13.82  35s
+rivers-tune  curve profile, 100 iterations                  oop  0.46 /  1.11 | ip  0.29 /  1.10 | both  0.37 /  1.10  13s

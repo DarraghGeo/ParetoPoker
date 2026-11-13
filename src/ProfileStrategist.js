@@ -18,9 +18,9 @@ import { RangeStrategist } from './RangeStrategist.js';
  * @param {number} [options.iterations] Default 300.
  */
 export class ProfileStrategist extends RangeStrategist {
-  constructor({ menu = null, iterations = 300, turn = false, turnIterations = 300, ...rest } = {}) {
+  constructor({ menu = null, iterations = 300, turn = false, turnIterations = 300, pure = false, ...rest } = {}) {
     super(rest);
-    Object.assign(this, { menu, iterations, turn, turnIterations });
+    Object.assign(this, { menu, iterations, turn, turnIterations, pure });
     // The turn being played, with the rivers behind it: solved once at its first decision
     this.turns = new Map();
     // The river being played: solved once at its first decision, read at the later ones
@@ -78,6 +78,14 @@ export class ProfileStrategist extends RangeStrategist {
   }
 
   #answer({ hero, actions }, strategy) {
+    // `pure` (for study): every hand takes its most frequent action outright
+    if (this.pure) {
+      for (let i = 0; i < NUM_COMBOS; i++) {
+        let best = 0;
+        for (let a = 1; a < strategy.length; a++) if (strategy[a][i] > strategy[best][i]) best = a;
+        for (let a = 0; a < strategy.length; a++) strategy[a][i] = a === best ? 1 : 0;
+      }
+    }
     const total = sumOf(hero);
     const played = strategy.map((probabilities) => {
       let weight = 0;
