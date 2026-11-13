@@ -442,8 +442,23 @@ Not built; these are what the measurements point to.
   the bettor is indifferent only at the thresholds while the caller is indifferent over a whole
   band (the 44-52% of bluff-catchers), and with two bet sizes the worst hands bluff with the big
   size while the small size takes the merged middle (the out-of-position river sizes).
-- **The 65 MB file (`modern-poker-theory-acevedo-michael.pdf`)** returned no text through Drive
-  and has not been read.
+- **Acevedo, "Modern Poker Theory"** (read afterwards: the game-theory sections of chapter 2 and
+  chapters 10, 13 and 14, from the PDF's text; its formulas and charts are images and were not
+  available). Where it meets the measurements:
+  - Agrees: mixing cannot be replaced by a pure split at the same frequency; out of position
+    part of the strongest range is checked to protect the checking range; allowing raises lowers
+    the bet frequency (its toy game goes from about 44% to 30% of the range betting) and deeper
+    stacks and traps lower it further; alpha and the minimum defence assume a bluff is worth
+    nothing when it checks, so the defender may fold more when it is not.
+  - Differs in wording, not in substance: it ranks otherwise equal bluff-catchers and bluffs by
+    blockers. Our equity is against his range at the decision with the hand's own cards removed,
+    which is the same information; the test says no feature beyond that equity is needed.
+  - Does not address: grouping turn hands by the distribution of their river equities (it uses
+    four equity buckets and draw classes), or a must / optional classification.
+  - Ideas from it not yet tested here: whether nut blockers are better bluffs than equal-equity
+    hands when his range holds traps and stacks are deep; which hands take which size (hands he
+    cannot hold in the largest size, overlapping value in the small one); the checked share of
+    strong hands against stack depth; whether what a hand loses when raised predicts turn checks.
 
 ## Files
 
