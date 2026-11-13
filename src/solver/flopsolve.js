@@ -1,4 +1,6 @@
 import { notation } from '../notation.js';
+import { frameAt } from '../explain/account.js';
+import { evaluator } from '../explain/best.js';
 
 /**
  * Reads a spot solved by poker-flopsolve into the plain shape the explainer takes.
@@ -140,14 +142,11 @@ export function decisionAt(fs, solution, nodes, id, dealt = []) {
   const mineIn = node.invested[me];
   const hisIn = node.invested[1 - me];
   const actions = node.edges.map((edge, k) => ({ kind: edge.kind, label: edge.label, add: edge.kind === 'fold' || edge.kind === 'check' ? 0 : edge.to - mineIn, child: edge.child }));
-  // Values are sums over his reach, in chips: divide by what the hand can face. River only: before it, each is a walk of every card to come
+  // What each action is worth to each hand, in chips: take it, then play the best reply to his solved
+  // strategy. (The solver's own values have the hand follow its solved strategy afterwards, which for an
+  // action the hand never takes is untrained and means nothing.) River only for now.
   let values = null;
-  if (river) {
-    const active = solver.ctx.active;
-    const slot = (active.roundBase[node.round] + at) * 2 + me;
-    const live = active.list.subarray(active.start[slot], active.start[slot] + active.count[slot]);
-    values = node.edges.map((edge) => solver.valuesAt(edge.child, at, me, mineStored, hisStored, live, live.length));
-  }
+  if (river) values = evaluator(fs, solution, nodes)(frameAt(fs, solution, nodes, id, dealt), 'best');
   const equity = river ? null : [equityVs(fs, board, mine, his), equityVs(fs, board, his, mine)];
   const row = new Map(); view.combos.forEach((combo, i) => row.set(combo, i));
   const n = view.actions.length;
@@ -158,7 +157,7 @@ export function decisionAt(fs, solution, nodes, id, dealt = []) {
     const mass = facing(combo);
     const strength = made(combo);
     hands.push({ id: combo, name: fs.formatCombo(combo), cards: cardsOf(combo), weight: mine[combo], strength: river ? strength : null, category: fs.categoryOf(strength), equity: equity ? equity[0][combo] : undefined,
-      strategy: Array.from({ length: n }, (_, a) => view.probs[i * n + a]), values: values && mass > 0 ? values.map((v) => v[stored[combo]] / mass) : null });
+      strategy: Array.from({ length: n }, (_, a) => view.probs[i * n + a]), values: values && mass > 0 ? values.map((v) => v[combo]) : null });
   }
   // His range here, and how each of his hands answers each bet or raise
   const answers = node.edges.map((edge) => {

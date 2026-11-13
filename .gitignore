@@ -15,3 +15,4 @@ research/diagnosis/dist-engine.log
 research/diagnosis/derived-defence-turns.log
 research/diagnosis/curve-turns.log
 research/diagnosis/curve-turns2.log
+research/proof/out/stability-*.jsonl

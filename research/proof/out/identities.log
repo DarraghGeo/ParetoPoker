@@ -1,0 +1,10 @@
+  solved turn two-tone wide: 80 iterations, 0.214%, 0.8s
+  solved turn rainbow BB v BTN: 60 iterations, 0.296%, 0.3s
+  solved turn flush board: 80 iterations, 0.265%, 0.8s
+  solved turn paired: 60 iterations, 0.228%, 0.3s
+  solved turn tight ranges deep: 120 iterations, 0.280%, 0.6s
+  solved turn two flush draws: 60 iterations, 0.164%, 0.1s
+  solved flop two-tone: 30 iterations, 1.226%, 9.5s
+  solved flop rainbow dry: 35 iterations, 1.261%, 25.2s
+  solved flop monotone tight: 30 iterations, 1.394%, 1.2s
+  solved flop paired: 35 iterations, 1.371%, 17.0s
