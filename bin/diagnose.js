@@ -5,10 +5,14 @@
 //   3. Is it interchangeable with others?  (how much of each role the solver mixes)
 //   4. What makes hands twins?             (characteristics measured on every hand)
 //   5. How do the characteristics rank?    (how well each separates musts from can'ts)
+//   6. Is it specific to the spot?         (does what the solver does move with range advantage,
+//                                           nut advantage, polarization or capping)
 // The selectors are scored the same way: how well their order separates musts from can'ts
 // when given the solver's own ranges at the node.
-//   node bin/diagnose.js [--boards a,b,c] [--bet 33%,75%,150%] [--raise 2.5x] [--pot 100] [--stack 250] [--hands 8]
+//   node bin/diagnose.js [--boards a,b,c] [--bet 33%,75%,150%] [--raise 2.5x] [--pot 100] [--stack 250] [--hands 8] [--out file.json]
+import { writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
+import { RangeManager } from 'poker-rangeman';
 import {
   EquitySelector, Equity, NapkinSelector, ParetoEngine, SelectionContext, SolverBridge, cards, classifyHands,
 } from '../src/index.js';
@@ -23,6 +27,7 @@ const { values: args } = parseArgs({
     bet: { type: 'string', default: '33%,75%,150%' },
     raise: { type: 'string', default: '2.5x' },
     hands: { type: 'string', default: '8' },
+    out: { type: 'string' },
   },
 });
 const MUST = 0.85;
@@ -37,6 +42,8 @@ const bridge = new SolverBridge();
 
 /** One row per hand per decision: its role, the solver's frequency, its characteristics, each selector's score. */
 const samples = { 'value bet': [], 'bluff bet': [], 'call': [] };
+/** One row per opening decision: how the spot is defined (poker-rangeman) and what the solver does in it. */
+const spots = [];
 
 for (const board of args.boards.split(',')) {
   const sizes = { bet: args.bet, raise: args.raise };
@@ -84,6 +91,7 @@ for (const board of args.boards.split(',')) {
     const blocksFolds = blocked(villain.map((w, i) => w - continues[i]));
     const scores = Object.fromEntries(Object.entries(selectors).map(([name, s]) => [name, { value: plain(s.value(context, wager)), bluff: plain(s.bluff(context, wager)) }]));
 
+    const first = { 'value bet': samples['value bet'].length, 'bluff bet': samples['bluff bet'].length };
     for (let i = 0; i < cards.NUM_COMBOS; i++) {
       if (!(hero[i] > 1e-4)) continue;
       const frequency = bets.reduce((total, bet) => total + open.strategy[bet.index][i], 0);
@@ -102,6 +110,34 @@ for (const board of args.boards.split(',')) {
         scores: Object.fromEntries(Object.entries(scores).map(([name, s]) => [name, value ? s.value[i] : s.bluff[i]])),
       });
     }
+
+    // Step 6: how the spot is defined, next to what the solver does in it
+    const asRange = (weights) => Object.fromEntries([...weights.keys()].filter((i) => weights[i] > 1e-4).map((i) => [cards.comboName(i), Math.min(1, weights[i])]));
+    const report = await new RangeManager(asRange(hero)).against(asRange(villain), board.match(/.{2}/g)).compare();
+    const valueRows = samples['value bet'].slice(first['value bet']);
+    const bluffRows = samples['bluff bet'].slice(first['bluff bet']);
+    const rows = [...valueRows, ...bluffRows];
+    const betting = (set) => set.map((r) => ({ ...r, weight: r.weight * r.frequency }));
+    const strong = valueRows.filter((r) => r.features['equity vs his range'] >= 0.8);
+    spots.push({
+      board, seat: POSITIONS[me],
+      spot: {
+        'range advantage': report.advantage.range,
+        'nut advantage': report.advantage.nut,
+        'polarization advantage': report.advantage.polarization,
+        'we are capped': report.hero.capped.relative,
+        'he is capped': report.villain.capped.relative,
+        'our polarization': report.hero.shape?.polarized ?? NaN,
+      },
+      solver: {
+        'bets': mean(rows, (r) => r.frequency),
+        'main size (pots)': main.bet.to / pot,
+        'strong value that checks': strong.length ? 1 - mean(strong, (r) => r.frequency) : NaN,
+        'thinnest value (equity vs calls)': quantile(betting(valueRows), (r) => r.features['equity vs his calls'], 0.1),
+        'strongest bluff (equity)': quantile(betting(bluffRows), (r) => r.features['equity vs his range'], 0.9),
+        'bluffs in his bets': sumWeights(betting(bluffRows)) / (sumWeights(betting(rows)) || 1),
+      },
+    });
 
     // Facing each bet: who continues
     for (const { bet, reply } of answers) {
@@ -196,6 +232,53 @@ for (const seat of POSITIONS) {
   console.log(`  ${seat} calls by equity vs his bets:  ${bands(of('call'), 'equity vs his bets', [0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.01])}`);
 }
 
+// Step 6: does what the solver does move with how the spot is defined?
+console.log('\n=== step 6: the solver\'s play in each spot, and what it moves with');
+const spotKeys = Object.keys(spots[0].spot);
+const solverKeys = Object.keys(spots[0].solver);
+const short = (x) => (Number.isNaN(x) ? '   - ' : x.toFixed(2).padStart(5));
+console.log(`  ${'spot'.padEnd(16)} ${[...spotKeys, ...solverKeys].map((k) => k.split(' (')[0].slice(0, 14).padStart(14)).join(' ')}`);
+for (const s of spots) {
+  console.log(`  ${`${s.board} ${s.seat}`.padEnd(16)} ${[...spotKeys.map((k) => s.spot[k]), ...solverKeys.map((k) => s.solver[k])].map((x) => short(x).padStart(14)).join(' ')}`);
+}
+// Seats differ in everything at once (who checked, which sizes are used), so each seat is read apart
+const correlations = {};
+for (const seat of POSITIONS) {
+  const of = spots.filter((s) => s.seat === seat);
+  console.log(`\n  ${seat}: correlation over ${of.length} spots (from -1 to 1; under about 0.55 is noise at this sample)`);
+  console.log(`  ${''.padEnd(34)} ${spotKeys.map((k) => k.padStart(22)).join(' ')}    mean   range`);
+  correlations[seat] = {};
+  for (const solverKey of solverKeys) {
+    const values = of.map((s) => s.solver[solverKey]).filter(Number.isFinite);
+    correlations[seat][solverKey] = Object.fromEntries(spotKeys.map((k) => [k, correlation(of.map((s) => [s.spot[k], s.solver[solverKey]]))]));
+    console.log(`  ${solverKey.padEnd(34)} ${spotKeys.map((k) => short(correlations[seat][solverKey][k]).padStart(22)).join(' ')}   ${short(values.reduce((a, b) => a + b, 0) / values.length)}   ${short(Math.min(...values))} to ${short(Math.max(...values)).trim()}`);
+  }
+}
+if (args.out) {
+  writeFileSync(args.out, `${JSON.stringify({ settings: { ...args, out: undefined }, spots, correlations }, null, 1)}\n`);
+  console.log(`\n  written to ${args.out}`);
+}
+
+function sumWeights(rows) {
+  return rows.reduce((t, r) => t + r.weight, 0);
+}
+/** The value below which `q` of the weight lies. */
+function quantile(rows, value, q) {
+  const sorted = rows.filter((r) => r.weight > 0).sort((a, b) => value(a) - value(b));
+  let left = q * sumWeights(sorted);
+  for (const r of sorted) if ((left -= r.weight) <= 0) return value(r);
+  return NaN;
+}
+function correlation(pairs) {
+  const ok = pairs.filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y));
+  const n = ok.length;
+  if (n < 3) return NaN;
+  const mx = ok.reduce((t, [x]) => t + x, 0) / n;
+  const my = ok.reduce((t, [, y]) => t + y, 0) / n;
+  let sxy = 0, sxx = 0, syy = 0;
+  for (const [x, y] of ok) { sxy += (x - mx) * (y - my); sxx += (x - mx) ** 2; syy += (y - my) ** 2; }
+  return sxx > 0 && syy > 0 ? sxy / Math.sqrt(sxx * syy) : NaN;
+}
 function sum(weights, probabilities) {
   let total = 0;
   for (let i = 0; i < weights.length; i++) total += weights[i] * probabilities[i];

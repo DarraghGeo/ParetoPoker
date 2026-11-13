@@ -218,6 +218,9 @@ boards, hand by hand, giving the selector the solver's own ranges:
 5. How do the characteristics rank? (How well each separates musts from can'ts, over all hands
    and among twins of the same equity.)
 
+6. Is it specific to the spot? (Does what the solver does move with range advantage, nut
+   advantage, polarization or capping, as measured by poker-rangeman. `--out file.json` saves it.)
+
 Each selector gets the same score: the chance that it ranks a must above a can't from the same
 decision (1.00 is perfect, 0.50 is no better than chance). On 12 rivers:
 
@@ -226,6 +229,9 @@ decision (1.00 is perfect, 0.50 is no better than chance). On 12 rivers:
 | Bluff bets | 0.90 | 0.91 |
 | Calls | 0.83 | 0.96 |
 | Value bets | 0.84 | 0.70 |
+
+Every tuned number, what it was tuned on and what else was tried is recorded in
+[TUNINGS.md](TUNINGS.md).
 
 The value row is the one place where agreeing with the solver and losing less to it pull apart:
 the solver bets thinner, with small sizes, than the engine can afford to with the sizes it picks.
