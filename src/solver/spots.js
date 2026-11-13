@@ -73,6 +73,14 @@ SPOTS['turns-held2'] = ['Qh7d3c2s', 'Tc8c5d4h'].flatMap((board) => Object.entrie
 SPOTS['turns-more'] = ['QsJd6c3h', 'Ac9c5d5h', '7h6h5c2d', 'KdQd4s9h'].flatMap((board) => Object.entries(PAIRS).flatMap(([pair, ranges]) => DEPTHS.turns.map((depth) => (
   { name: `${pair} ${board} ${depth}x`, pair, ...ranges, board, pot: 100, stack: Math.round(100 * depth), depth, sizes: SIZES }))));
 
+/**
+ * A different menu of sizes (25%, 50%, 100%, 200% pot; 3x raises), to check that what was
+ * fitted on 33/75/150 with 2.5x raises does not depend on that menu. Held-out boards.
+ */
+const ALT = { bet: '25%,50%,100%,200%', raise: '3x' };
+SPOTS['rivers-alt'] = build('rivers', 'held').map((spot) => ({ ...spot, sizes: ALT }));
+SPOTS['turns-alt'] = build('turns', 'held').map((spot) => ({ ...spot, sizes: ALT }));
+
 /** Small flop trees (one bet size, 3x raises), for checking that turn and river findings carry to the flop. */
 SPOTS['flops-check'] = [
   { name: 'C Ks7h2d 1x', pair: 'C', ...PAIRS.C, board: 'Ks7h2d', pot: 100, stack: 100, depth: 1, sizes: { bet: '75%', raise: '3x' } },

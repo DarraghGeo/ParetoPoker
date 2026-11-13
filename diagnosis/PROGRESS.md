@@ -212,3 +212,12 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   Raising a turn bet is not what separates the engine's order from the solver's: never raising
   gives 8.7 located against 9.4. Turn calling orders built on starting-range equity: no change
   (9.94-10.27 whole engine). Selection is on a plateau on both streets.
+- 08:40 **A different menu of sizes** (`rivers-alt`, `turns-alt`: 25/50/100/200% pot, 3x raises,
+  held-out boards). Turns carried over (napkin 12.09 -> fitted 9.26). Rivers did not (5.08 ->
+  5.07): `sizeNear(0.75)` split value between the 50% and 100% bets. One size, the nearest
+  (the smaller on a tie), is the fix: rivers-alt 4.17, turns-alt 8.99; rivers-tune unchanged
+  3.72; R8-B (50/100 menu) 3.34 -> 3.68, still under napkin's 4.41. `sizeNear` now never splits.
+  Across the menus, geometric sizing with the 0.6 threshold: tune 3.96, held 4.08, R8-B 3.72,
+  alt 4.34. Recorded as a tuning that depends on the configuration (the menu), not the spot.
+  In-position river opens (bluff scale, value caps, sizes): nothing beats the fitted setting.
+  Next: final table on every set, final docs, summary.

@@ -65,22 +65,16 @@ export class Tuner {
 
 /**
  * A sizing for `Tuning.sizing` that aims at a bet of `pots` pots: all of the weight on the
- * nearest available size, or split between the two sizes either side of the target.
+ * nearest available size, the smaller one on a tie. One size, never a split: spreading value
+ * over the two sizes either side of the target lost more on a menu the target fell between
+ * (TUNINGS.md).
  */
 export function sizeNear(pots) {
   return (spot, wagers) => {
-    const size = (w) => w.add / spot.pot;
-    const weights = wagers.map(() => 0);
-    const above = wagers.findIndex((w) => size(w) >= pots);
-    if (above === 0) weights[0] = 1;
-    else if (above < 0) weights[wagers.length - 1] = 1;
-    else {
-      const low = size(wagers[above - 1]);
-      const high = size(wagers[above]);
-      weights[above] = (pots - low) / (high - low);
-      weights[above - 1] = 1 - weights[above];
-    }
-    return weights;
+    const distance = (w) => Math.abs(w.add / spot.pot - pots);
+    let best = 0;
+    wagers.forEach((w, i) => { if (distance(w) < distance(wagers[best]) - 1e-9) best = i; });
+    return wagers.map((_, i) => (i === best ? 1 : 0));
   };
 }
 
