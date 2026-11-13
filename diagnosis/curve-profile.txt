@@ -1,0 +1,3 @@
+rivers-tune  fitted preset                                  oop  0.72 /  3.48 | ip  0.49 /  3.57 | both  0.61 /  3.53  7s
+rivers-tune  fitted with the derived defence                oop  0.70 /  2.84 | ip  0.49 /  3.77 | both  0.60 /  3.31  7s
+rivers-tune  curve profile, whole engine                    oop  0.36 /  1.07 | ip  0.24 /  1.07 | both  0.30 /  1.07  36s

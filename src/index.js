@@ -1,5 +1,7 @@
 export { ParetoEngine } from './ParetoEngine.js';
 export { RangeStrategist } from './RangeStrategist.js';
+export { ProfileStrategist } from './ProfileStrategist.js';
+export { riverProfile, solveCurves, buildTree } from './CurveGame.js';
 export { EquitySelector, SelectionContext } from './HandSelector.js';
 export { NapkinSelector } from './NapkinSelector.js';
 export { Mixer, PureMixer, KindMixer, DistributionMixer, gridCells, TURN_KINDS, TURN_FACING_KINDS } from './Mixer.js';
