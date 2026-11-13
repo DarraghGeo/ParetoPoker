@@ -3,6 +3,18 @@ import { COMBO_A, COMBO_B, NUM_COMBOS } from './cards.js';
 
 const bitval = new BitVal();
 
+/** Every complete board that a 3, 4 or 5 card board can run out to. */
+export function runouts(board) {
+  if (board.length === 5) return [board];
+  const out = [];
+  for (let a = 0; a < 52; a++) {
+    if (board.includes(a)) continue;
+    if (board.length === 4) out.push([...board, a]);
+    else for (let b = a + 1; b < 52; b++) if (!board.includes(b)) out.push([...board, a, b]);
+  }
+  return out;
+}
+
 /**
  * Per-combo equity against a weighted range, exact on the turn and river (and on the flop, by
  * enumerating both cards to come).
@@ -47,6 +59,64 @@ export class Equity {
     const equity = new Float64Array(NUM_COMBOS);
     for (let i = 0; i < NUM_COMBOS; i++) equity[i] = all[i] > 0 ? win[i] / all[i] : NaN;
     return equity;
+  }
+
+  /**
+   * Equity of each hero combo against each villain combo, one at a time: the hand's equity
+   * "against his enumerated range". Exact (every runout is counted).
+   *
+   * @param {number[]} board 3, 4 or 5 card ids.
+   * @param {number[]} heroIds Combo ids.
+   * @param {number[]} villainIds Combo ids.
+   * @returns {Float32Array} `matrix[h * villainIds.length + v]`, 0 to 1. NaN when the two
+   *   hands share a card or one of them holds a board card.
+   */
+  matchups(board, heroIds, villainIds) {
+    const nv = villainIds.length;
+    const won = new Float64Array(heroIds.length * nv);
+    const seen = new Float64Array(heroIds.length * nv);
+    for (const full of runouts(board)) {
+      const { values } = this.#ranking(full);
+      for (let h = 0; h < heroIds.length; h++) {
+        const hv = values[heroIds[h]];
+        if (hv < 0) continue;
+        const a = COMBO_A[heroIds[h]];
+        const b = COMBO_B[heroIds[h]];
+        for (let v = 0; v < nv; v++) {
+          const id = villainIds[v];
+          const vv = values[id];
+          if (vv < 0 || COMBO_A[id] === a || COMBO_A[id] === b || COMBO_B[id] === a || COMBO_B[id] === b) continue;
+          won[h * nv + v] += hv > vv ? 1 : hv === vv ? 0.5 : 0;
+          seen[h * nv + v]++;
+        }
+      }
+    }
+    return Float32Array.from(won, (w, k) => (seen[k] > 0 ? w / seen[k] : NaN));
+  }
+
+  /**
+   * How strong each combo is right now, with no more cards to come: higher beats lower, equal
+   * values tie, -1 when the combo holds a board card. Works on 3, 4 and 5 card boards.
+   */
+  madeValues(board) {
+    if (board.length === 5) return this.#ranking(board).values;
+    const masks = [0, 0, 0, 0];
+    const dead = new Uint8Array(52);
+    for (const card of board) {
+      masks[card & 3] |= 1 << (card >> 2);
+      dead[card] = 1;
+    }
+    const values = new Int32Array(NUM_COMBOS).fill(-1);
+    for (let i = 0; i < NUM_COMBOS; i++) {
+      const a = COMBO_A[i];
+      const b = COMBO_B[i];
+      if (dead[a] || dead[b]) continue;
+      const m = [...masks];
+      m[a & 3] |= 1 << (a >> 2);
+      m[b & 3] |= 1 << (b >> 2);
+      values[i] = bitval.evaluateSuits(m[3], m[2], m[1], m[0]);
+    }
+    return values;
   }
 
   /** Average equity of `hero` (weights per combo) against `villain`. */

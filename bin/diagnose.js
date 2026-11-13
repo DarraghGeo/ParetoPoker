@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// Diagnoses hand selection on the river against the solver's equilibrium, in five steps:
+// Diagnoses hand selection against the solver's equilibrium on the first decisions of a river,
+// turn or flop tree, in six steps:
 //   1. Is the hand bluff or value?         (does it beat half of the range that continues)
 //   2. Is it a must, a can't or optional?  (the solver takes the action >= 85%, <= 15%, or mixes)
 //   3. Is it interchangeable with others?  (how much of each role the solver mixes)
@@ -9,17 +10,21 @@
 //                                           nut advantage, polarization or capping)
 // The selectors are scored the same way: how well their order separates musts from can'ts
 // when given the solver's own ranges at the node.
-//   node bin/diagnose.js [--boards a,b,c] [--bet 33%,75%,150%] [--raise 2.5x] [--pot 100] [--stack 250] [--hands 8] [--out file.json]
+//   node bin/diagnose.js [--street river|turn|flop] [--boards a,b,c] [--stack 250,600] [--bet 33%,75%,150%]
+//                        [--raise 2.5x] [--pot 100] [--hands 8] [--out file.json]
+// Characteristics include the forms of equity in src/handFeatures.js: spread and slope against his
+// enumerated range and, with cards to come, draw equity, swing, E[HS^2] and an implied-odds proxy.
 import { writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { RangeManager } from 'poker-rangeman';
 import {
-  EquitySelector, Equity, NapkinSelector, ParetoEngine, SelectionContext, SolverBridge, cards, classifyHands,
+  EquitySelector, Equity, NapkinSelector, ParetoEngine, SelectionContext, SolverBridge, cards, classifyHands, handFeatures,
 } from '../src/index.js';
 
 const { values: args } = parseArgs({
   options: {
-    boards: { type: 'string', default: 'Td9d6hQc7s,Ks7h2d5c9s,AhJh8c3d2h,8s8d4c2hKd,QsJd6c3h2s,Ac9c5d5hTs,7h6h5c2dKs,KdQd4s9h3c,Jc8c3c6dAh,Ts7s4d2hQh,AdKh7c7d2s,9s8h3d2cJd' },
+    street: { type: 'string', default: 'river' },
+    boards: { type: 'string' },
     oop: { type: 'string', default: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s' },
     ip: { type: 'string', default: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+' },
     pot: { type: 'string', default: '100' },
@@ -33,8 +38,19 @@ const { values: args } = parseArgs({
 const MUST = 0.85;
 const CANT = 0.15;
 const POSITIONS = ['oop', 'ip'];
+const BOARDS = {
+  river: 'Td9d6hQc7s,Ks7h2d5c9s,AhJh8c3d2h,8s8d4c2hKd,QsJd6c3h2s,Ac9c5d5hTs,7h6h5c2dKs,KdQd4s9h3c,Jc8c3c6dAh,Ts7s4d2hQh,AdKh7c7d2s,9s8h3d2cJd',
+  turn: 'Ks7h2d5c,JsTs4h8d,Td9d6hQc,Ah8c3d6s,QsJd6c3h,Ac9c5d5h,7h6h5c2d,KdQd4s9h',
+  flop: 'Td9d6h,Ks7h2d,AhJh8c,8s8d4c',
+};
+const STREETS = { 3: 'flop', 4: 'turn', 5: 'river' };
+const boardList = (args.boards ?? BOARDS[args.street]).split(',');
 const pot = Number(args.pot);
-const stack = Number(args.stack);
+const FEATURE_NAMES = {
+  spread: 'equity spread', slope: 'equity slope', strengthNow: 'strength now', drawEquity: 'draw equity', swing: 'equity swing',
+  ehs2: 'E[HS^2]', bestCard: 'best-card equity', upside: 'upside', downside: 'downside', impliedOdds: 'implied odds proxy',
+};
+const extra = (features, i) => Object.fromEntries(Object.entries(FEATURE_NAMES).filter(([key]) => features[key]).map(([key, name]) => [name, features[key][i]]));
 const equity = new Equity();
 const engine = new ParetoEngine();
 const selectors = { equity: new EquitySelector(), napkin: new NapkinSelector() };
@@ -45,9 +61,12 @@ const samples = { 'value bet': [], 'bluff bet': [], 'call': [] };
 /** One row per opening decision: how the spot is defined (poker-rangeman) and what the solver does in it. */
 const spots = [];
 
-for (const board of args.boards.split(',')) {
+for (const stack of args.stack.split(',').map(Number)) for (const board of boardList) {
   const sizes = { bet: args.bet, raise: args.raise };
-  const info = await bridge.init({ oopRange: args.oop, ipRange: args.ip, board, pot, stack, betSizes: { river: { oop: sizes, ip: sizes } } });
+  const street = STREETS[board.length / 2];
+  const both = { oop: sizes, ip: sizes };
+  const info = await bridge.init({ oopRange: args.oop, ipRange: args.ip, board, pot, stack, betSizes: { flop: both, turn: both, river: both } });
+  const node = (seat) => `${board} ${seat} ${stack}`;
   await bridge.solve({ iterations: 1000, target: 0.002 });
   const ids = info.hands.map((hands) => hands.map(([a, b]) => cards.comboId(a, b)));
   const spread = (player, values) => {
@@ -73,7 +92,7 @@ for (const board of args.boards.split(',')) {
     const me = open.player;
     const hero = open.ranges[me];
     const villain = open.ranges[1 - me];
-    const spot = { street: 'river', pot, stack };
+    const spot = { street, pot, stack };
     const context = new SelectionContext({ equity, position: POSITIONS[me], spot, board: boardIds, hero, villain, actions: open.node.actions });
     const classes = classifyHands(boardIds, hero);
     const bets = open.node.actions.map((a, i) => ({ ...a, index: i })).filter((a) => a.to != null);
@@ -90,6 +109,8 @@ for (const board of args.boards.split(',')) {
     const blocksCalls = blocked(continues);
     const blocksFolds = blocked(villain.map((w, i) => w - continues[i]));
     const scores = Object.fromEntries(Object.entries(selectors).map(([name, s]) => [name, { value: plain(s.value(context, wager)), bluff: plain(s.bluff(context, wager)) }]));
+    // The forms of equity, judged as the bet goes in and is called
+    const forms = handFeatures({ equity, board: boardIds, hero, villain, pot: pot + 2 * main.bet.to, behind: stack - main.bet.to });
 
     const first = { 'value bet': samples['value bet'].length, 'bluff bet': samples['bluff bet'].length };
     for (let i = 0; i < cards.NUM_COMBOS; i++) {
@@ -97,7 +118,7 @@ for (const board of args.boards.split(',')) {
       const frequency = bets.reduce((total, bet) => total + open.strategy[bet.index][i], 0);
       const value = versusContinues[i] > 0.5; // step 1
       samples[value ? 'value bet' : 'bluff bet'].push({
-        board, seat: POSITIONS[me], hand: cards.comboName(i), weight: hero[i], frequency,
+        board, seat: POSITIONS[me], node: node(POSITIONS[me]), hand: cards.comboName(i), weight: hero[i], frequency,
         features: {
           'equity vs his range': context.strength[i],
           'equity vs his calls': versusContinues[i],
@@ -105,7 +126,9 @@ for (const board of args.boards.split(',')) {
           'blocks his folds': blocksFolds[i],
           'unblocks his folds': -blocksFolds[i],
           'has a pair': classes.pair[i] ? 1 : 0,
+          ...(street === 'river' ? {} : { 'has a draw': classes.draw[i] ? 1 : 0 }),
           'high card rank': Math.max(cards.COMBO_A[i], cards.COMBO_B[i]) >> 2,
+          ...extra(forms, i),
         },
         scores: Object.fromEntries(Object.entries(scores).map(([name, s]) => [name, value ? s.value[i] : s.bluff[i]])),
       });
@@ -120,8 +143,9 @@ for (const board of args.boards.split(',')) {
     const betting = (set) => set.map((r) => ({ ...r, weight: r.weight * r.frequency }));
     const strong = valueRows.filter((r) => r.features['equity vs his range'] >= 0.8);
     spots.push({
-      board, seat: POSITIONS[me],
+      board, seat: POSITIONS[me], stack,
       spot: {
+        'stack to pot': stack / pot,
         'range advantage': report.advantage.range,
         'nut advantage': report.advantage.nut,
         'polarization advantage': report.advantage.polarization,
@@ -145,7 +169,7 @@ for (const board of args.boards.split(',')) {
       const range = reply.ranges[caller];
       const bettor = reply.ranges[1 - caller];
       if (!(sum(bettor, bettor.map(() => 1)) > 0.5)) continue; // a size the solver does not use
-      const callSpot = { street: 'river', pot: pot + bet.to, toCall: bet.to, stack, facing: bet.to };
+      const callSpot = { street, pot: pot + bet.to, toCall: bet.to, stack, facing: bet.to };
       const callContext = new SelectionContext({ equity, position: POSITIONS[caller], spot: callSpot, board: boardIds, hero: range, villain: bettor, villainPrior: open.ranges[1 - caller], actions: reply.node.actions });
       const bettorStrength = equity.against(boardIds, range, bettor);
       const hisValue = bettor.map((w, i) => (bettorStrength[i] > 0.5 ? w : 0));
@@ -155,10 +179,12 @@ for (const board of args.boards.split(',')) {
       const blocksBluffs = blocked(hisBluffs);
       const callScores = Object.fromEntries(Object.entries(selectors).map(([name, s]) => [name, plain(s.call(callContext))]));
       const foldIndex = reply.node.actions.findIndex((a) => a.type === 'fold');
+      const callForms = handFeatures({ equity, board: boardIds, hero: range, villain: bettor, pot: pot + 2 * bet.to, behind: stack - bet.to });
+      const callClasses = classifyHands(boardIds, range);
       for (let i = 0; i < cards.NUM_COMBOS; i++) {
         if (!(range[i] > 1e-4)) continue;
         samples.call.push({
-          board, seat: POSITIONS[caller], hand: cards.comboName(i), weight: range[i], frequency: 1 - reply.strategy[foldIndex][i],
+          board, seat: POSITIONS[caller], node: `${node(POSITIONS[caller])} vs ${bet.to}`, hand: cards.comboName(i), weight: range[i], frequency: 1 - reply.strategy[foldIndex][i],
           features: {
             'equity vs his bets': callContext.strength[i],
             'equity vs his value': versusValue[i] || 0,
@@ -166,6 +192,8 @@ for (const board of args.boards.split(',')) {
             'blocks his value': blocksValue[i],
             'blocks his bluffs': blocksBluffs[i],
             'unblocks his bluffs': -blocksBluffs[i],
+            ...(street === 'river' ? {} : { 'has a draw': callClasses.draw[i] ? 1 : 0 }),
+            ...extra(callForms, i),
           },
           scores: Object.fromEntries(Object.entries(callScores).map(([name, s]) => [name, s[i]])),
         });
@@ -176,18 +204,29 @@ for (const board of args.boards.split(',')) {
 bridge.close();
 
 const percent = (x) => `${(100 * x).toFixed(0)}%`.padStart(4);
+const summary = {};
 for (const [role, rows] of Object.entries(samples)) {
   const total = rows.reduce((t, r) => t + r.weight, 0);
   const musts = rows.filter((r) => r.frequency >= MUST);
   const cants = rows.filter((r) => r.frequency <= CANT);
   const share = (set) => set.reduce((t, r) => t + r.weight, 0) / total;
-  console.log(`\n=== ${role}: ${rows.length} hands over ${args.boards.split(',').length} boards`);
+  console.log(`\n=== ${role}: ${rows.length} hands over ${new Set(rows.map((r) => r.node)).size} decisions`);
   console.log(`  step 2-3  must ${percent(share(musts))}, can't ${percent(share(cants))}, optional (interchangeable) ${percent(1 - share(musts) - share(cants))}`);
-  console.log('  step 4-5  characteristic            separates   must   can\'t   (1.00 = every must above every can\'t, 0.50 = no use)');
+  console.log('  step 4-5  characteristic            separates  twins  pooled    must   can\'t');
+  console.log('            (separates: a must is above a can\'t from the same decision; twins: the same, among hands within');
+  console.log('             2 points of equity; pooled: across every decision. 1.00 = always above, 0.00 = always below, 0.50 = no use)');
+  const first = Object.keys(rows[0].features)[0];
+  const twins = (r) => Math.round(r.features[first] * 50);
   const features = Object.keys(rows[0].features).map((name) => ({
-    name, auc: separation(musts, cants, (r) => r.features[name]), must: mean(musts, (r) => r.features[name]), cant: mean(cants, (r) => r.features[name]),
+    name,
+    auc: separation(musts, cants, (r) => r.features[name]),
+    twin: separation(musts, cants, (r) => r.features[name], twins),
+    pooled: separation(musts, cants, (r) => r.features[name], undefined, () => ''),
+    must: mean(musts, (r) => r.features[name]), cant: mean(cants, (r) => r.features[name]),
   })).sort((a, b) => Math.abs(b.auc - 0.5) - Math.abs(a.auc - 0.5));
-  for (const f of features) console.log(`            ${f.name.padEnd(30)} ${f.auc.toFixed(2)}      ${f.must.toFixed(2).padStart(5)}  ${f.cant.toFixed(2).padStart(5)}`);
+  const two = (x) => (Number.isNaN(x) ? '  - ' : x.toFixed(2));
+  for (const f of features) console.log(`            ${f.name.padEnd(30)} ${two(f.auc)}     ${two(f.twin)}   ${two(f.pooled)}    ${f.must.toFixed(2).padStart(5)}  ${f.cant.toFixed(2).padStart(5)}`);
+  summary[role] = Object.fromEntries(features.map((f) => [f.name, { separates: f.auc, twins: f.twin, pooled: f.pooled, must: f.must, cant: f.cant }]));
   console.log('  selectors (the order each would fill in, on the solver\'s ranges)');
   for (const name of Object.keys(selectors)) {
     const score = (r) => (Number.isNaN(r.scores[name]) ? -Infinity : r.scores[name]);
@@ -198,9 +237,9 @@ for (const [role, rows] of Object.entries(samples)) {
   const count = Number(args.hands);
   for (const name of Object.keys(selectors)) {
     const score = (r) => (Number.isNaN(r.scores[name]) ? -Infinity : r.scores[name]);
-    const rank = (r) => (cants.filter((c) => score(c) >= score(r)).reduce((t, c) => t + c.weight, 0));
+    const rank = (r) => (cants.filter((c) => c.node === r.node && score(c) >= score(r)).reduce((t, c) => t + c.weight, 0));
     const worst = [...musts].map((r) => ({ r, behind: rank(r) })).sort((a, b) => b.behind - a.behind).slice(0, count);
-    console.log(`  ${name}: musts ranked behind the most can'ts: ${worst.map(({ r }) => `${r.hand}@${r.board.slice(0, 10)}/${r.seat}`).join(' ')}`);
+    console.log(`  ${name}: musts ranked behind the most can'ts: ${worst.map(({ r }) => `${r.hand}@${r.board}/${r.seat}`).join(' ')}`);
   }
 }
 
@@ -239,7 +278,7 @@ const solverKeys = Object.keys(spots[0].solver);
 const short = (x) => (Number.isNaN(x) ? '   - ' : x.toFixed(2).padStart(5));
 console.log(`  ${'spot'.padEnd(16)} ${[...spotKeys, ...solverKeys].map((k) => k.split(' (')[0].slice(0, 14).padStart(14)).join(' ')}`);
 for (const s of spots) {
-  console.log(`  ${`${s.board} ${s.seat}`.padEnd(16)} ${[...spotKeys.map((k) => s.spot[k]), ...solverKeys.map((k) => s.solver[k])].map((x) => short(x).padStart(14)).join(' ')}`);
+  console.log(`  ${`${s.board} ${s.seat} ${s.stack}`.padEnd(16)} ${[...spotKeys.map((k) => s.spot[k]), ...solverKeys.map((k) => s.solver[k])].map((x) => short(x).padStart(14)).join(' ')}`);
 }
 // Seats differ in everything at once (who checked, which sizes are used), so each seat is read apart
 const correlations = {};
@@ -255,7 +294,7 @@ for (const seat of POSITIONS) {
   }
 }
 if (args.out) {
-  writeFileSync(args.out, `${JSON.stringify({ settings: { ...args, out: undefined }, spots, correlations }, null, 1)}\n`);
+  writeFileSync(args.out, `${JSON.stringify({ settings: { ...args, boards: boardList.join(','), out: undefined }, characteristics: summary, spots, correlations }, null, 1)}\n`);
   console.log(`\n  written to ${args.out}`);
 }
 
@@ -303,11 +342,11 @@ function mean(rows, value) {
  * Chance that a must scores above a can't from the same decision (ties count half). With `twin`,
  * only hands with the same twin key are compared: what separates hands that are otherwise alike.
  */
-function separation(musts, cants, value, twin = () => '') {
+function separation(musts, cants, value, twin = () => '', decision = (r) => r.node) {
   let above = 0;
   let pairs = 0;
   const byNode = new Map();
-  const keyOf = (r) => `${r.board}/${r.seat}/${twin(r)}`;
+  const keyOf = (r) => `${decision(r)}/${twin(r)}`;
   for (const c of cants) {
     const key = keyOf(c);
     if (!byNode.has(key)) byNode.set(key, []);

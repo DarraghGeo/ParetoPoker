@@ -116,8 +116,12 @@ Weight, among the bluff-catcher marks, of equity against the range he started th
 | R4 (when added) | 15.16 | 6.71 | |
 | R12, `valueThreshold` 0.5 | | 6.77 | 6.68 |
 
-In the diagnosis it is the best single separator of must-calls from must-folds on R12 (0.94, and
-0.83-0.88 among twins of equal equity against his bets).
+In the diagnosis it separates must-calls from must-folds on R12 at 0.97 (0.82 among twins of
+equal equity against his bets), just behind equity against his bets itself at 0.99. An earlier
+version of the diagnosis compared hands across bet sizes on the same board and reported 0.94
+against 0.83, and scored the equity selector's calls at 0.83 against Napkin's 0.96; compared
+within one bet size the two selectors score 0.99 and 0.98. Napkin's gain on river calls in the
+exploited results is therefore not explained by this score.
 
 ### 6. Bluff-catcher weights
 
@@ -181,6 +185,15 @@ obvious untested lever.
 `thinValue` 0.5-0.7 and `trapShare` 1/6 (both inactive by default), the 0.1 blocker weight in
 the value order, and the diagnosis's must and can't cut-offs (85% and 15%).
 
+## Not yet used: forms of equity on the turn
+
+The diagnosis on 8 turns at two depths (`diagnosis/turns.json`) scores both selectors' turn
+bluffs at 0.70, the weakest role measured. Characteristics that separate must-bluffs from
+can't-bluffs better than either selector: equity spread 0.85, draw equity 0.83, low strength now
+0.83, equity swing 0.80, the implied-odds proxy 0.78, not blocking his folds 0.75. For turn
+calls, E[HS^2] and equity against his value both reach 0.98 (selectors: 0.94 and 0.96). None of
+this has been turned into a selection rule or measured against the best response.
+
 ## Spot data
 
 `node bin/diagnose.js --out diagnosis/rivers.json` writes, for every opening decision, how the
@@ -188,7 +201,7 @@ spot is defined (range advantage, nut advantage, polarization advantage, capping
 poker-rangeman's `compare()`) next to what the solver does there (how often it bets, its main
 size, how much strong value it checks, its thinnest value bet, its strongest bluff, the bluff
 share of its bets), and the correlations between the two for each seat. `diagnosis/rivers.json`
-holds the R12 run.
+holds the R12 run and `diagnosis/turns.json` 8 turns at stacks of 2.5x and 6x pot.
 
 What that file does not yet answer: whether the *best tuning* changes with the spot. It shows
 whether the solver's play does. Answering the first needs each tuning swept per spot and the

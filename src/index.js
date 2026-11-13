@@ -3,6 +3,7 @@ export { RangeStrategist } from './RangeStrategist.js';
 export { EquitySelector, SelectionContext } from './HandSelector.js';
 export { NapkinSelector } from './NapkinSelector.js';
 export { classifyHands, PAIR, DRAW } from './handClass.js';
+export { handFeatures } from './handFeatures.js';
 export { Equity } from './Equity.js';
 export { Range } from './Range.js';
 export { SolverBridge } from './solver/SolverBridge.js';

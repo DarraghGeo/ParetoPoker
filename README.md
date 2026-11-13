@@ -208,27 +208,47 @@ turns (3.5%) and 6.0% on the flop (6.1%). `node bin/play.js --selector napkin` r
 
 ### Diagnosing hand selection
 
-`node bin/diagnose.js` compares a selector's order with the solver's equilibrium on river
-boards, hand by hand, giving the selector the solver's own ranges:
+`node bin/diagnose.js` compares a selector's order with the solver's equilibrium on the first
+decisions of river, turn or flop trees (`--street`), hand by hand, giving the selector the
+solver's own ranges:
 
 1. Is the hand bluff or value? (Does it beat half of the range that continues.)
 2. Is it a must, a can't or optional? (The solver takes the action 85% or more, 15% or less, or mixes.)
 3. Is it interchangeable? (How much of each role the solver mixes.)
 4. What makes hands twins? (Characteristics measured on every hand.)
-5. How do the characteristics rank? (How well each separates musts from can'ts, over all hands
-   and among twins of the same equity.)
-
+5. How do the characteristics rank? (How well each separates musts from can'ts: within a
+   decision, among twins of the same equity, and pooled across decisions.)
 6. Is it specific to the spot? (Does what the solver does move with range advantage, nut
    advantage, polarization or capping, as measured by poker-rangeman. `--out file.json` saves it.)
 
-Each selector gets the same score: the chance that it ranks a must above a can't from the same
-decision (1.00 is perfect, 0.50 is no better than chance). On 12 rivers:
+The characteristics include the forms of equity in `handFeatures()` (`src/handFeatures.js`):
 
-| Role | `EquitySelector` | `NapkinSelector` |
-|---|---|---|
-| Bluff bets | 0.90 | 0.91 |
-| Calls | 0.83 | 0.96 |
-| Value bets | 0.84 | 0.70 |
+| Measure | Meaning |
+|---|---|
+| Equity spread | How consistent the hand's equity is against his enumerated range (each of his hands in turn). 1 = the same against every hand, 0 = completely different. |
+| Equity slope | How fast the equity goes from its lowest to its highest across his hands. 0 = all equal, 1 = it jumps, about 0.33 = an even climb. |
+| Strength now | The share of his range the hand beats as it stands. |
+| Draw equity | The equity the hand wins from behind. |
+| Equity swing | How much its equity moves on the next card. |
+| E[HS^2] | The average over every runout of its river equity squared. |
+| Best-card equity, upside, downside | Its equity on the best next card; its average gain and loss on the next card. |
+| Implied odds proxy | `behind / (pot + behind) x (best-card equity - equity)`: the most equity it can still gain, scaled by what is left to win. |
+
+On the river only spread and slope apply, and both add little: every matchup there is won,
+lost or tied, so the slope is 1 for nearly every hand and the spread is a function of equity.
+The stack factor of the implied-odds proxy is the same for every hand in a decision, so it only
+shows in the pooled column, and only when the run covers several depths (`--stack 250,600`).
+
+Each selector gets the same score: the chance that it ranks a must above a can't from the same
+decision (1.00 is perfect, 0.50 is no better than chance).
+
+| Role | Rivers: equity | Rivers: Napkin | Turns: equity | Turns: Napkin |
+|---|---|---|---|---|
+| Bluff bets | 0.90 | 0.91 | 0.70 | 0.70 |
+| Calls | 0.99 | 0.98 | 0.94 | 0.96 |
+| Value bets | 0.84 | 0.70 | 0.90 | 0.85 |
+
+(12 rivers at stack 2.5x pot; 8 turns at 2.5x and 6x. Saved in `diagnosis/`.)
 
 Every tuned number, what it was tuned on and what else was tried is recorded in
 [TUNINGS.md](TUNINGS.md).
