@@ -5,3 +5,7 @@ export { treeOf, decisionAt, equityVs } from './solver/flopsolve.js';
 export { buildTree, solveCurves, levelsFromCurve } from './warp/curves.js';
 export { warpGame } from './warp/game.js';
 export { outline } from './explain/outline.js';
+export { study, measure, claims, holds, tolerance, explainStreet, describe, TOLERANCE } from './explain/street.js';
+export { frameAt, actionValues, byReply, byHolding, byCard } from './explain/account.js';
+export { evaluator } from './explain/best.js';
+export { features, groupOf } from './explain/features.js';

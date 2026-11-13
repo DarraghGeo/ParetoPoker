@@ -2,10 +2,15 @@
 
 Explains why hands do what they do in a solved poker spot.
 
-A solver tells you that a hand bets 46% of the time. Pareto says why: whether the choice
-matters to the hand at all, what it beats, what the price is, what the rest of its strength
-does, and whether its cards change anything. Every sentence carries the number behind it and
-where that number comes from.
+A solver tells you that a hand bets 46% of the time. Pareto says what stands behind that: what
+the hand is, what each action is worth to it against the strategy he plays, whether a bet earns
+through his folds or does not need them, which cards a call is for, and which actions are worth
+the same.
+
+It says only what has been proven. A **number** is a fact of the solution on screen and is worded
+as that. A **conclusion** is drawn only where it has held, without exception, in two far finer
+solves of every spot it was tried on. [`research/proof/PROOF.md`](research/proof/PROOF.md) has the
+proofs, the figures, and the list of what is not proven and so not said.
 
 It sits on top of [poker-flopsolve](https://www.npmjs.com/package/poker-flopsolve), which does
 the solving, and uses [poker-rangeman](https://www.npmjs.com/package/poker-rangeman) to describe
@@ -20,11 +25,12 @@ folder `/docs`.
 
 The page opens on a choice between the two:
 
-- **Study**: a board, two ranges and a bet menu are solved in the browser. Walk the line, pick a
-  hand, read why. Ranges are edited on a chart, and each edit is a version to go back and forth between.
+- **Study** (`study.html`): a board of three, four or five cards, two ranges and a bet menu are
+  solved in the browser. Walk the line, pick a hand, read what it does and why. The pen edits the
+  ranges; each save is a version you can slide back to.
   A spot too big to solve whole in a browser (most flops with several sizes, raises and all-in) is
   offered as Solve (Lite): the first street's betting as given, one bet size on the later ones.
-- **Train**: questions on boards dealt at random, with the ranges, pot and bet sizes set up in
+- **Train** (`train.html`): questions on boards dealt at random, with the ranges, pot and bet sizes set up in
   Study. Who has the range advantage, who has the nut advantage (hands with 90% equity or more),
   the biggest bet or raise the range takes, and what a given hand can do. The two ranges sit side
   by side, hero in ink and villain faded, or as the two equity curves. Settings choose the kinds
@@ -48,48 +54,42 @@ npm test
 
 ```js
 import * as solver from 'poker-flopsolve';
-import { treeOf, decisionAt, survey, explain } from './src/index.js'; // not on npm: use it from this repository
+import { treeOf } from './src/index.js'; // not on npm: use it from this repository
+import { study, measure, tolerance, explainStreet } from './src/explain/street.js';
 
-const spot = solver.defineSpot({ board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, oop: '66+,AJs+', ip: 'QQ-22,AQs-A2s', betSizes: [[0.33, 0.75]] });
+const spot = solver.defineSpot({ board: 'Td 9d 6h Qc', pot: 100, stack: 200, oop: '66+,AJs+,KQs,JTs', ip: 'QQ-22,AQs-A2s,KJs+', betSizes: [[0.33, 0.75]] });
 const run = solver.createRun(spot, {});
-run.step(400);
+while (run.exploitabilityPercent() > 0.02) run.step(20);   // conclusions are proven for turns solved this finely
 const solution = run.snapshot();
+const nodes = treeOf(solver, spot);                         // the betting tree as plain objects
 
-const nodes = treeOf(solver, spot);                    // the betting tree as plain objects
-const decision = decisionAt(solver, solution, nodes, 0); // one decision: every hand's strategy and values
-const told = explain(survey(decision), 'AsTs');
+const decision = study(solver, solution, nodes, 0);         // one decision, studied once
+const gates = tolerance('turn', run.exploitabilityPercent(), decision.lineReach); // null where nothing is proven
+const hand = measure(decision, 1234);                        // one hand (a combination index), read off it
+const told = explainStreet(decision, hand, gates);
 
-told.status;   // 'forced' | 'optional'
-told.line;     // one sentence
-told.reasons;  // [{ id, basis, text, short }]
+told.line;     // what the hand is, and its equity
+told.reasons;  // [{ id, text }]: numbers of this solution, and the conclusions that passed their gates
+told.claims;   // the same, as data: what each sentence commits to
 ```
 
 Actions are named in shorthand everywhere: `X` check, `C` call, `F` fold, `B33` a bet of 33% of the
 pot, `R2.5x` a raise to 2.5 times the bet faced, `All-in`.
 
-`line` is the short answer and `reasons` the full one; show either.
+### What is said
 
-### What a reason is
+| | sort | |
+|---|---|---|
+| what the hand is: pair names, draws with their outs | exact | counted card by card |
+| equity against the range he has here; how often he folds; how often the hand is ahead when called | number | a fact of this solution |
+| an action the hand does not take is **worse** | conclusion | the amount is this solution's; that it is worse carries over |
+| two actions the hand takes are worth **the same** | conclusion | |
+| a bet **earns through his folds**, or **does not depend on them** | conclusion | the times he continues, set against the passive action |
+| a call is **for the cards that improve it** | conclusion | flop and turn |
 
-| `basis` | where the number comes from |
-|---|---|
-| `solver` | read from the solution: what an action is worth to the hand, what he does next |
-| `count` | counted from the two ranges: what the hand beats, what its cards remove |
-| `formula` | the indifference maths: the price of a call, the folds a bluff needs |
-| `spot` | poker-rangeman's comparison of the two ranges (page only) |
-
-The reasons, in the order they are tried:
-
-1. **Forced or optional.** An action that gives up more than 0.5% of the pot is a mistake for
-   the hand. One acceptable action: forced. Several: the mix is the range's choice.
-2. **The price** (facing a bet). What the hand beats against what a call needs.
-3. **Value, bluff or neither** (betting or raising). What it beats of the hands that continue;
-   what it would win by checking; the folds the size needs; the bluffs the price allows.
-4. **Showdown or protection** (checking). A bet folds out what it beats; or it is strong enough
-   to bet and checks so that a check is not always weak.
-5. **Its strength level.** Hands of exactly its strength are interchangeable on the river.
-   When it plays differently from them, either its cards remove different parts of his range
-   (blockers), or they do not and the split between them is arbitrary.
+Where conclusions are proven: rivers solved to 0.01% of the pot and turns to 0.02%, on lines at
+least half of each range takes. Elsewhere the page gives the numbers and says they are only that.
+Flop spots are solved and walked; their conclusions are on trial (see the proof file).
 
 ## Where this came from
 
@@ -103,7 +103,8 @@ the record. Nothing in `src/` depends on it.
 
 | | |
 |---|---|
-| `src/explain/` | the reasons (`river.js`) and the spot sentence (`profile.js`) |
+| `src/explain/` | `street.js` (measure a decision, claims, wording), `account.js` and `best.js` (what actions are worth), `features.js` (what a hand is), `profile.js` (the spot sentence) |
+| `research/proof/` | the proofs and their results; `PROOF.md` is written from them |
 | `src/solver/flopsolve.js` | reads a poker-flopsolve solution into the explainer's shape |
 | `src/warp/` | the curve game: two ranges from one drawn curve, solved in milliseconds |
 | `web/` | the page's source; `scripts/build.mjs` bundles it into `docs/` |

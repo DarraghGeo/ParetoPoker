@@ -5,3 +5,6 @@
 {"spot":"turn tight ranges deep","exploit":0.28,"decisions":23,"values":3565,"seconds":1,"worst":{"average":"4.5e-13","order":"3.4e-13","root":"4.3e-14"}}
 {"spot":"turn two flush draws","exploit":0.16,"decisions":22,"values":10683,"seconds":0,"worst":{"average":"4.5e-13","order":"3.1e-13","root":"4.0e-14"}}
 {"spot":"flop two-tone","exploit":1.23,"decisions":13,"values":5753,"seconds":36,"worst":{"average":"2.3e-13","order":"2.3e-13","root":"4.3e-14"}}
+{"spot":"flop rainbow dry","exploit":1.26,"decisions":13,"values":8841,"seconds":46,"worst":{"average":"3.1e-13","order":"2.2e-13","root":"5.7e-14"}}
+{"spot":"flop monotone tight","exploit":1.39,"decisions":13,"values":1320,"seconds":20,"worst":{"average":"1.1e-13","order":"1.1e-13","root":"4.3e-14"}}
+{"spot":"flop paired","exploit":1.37,"decisions":13,"values":8849,"seconds":46,"worst":{"average":"4.1e-13","order":"4.1e-13","root":"8.5e-14"}}

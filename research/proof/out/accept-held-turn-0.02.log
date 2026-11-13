@@ -1,0 +1,12 @@
+  solved held turn ace-high dry: 320 iterations, 0.018%, 4.7s
+  held turn ace-high dry: page 0.018%, refs 0.0097 0.0099; running tally {"equity":{"made":1191,"failed":0},"clear":{"made":878,"failed":0},"folds":{"made":1142,"failed":0},"needs":{"made":952,"failed":0},"builds":{"made":152,"failed":0},"same":{"made":298,"failed":0},"cards":{"made":620,"failed":0}}
+  solved held turn connected: 340 iterations, 0.019%, 2.7s
+  held turn connected: page 0.019%, refs 0.0094 0.0099; running tally {"equity":{"made":2203,"failed":0},"clear":{"made":1461,"failed":0},"folds":{"made":2334,"failed":0},"needs":{"made":1967,"failed":0},"builds":{"made":259,"failed":0},"same":{"made":737,"failed":0},"cards":{"made":1102,"failed":0}}
+  solved held turn broadway: 720 iterations, 0.020%, 3.7s
+  held turn broadway: page 0.020%, refs 0.0100 0.0099; running tally {"equity":{"made":2369,"failed":0},"clear":{"made":1512,"failed":0},"folds":{"made":2500,"failed":0},"needs":{"made":2115,"failed":0},"builds":{"made":267,"failed":0},"same":{"made":808,"failed":0},"cards":{"made":1154,"failed":0}}
+  solved held turn low paired: 300 iterations, 0.020%, 1.6s
+  held turn low paired: page 0.020%, refs 0.0098 0.0100; running tally {"equity":{"made":3283,"failed":0},"clear":{"made":1989,"failed":68},"folds":{"made":3414,"failed":0},"needs":{"made":2898,"failed":0},"builds":{"made":368,"failed":0},"same":{"made":1006,"failed":0},"cards":{"made":1470,"failed":38}}
+  solved held turn monotone: 260 iterations, 0.018%, 1.3s
+  held turn monotone: page 0.018%, refs 0.0092 0.0096; running tally {"equity":{"made":4153,"failed":0},"clear":{"made":2431,"failed":68},"folds":{"made":4284,"failed":0},"needs":{"made":3580,"failed":0},"builds":{"made":496,"failed":0},"same":{"made":1257,"failed":0},"cards":{"made":1886,"failed":38}}
+  solved held turn three sizes: 320 iterations, 0.018%, 3.5s
+  held turn three sizes: page 0.018%, refs 0.0093 0.0097; running tally {"equity":{"made":5113,"failed":0},"clear":{"made":2959,"failed":68},"folds":{"made":5244,"failed":0},"needs":{"made":4380,"failed":0},"builds":{"made":590,"failed":0},"same":{"made":1547,"failed":0},"cards":{"made":2203,"failed":38}}

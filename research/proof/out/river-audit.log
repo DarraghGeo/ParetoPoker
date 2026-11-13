@@ -1,0 +1,6 @@
+  river default: page 0.032%, refs 0.0046 0.0049
+  river dry: page 0.037%, refs 0.0048 0.0049
+  river flush: page 0.037%, refs 0.0048 0.0048
+  river paired: page 0.042%, refs 0.0048 0.0049
+  river four straight: page 0.027%, refs 0.0044 0.0049
+  river brick: page 0.043%, refs 0.0047 0.0050

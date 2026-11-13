@@ -1,5 +1,5 @@
 import { RangeManager } from 'poker-rangeman';
-import { explain, survey } from '../src/explain/river.js';
+import { survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
 import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
@@ -12,6 +12,8 @@ const state = {
   versions: [], at: 0, slide: null,
   // Past a deal: the cards dealt after the spot's own board, and the deal being chosen (a chance node), if any
   dealt: [], pick: null, sub: null,
+  // flop and turn reasons, as the worker has worked them out: `${node}|${dealt}|${combo}`
+  told: new Map(), asked: new Set(),
 };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config);
   // an earlier visit saved one raise size as `raise`
@@ -34,13 +36,14 @@ worker.onmessage = ({ data }) => {
     state.sub = null; turnTo(state.versions.length - 1);
   }
   if (data.type === 'solved') {
-    loaded(); state.nodes = data.nodes; state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
     // back where this version was last looked at, if that place exists in it
     const pos = version().pos ?? { node: 0, dealt: [] }; const there = state.nodes[pos.node];
     const ok = there?.kind === 'decision' && pos.dealt.length >= there.round;
     state.dealt = ok ? [...pos.dealt] : []; state.pick = null; go(ok ? pos.node : 0);
   }
   if (data.type === 'decision') show(data.decision);
+  if (data.type === 'told') { state.told.set(`${data.id}|${state.dealt.join(' ')}|${data.combo}`, data.told ?? { line: '', reasons: [], silent: data.error ?? '' }); renderWhy(); }
 };
 // ---- a solve that takes a while says so: what is being solved, how far along, and a way to stop ----
 const load = { started: 0, first: null, timer: null, last: null };
@@ -301,7 +304,14 @@ const handsInOrder = (s) => [...s.rows].sort((a, b) => (a.hand.strength ?? 0) - 
 function renderWhy() {
   const s = state.survey; const row = s?.byName.get(state.hand);
   // before the river there is the hand and what it does; the reasons are a river matter for now
-  const told = !s || !state.hand ? null : s.outline ? (row ? { name: row.hand.name, strategy: row.hand.strategy, equity: row.equity, line: '', reasons: [] } : null) : explain(s, state.hand);
+  let told = !s || !state.hand || !row ? null : { name: row.hand.name, strategy: row.hand.strategy, equity: row.equity, line: '', reasons: [] };
+  // the reasons come from the worker on every street: only what has been proven is said (research/proof/PROOF.md)
+  if (told && row) {
+    // the reasons come from the worker: asked for once a hand, shown when they arrive
+    const key = `${state.node}|${state.dealt.join(' ')}|${row.hand.id}`; const got = state.told.get(key);
+    if (got) told = { ...told, line: got.line, reasons: got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : got.reasons };
+    else { told = { ...told, reasons: [{ text: 'Working out the reasons\u2026', quiet: true }] }; if (!state.asked.has(key)) { state.asked.add(key); worker.postMessage({ type: 'explain', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); } }
+  }
   if (!told) { $('why').innerHTML = ''; return; }
   const d = state.decision; const strata = strataOf(d.actions);
   const title = d.abstract ? `${pct(told.equity)}%` : cardsHtml(told.name);
@@ -311,7 +321,7 @@ function renderWhy() {
   $('why').innerHTML = `<h2>${title}</h2>`
     + `<div class="mix"><span class="bar">${bar(told.strategy, strata)}</span><div class="nums">${d.actions.map((a, k) => (told.strategy[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(told.strategy[k])}</span>` : '')).join('')}</div></div>`
     + (told.line ? `<p class="lead">${esc(told.line)}</p>` : '')
-    + reasons.map((r) => `<p>${esc(r.text)}</p>`).join('');
+    + reasons.map((r) => `<p${r.quiet ? ' class="quiet"' : ''}>${esc(r.text)}</p>`).join('');
 }
 
 const W = 560, PAD = 8;

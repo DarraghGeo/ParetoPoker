@@ -6,3 +6,5 @@
   solved turn two flush draws: 60 iterations, 0.164%, 0.1s
   solved flop two-tone: 30 iterations, 1.226%, 9.3s
   solved flop rainbow dry: 35 iterations, 1.261%, 24.5s
+  solved flop monotone tight: 30 iterations, 1.394%, 1.1s
+  solved flop paired: 35 iterations, 1.371%, 20.7s

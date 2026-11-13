@@ -1,0 +1,102 @@
+line 20-50%  arbitrary                          made     1  absent or reshaped in a reference 100.0%  largest number difference: median NaN  p99 NaN  max NaN
+line 20-50%  blockers                           made    16  absent or reshaped in a reference  34.4%  largest number difference: median 5  p99 40  max 40
+line 20-50%  bluff                              made    44  absent or reshaped in a reference   0.0%  largest number difference: median 1  p99 2  max 2
+line 20-50%  cost                               made  2047  absent or reshaped in a reference   6.8%  largest number difference: median 0.3999999999999999  p99 3.6000000000000014  max 5.300000000000001
+line 20-50%  defence                            made  1189  absent or reshaped in a reference  14.4%  largest number difference: median 1  p99 30  max 56
+line 20-50%  give-up                            made    12  absent or reshaped in a reference   0.0%  largest number difference: median 18  p99 18  max 18
+line 20-50%  lead: A pair is                    made   571  absent or reshaped in a reference   4.3%  largest number difference: median 0  p99 1  max 2
+line 20-50%  lead: Ace high is                  made   269  absent or reshaped in a reference   2.8%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: It could bet                 made     2  absent or reshaped in a reference   0.0%  largest number difference: median 1  p99 1  max 1
+line 20-50%  lead: King high is                 made    80  absent or reshaped in a reference   6.3%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: Queen high is                made    14  absent or reshaped in a reference  32.1%  largest number difference: median 0  p99 0  max 0
+line 20-50%  lead: Three of a                   made     3  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 0  max 0
+line 20-50%  lead: Two pair is                  made    83  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: You bet it                   made   104  absent or reshaped in a reference   0.0%  largest number difference: median 1  p99 67  max 67
+line 20-50%  lead: You bluff with               made    44  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: You call with                made   531  absent or reshaped in a reference  10.1%  largest number difference: median 1  p99 5  max 6
+line 20-50%  lead: You check and                made    78  absent or reshaped in a reference   0.0%  largest number difference: median 2  p99 17  max 18
+line 20-50%  lead: You fold a                   made   142  absent or reshaped in a reference  11.3%  largest number difference: median 0  p99 2  max 2
+line 20-50%  lead: You fold ace                 made   112  absent or reshaped in a reference  10.7%  largest number difference: median 1  p99 3  max 3
+line 20-50%  lead: You fold eight               made    56  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: You fold five                made    12  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 0  max 0
+line 20-50%  lead: You fold jack                made    74  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: You fold king                made    78  absent or reshaped in a reference   1.9%  largest number difference: median 1  p99 2  max 30
+line 20-50%  lead: You fold nine                made    44  absent or reshaped in a reference   0.0%  largest number difference: median 1  p99 2  max 2
+line 20-50%  lead: You fold queen               made   116  absent or reshaped in a reference   2.6%  largest number difference: median 1  p99 1  max 1
+line 20-50%  lead: You fold seven               made    34  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: You fold six                 made    19  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 20-50%  lead: You fold ten                 made    11  absent or reshaped in a reference   0.0%  largest number difference: median 1  p99 1  max 1
+line 20-50%  lead: You give up                  made    12  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 0  max 0
+line 20-50%  lead: You raise as                 made   278  absent or reshaped in a reference  24.8%  largest number difference: median 0  p99 29  max 29
+line 20-50%  lead: You raise for                made   391  absent or reshaped in a reference   3.1%  largest number difference: median 0  p99 5  max 6
+line 20-50%  line                               made   730  absent or reshaped in a reference  26.4%  largest number difference: median 0  p99 27  max 32
+line 20-50%  no-raise                           made    37  absent or reshaped in a reference  24.3%  largest number difference: median 1  p99 2  max 2
+line 20-50%  price                              made  1838  absent or reshaped in a reference   5.6%  largest number difference: median 1  p99 4  max 6
+line 20-50%  quota                              made    12  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 0  max 0
+line 20-50%  raise                              made   511  absent or reshaped in a reference   9.5%  largest number difference: median 0  p99 3  max 4
+line 20-50%  showdown                           made    78  absent or reshaped in a reference  10.3%  largest number difference: median 3  p99 20  max 23
+line 20-50%  size                               made    84  absent or reshaped in a reference   9.5%  largest number difference: median 1  p99 10  max 10
+line 20-50%  trap                               made    24  absent or reshaped in a reference  37.5%  largest number difference: median 8  p99 20  max 20
+line 20-50%  value                              made   104  absent or reshaped in a reference   3.8%  largest number difference: median 3  p99 15  max 15
+line 5-20%   arbitrary                          made     5  absent or reshaped in a reference 100.0%  largest number difference: median NaN  p99 NaN  max NaN
+line 5-20%   blockers                           made    83  absent or reshaped in a reference  41.0%  largest number difference: median 4  p99 25  max 25
+line 5-20%   cost                               made  4606  absent or reshaped in a reference  20.3%  largest number difference: median 0.3999999999999999  p99 5.5  max 16.1
+line 5-20%   defence                            made  1946  absent or reshaped in a reference  21.8%  largest number difference: median 1  p99 42  max 79
+line 5-20%   lead: A flush is                   made     4  absent or reshaped in a reference  75.0%  largest number difference: median 0  p99 0  max 0
+line 5-20%   lead: A pair is                    made  1145  absent or reshaped in a reference   8.1%  largest number difference: median 0  p99 2  max 2
+line 5-20%   lead: Ace high is                  made   284  absent or reshaped in a reference   2.5%  largest number difference: median 0  p99 1  max 1
+line 5-20%   lead: King high is                 made   105  absent or reshaped in a reference   3.8%  largest number difference: median 0  p99 1  max 2
+line 5-20%   lead: Queen high is                made    53  absent or reshaped in a reference   7.5%  largest number difference: median 0  p99 1  max 1
+line 5-20%   lead: Three of a                   made    41  absent or reshaped in a reference  14.6%  largest number difference: median 0  p99 1  max 1
+line 5-20%   lead: Two pair is                  made   218  absent or reshaped in a reference   3.0%  largest number difference: median 0  p99 1  max 2
+line 5-20%   lead: You call with                made  1003  absent or reshaped in a reference  20.3%  largest number difference: median 3  p99 18  max 31
+line 5-20%   lead: You fold a                   made   873  absent or reshaped in a reference  29.6%  largest number difference: median 0  p99 4  max 5
+line 5-20%   lead: You fold ace                 made   411  absent or reshaped in a reference  33.9%  largest number difference: median 1  p99 3  max 4
+line 5-20%   lead: You fold eight               made    44  absent or reshaped in a reference   4.5%  largest number difference: median 0  p99 4  max 4
+line 5-20%   lead: You fold five                made    20  absent or reshaped in a reference  10.0%  largest number difference: median 0  p99 1  max 1
+line 5-20%   lead: You fold jack                made   230  absent or reshaped in a reference   2.0%  largest number difference: median 0  p99 3  max 4
+line 5-20%   lead: You fold king                made   370  absent or reshaped in a reference  23.2%  largest number difference: median 0  p99 5  max 6
+line 5-20%   lead: You fold nine                made    56  absent or reshaped in a reference   7.1%  largest number difference: median 2  p99 5  max 5
+line 5-20%   lead: You fold queen               made   324  absent or reshaped in a reference  13.6%  largest number difference: median 0  p99 2  max 3
+line 5-20%   lead: You fold seven               made    62  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 5  max 51
+line 5-20%   lead: You fold six                 made    41  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 5-20%   lead: You fold ten                 made    25  absent or reshaped in a reference   4.0%  largest number difference: median 0  p99 1  max 1
+line 5-20%   lead: You fold three               made     9  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 5-20%   lead: You fold two                 made    47  absent or reshaped in a reference  12.8%  largest number difference: median 1  p99 4  max 4
+line 5-20%   lead: You raise as                 made   246  absent or reshaped in a reference  33.5%  largest number difference: median 1  p99 38  max 39
+line 5-20%   lead: You raise for                made   258  absent or reshaped in a reference   6.0%  largest number difference: median 1  p99 17  max 19
+line 5-20%   line                               made  1529  absent or reshaped in a reference  29.6%  largest number difference: median 0  p99 26  max 59
+line 5-20%   no-raise                           made    42  absent or reshaped in a reference  20.2%  largest number difference: median 1  p99 5  max 5
+line 5-20%   price                              made  4389  absent or reshaped in a reference  22.0%  largest number difference: median 1  p99 16  max 21
+line 5-20%   raise                              made   432  absent or reshaped in a reference  19.4%  largest number difference: median 1  p99 3  max 4
+line 50%+    arbitrary                          made   123  absent or reshaped in a reference  31.3%  largest number difference: median 9  p99 46  max 56
+line 50%+    block                              made    62  absent or reshaped in a reference  14.5%  largest number difference: median 1  p99 14  max 14
+line 50%+    blockers                           made    84  absent or reshaped in a reference  15.5%  largest number difference: median 4  p99 44  max 48
+line 50%+    bluff                              made   470  absent or reshaped in a reference  22.8%  largest number difference: median 1  p99 17  max 25
+line 50%+    cost                               made  1735  absent or reshaped in a reference   6.8%  largest number difference: median 0.30000000000000004  p99 1.8999999999999995  max 2.4000000000000004
+line 50%+    defence                            made    78  absent or reshaped in a reference  22.4%  largest number difference: median 4  p99 31  max 32
+line 50%+    give-up                            made   472  absent or reshaped in a reference   1.6%  largest number difference: median 0  p99 20  max 20
+line 50%+    lead: A pair is                    made    53  absent or reshaped in a reference  11.3%  largest number difference: median 0  p99 1  max 1
+line 50%+    lead: Ace high is                  made    12  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 50%+    lead: It could bet                 made   156  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 57
+line 50%+    lead: It is about                  made    73  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 1
+line 50%+    lead: That is too                  made    62  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 7  max 7
+line 50%+    lead: You bet it                   made   838  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 42  max 65
+line 50%+    lead: You bluff with               made   470  absent or reshaped in a reference   0.9%  largest number difference: median 0  p99 1  max 1
+line 50%+    lead: You call with                made    49  absent or reshaped in a reference   0.0%  largest number difference: median 1  p99 5  max 5
+line 50%+    lead: You check and                made   815  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 2  max 9
+line 50%+    lead: You fold ace                 made    32  absent or reshaped in a reference   0.0%  largest number difference: median 1  p99 1  max 1
+line 50%+    lead: You fold five                made     4  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 0  max 0
+line 50%+    lead: You give up                  made   472  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 1  max 29
+line 50%+    lead: You raise as                 made    26  absent or reshaped in a reference  26.9%  largest number difference: median 0  p99 2  max 2
+line 50%+    lead: You raise for                made    64  absent or reshaped in a reference   0.8%  largest number difference: median 0  p99 2  max 2
+line 50%+    line                               made   160  absent or reshaped in a reference  30.0%  largest number difference: median 1  p99 10  max 10
+line 50%+    mix                                made    53  absent or reshaped in a reference  23.6%  largest number difference: median 11  p99 54  max 54
+line 50%+    no-raise                           made     1  absent or reshaped in a reference   0.0%  largest number difference: median 0  p99 0  max 0
+line 50%+    price                              made   114  absent or reshaped in a reference   5.3%  largest number difference: median 1  p99 2  max 2
+line 50%+    quota                              made   282  absent or reshaped in a reference  19.5%  largest number difference: median 0  p99 14  max 18
+line 50%+    raise                              made    67  absent or reshaped in a reference   2.2%  largest number difference: median 0  p99 1  max 1
+line 50%+    showdown                           made   815  absent or reshaped in a reference   6.0%  largest number difference: median 1  p99 3  max 4
+line 50%+    size                               made   485  absent or reshaped in a reference   8.1%  largest number difference: median 0  p99 2  max 2
+line 50%+    trap                               made   401  absent or reshaped in a reference  17.2%  largest number difference: median 2  p99 35  max 59
+line 50%+    value                              made   911  absent or reshaped in a reference   8.2%  largest number difference: median 1  p99 5  max 14

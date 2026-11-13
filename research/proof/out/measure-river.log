@@ -1,0 +1,85 @@
+  solved river default: 150 iterations, 0.032%, 0.0s
+  solved river default: 200 iterations, 0.019%, 0.0s
+  solved river default: 350 iterations, 0.009%, 0.1s
+  dcfr river default: 880 its 0.0020% 0s
+  cfr+ river default: 1960 its 0.0020% 0s
+  river default node 0 [] round 0 done, 0s
+  river default node 1 [] round 0 done, 0s
+  river default node 3 [] round 0 done, 0s
+  river default node 6 [] round 0 done, 0s
+  river default node 9 [] round 0 done, 0s
+  river default node 15 [] round 0 done, 0s
+  river default node 21 [] round 0 done, 0s
+  river default node 24 [] round 0 done, 0s
+{"spot":"river default","levels":[0.05,0.02,0.01],"exploit":[0.0324,0.0191,0.009,0.002,0.002],"lines":1528,"seconds":0}
+  solved river dry: 200 iterations, 0.037%, 0.0s
+  solved river dry: 300 iterations, 0.019%, 0.0s
+  solved river dry: 450 iterations, 0.009%, 0.0s
+  dcfr river dry: 1080 its 0.0019% 0s
+  cfr+ river dry: 3060 its 0.0020% 0s
+  river dry node 0 [] round 0 done, 0s
+  river dry node 1 [] round 0 done, 0s
+  river dry node 3 [] round 0 done, 0s
+  river dry node 6 [] round 0 done, 0s
+  river dry node 9 [] round 0 done, 0s
+  river dry node 12 [] round 0 done, 0s
+  river dry node 15 [] round 0 done, 0s
+  river dry node 18 [] round 0 done, 0s
+{"spot":"river dry","levels":[0.05,0.02,0.01],"exploit":[0.0373,0.0191,0.0094,0.0019,0.002],"lines":2452,"seconds":0}
+  solved river flush: 200 iterations, 0.037%, 0.0s
+  solved river flush: 300 iterations, 0.019%, 0.0s
+  solved river flush: 450 iterations, 0.009%, 0.0s
+  dcfr river flush: 1240 its 0.0020% 0s
+  cfr+ river flush: 3120 its 0.0020% 0s
+  river flush node 0 [] round 0 done, 0s
+  river flush node 1 [] round 0 done, 0s
+  river flush node 3 [] round 0 done, 0s
+  river flush node 6 [] round 0 done, 0s
+  river flush node 9 [] round 0 done, 0s
+  river flush node 12 [] round 0 done, 0s
+  river flush node 15 [] round 0 done, 0s
+  river flush node 18 [] round 0 done, 0s
+  river flush node 21 [] round 0 done, 0s
+  river flush node 24 [] round 0 done, 0s
+{"spot":"river flush","levels":[0.05,0.02,0.01],"exploit":[0.0369,0.0191,0.0087,0.002,0.002],"lines":2990,"seconds":0}
+  solved river paired: 150 iterations, 0.042%, 0.0s
+  solved river paired: 300 iterations, 0.014%, 0.0s
+  solved river paired: 400 iterations, 0.009%, 0.0s
+  dcfr river paired: 960 its 0.0020% 0s
+  cfr+ river paired: 2320 its 0.0020% 0s
+  river paired node 0 [] round 0 done, 0s
+  river paired node 1 [] round 0 done, 0s
+  river paired node 3 [] round 0 done, 0s
+  river paired node 6 [] round 0 done, 0s
+  river paired node 9 [] round 0 done, 0s
+  river paired node 12 [] round 0 done, 0s
+{"spot":"river paired","levels":[0.05,0.02,0.01],"exploit":[0.0417,0.0144,0.0087,0.002,0.002],"lines":1788,"seconds":0}
+  solved river four straight: 150 iterations, 0.027%, 0.0s
+  solved river four straight: 200 iterations, 0.015%, 0.0s
+  solved river four straight: 300 iterations, 0.007%, 0.0s
+  dcfr river four straight: 720 its 0.0019% 0s
+  cfr+ river four straight: 1560 its 0.0020% 0s
+  river four straight node 0 [] round 0 done, 0s
+  river four straight node 1 [] round 0 done, 0s
+  river four straight node 3 [] round 0 done, 0s
+  river four straight node 9 [] round 0 done, 0s
+  river four straight node 12 [] round 0 done, 0s
+{"spot":"river four straight","levels":[0.05,0.02,0.01],"exploit":[0.0266,0.015,0.0074,0.0019,0.002],"lines":1043,"seconds":0}
+  solved river brick deep: 200 iterations, 0.043%, 0.0s
+  solved river brick deep: 350 iterations, 0.016%, 0.0s
+  solved river brick deep: 500 iterations, 0.009%, 0.1s
+  dcfr river brick deep: 1260 its 0.0020% 0s
+  cfr+ river brick deep: 2800 its 0.0020% 0s
+  river brick deep node 0 [] round 0 done, 0s
+  river brick deep node 1 [] round 0 done, 0s
+  river brick deep node 3 [] round 0 done, 0s
+  river brick deep node 6 [] round 0 done, 0s
+  river brick deep node 9 [] round 0 done, 0s
+  river brick deep node 12 [] round 0 done, 0s
+  river brick deep node 15 [] round 0 done, 0s
+  river brick deep node 21 [] round 0 done, 0s
+  river brick deep node 24 [] round 0 done, 0s
+  river brick deep node 27 [] round 0 done, 0s
+  river brick deep node 30 [] round 0 done, 0s
+  river brick deep node 33 [] round 0 done, 0s
+{"spot":"river brick deep","levels":[0.05,0.02,0.01],"exploit":[0.0425,0.0164,0.0092,0.002,0.002],"lines":2976,"seconds":0}

@@ -2,6 +2,7 @@
 import * as fs from 'poker-flopsolve';
 import { decisionAt, equityVs, treeOf } from '../src/solver/flopsolve.js';
 import { KNOBS, describe, isNeutral, reshape } from '../src/warp/reshape.js';
+import { study, measure, tolerance, explainStreet, RARE } from '../src/explain/street.js';
 
 let solution = null;
 let nodes = null;
@@ -20,7 +21,9 @@ function keep(key, entry) {
   let total = 0; for (const e of kept.values()) total += e.bytes;
   for (const [k, e] of kept) { if (total <= ROOM || k === key) continue; kept.delete(k); total -= e.bytes; }
 }
-const use = (entry) => { solution = entry.solution; nodes = entry.nodes; last = { board: entry.board, run: entry.run, lite: entry.lite }; };
+let current = null; // the solve on screen
+const studies = new Map(); // decisions already studied in it
+const use = (entry) => { solution = entry.solution; nodes = entry.nodes; last = { board: entry.board, run: entry.run, lite: entry.lite }; current = entry; studies.clear(); };
 /** The spot as the solver takes it. One list of bet sizes plays on every street; several, one for each street from the board's own. The solver counts the bet as the first raise. */
 const spotOf = (c, oop, ip) => ({ board: c.board, pot: c.pot, stack: c.stack, oop, ip, betSizes: Array.isArray(c.bets[0]) ? c.bets : [c.bets], raiseSizes: c.raises.length ? c.raises.map((times) => ({ times })) : undefined, maxRaises: 1 + (c.raises.length ? c.maxRaises : 0), allowAllIn: !!c.allIn });
 
@@ -50,7 +53,8 @@ self.onmessage = async ({ data }) => {
       const started = Date.now();
       const river = board.length === 5;
       // A river is cheap enough to solve finely; earlier streets stop at the usual 0.3% of the pot, or when told to
-      const target = river ? 0.05 : 0.3; const patience = river ? 8000 : board.length === 4 ? 45000 : 180000;
+      // Conclusions are proven for rivers solved to 0.01% and turns to 0.02%, so each is taken that far
+      const target = river ? 0.01 : board.length === 4 ? 0.02 : 0.3; const patience = river ? 15000 : board.length === 4 ? 90000 : 180000;
       const chunk = river ? (warm ? 10 : 50) : board.length === 4 ? 10 : 2;
       let exploit = Infinity;
       self.postMessage({ type: 'progress', job: data.job, iterations: 0, exploit: Infinity, target, street: ['flop', 'turn', 'river'][board.length - 3] });
@@ -140,6 +144,20 @@ self.onmessage = async ({ data }) => {
       self.postMessage({ type: 'preview', id: data.id, sides: { oop: side(0), ip: side(1) } });
     } catch (error) {
       self.postMessage({ type: 'preview', id: data.id, error: String(error?.message ?? error) });
+    }
+  } else if (data.type === 'explain' && solution) {
+    // One hand at a flop or turn decision. The decision is studied once; other hands at it then answer at once
+    try {
+      const dealt = fs.parseCards((data.dealt ?? []).join(' '));
+      const key = `${data.id}|${dealt.join(',')}`;
+      let st = studies.get(key); if (!st) studies.set(key, st = study(fs, solution, nodes, data.id, dealt));
+      const street = ['flop', 'turn', 'river'][st.f.board.length - 3];
+      const T = st.f.round === 0 ? tolerance(street, current.exploit, st.lineReach) : tolerance(`${street} after a deal`, current.exploit, st.lineReach);
+      const m = measure(st, data.combo, { worth: !!T || Math.min(...st.lineReach) >= RARE });
+      const told = explainStreet(st, m, T);
+      self.postMessage({ type: 'told', job: data.job, id: data.id, combo: data.combo, told: told && { name: told.name, strategy: told.strategy, line: told.line, reasons: told.reasons, silent: told.silent } });
+    } catch (error) {
+      self.postMessage({ type: 'told', job: data.job, id: data.id, combo: data.combo, told: null, error: String(error?.message ?? error) });
     }
   } else if (data.type === 'decision' && solution) {
     self.postMessage({ type: 'decision', job: data.job, id: data.id, decision: decisionAt(fs, solution, nodes, data.id, fs.parseCards((data.dealt ?? []).join(' '))) });
