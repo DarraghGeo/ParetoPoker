@@ -128,22 +128,25 @@ function renderCombos(strata) {
 function renderDist() {
   const s = state.survey; if (!s) { $('dist').innerHTML = ''; return; }
   const d = state.decision; const DH = 220;
+  // the same horizontal scale as the strip above: the full width
+  const Xd = (x) => x * W;
   const Yd = (y) => DH - PAD - y * (DH - 2 * PAD);
-  const steps = (list) => { const total = list.reduce((t, r) => t + r.w, 0); let x = 0; const pts = []; for (const r of list) { const w = r.w / total; pts.push(`${X(x).toFixed(1)},${Yd(r.e).toFixed(1)} ${X(x + w).toFixed(1)},${Yd(r.e).toFixed(1)}`); r.mid = x + w / 2; x += w; } return pts.join(' '); };
+  const steps = (list) => { const total = list.reduce((t, r) => t + r.w, 0); let x = 0; const pts = []; for (const r of list) { const w = r.w / total; pts.push(`${Xd(x).toFixed(1)},${Yd(r.e).toFixed(1)} ${Xd(x + w).toFixed(1)},${Yd(r.e).toFixed(1)}`); r.mid = x + w / 2; x += w; } return pts.join(' '); };
   const mine = [...s.rows].sort((a, b) => a.hand.strength - b.hand.strength || a.equity - b.equity).map((r) => ({ w: r.hand.weight, e: r.equity, name: r.hand.name }));
   // his hands against the range to act, with the cards each removes
   const his = d.villain.map((v) => { let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
   const pick = mine.find((r) => r.name === state.hand);
   $('dist').innerHTML = `<svg viewBox="0 0 ${W} ${DH}" role="img" aria-label="Equity distribution">`
-    + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="${X(0)}" x2="${X(1)}" y1="${Yd(v)}" y2="${Yd(v)}"/>`).join('')
-    + `<line class="axis" x1="${X(0)}" x2="${X(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/><polyline class="wait" points="${hisPts}"/><polyline class="act" points="${minePts}"/>`
-    + (pick ? `<circle class="dot" cx="${X(pick.mid).toFixed(1)}" cy="${Yd(pick.e).toFixed(1)}" r="5"/>` : '') + '</svg>';
+    + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="${Xd(0)}" x2="${Xd(1)}" y1="${Yd(v)}" y2="${Yd(v)}"/>`).join('')
+    + `<line class="axis" x1="${Xd(0)}" x2="${Xd(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/><polyline class="wait" points="${hisPts}"/><polyline class="act" points="${minePts}"/>`
+    + (pick ? `<circle class="dot" cx="${Xd(pick.mid).toFixed(1)}" cy="${Yd(pick.e).toFixed(1)}" r="5"/>` : '') + '</svg>';
 }
 const SHORT = { 'High card': 'HC', Pair: 'P', 'Two pair': '2P', 'Three of a kind': '3K', Straight: 'ST', Flush: 'FL', 'Full house': 'FH', 'Four of a kind': '4K', 'Straight flush': 'SF' };
 /**
  * The strategy along the range, weakest to strongest: one column per strength, as wide as its
- * share. Split, it opens into a row for each made hand, strongest first, each on its own scale.
+ * share. Split, it opens into a row for each made hand, strongest first, each in its own place on
+ * the same scale.
  */
 function renderStrip(strata) {
   const s = state.survey; const el = $('strip');
@@ -157,12 +160,20 @@ function renderStrip(strata) {
   const names = state.decision.categories;
   if (!state.split || !names) { el.className = 'strip'; el.innerHTML = levels.map(column).join(''); return; }
   const total = levels.reduce((t, [, level]) => t + level.weight, 0);
+  // Every row keeps the whole range's scale: a made hand sits where it sits in the single bar, with gaps either side
+  const classOf = (entry) => entry[1].rows[0].hand.category;
+  const space = ([, level]) => `<span style="flex:${level.weight.toFixed(4)} 1 0"></span>`;
   const rows = new Map();
-  for (const entry of levels) { const c = entry[1].rows[0].hand.category; if (!rows.has(c)) rows.set(c, []); rows.get(c).push(entry); }
+  for (const entry of levels) { const c = classOf(entry); if (!rows.has(c)) rows.set(c, []); rows.get(c).push(entry); }
   el.className = 'rows';
+  // Where each made hand starts and ends along the range; its name goes in the free space beside it
+  const span = new Map(); let seen = 0;
+  for (const entry of levels) { const c = classOf(entry); const w = entry[1].weight / total; if (!span.has(c)) span.set(c, [seen, seen]); span.get(c)[1] = seen + w; seen += w; }
   el.innerHTML = [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([c, list]) => {
     const name = names[c] ?? ''; const nice = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-    return `<span class="name"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span></span><div class="strip">${list.map(column).join('')}</div><span class="share">${pct(list.reduce((t, [, level]) => t + level.weight, 0) / total)}</span>`;
+    const [from, to] = span.get(c);
+    const place = (from + to) / 2 < 0.5 ? `left:calc(${(100 * to).toFixed(2)}% + 8px)` : `right:calc(${(100 * (1 - from)).toFixed(2)}% + 8px)`;
+    return `<div class="row"><div class="strip">${levels.map((entry) => (classOf(entry) === c ? column(entry) : space(entry))).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct(list.reduce((t, [, level]) => t + level.weight, 0) / total)}</span></div>`;
   }).join('');
 }
 function renderWhy() {
