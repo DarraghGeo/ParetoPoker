@@ -1,3 +1,4 @@
+import { riverWorth } from './derived.js';
 import { NUM_COMBOS, COMBO_A, COMBO_B } from './cards.js';
 import { candidatesInOrder, deal, sumOf } from './HandSelector.js';
 import { DRAW, PAIR, classifyHands } from './handClass.js';
@@ -51,6 +52,11 @@ export class NapkinSelector {
    *   order. 'ehs2': E[HS^2] plus equity against his value, which matches the solver's turn calls
    *   best (0.99) but lost more when exploited out of position; 'ehs2-ip' uses it in position only,
    *   and only when the stack behind is at least `ehs2Depth` pots.
+   * @param {null|'call'|'value'|'both'} [options.worth] With cards to come, order hands by their
+   *   river worth (src/derived.js, `riverWorth`: the average over the river cards of what the
+   *   hand's equity is worth there) in place of the guide's marks: for calling, for value bets
+   *   and raises, or both. Default: off.
+   * @param {number} [options.worthBet] The river bet the worth is taken for, in pots. Default 0.75.
    * @param {number} [options.ehs2Depth] Default 2. With less behind the class order does better
    *   (9.9 against 11.7 at 1.5 pots; 18.7 against 16.9 at 4 pots, in position on the turn sets).
    * @param {'weakest'|'air'} [options.riverBluffs] 'weakest' (default): the hand with the least
@@ -73,8 +79,9 @@ export class NapkinSelector {
    * @param {number} [options.priorStrength] Weight, among the bluff-catcher marks, of equity
    *   against the range he started with. See WEIGHTS.priorStrength. 0 uses the guide's marks alone.
    */
-  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 0, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, turnBluffs = 'draws', turnCalls = 'classes', ehs2Depth = 2 } = {}) {
-    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, turnBluffs, turnCalls, ehs2Depth });
+  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 0, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, turnBluffs = 'draws', turnCalls = 'classes', ehs2Depth = 2, worth = null, worthBet = 0.75 } = {}) {
+    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, turnBluffs, turnCalls, ehs2Depth, worth, worthBet });
+    this.worths = new WeakMap();
     this.cache = new WeakMap();
   }
 
@@ -92,6 +99,7 @@ export class NapkinSelector {
   #valueBets(context, view, sized, qualifies) {
     const { hero, strength } = view;
     const thinChecks = context.position === 'oop' && context.street === 'river' && this.thinValue;
+    const worth = this.#worth(context, 'value');
     const scores = new Float64Array(NUM_COMBOS).fill(NaN);
     let checked = 0;
     for (let i = 0; i < NUM_COMBOS; i++) {
@@ -103,7 +111,7 @@ export class NapkinSelector {
       }
       // Flat value first (equity that holds against his strong hands), then value that does
       // not block the hands that call it
-      scores[i] = sized.flatness[i] - 0.1 * sized.blocksContinues[i];
+      scores[i] = worth ? worth[i] : sized.flatness[i] - 0.1 * sized.blocksContinues[i];
     }
     if (!thinChecks || !(this.trapShare > 0) || !(checked > 0)) return scores;
 
@@ -131,8 +139,9 @@ export class NapkinSelector {
     }
     // Turn and flop: the value hands are close to interchangeable; equity against his value
     // orders them a little
+    const worth = this.#worth(context, 'value');
     for (let i = 0; i < NUM_COMBOS; i++) {
-      if (hero[i] > 0 && qualifies(i)) scores[i] = finite(view.versusHisValue[i], strength[i]);
+      if (hero[i] > 0 && qualifies(i)) scores[i] = worth ? worth[i] : finite(view.versusHisValue[i], strength[i]);
     }
     return scores;
   }
@@ -257,6 +266,7 @@ export class NapkinSelector {
     const weights = NapkinSelector.WEIGHTS.catcher;
     const floor = context.floor(this.callFloor, context.potOdds);
     const rivers = context.street === 'turn' ? this.#riverSwings(context, view) : null;
+    const worth = this.#worth(context, 'call');
     const scores = new Float64Array(NUM_COMBOS).fill(NaN);
 
     for (let i = 0; i < NUM_COMBOS; i++) {
@@ -274,7 +284,11 @@ export class NapkinSelector {
       // Our roles when he bets: value beats half his value, a bluff-catcher beats half his
       // bluffs, the rest is weak. Value continues first on every street.
       let tier;
-      if (versusValue >= 0.5) {
+      if (worth) {
+        // One order for every hand: what its equity is worth over the river cards
+        tier = 2;
+        marks = worth[i];
+      } else if (versusValue >= 0.5) {
         tier = 5;
       } else if (context.street === 'river') {
         const catcher = Number.isNaN(view.versusHisBluffs[i]) || view.versusHisBluffs[i] >= 0.5;
@@ -294,6 +308,14 @@ export class NapkinSelector {
       scores[i] = 100 * tier + marks;
     }
     return scores;
+  }
+
+  /** The river worth of every hand, when the option asks for it for this role and cards are to come. */
+  #worth(context, role) {
+    if (context.street === 'river' || !(this.worth === role || this.worth === 'both')) return null;
+    let worth = this.worths.get(context);
+    if (!worth) this.worths.set(context, worth = riverWorth({ equity: context.calculator, board: context.board, hero: context.hero, villain: context.villain, bet: this.worthBet }));
+    return worth;
   }
 
   /**

@@ -116,3 +116,65 @@ function quantile({ hands, total }, q) {
 function shareBelowEquity(his, mine, e) {
   return Math.min(1, Math.max(0, e));
 }
+
+/**
+ * The von Neumann thresholds for two uniform ranges and a bet of `s` pots (Ferguson & Ferguson,
+ * theorem 2, with B = 2s): bluffs below `a`, value above `b`, calls above `c`.
+ */
+export function uniformThresholds(s) {
+  const B = 2 * s;
+  const d = (B + 1) * (B + 4);
+  return { a: B / d, b: (B * B + 4 * B + 2) / d, c: (B * (B + 3)) / d };
+}
+
+/**
+ * What a hand with river equity `e` is worth on the river, as a share of the pot, when it is
+ * the one who may bet `s` pots: the value of the von Neumann game for that hand.
+ *
+ *   worth(e) = max(a, e, e + 2 s (e - b))
+ *
+ * Below `a` it bluffs and is worth `a` whatever it holds; in the middle it checks and is worth
+ * its equity; above `b` it bets and every point of equity is worth 1 + 2s points. The function
+ * is convex: equity that arrives in lumps is worth more than the same equity spread evenly,
+ * which is why two turn hands of equal equity are not equal.
+ */
+export function riverWorthOf(e, s = 0.75, cuts = uniformThresholds(s)) {
+  return Math.max(cuts.a, e, e + 2 * s * (e - cuts.b));
+}
+
+/**
+ * A turn hand as one number: the average, over the river cards, of what its river equity is
+ * worth (`riverWorthOf`). Hands with the same distribution of river equities get the same
+ * number; so do some that differ, but unlike average equity it counts how the equity arrives.
+ * With no card to come it is `riverWorthOf` of the equity.
+ *
+ * @param {Object} input
+ * @param {import('./Equity.js').Equity} input.equity
+ * @param {number[]} input.board Card ids (3 to 5).
+ * @param {Float64Array} input.hero Weights per combo: the hands to measure.
+ * @param {Float64Array} input.villain
+ * @param {number} [input.bet] The river bet the worth is taken for, in pots.
+ * @returns {Float64Array} Per combo id; NaN outside hero's range.
+ */
+export function riverWorth({ equity, board, hero, villain, bet = 0.75 }) {
+  const cuts = uniformThresholds(bet);
+  const out = new Float64Array(NUM_COMBOS).fill(NaN);
+  if (board.length >= 5) {
+    const e = equity.against(board, villain, hero);
+    for (let i = 0; i < NUM_COMBOS; i++) if (hero[i] > 0 && !Number.isNaN(e[i])) out[i] = riverWorthOf(e[i], bet, cuts);
+    return out;
+  }
+  const sum = new Float64Array(NUM_COMBOS);
+  const count = new Float64Array(NUM_COMBOS);
+  const walk = (cards) => {
+    if (cards.length === 5) {
+      const e = equity.against(cards, villain, hero);
+      for (let i = 0; i < NUM_COMBOS; i++) if (hero[i] > 0 && !Number.isNaN(e[i])) { sum[i] += riverWorthOf(e[i], bet, cuts); count[i]++; }
+      return;
+    }
+    for (let card = cards.length === board.length ? 0 : cards[cards.length - 1] + 1; card < 52; card++) if (!cards.includes(card)) walk([...cards, card]);
+  };
+  walk(board);
+  for (let i = 0; i < NUM_COMBOS; i++) if (count[i]) out[i] = sum[i] / count[i];
+  return out;
+}

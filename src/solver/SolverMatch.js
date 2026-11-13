@@ -271,7 +271,12 @@ export class SolverMatch {
           // The solver's frequencies and its mixing, laid along the selector's order: the range is
           // cut into bands by that order and every hand of a band plays the band's average of the
           // solver's strategy. What the order cannot tell apart is all that is lost.
-          mine = alongOrder(solved, state.own, strategist.order(base), orderBands);
+          // As for groups: on a line he takes under 1% of the time the solver's play is kept
+          let his = 0;
+          for (const w of weights[1 - me]) his += w;
+          let all = 0;
+          for (const w of state.priors[1 - me]) all += w;
+          mine = his > 0.01 * all ? alongOrder(solved, state.own, strategist.order(base), orderBands) : solved;
           decisions.push({ history: [...state.history], flat: this.#flatten(me, mine) });
         } else {
         if (hands !== 'engine') {

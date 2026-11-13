@@ -1,0 +1,12 @@
+turns-tune    20 bands  equity                   oop  0.40 /  4.28 | ip  0.41 /  4.14 | both  0.41 /  4.21
+turns-tune    20 bands  the fitted selector      oop  0.34 /  3.87 | ip  0.29 /  4.93 | both  0.31 /  4.40
+turns-tune    20 bands  E[HS2]                   oop  0.25 /  4.20 | ip  0.35 /  4.72 | both  0.30 /  4.46
+turns-tune    20 bands  river worth, bet 0.33    oop  0.34 /  3.92 | ip  0.32 /  4.16 | both  0.33 /  4.04
+turns-tune    20 bands  river worth, bet 0.75    oop  0.28 /  3.98 | ip  0.32 /  4.25 | both  0.30 /  4.12
+turns-tune    20 bands  river worth, bet 1.5     oop  0.29 /  4.19 | ip  0.35 /  4.45 | both  0.32 /  4.32
+turns-tune    50 bands  equity                   oop  0.24 /  2.29 | ip  0.22 /  2.34 | both  0.23 /  2.32
+turns-tune    50 bands  the fitted selector      oop  0.21 /  2.23 | ip  0.17 /  2.71 | both  0.19 /  2.47
+turns-tune    50 bands  E[HS2]                   oop  0.13 /  2.19 | ip  0.21 /  2.39 | both  0.17 /  2.29
+turns-tune    50 bands  river worth, bet 0.33    oop  0.18 /  2.05 | ip  0.19 /  2.29 | both  0.19 /  2.17
+turns-tune    50 bands  river worth, bet 0.75    oop  0.16 /  2.24 | ip  0.20 /  2.37 | both  0.18 /  2.31
+turns-tune    50 bands  river worth, bet 1.5     oop  0.17 /  2.37 | ip  0.21 /  2.53 | both  0.19 /  2.45

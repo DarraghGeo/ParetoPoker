@@ -4,7 +4,7 @@ export { EquitySelector, SelectionContext } from './HandSelector.js';
 export { NapkinSelector } from './NapkinSelector.js';
 export { Mixer, PureMixer, KindMixer, TURN_KINDS, TURN_FACING_KINDS } from './Mixer.js';
 export { Tuner, NoTuner, fittedTuner, derivedTuner, sizeNear, FITTED } from './Tuner.js';
-export { riverThresholds, riverFold } from './derived.js';
+export { riverThresholds, riverFold, riverWorth, riverWorthOf, uniformThresholds } from './derived.js';
 export { presets, valueChecks, fittedMixer } from './presets.js';
 export { classifyHands, PAIR, DRAW } from './handClass.js';
 export { handFeatures } from './handFeatures.js';
