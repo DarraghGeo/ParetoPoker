@@ -6,12 +6,12 @@
 //   freq given    the solver's frequencies, the selector's hands: hand order and mixing
 //   order given   the solver's frequencies and its order of hands, dealt all-or-nothing: mixing alone
 //   hands given   the engine's frequencies with the solver's hands and mixing: frequencies alone
-//   node bin/locate.js [--set rivers-tune] [--parts napkin] [--out file.json]
+//   node bin/locate.js [--set rivers-tune] [--parts napkin|fitted|equity] [--only engine,"freq given"] [--out file.json]
 import { writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { SELECTORS, SETS, measure } from './compare.js';
 
-const { values: args } = parseArgs({ options: { set: { type: 'string', default: 'rivers-tune' }, parts: { type: 'string', default: 'napkin' }, out: { type: 'string' } } });
+const { values: args } = parseArgs({ options: { set: { type: 'string', default: 'rivers-tune' }, parts: { type: 'string', default: 'napkin' }, out: { type: 'string' }, only: { type: 'string' } } });
 const spots = SETS[args.set];
 const streets = [...new Set((Array.isArray(spots) ? spots.map((s) => s.board) : spots.boards.split(',')).map((b) => b.length / 2))].flatMap((n) => (n === 5 ? ['river'] : n === 4 ? ['turn', 'river'] : ['flop', 'turn', 'river']));
 const SITUATIONS = {
@@ -19,12 +19,13 @@ const SITUATIONS = {
   'facing a bet': (d) => d.facing && d.raises === 0,
   'facing a raise': (d) => d.facing && d.raises > 0,
 };
-const VARIANTS = {
+const ALL_VARIANTS = {
   engine: { ranges: 'solver' },
   'freq given': { ranges: 'solver', frequencies: 'solver' },
   'order given': { ranges: 'solver', frequencies: 'solver', hands: 'solver' },
   'hands given': { ranges: 'solver', hands: 'solver-mixed' },
 };
+const VARIANTS = args.only ? Object.fromEntries(args.only.split(',').map((v) => [v, ALL_VARIANTS[v]])) : ALL_VARIANTS;
 
 console.log(`${args.set}, ${args.parts}: loss to the best response as a share of the pot when the engine decides at one kind of decision only`);
 console.log(`  ${'decision'.padEnd(44)} ${Object.keys(VARIANTS).map((v) => v.padStart(13)).join('')}     (out of position / in position)`);

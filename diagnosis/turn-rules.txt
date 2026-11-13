@@ -1,0 +1,8 @@
+turns-tune   turn:raise fitted                                       oop  0.22 /  6.52 | ip  0.27 /  7.27 | both  0.24 /  6.90  (72s)
+turns-tune   turn:raise vs turn raise 1.1                            oop  0.09 /  4.41 | ip  0.15 /  4.93 | both  0.12 /  4.67  (70s)
+turns-tune   turn:raise vs turn raise 1.2                            oop  0.05 /  3.73 | ip  0.09 /  3.79 | both  0.07 /  3.76  (69s)
+turns-tune   turn:raise vs turn raise 1.35                           oop  0.04 /  3.53 | ip  0.07 /  3.18 | both  0.05 /  3.36  (67s)
+turns-tune   turn:bet   turn bet defence 0.9 / 1.0                   oop  0.12 /  5.49 | ip  0.59 / 17.85 | both  0.35 / 11.67  (69s)
+turns-tune   turn:bet   turn bet defence 1.0 / 1.1                   oop  0.16 /  5.75 | ip  0.52 / 17.29 | both  0.34 / 11.52  (72s)
+turns-tune   turn:bet   turn raise share 0.23 / 0.15                 oop  0.18 /  5.77 | ip  0.53 / 15.22 | both  0.35 / 10.50  (72s)
+turns-tune   turn:bet   turn raise share 0.1 / 0.1                   oop  0.16 /  4.55 | ip  0.46 / 14.18 | both  0.31 /  9.36  (65s)

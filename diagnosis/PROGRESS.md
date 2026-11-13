@@ -105,3 +105,19 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   trees as they stand; no single rule is the cause.
   Running: diagnosis/turn-rules.txt (turn defence vs raise, turn defence, turn raise share).
   Next: a mixer cap on raising in position facing a turn bet; then turn opens.
+- 07:55 **Turns: fitted and validated.** Added to `presets.fitted()` / `fittedTuner` / `fittedMixer`:
+  - tuner: continue at 1.25 x MDF facing a turn raise (located: 6.9 -> 3.8);
+  - mixer: facing a turn bet a value hand raises 25% of the time (located, in position: 17.9 ->
+    13.2; never raising 12.7); out of position turn value bets 45%; in position on the turn the
+    strongest value (85%+) always bets and thinner value 55%;
+  - selector: in position facing a turn bet, calls ordered by E[HS^2] + equity against his value
+    when at least 2 pots are behind, by class otherwise. `diagnosis/bygroup.mjs`: by class 9.9
+    against 11.7 at 1.5 pots behind, 18.7 against 16.9 at 4 pots; and by board the E[HS^2] order
+    wins on the draw-heavy board (16.2 against 21.2) and loses on the two dry ones.
+  Whole engine, napkin -> fitted: turns-tune 14.88 -> 11.98; turns-held 12.70 -> 9.88;
+  T4 11.70 -> 9.09; T4-B 19.37 -> 13.54.
+  Tried on turns and not adopted: oop bet frequency from the spot formula (lower loss to the
+  equilibrium, 2.16 -> 1.90, but 0.2 more to the best response); turn bet sizes 0.75 / 0.5 pots
+  (worse); turn defence factors facing a bet (no effect).
+  Next: re-locate turns with the fitted parts (diagnosis/locate-turns-fitted.txt), flop check,
+  then write-up (TUNINGS.md, README).

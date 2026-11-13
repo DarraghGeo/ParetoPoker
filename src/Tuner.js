@@ -174,8 +174,8 @@ export function fittedTuner(params = {}) {
 export const FITTED = {
   /** continue = MDF x (base + slope x range advantage), kept within [low, high]. */
   defence: { river: { oop: [0.95, 0, 0, 1.1], ip: [0.95, 0, 0, 1.1] } },
-  /** continue = MDF x this, facing a raise. */
-  defenceVsRaise: null,
+  /** continue = MDF x this, facing a raise. On the turn the solver continues at about 1.2. */
+  defenceVsRaise: { turn: { oop: 1.25, ip: 1.25 } },
   /** The same for the opponent's answer to hero's bet, by the opponent's seat. */
   hisDefence: { river: { oop: [1, 0, 0, 1.1], ip: [1, 0, 0, 1.1] } },
   /** raises = continue x (base + a x hero's polarization + b x stack-to-pot), within [low, high]. */

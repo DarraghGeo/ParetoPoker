@@ -70,4 +70,8 @@ test('presets bundle a selector, a mixer and a tuner', () => {
   const turn = cards.parseCards('Td9d6h2c');
   const node = { position: 'oop', spot: { street: 'turn', pot: 100, stack: 400 }, board: turn, hero: Range.from('TT,99,AKs').without(turn).weights, villain: Range.from('QQ-JJ,AQs').without(turn).weights, actions: [{ type: 'check' }, { type: 'bet', to: 75 }] };
   near(new RangeStrategist({ engine: new ParetoEngine(), ...napkin }).decide(node).strategy[0][cards.parseCombo('TsTh')], 0.4);
+  // The fitted preset has a tuner and a mixer of its own
+  const fitted = presets.fitted();
+  assert.ok(fitted.tuner.rules.length > 1 && fitted.mixer.rules.length > 1);
+  near(new RangeStrategist(fitted).decide(node).strategy[0][cards.parseCombo('TsTh')], 0.55);
 });

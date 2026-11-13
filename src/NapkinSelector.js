@@ -49,7 +49,10 @@ export class NapkinSelector {
    *   the engine's model of it).
    * @param {'classes'|'ehs2'|'ehs2-ip'} [options.turnCalls] 'classes' (default): the guide's class
    *   order. 'ehs2': E[HS^2] plus equity against his value, which matches the solver's turn calls
-   *   best (0.99) but lost more when exploited out of position; 'ehs2-ip' uses it in position only.
+   *   best (0.99) but lost more when exploited out of position; 'ehs2-ip' uses it in position only,
+   *   and only when the stack behind is at least `ehs2Depth` pots.
+   * @param {number} [options.ehs2Depth] Default 2. With less behind the class order does better
+   *   (9.9 against 11.7 at 1.5 pots; 18.7 against 16.9 at 4 pots, in position on the turn sets).
    * @param {'weakest'|'air'} [options.riverBluffs] 'weakest' (default): the hand with the least
    *   equity bluffs first, and blockers choose among twins. 'air': the guide's order, air with
    *   blockers to his calls first. Measured on rivers, 'weakest' follows the solver's bluffs better.
@@ -70,8 +73,8 @@ export class NapkinSelector {
    * @param {number} [options.priorStrength] Weight, among the bluff-catcher marks, of equity
    *   against the range he started with. See WEIGHTS.priorStrength. 0 uses the guide's marks alone.
    */
-  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 0, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, turnBluffs = 'draws', turnCalls = 'classes' } = {}) {
-    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, turnBluffs, turnCalls });
+  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 0, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, turnBluffs = 'draws', turnCalls = 'classes', ehs2Depth = 2 } = {}) {
+    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, turnBluffs, turnCalls, ehs2Depth });
     this.cache = new WeakMap();
   }
 
@@ -278,7 +281,7 @@ export class NapkinSelector {
         // Weak hands beat neither. Without a tuner they never call; with one they come last
         if (!catcher && !context.tuning) continue;
         tier = catcher ? 2 : 1;
-      } else if (context.street === 'turn' && (this.turnCalls === 'ehs2' || (this.turnCalls === 'ehs2-ip' && context.position === 'ip'))) {
+      } else if (context.street === 'turn' && (this.turnCalls === 'ehs2' || (this.turnCalls === 'ehs2-ip' && context.position === 'ip' && context.profile.spr >= this.ehs2Depth))) {
         // Measured on the turn: the hands the solver must call have the highest E[HS^2] (they
         // end up strong often, whatever they are now) and the most equity against his value
         tier = 2;
