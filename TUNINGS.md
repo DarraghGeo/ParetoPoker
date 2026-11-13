@@ -161,7 +161,26 @@ for river opens under the tuner, and the mixer's curves replace the flat value-c
 | River opens from a table over rank (the solver's curve, 13 bands) | rivers-tune 4.13 against 3.72 for the order with caps; with the level from the spot formula 4.68. |
 | Facing a turn bet from a kind table (`TURN_FACING_KINDS`) | Located: in position 9.4 -> 21.7, out of position 4.3 -> 12.5. Hands of a kind are not interchangeable when calling. |
 | The turn bet level from the solver's spot formula | Located 8.84 against 8.59 with the engine's own level. |
+| Finer kind tables in which each kind's frequency is a line in the bet level (5, 10, 20 bands) | They explain more of the solver (0.58-0.64 against 0.52) and lose more: turns-tune 10.46, 10.86, 10.85 against 10.01. |
+| Range-betting the turn out of position where the spot formula says the solver bets 70%+ | In the 3-bet pot the solver bets 73-100% and the engine 10-38%. Located it helps there (20.2 -> 14.8). Whole engine the seat itself gains (9.56 -> 9.11) but the other seat, which models its opponent as the engine, loses more: turns-tune 10.01 -> 10.11, turns-held 8.87 -> 9.36, turns-held2 9.87 -> 10.44. |
+| River: smaller or split raise sizes, a cap on value raises, other defence factors when deep, deeper value thresholds | All within 0.1 of 3.72 or worse: rivers are on a plateau for this design. |
 | In position river value threshold of 0.7 or 0.8 inside turn trees | Located they are far better (18.1 at 0.6, 14.0 at 0.7, 10.9 at 0.8); whole engine 0.6 is best (11.98, 12.09, 12.43). |
+
+### Where the fitted engine still loses
+
+`diagnosis/where.mjs` and `diagnosis/worst.mjs`, with `presets.fitted()`:
+
+- **Depth.** The loss rises with the stack-to-pot ratio on every street and in both seats:
+  rivers 2.0-2.7 at 0.75 pots behind, 3.6-4.1 at 2, 4.9-5.1 at 5; turns 7.4-8.1 at 1.5 pots,
+  11.8-12.3 at 4. Located on rivers at 5 pots: opening 9.1 / 9.4, in position facing a bet 9.8.
+- **The 3-bet pot (pair C)** is the worst pair everywhere: rivers 4.8 / 6.4, turns 13.3 / 14.0.
+  Out of position on the turn the solver bets its whole range there and the engine does not
+  (located 20.2 against 5.6-8.8 for the other pairs).
+- **The draw-heavy turn board** `JsTs4h8d` holds five of the six worst turn spots.
+- **In position**, the river loss rises with how polarized hero's range is (correlation 0.57).
+- Located, the largest remaining pieces on turn trees are the in-position river decision after
+  a check (27.4 at 4 pots behind) and turn opens (13.1 / 9.5 at 4 pots). The first does not
+  respond to anything tried in the whole engine.
 
 ### What the run says about method
 

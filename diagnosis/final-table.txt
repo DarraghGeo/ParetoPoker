@@ -30,3 +30,4 @@ flop         engine     napkin                                       oop  6.39 /
 flop         engine     fitted                                       oop  5.33 / 12.96 | ip  3.19 /  7.76 | both  4.26 / 10.36  (78s)
 flops-check  engine     equity                                       oop  4.32 / 18.97 | ip  2.95 / 27.28 | both  3.64 / 23.13  (60s)
 flops-check  engine     napkin                                       oop  4.43 / 16.70 | ip  3.49 / 15.56 | both  3.96 / 16.13  (130s)
+flops-check  engine     fitted                                       oop  4.32 / 12.37 | ip  2.14 /  8.81 | both  3.23 / 10.59  (157s)

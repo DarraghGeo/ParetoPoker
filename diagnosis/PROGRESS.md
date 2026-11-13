@@ -180,3 +180,16 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   (diagnosis/kinds-fit.py -> turn-kinds-{6,10,20}.json; they explain 0.58-0.64 of the per-hand
   variation out of position against 0.52 for the adopted table). 42 tests pass.
   Next: test those tables (diagnosis/v32.mjs), located then whole engine.
+- 07:10 Finer kind tables, each kind a line in the bet level: worse on the whole engine even on
+  the tuning set (turns-tune 10.46 with 5 bands, 10.86 with 10, 10.85 with 20, against 10.01
+  for the adopted table). They fit the solver better and lose more: the engine's bet level is
+  not the solver's, so a line in the level does not carry over. Not adopted.
+- 07:30 **Where the fitted engine still loses** (diagnosis/where.mjs, worst.mjs): depth (rivers
+  2.0 -> 4.9 from 0.75 to 5 pots behind; turns 7.4 -> 11.8), the 3-bet pot, the draw-heavy turn
+  board. In the 3-bet pot the solver range-bets the turn out of position (73-100%) and the
+  engine bets 10-38%. A range-bet rule keyed on the spot formula fixes that seat (located 20.2
+  -> 14.8; whole engine 9.56 -> 9.11) but the other seat, which models its opponent as the
+  engine, loses more (tune 10.01 -> 10.11, held 8.87 -> 9.36, held2 9.87 -> 10.44). Not adopted.
+  Rivers: raise sizes, raise caps, deep-stack thresholds, sizes and bluff scales all tried
+  (diagnosis/v33-v35.mjs): nothing beats 3.72. Rivers are on a plateau for this design.
+  README and TUNINGS updated with the results, the mixing diagnosis and what was dropped.

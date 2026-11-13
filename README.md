@@ -117,7 +117,7 @@ rules fitted during the diagnosis run.
 
 ### Mixing
 
-A mixer's `mix(context, role, wager)` returns the most each hand may take a role (`'value'`,
+Two ways to mix. With caps, a mixer's `mix(context, role, wager)` returns the most each hand may take a role (`'value'`,
 `'call'` or `'bluff'`): one number for every hand, one per combo, or nothing for pure. The rest
 of the time the hand does something else, and the frequency is made up from further down the
 selector's order.
@@ -132,6 +132,21 @@ new Mixer([{
   share: (c) => c.strength.map((equity) => (equity >= 0.9 ? 0.5 : 0.75)),
 }]);
 ```
+
+Or outright: a mixer's `direct(context, frequencies)` returns how often each hand bets at this
+decision. `KindMixer` does this from a table over kinds of hand: how strong the hand is right
+now, as a rank within the range, and what it is drawing to. Every hand of a kind bets equally
+often, relative to how often the engine says the range bets.
+
+```js
+import { KindMixer, TURN_KINDS } from './src/index.js';
+
+new KindMixer({ tables: TURN_KINDS });   // the solver's turn opening play by kind, both seats
+```
+
+At turn opens, mixing hands evenly within 20 bands of strength now crossed with the draw costs
+1.9% of the pot against the solver's own strategy; within 20 bands of equity, 4.4%; over the
+whole range, 18.1%. That is what makes these the kinds (`bin/diagnose.js`, step 3).
 
 ## Choosing hands
 
@@ -412,17 +427,19 @@ Bet sizes use postflop-solver's syntax (`60%`, `2.5x`, `100c`, `e` geometric, `a
 In the textbook nuts-or-air game (AA and QQ against KK, one pot-sized bet) the engine matches
 the solver in both seats: zero loss against equilibrium and zero when exploited. That is a test.
 
-With real ranges, default settings, bets of 33%, 75% and 150% pot and 2.5x raises:
+With real ranges, loss to the solver's best response as a share of the pot, both seats
+averaged (loss to its equilibrium play in brackets):
 
-| Spot | Loss vs solver's GTO | Loss when fully exploited |
-|---|---|---|
-| River `Td9d6hQc7s`, stack 2x pot | 0.5% (IP), 2.4% (OOP) of the pot | 7.1%, 5.9% |
-| Turn `Td9d6hQc`, bets 50%/100%, stack 3x pot | 2.3%, 3.2% | 21.3%, 19.6% |
-| Average of 4 rivers and 2 turns, both seats, stack 2.5x pot | about 2% | about 17% |
+| Spots | `presets.equity()` | `presets.napkin()` | `presets.fitted()` |
+|---|---|---|---|
+| 72 rivers used for tuning (four range pairs, three depths) | 9.0% (1.1%) | 4.6% (0.7%) | 3.7% (0.7%) |
+| 48 rivers held out | 9.2% (1.2%) | 4.5% (0.7%) | 3.8% (0.7%) |
+| 16 turns used for tuning | 29.2% (3.6%) | 14.9% (2.7%) | 10.0% (2.2%) |
+| 16 turns held out, boards never used | 29.4% (3.3%) | 13.7% (2.2%) | 9.9% (2.1%) |
+| 3 small flop trees, checked but not fitted | 23.1% (3.6%) | 16.1% (4.0%) | 10.6% (3.2%) |
 
-The gap is hand selection, as intended: the frequencies hold, but a best-responding solver
-finds the hands the engine puts in the wrong bucket (it traps the engine's thin value bets
-and folds exactly the hands the engine's bluffs beat).
+The loss grows with stack depth and is largest in 3-bet pots. `TUNINGS.md` has every set, what
+was adopted and what was tried and dropped.
 
 ### Limits
 
