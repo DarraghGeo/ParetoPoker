@@ -1,3 +1,6 @@
+import { sumOf } from './HandSelector.js';
+import { riverFold, riverThresholds } from './derived.js';
+
 /**
  * Tuning: values that adjust the engine's frequencies for the spot and the configuration.
  *
@@ -192,3 +195,57 @@ export const FITTED = {
   size: null,
   bet: null,
 };
+
+/**
+ * River tuning derived from the two ranges (src/derived.js): no numbers fitted to a solver.
+ *
+ * - Facing a first bet: hero folds (s + v)/(1 + s) in place of s/(1 + s), where v is what the
+ *   bettor's bluff is worth when it checks. With `fold: 'prior'` v comes from the von Neumann
+ *   thresholds on the bettor's range before the bet (`context.villainPrior`, right when the
+ *   street began at the root of the tree); with `fold: 'range'` from the betting range alone.
+ * - First to act: the range bets as often as the von Neumann thresholds say, with the thinnest
+ *   value bet raised for the bluff raises he can make. `raiseMultiple` is the raise he is taken
+ *   to have (his whole wager as a multiple of the bet, capped by the stack): a fact about the
+ *   game, like the bet sizes.
+ *
+ * `size` (pots) picks one bet size as `sizeNear` does; the size itself is not derived.
+ * `rules` are applied first (for example a fitted tuner's), and these override them.
+ */
+export function derivedTuner({ rules = [], defence = true, frequency = true, fold = 'range', raiseMultiple = 2.5, size = 0.75 } = {}) {
+  const river = (context) => context.street === 'river';
+  const stackPots = (context, pot) => ((context.spot.stack ?? Infinity) + (context.spot.invested ?? 0)) / pot;
+  const derived = [];
+  if (defence) {
+    derived.push({
+      when: (context) => river(context) && context.facing && (context.spot.raises ?? 0) === 0,
+      set: (context) => {
+        const pot = context.spot.pot - context.spot.toCall; // before his bet
+        const s = context.spot.toCall / pot;
+        // What his checked bluff reaches showdown with: everything in position, out of position only when hero checks behind
+        const before = sumOf(context.villainPrior ?? []) > 1e-9 ? context.villainPrior : context.villain;
+        const mine = () => riverThresholds({ hero: context.hero, strength: context.equityAgainst(before), villain: before, villainStrength: context.calculator.against(context.board, context.hero, before), bet: s, raiseTo: Math.min(raiseMultiple * s, stackPots(context, pot)) }).frequency;
+        const behind = context.position === 'ip' ? 1 - mine() : 1;
+        let folds;
+        if (fold === 'prior') {
+          const his = riverThresholds({ hero: before, strength: context.calculator.against(context.board, context.hero, before), villain: context.hero, villainStrength: context.equityAgainst(before), bet: s, raiseTo: Math.min(raiseMultiple * s, stackPots(context, pot)) });
+          folds = Math.min(1, (s + his.bluff * behind) / (1 + s));
+        } else folds = riverFold(context.villain, context.villainStrength, s, behind);
+        return { defence: (1 - folds) * (1 + s) };
+      },
+    });
+  }
+  if (frequency) {
+    derived.push({
+      when: (context) => river(context) && !context.facing,
+      set: (context) => {
+        const pot = context.spot.pot;
+        const sizes = context.actions.filter((a) => a.to != null).map((a) => (a.to - (context.spot.invested ?? 0)) / pot);
+        if (!sizes.length) return null;
+        const s = sizes.reduce((best, x) => (Math.abs(x - size) < Math.abs(best - size) - 1e-9 ? x : best), sizes[0]);
+        const cuts = riverThresholds({ hero: context.hero, strength: context.strength, villain: context.villain, villainStrength: context.villainStrength, bet: s, raiseTo: Math.min(raiseMultiple * s, stackPots(context, pot)) });
+        return { sizing: sizeNear(size), frequency: cuts.frequency };
+      },
+    });
+  }
+  return new Tuner([...rules, ...derived]);
+}

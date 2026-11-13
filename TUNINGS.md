@@ -183,6 +183,45 @@ Full report in `diagnosis/HAND-SELECTION-DIAGNOSIS.md`. Nothing adopted; what it
   must still be mixed (pure loses about 8% on both streets).
 - The spot moves thresholds and levels, not the ranking of hands.
 
+### Derived river formulas in place of fitted numbers
+
+`src/derived.js` (`riverThresholds`, `riverFold`) and `derivedTuner` in `src/Tuner.js`. Not in
+any preset yet. Predictions against the solver in `diagnosis/derived-formulas.txt` (v58), the
+engine's loss with them in `diagnosis/derived-tuner.txt` (v59).
+
+The formulas, for a bet of s pots, hands measured by equity against the other range, F the
+bettor's equity distribution:
+
+- bluffs to value: F(a) = s/(1+s) x (1 - F(b))
+- he folds c = (s + v)/(1+s), with v what the best bluff is worth checked: a in position,
+  a x (how often the other player checks behind) out of position
+- thinnest value bet: b = (1 + c)/2 + (1+s)/(2s) x his bluff raises; his bluff raises are his
+  value raises x price/(1 - price), price = (r - s)/(1 + 2r) for a raise to r pots, and his value
+  raises are his hands that beat half of what the bettor calls a raise with
+
+| predicted against the solver, 24 spots x 15 trees | plain formula | derived |
+|---|---|---|
+| fold to an in-position bet: mean distance | 0.05-0.09 | 0.014-0.025 (r 0.92-0.99) |
+| fold to an out-of-position bet | 0.03-0.06 | 0.017-0.034 (r 0.65-0.88) |
+| in position bets, raises allowed | 0.06-0.12 (von Neumann) | 0.06-0.09 |
+| out of position bets, raises allowed | 0.10-0.20 (von Neumann) | 0.08-0.17 |
+
+| engine loss to the best response, % of pot | rivers-tune | rivers-held | rivers-alt |
+|---|---|---|---|
+| no tuning | 4.80 | 4.58 | 5.22 |
+| fitted tuner | 3.53 | 3.70 | 4.07 |
+| derived defence only (range before the bet) | 4.02 | 3.79 | 4.36 |
+| derived defence only (from the betting range) | 4.42 | 4.47 | 5.06 |
+| derived bet frequency only | 5.67 | | |
+| fitted, with the derived defence in place of its own | **3.31** | **3.23** | **3.72** |
+
+- The defence formula is Derived and works: on its own it recovers most of what the whole
+  fitted tuner gains, and in place of the fitted defence numbers it beats them on all three sets.
+- The bet-frequency formula predicts the solver better with the raise term than without, but
+  still bets too often (about 0.05 in position, 0.10 out of position), and in the engine it
+  loses (5.67 against 4.80 untuned). Not usable yet: out of position it has no checking range
+  to protect, and our hands and mixing are not the solver's.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,

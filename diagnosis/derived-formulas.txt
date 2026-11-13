@@ -1,0 +1,75 @@
+bet  33% no raise              
+    ip  bets 0.680 | von Neumann 0.731 (off 0.059, r -0.44) | with raises 0.731 (off 0.059, r -0.44)
+        is folded to 0.335 | s/(1+s) 0.248 (off 0.088) | from the betting range 0.287 (off 0.050, r 0.92) | from the thresholds 0.314 (off 0.023, r 0.99)
+    oop bets 0.561 | von Neumann 0.478 (off 0.134, r 0.54) | with raises 0.478 (off 0.134, r 0.54)
+        is folded to 0.311 | s/(1+s) 0.248 (off 0.063) | from the betting range 0.285 (off 0.042, r 0.47) | from the thresholds 0.304 (off 0.034, r 0.65)
+bet  33% raise 2.5x, 2 pots    
+    ip  bets 0.543 | von Neumann 0.650 (off 0.115, r -0.53) | with raises 0.624 (off 0.090, r -0.64)
+        is folded to 0.319 | s/(1+s) 0.248 (off 0.071) | from the betting range 0.278 (off 0.042, r 0.89) | from the thresholds 0.300 (off 0.020, r 0.97)
+    oop bets 0.408 | von Neumann 0.478 (off 0.103, r 0.88) | with raises 0.431 (off 0.082, r 0.88)
+        is folded to 0.298 | s/(1+s) 0.248 (off 0.050) | from the betting range 0.281 (off 0.024, r 0.69) | from the thresholds 0.298 (off 0.022, r 0.65)
+bet  33% raise 2.5x, 5 pots    
+    ip  bets 0.535 | von Neumann 0.635 (off 0.108, r -0.27) | with raises 0.602 (off 0.071, r -0.28)
+        is folded to 0.320 | s/(1+s) 0.248 (off 0.072) | from the betting range 0.278 (off 0.042, r 0.89) | from the thresholds 0.300 (off 0.023, r 0.97)
+    oop bets 0.406 | von Neumann 0.478 (off 0.103, r 0.88) | with raises 0.431 (off 0.085, r 0.87)
+        is folded to 0.299 | s/(1+s) 0.248 (off 0.051) | from the betting range 0.279 (off 0.025, r 0.59) | from the thresholds 0.298 (off 0.021, r 0.67)
+bet  33% raise all-in, 2 pots  
+    ip  bets 0.476 | von Neumann 0.556 (off 0.087, r 0.21) | with raises 0.504 (off 0.057, r 0.04)
+        is folded to 0.317 | s/(1+s) 0.248 (off 0.070) | from the betting range 0.276 (off 0.042, r 0.86) | from the thresholds 0.296 (off 0.022, r 0.98)
+    oop bets 0.328 | von Neumann 0.478 (off 0.156, r 0.91) | with raises 0.391 (off 0.114, r 0.79)
+        is folded to 0.287 | s/(1+s) 0.248 (off 0.045) | from the betting range 0.293 (off 0.030, r -0.23) | from the thresholds 0.296 (off 0.018, r 0.76)
+bet  33% raise all-in, 5 pots  
+    ip  bets 0.496 | von Neumann 0.550 (off 0.064, r 0.75) | with raises 0.496 (off 0.057, r 0.72)
+        is folded to 0.318 | s/(1+s) 0.248 (off 0.070) | from the betting range 0.277 (off 0.041, r 0.89) | from the thresholds 0.299 (off 0.022, r 0.97)
+    oop bets 0.331 | von Neumann 0.478 (off 0.152, r 0.77) | with raises 0.405 (off 0.093, r 0.88)
+        is folded to 0.287 | s/(1+s) 0.248 (off 0.038) | from the betting range 0.279 (off 0.019, r 0.57) | from the thresholds 0.299 (off 0.017, r 0.84)
+bet  75% no raise              
+    ip  bets 0.525 | von Neumann 0.544 (off 0.040, r 0.68) | with raises 0.544 (off 0.040, r 0.68)
+        is folded to 0.505 | s/(1+s) 0.429 (off 0.077) | from the betting range 0.459 (off 0.047, r 0.82) | from the thresholds 0.480 (off 0.025, r 0.95)
+    oop bets 0.358 | von Neumann 0.418 (off 0.092, r 0.86) | with raises 0.418 (off 0.092, r 0.86)
+        is folded to 0.473 | s/(1+s) 0.429 (off 0.047) | from the betting range 0.462 (off 0.025, r 0.60) | from the thresholds 0.493 (off 0.021, r 0.88)
+bet  75% raise 2.5x, 2 pots    
+    ip  bets 0.430 | von Neumann 0.518 (off 0.088, r 0.13) | with raises 0.492 (off 0.062, r 0.10)
+        is folded to 0.499 | s/(1+s) 0.429 (off 0.070) | from the betting range 0.456 (off 0.042, r 0.87) | from the thresholds 0.482 (off 0.018, r 0.96)
+    oop bets 0.261 | von Neumann 0.418 (off 0.165, r 0.84) | with raises 0.381 (off 0.137, r 0.87)
+        is folded to 0.469 | s/(1+s) 0.429 (off 0.043) | from the betting range 0.459 (off 0.019, r 0.71) | from the thresholds 0.486 (off 0.022, r 0.80)
+bet  75% raise 2.5x, 5 pots    
+    ip  bets 0.444 | von Neumann 0.526 (off 0.083, r 0.22) | with raises 0.501 (off 0.061, r 0.18)
+        is folded to 0.499 | s/(1+s) 0.429 (off 0.071) | from the betting range 0.457 (off 0.043, r 0.87) | from the thresholds 0.481 (off 0.019, r 0.97)
+    oop bets 0.272 | von Neumann 0.418 (off 0.152, r 0.86) | with raises 0.381 (off 0.126, r 0.89)
+        is folded to 0.466 | s/(1+s) 0.429 (off 0.043) | from the betting range 0.464 (off 0.024, r 0.14) | from the thresholds 0.486 (off 0.024, r 0.77)
+bet  75% raise all-in, 2 pots  
+    ip  bets 0.427 | von Neumann 0.514 (off 0.087, r 0.18) | with raises 0.492 (off 0.066, r 0.05)
+        is folded to 0.498 | s/(1+s) 0.429 (off 0.070) | from the betting range 0.457 (off 0.042, r 0.88) | from the thresholds 0.482 (off 0.018, r 0.96)
+    oop bets 0.258 | von Neumann 0.418 (off 0.165, r 0.84) | with raises 0.392 (off 0.141, r 0.91)
+        is folded to 0.466 | s/(1+s) 0.429 (off 0.043) | from the betting range 0.459 (off 0.022, r 0.55) | from the thresholds 0.485 (off 0.024, r 0.78)
+bet  75% raise all-in, 5 pots  
+    ip  bets 0.408 | von Neumann 0.490 (off 0.086, r 0.69) | with raises 0.452 (off 0.063, r 0.58)
+        is folded to 0.496 | s/(1+s) 0.429 (off 0.068) | from the betting range 0.456 (off 0.040, r 0.87) | from the thresholds 0.479 (off 0.019, r 0.97)
+    oop bets 0.238 | von Neumann 0.418 (off 0.180, r 0.88) | with raises 0.376 (off 0.144, r 0.90)
+        is folded to 0.466 | s/(1+s) 0.429 (off 0.039) | from the betting range 0.456 (off 0.017, r 0.75) | from the thresholds 0.484 (off 0.020, r 0.83)
+bet 150% no raise              
+    ip  bets 0.368 | von Neumann 0.430 (off 0.065, r 0.36) | with raises 0.430 (off 0.065, r 0.36)
+        is folded to 0.656 | s/(1+s) 0.600 (off 0.056) | from the betting range 0.622 (off 0.035, r 0.85) | from the thresholds 0.641 (off 0.016, r 0.94)
+    oop bets 0.203 | von Neumann 0.348 (off 0.160, r 0.83) | with raises 0.348 (off 0.160, r 0.83)
+        is folded to 0.627 | s/(1+s) 0.600 (off 0.032) | from the betting range 0.622 (off 0.018, r 0.61) | from the thresholds 0.647 (off 0.023, r 0.77)
+bet 150% raise 2.5x, 2 pots    
+    ip  bets 0.346 | von Neumann 0.408 (off 0.064, r 0.33) | with raises 0.398 (off 0.057, r 0.36)
+        is folded to 0.653 | s/(1+s) 0.600 (off 0.053) | from the betting range 0.620 (off 0.033, r 0.85) | from the thresholds 0.640 (off 0.015, r 0.95)
+    oop bets 0.176 | von Neumann 0.348 (off 0.180, r 0.82) | with raises 0.341 (off 0.170, r 0.83)
+        is folded to 0.624 | s/(1+s) 0.600 (off 0.027) | from the betting range 0.621 (off 0.014, r 0.67) | from the thresholds 0.645 (off 0.022, r 0.79)
+bet 150% raise 2.5x, 5 pots    
+    ip  bets 0.310 | von Neumann 0.397 (off 0.088, r 0.52) | with raises 0.374 (off 0.071, r 0.59)
+        is folded to 0.651 | s/(1+s) 0.600 (off 0.051) | from the betting range 0.622 (off 0.030, r 0.87) | from the thresholds 0.641 (off 0.014, r 0.93)
+    oop bets 0.155 | von Neumann 0.348 (off 0.199, r 0.84) | with raises 0.310 (off 0.161, r 0.84)
+        is folded to 0.625 | s/(1+s) 0.600 (off 0.026) | from the betting range 0.620 (off 0.014, r 0.64) | from the thresholds 0.643 (off 0.020, r 0.84)
+bet 150% raise all-in, 2 pots  
+    ip  bets 0.346 | von Neumann 0.408 (off 0.064, r 0.33) | with raises 0.398 (off 0.057, r 0.36)
+        is folded to 0.653 | s/(1+s) 0.600 (off 0.053) | from the betting range 0.620 (off 0.033, r 0.85) | from the thresholds 0.640 (off 0.015, r 0.95)
+    oop bets 0.176 | von Neumann 0.348 (off 0.180, r 0.82) | with raises 0.341 (off 0.170, r 0.83)
+        is folded to 0.624 | s/(1+s) 0.600 (off 0.027) | from the betting range 0.621 (off 0.014, r 0.67) | from the thresholds 0.645 (off 0.022, r 0.79)
+bet 150% raise all-in, 5 pots  
+    ip  bets 0.299 | von Neumann 0.392 (off 0.094, r 0.54) | with raises 0.373 (off 0.077, r 0.70)
+        is folded to 0.651 | s/(1+s) 0.600 (off 0.051) | from the betting range 0.620 (off 0.031, r 0.87) | from the thresholds 0.641 (off 0.014, r 0.92)
+    oop bets 0.144 | von Neumann 0.348 (off 0.203, r 0.86) | with raises 0.308 (off 0.163, r 0.88)
+        is folded to 0.624 | s/(1+s) 0.600 (off 0.024) | from the betting range 0.619 (off 0.012, r 0.64) | from the thresholds 0.642 (off 0.019, r 0.87)
