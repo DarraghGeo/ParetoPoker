@@ -133,10 +133,9 @@ function renderDist() {
   const his = d.villain.map((v) => { let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
   const pick = mine.find((r) => r.name === state.hand);
-  const oop = d.seat === 'oop';
   $('dist').innerHTML = `<svg viewBox="0 0 ${W} ${DH}" role="img" aria-label="Equity distribution">`
     + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="${X(0)}" x2="${X(1)}" y1="${Yd(v)}" y2="${Yd(v)}"/>`).join('')
-    + `<line class="axis" x1="${X(0)}" x2="${X(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/><polyline class="${oop ? 'ip' : 'oop'}" points="${hisPts}"/><polyline class="${oop ? 'oop' : 'ip'}" points="${minePts}"/>`
+    + `<line class="axis" x1="${X(0)}" x2="${X(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/><polyline class="wait" points="${hisPts}"/><polyline class="act" points="${minePts}"/>`
     + (pick ? `<circle class="dot" cx="${X(pick.mid).toFixed(1)}" cy="${Yd(pick.e).toFixed(1)}" r="5"/>` : '') + '</svg>';
 }
 /** The strategy along the range, weakest to strongest: one column per strength, as wide as its share. */
@@ -176,11 +175,12 @@ function solveWarp() {
 }
 function renderCurve() {
   const { knobs, n } = state.warp; const e = equitiesOf(knobs, n);
+  const acting = state.decision?.seat ?? 'oop';
   const mine = e.map((y, i) => `${X((i + 0.5) / n).toFixed(1)},${Y(y).toFixed(1)}`).join(' ');
   const his = [`${X(0)},${Y(0)}`, ...e.map((y, i) => `${X(y).toFixed(1)},${Y((i + 0.5) / n).toFixed(1)}`), `${X(1)},${Y(1)}`].join(' ');
   $('curve').innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Equity curves">`
     + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="${X(0)}" x2="${X(1)}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')
-    + `<line class="axis" x1="${X(0)}" x2="${X(1)}" y1="${Y(0)}" y2="${Y(0)}"/><polyline class="ip" points="${his}"/><polyline class="oop" points="${mine}"/>`
+    + `<line class="axis" x1="${X(0)}" x2="${X(1)}" y1="${Y(0)}" y2="${Y(0)}"/><polyline class="${acting === 'ip' ? 'act' : 'wait'}" points="${his}"/><polyline class="${acting === 'ip' ? 'wait' : 'act'}" points="${mine}"/>`
     + knobs.map((y, k) => `<circle class="knob" data-knob="${k}" cx="${X(k / (knobs.length - 1))}" cy="${Y(y)}" r="7" tabindex="0" role="slider" aria-label="Equity ${k + 1}" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct(y)}"/>`).join('') + '</svg>';
 }
 let dragging = null; let timer = null;

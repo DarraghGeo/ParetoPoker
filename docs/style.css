@@ -64,7 +64,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .why .more{align-self:flex-start;border-color:transparent;padding:4px 0;color:var(--ink-3)}
 .curve svg{display:block;width:100%;height:auto;touch-action:none}
 .curve .axis{stroke:var(--line-strong);stroke-width:1}.curve .gridl{stroke:var(--line);stroke-width:1}
-.curve .oop{fill:none;stroke:var(--ink);stroke-width:1.5}.curve .ip{fill:none;stroke:var(--accent);stroke-width:1.5}
+/* Both ranges in ink: the player to act at full strength, the other faded */
+.curve .act{fill:none;stroke:var(--ink);stroke-width:1.75}.curve .wait{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28}
 .curve .dot{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
 .line .view{margin-left:auto}
 .curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
