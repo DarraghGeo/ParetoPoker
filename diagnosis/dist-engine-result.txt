@@ -1,0 +1,15 @@
+turns-tune   sd 8x3       oop  2.54 /  9.48 | ip  1.74 /  9.83 | both  2.14 /  9.65
+turns-tune   best 8x3     oop  2.54 /  9.46 | ip  1.73 /  9.80 | both  2.14 /  9.63
+turns-tune   high 8x3     oop  2.54 /  9.45 | ip  1.75 /  9.79 | both  2.14 /  9.62
+turns-tune   high 6x3     oop  2.51 /  9.43 | ip  1.74 /  9.73 | both  2.12 /  9.58
+turns-tune   high 10x3    oop  2.54 /  9.48 | ip  1.73 /  9.79 | both  2.14 /  9.64
+turns-tune   high 8x4     oop  2.54 /  9.47 | ip  1.75 /  9.80 | both  2.15 /  9.63
+turns-tune   high 8x2     oop  2.56 /  9.45 | ip  1.75 /  9.82 | both  2.15 /  9.64
+turns-tune   high 8x3     oop  2.54 /  9.45 | ip  1.75 /  9.79 | both  2.14 /  9.62
+winner on turns-tune: high 6x3
+turns-held2  fitted       oop  2.32 /  9.43 | ip  1.80 /  9.59 | both  2.06 /  9.51
+turns-held2  high 6x3     oop  2.37 /  9.52 | ip  1.84 /  9.42 | both  2.11 /  9.47
+turns-alt    fitted       oop  2.49 /  8.51 | ip  1.85 /  9.56 | both  2.17 /  9.04
+turns-alt    high 6x3     oop  2.85 /  8.72 | ip  1.96 / 10.13 | both  2.41 /  9.43
+turns-tune   fitted       oop  2.57 /  9.84 | ip  1.77 /  9.98 | both  2.17 /  9.91
+DONE

@@ -222,6 +222,45 @@ bettor's equity distribution:
   loses (5.67 against 4.80 untuned). Not usable yet: out of position it has no checking range
   to protect, and our hands and mixing are not the solver's.
 
+### A turn mixer whose kinds follow the river-equity distribution (not adopted)
+
+`DistributionMixer` and `gridCells` in `src/Mixer.js`, `nextCardSpread` in `src/derived.js`. A
+hand's kind is its band of equity within hero's range (columns) and, within that band, its band
+of how the equity is spread over the next card (rows): `sd` (standard deviation), `best` (what
+the best card adds) or `high` (share of equity from cards where it ends above 0.75). Each cell
+holds how often the kind bets relative to the range, scaled to the engine's frequency as
+`KindMixer` does. The cells are **Copied**: the solver's turn opens on turns-tune and turns-more
+(96 decisions; `diagnosis/dist-data.mjs`, `dist-fit.mjs`, tables in `diagnosis/dist-tables.json`).
+Every table reproduces 26% to 28% of the solver's choice, whatever the measure or grid.
+
+Whole engine, the fitted preset with this mixer in place of its turn kind table
+(`diagnosis/v62.mjs`, `diagnosis/dist-engine-result.txt`), loss to the best response, % of pot:
+
+| turns-tune (in the fit) | out of position | in position | both |
+|---|---|---|---|
+| fitted preset | 9.84 | 9.98 | 9.91 |
+| sd, 8 x 3 | 9.48 | 9.83 | 9.65 |
+| best, 8 x 3 | 9.46 | 9.80 | 9.63 |
+| high, 8 x 3 | 9.45 | 9.79 | 9.62 |
+| high, 6 x 3 | 9.43 | 9.73 | 9.58 |
+| high, 10 x 3 | 9.48 | 9.79 | 9.64 |
+| high, 8 x 4 | 9.47 | 9.80 | 9.63 |
+| high, 8 x 2 | 9.45 | 9.82 | 9.64 |
+
+| held out | fitted: oop / ip / both | high, 6 x 3: oop / ip / both |
+|---|---|---|
+| turns-held2 (other boards) | 9.43 / 9.59 / 9.51 | 9.52 / 9.42 / 9.47 |
+| turns-alt (other boards and bet sizes) | 8.51 / 9.56 / 9.04 | 8.72 / 10.13 / 9.43 |
+
+- Not adopted, no preset: 0.33 better where it was fitted, level on other boards, 0.39 worse
+  on another menu of bet sizes.
+- The measure of spread and the number of rows make no difference (9.58 to 9.65 for every
+  variant, two rows as good as four). In the engine the second axis is not what is missing.
+- Read with the interchange test: the distribution identifies the twins when the frequencies and
+  the mix per group are the solver's for that spot. A table of mixes averaged over spots is not
+  that: the mix of a kind moves with the spot, and an average table does not carry over. The
+  turn loss is in the level and shape per spot, not in which grouping the table is indexed by.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,
