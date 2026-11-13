@@ -1,3 +1,4 @@
+import { notation } from '../notation.js';
 import { buildTree, levelsFromCurve, solveCurves } from './curves.js';
 
 /**
@@ -34,8 +35,9 @@ export function warpGame({ equities, pot, stack, bets, raise, iterations = 300 }
       if (action.type !== 'fold' && action.type !== 'check') next[node.player] += action.add;
       const sized = action.type === 'raise';
       const kind = !sized ? action.type : owed > 0 ? 'raise' : 'bet';
-      const share = sized ? Math.round((100 * (action.add - Math.max(0, owed))) / (plain.pot + Math.max(0, owed))) : 0;
-      const edge = { kind, label: sized ? `${kind} ${share}` : action.type, to: next[node.player], child: -1 };
+      // A bet or raise that takes the whole stack is All-in
+      const all = sized && node.children[k].terminal == null && node.children[k].actions.every((a) => a.type !== 'raise') && action.add >= stack - invested[node.player] - 1e-6;
+      const edge = { kind, label: notation(all ? 'allin' : kind, { add: action.add, toCall: Math.max(0, owed), pot: plain.pot }), to: next[node.player], child: -1 };
       plain.edges.push(edge);
       edge.child = add(node.children[k], id, k, next);
     });

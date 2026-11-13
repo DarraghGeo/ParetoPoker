@@ -173,10 +173,10 @@ export function explain(s, name) {
       if (called >= 0.5) {
         say('value', 'solver', `It bets for value: it beats ${pct(called)} of what calls ${label(mainBet)}.`, `Bets for value: beats ${pct(called)} of what calls.`);
       } else if (!isBluff(row, mainBet)) {
-        say('merged', 'solver', `It bets ${label(mainBet)} with a middling hand: it beats ${pct(row.equity)} of his range, and ${pct(called)} of what calls. That is neither a value bet nor a bluff; the bet is worth what a check is, and the range uses hands like this to fill out the size.`, `Bets a middling hand: beats ${pct(row.equity)} of his range and ${pct(called)} of what calls.`);
+        say('merged', 'solver', `It bets (${label(mainBet)}) with a middling hand: it beats ${pct(row.equity)} of his range, and ${pct(called)} of what calls. That is neither a value bet nor a bluff; the bet is worth what a check is, and the range uses hands like this to fill out the size.`, `Bets a middling hand: beats ${pct(row.equity)} of his range and ${pct(called)} of what calls.`);
       } else {
         say('bluff', 'solver', `It bets as a bluff: checked, it wins ${pct(row.equity)} at showdown; he folds ${pct(row.folds[mainBet] ?? 0)} to ${label(mainBet)}, and a bluff of this size needs ${pct(size.needsFolds)}.`, `Bluffs: wins ${pct(row.equity)} if checked; he folds ${pct(row.folds[mainBet] ?? 0)}, and it needs ${pct(size.needsFolds)}.`);
-        say('quota', 'formula', `Bluffs are ${pct(size.bluffShare)} of the range's ${label(mainBet)}. The price he gets to call allows ${pct(size.wanted)}.`);
+        say('quota', 'formula', `Bluffs are ${pct(size.bluffShare)} of the range's ${label(mainBet)} bets. The price he gets to call allows ${pct(size.wanted)}.`);
       }
     }
     if (check >= 0 && hand.strategy[check] > 0.1) {
@@ -189,7 +189,7 @@ export function explain(s, name) {
         say('showdown', 'count', `It checks: it beats ${pct(row.equity)} of his range but only ${pct(called)} of what would call ${label(probe)}. A bet folds out the hands it beats.`, `Checks: beats ${pct(row.equity)} of his range but only ${pct(called)} of what would call.`);
       } else if (row.equity < 0.35) {
         const size = probe >= 0 ? s.sizes[probe] : null;
-        say('give-up', 'formula', `It checks and gives up: it wins ${pct(row.equity)} at showdown.${size ? ` The range already bluffs ${pct(size.bluffShare)} of its ${label(probe)}, against the ${pct(size.wanted)} the price allows.` : ''}`, `Checks and gives up: wins ${pct(row.equity)} at showdown.`);
+        say('give-up', 'formula', `It checks and gives up: it wins ${pct(row.equity)} at showdown.${size ? ` The range already bluffs with ${pct(size.bluffShare)} of its ${label(probe)} bets, against the ${pct(size.wanted)} the price allows.` : ''}`, `Checks and gives up: wins ${pct(row.equity)} at showdown.`);
       }
     }
   }

@@ -1,3 +1,5 @@
+import { notation } from '../notation.js';
+
 /**
  * Reads a spot solved by poker-flopsolve into the plain shape the explainer takes.
  *
@@ -21,7 +23,10 @@ export function treeOf(fs, spot) {
   // What each player has put in on the way to every node
   const walk = (id) => {
     const node = nodes[id];
+    const me = node.seat === 'oop' ? 0 : 1;
+    const toCall = node.invested[1 - me] - node.invested[me];
     node.edges.forEach((edge, k) => {
+      edge.label = notation(edge.kind, { add: edge.to - node.invested[me], toCall, pot: node.pot });
       const child = nodes[edge.child];
       child.parent = id;
       child.via = k;
@@ -63,7 +68,7 @@ export function decisionAt(fs, solution, nodes, id) {
 
   const mineIn = node.invested[me];
   const hisIn = node.invested[1 - me];
-  const actions = node.edges.map((edge, k) => ({ kind: edge.kind, label: view.actions[k], add: edge.kind === 'fold' || edge.kind === 'check' ? 0 : edge.to - mineIn, child: edge.child }));
+  const actions = node.edges.map((edge, k) => ({ kind: edge.kind, label: edge.label, add: edge.kind === 'fold' || edge.kind === 'check' ? 0 : edge.to - mineIn, child: edge.child }));
   // Values are sums over his reach, in chips: divide by what the hand can face
   const values = node.edges.map((edge) => solver.valuesAt(edge.child, 0, me, mine, his, live, live.length));
   const n = view.actions.length;

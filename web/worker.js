@@ -26,8 +26,6 @@ self.onmessage = async ({ data }) => {
       if (mine !== job) return;
       solution = run.snapshot();
       nodes = treeOf(fs, spot);
-      // Name each action as the solver does ('bet 33', 'raise 83')
-      for (const node of nodes) if (node.kind === 'decision') { const labels = solution.strategyAt(node.id, 0).actions; node.edges.forEach((edge, k) => { edge.label = labels[k]; }); }
       self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit, iterations: run.completed, ms: Date.now() - started });
     } catch (error) {
       self.postMessage({ type: 'error', job: data.job, message: String(error?.message ?? error) });

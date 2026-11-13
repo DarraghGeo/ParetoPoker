@@ -49,6 +49,9 @@ told.line;     // one sentence
 told.reasons;  // [{ id, basis, text, short }]
 ```
 
+Actions are named in shorthand everywhere: `X` check, `C` call, `F` fold, `B33` a bet of 33% of the
+pot, `R30` a raise of 30% of the pot (beyond the call), `All-in`.
+
 `line` is the short answer and `reasons` the full one; show either.
 
 ### What a reason is
