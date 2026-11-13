@@ -20,7 +20,23 @@ pot, C a 3-bet pot, D blind against blind); rivers at 0.75, 2 and 5 pots behind 
 72 trees, `rivers-held` 48); turns at 1.5 and 4 pots (`turns-tune` 16, `turns-held` 8); bets of
 33%, 75%, 150% pot and 2.5x raises. R12, R8-B, T4 and T4-B are the earlier sets, kept as checks.
 
-RESULTS_TABLE
+Loss to the solver's best response as a share of the pot, both seats averaged, whole engine
+(loss to its equilibrium in brackets). `equity` and `napkin` are the presets as they stood
+before the run, apart from fix 18 below, which applies to every preset.
+
+| Set | `presets.equity()` | `presets.napkin()` | `presets.fitted()` |
+|---|---|---|---|
+| rivers-tune (72 trees) | 9.01 (1.11) | 4.64 (0.70) | 3.72 (0.66) |
+| rivers-held (48) | 9.24 (1.19) | 4.51 (0.73) | 3.79 (0.70) |
+| R12 | 9.33 (1.19) | 3.87 (0.61) | 3.31 (0.77) |
+| R8-B | 9.89 (1.13) | 4.41 (0.44) | 3.34 (0.45) |
+| turns-tune (16) | 29.20 (3.58) | 14.88 (2.65) | 11.98 (2.12) |
+| turns-held (8) | 26.14 (4.41) | 12.70 (2.06) | 9.88 (1.85) |
+| T4 | 26.09 (3.52) | 11.70 (1.77) | 9.09 (1.73) |
+| T4-B | 34.70 (4.69) | 19.37 (1.93) | 13.54 (2.12) |
+| F1 (one flop tree, not tuned on) | 26.81 (6.07) | 14.88 (5.60) | 12.35 (5.17) |
+
+`diagnosis/final-table.txt` has the seats apart.
 
 ### Where the loss was, street by street
 

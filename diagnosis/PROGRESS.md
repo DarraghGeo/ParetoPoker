@@ -137,3 +137,12 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   Running: diagnosis/final-table.txt (equity, napkin, fitted on every set, plus the flop tree).
   Next: write-up of results so far; then a mixing table for turn opens (the solver's bet
   frequency by strength now and draw), tested located and on the whole engine.
+- 05:55 **Results table for the fitted preset** (diagnosis/final-table.txt, TUNINGS.md): fitted
+  beats napkin on all nine sets, including the four not tuned on and the flop tree
+  (14.88 -> 12.35). Rivers about 3.3-3.8, turns 9-13.5.
+  Mixing diagnosis for turn opens: `diagnosis/open-hands.mjs` + `open-table.mjs`. The solver's
+  bet level out of position runs from 4% to 100% across the 16 turn decisions; a table over
+  kinds (rank of strength now x draw), scaled by the level, explains 45% (oop) / 38% (ip) of the
+  per-hand variation; the best any kind table could do is 72% / 56%.
+  Built `KindMixer` (src/Mixer.js) with `direct()`: how often each hand bets, from that table.
+  Running: diagnosis/kind-mixer-located.txt (turn:open, located). Next: whole engine if it helps.

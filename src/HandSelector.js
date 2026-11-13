@@ -1,5 +1,6 @@
 import { NUM_COMBOS } from './cards.js';
 import { Range } from './Range.js';
+import { classifyHands } from './handClass.js';
 import { handFeatures } from './handFeatures.js';
 
 /**
@@ -175,6 +176,11 @@ export class SelectionContext {
       equity: this.calculator, board: this.board, hero: this.hero, villain: this.villain,
       pot: this.spot.pot, behind: this.spot.stack ?? 0,
     }));
+  }
+
+  /** What each hand of hero's range holds: `{ pair, draw, highCard }` per combo id (see handClass.js). */
+  get kinds() {
+    return (this.cachedKinds ??= classifyHands(this.board, this.hero));
   }
 
   /** Each villain combo's equity against hero's range. */

@@ -13,7 +13,10 @@ import { NUM_COMBOS } from './cards.js';
  * @property {(context: import('./HandSelector.js').SelectionContext, role: 'value'|'call'|'bluff', wager?: Object)
  *   => Float64Array | number | null | undefined} mix
  *   The most each combo may take the role: one number per combo id, one number for every hand,
- *   or nothing for pure.
+ *   or nothing for pure. *
+ * A mixer may also have `direct(context, frequencies)`: how often each hand bets or raises at
+ * this decision, one probability per combo id, in place of dealing an order under caps. Used
+ * where the solver's play is a level over kinds of hand rather than an order (see KindMixer).
  */
 
 /** Every hand plays pure. */
@@ -59,3 +62,82 @@ export function capsOf(answer) {
   if (answer == null) return null;
   return typeof answer === 'number' ? new Float64Array(NUM_COMBOS).fill(answer) : answer;
 }
+
+/** Draw classes as columns of a kind table: none, gutshot, strong draw, nut draw. */
+const RANKS = [0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0001];
+
+/**
+ * Mixing by kind of hand, for decisions with cards to come and no bet to face.
+ *
+ * A hand's kind is how strong it is right now, as a rank within hero's range (six bands), and
+ * what it is drawing to (none, gutshot, strong draw, nut draw). `tables[position][draw][band]`
+ * is how often that kind bets relative to how often the whole range bets, which is taken from
+ * the engine's frequencies (or `level(context, frequencies)` when given). Every hand of a kind
+ * bets equally often: the hands of a kind are treated as interchangeable.
+ *
+ * `rules` are ordinary Mixer rules for every other decision.
+ */
+export class KindMixer extends Mixer {
+  constructor({ tables, streets = ['turn'], level = null, rules = [] }) {
+    super(rules);
+    Object.assign(this, { tables, streets, level });
+  }
+
+  direct(context, frequencies) {
+    if (context.facing || !this.streets.includes(context.street) || !this.tables[context.position]) return null;
+    const table = this.tables[context.position];
+    const { strengthNow } = context.features;
+    const draws = context.kinds.draw;
+    // Rank of each hand within the range by strength now
+    const order = [];
+    let total = 0;
+    for (let i = 0; i < NUM_COMBOS; i++) {
+      if (context.hero[i] > 0 && !Number.isNaN(strengthNow[i])) {
+        order.push(i);
+        total += context.hero[i];
+      }
+    }
+    order.sort((a, b) => strengthNow[a] - strengthNow[b]);
+    const level = Math.min(1, Math.max(0, this.level ? this.level(context, frequencies) : frequencies.bet));
+    const out = new Float64Array(NUM_COMBOS);
+    let seen = 0;
+    let sum = 0;
+    for (const i of order) {
+      const rank = (seen + context.hero[i] / 2) / total;
+      seen += context.hero[i];
+      const band = RANKS.findIndex((low, k) => rank >= low && rank < RANKS[k + 1]);
+      out[i] = table[draws[i]][band];
+      sum += context.hero[i] * out[i];
+    }
+    // Scale so that the range bets `level` in all (the table is relative), capping each hand at 1
+    let scale = sum > 0 ? (level * total) / sum : 0;
+    for (let pass = 0; pass < 4; pass++) {
+      let got = 0;
+      for (const i of order) got += context.hero[i] * Math.min(1, out[i] * scale);
+      if (got <= 0 || Math.abs(got - level * total) < 1e-6 * total) break;
+      scale *= (level * total) / got;
+    }
+    for (const i of order) out[i] = Math.min(1, out[i] * scale);
+    return out;
+  }
+}
+
+/**
+ * The solver's turn opening play on the tuning spots, relative to how often it bets:
+ * `[draw][rank band]`, bands 0-20%, 20-40%, 40-60%, 60-80%, 80-90%, 90-100% of the range by
+ * strength now. From diagnosis/open-table.mjs; empty cells take a neighbour's value.
+ */
+export const TURN_KINDS = {
+  oop: [
+    [0.55, 0.31, 0.28, 0.80, 1.57, 1.80],
+    [2.05, 0.50, 0.30, 1.42, 2.56, 2.69],
+    [2.78, 0.56, 0.70, 1.07, 2.55, 2.55],
+    [2.07, 1.15, 0.17, 0.12, 0.12, 0.12],
+  ],
+  ip: [
+    [1.49, 0.51, 0.31, 0.93, 1.32, 1.95],
+    [1.20, 0.90, 0.27, 0.96, 1.78, 1.93],
+    [1.07, 1.15, 0.50, 1.06, 2.42, 2.42],
+    [0.95, 1.22, 0.96, 1.47, 1.47, 1.47],
+  ],
+};

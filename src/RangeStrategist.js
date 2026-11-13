@@ -116,7 +116,19 @@ export class RangeStrategist {
     const own = (candidates, share) => (targets ? share : candidates.share ?? share);
     // A frequency that does not come from counting the selector's candidates has to be filled anyway
     const fill = targets || tuning?.frequency != null;
-    for (const wager of biggestFirst) {
+    // A mixer may say outright how often each hand bets or raises (`direct`): the frequency is
+    // then spread over the sizes the engine chose, and nothing is dealt for those actions.
+    const direct = targets ? null : this.mixer.direct?.(context, frequencies);
+    if (direct) {
+      const aggressive = frequencies.sizes.reduce((sum, wager) => sum + wager.frequency, 0);
+      const shareOf = (wager) => (aggressive > 0 ? wager.frequency / aggressive : wager.weight);
+      for (const wager of frequencies.sizes) {
+        const out = actionFor(wager);
+        for (let i = 0; i < NUM_COMBOS; i++) out[i] = Math.min(1, Math.max(0, direct[i])) * shareOf(wager);
+      }
+      for (let i = 0; i < NUM_COMBOS; i++) left[i] -= Math.min(1, Math.max(0, direct[i]));
+    }
+    for (const wager of direct ? [] : biggestFirst) {
       if (!(wager.value > 0)) continue;
       const unplaced = give(valueHands.get(wager.to), actionFor(wager), wager.value);
       // More value asked for than the selector has candidates: the next strongest hands make it up
@@ -131,7 +143,7 @@ export class RangeStrategist {
         if ((targets || tuning) && unplaced > 1e-9) give({ scores: context.strength, limit: null }, strategy[index('call')], unplaced / total);
       }
     }
-    for (const wager of biggestFirst) {
+    for (const wager of direct ? [] : biggestFirst) {
       if (!(wager.bluff > 0)) continue;
       const candidates = this.#candidates('bluff', context, wager);
       give(candidates, actionFor(wager), own(candidates, wager.bluff));
