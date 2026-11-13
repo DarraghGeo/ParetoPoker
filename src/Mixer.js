@@ -112,7 +112,9 @@ export class KindMixer extends Mixer {
       seen += context.hero[i];
       let band = bands.length - 2;
       while (band > 0 && rank < bands[band]) band--;
-      out[i] = (table[draws[i]] ?? table[0])[band];
+      // A cell is how often the kind bets relative to the level, or `[a, b]` for a + b x level
+      const cell = (table[draws[i]] ?? table[0])[band];
+      out[i] = Array.isArray(cell) ? Math.max(0, cell[0] + cell[1] * level) : cell;
       sum += context.hero[i] * out[i];
     }
     // Scale so that the range bets `level` in all (the table is relative), capping each hand at 1

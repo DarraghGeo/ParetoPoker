@@ -30,11 +30,16 @@ before the run, apart from fix 18 below, which applies to every preset.
 | rivers-held (48) | 9.24 (1.19) | 4.51 (0.73) | 3.79 (0.70) |
 | R12 | 9.33 (1.19) | 3.87 (0.61) | 3.31 (0.77) |
 | R8-B | 9.89 (1.13) | 4.41 (0.44) | 3.34 (0.45) |
-| turns-tune (16) | 29.20 (3.58) | 14.88 (2.65) | 11.98 (2.12) |
-| turns-held (8) | 26.14 (4.41) | 12.70 (2.06) | 9.88 (1.85) |
-| T4 | 26.09 (3.52) | 11.70 (1.77) | 9.09 (1.73) |
-| T4-B | 34.70 (4.69) | 19.37 (1.93) | 13.54 (2.12) |
-| F1 (one flop tree, not tuned on) | 26.81 (6.07) | 14.88 (5.60) | 12.35 (5.17) |
+| turns-tune (16) | 29.20 (3.58) | 14.88 (2.65) | 10.01 (2.18) |
+| turns-held (8, one board) | 26.14 (4.41) | 12.70 (2.06) | 8.87 (1.94) |
+| turns-held2 (16, two boards never used before) | 29.35 (3.33) | 13.74 (2.20) | 9.87 (2.12) |
+| T4 | 26.09 (3.52) | 11.70 (1.77) | 8.63 (2.04) |
+| T4-B | 34.70 (4.69) | 19.37 (1.93) | 10.98 (2.23) |
+| F1 (one flop tree) | 26.81 (6.07) | 14.88 (5.60) | 10.36 (4.26) |
+| flops-check (3 flop trees) | 23.13 (3.64) | 16.13 (3.96) | 10.59 (3.23) |
+
+Nothing was fitted on the held-out sets, R8-B, T4-B or the flop trees; the kind table was first
+checked on the flop trees and then kept there (entry 29), so those two rows are not blind.
 
 `diagnosis/final-table.txt` has the seats apart.
 
@@ -86,6 +91,39 @@ Mixing curves (`diagnosis/curves.mjs`, the range cut into 20 slices by equity):
 - Turn, in position: the strongest 15% bet 85-93%, thinner value about half the time.
 - Facing a turn bet in position: the strongest hands call 80% and raise 20%.
 
+### Mixing: which hands are interchangeable
+
+`bin/diagnose.js` step 3, turn opens on 8 turns at 2.5 pots behind. Inside the solver's own
+strategy, every hand of a group is given the group's average strategy at that decision; loss to
+the best response:
+
+| Group | Loss |
+|---|---|
+| the whole range | 18.1% |
+| 20 bands of equity | 4.4% |
+| 6 bands of strength now x draw | 4.3% |
+| 20 bands of strength now x draw | 1.9% |
+| 20 bands of strength now x draw x pair class | 1.7% |
+
+Strength now and the draw make hands close to interchangeable on the turn; equity does not.
+That is the ceiling for a kind table that knew each spot's own frequencies. The table adopted
+(28) is one average table for all spots and loses about 8.6 located, so most of what is left
+in turn opens is how a kind's frequency changes with the spot, not which hands form a kind.
+
+How much of the per-hand variation in the solver's turn bet frequency a table explains
+(`diagnosis/open-table.mjs`, 16 decisions per seat; out of position / in position):
+
+| Table | Explained |
+|---|---|
+| the decision's bet level alone | 0.37 / 0.04 |
+| 6 bands x draw, proportional to the level | 0.52 / 0.38 |
+| 20 bands x draw, proportional to the level | 0.56 / 0.43 |
+| 6 bands x draw, each kind a line in the level | 0.58 / 0.42 |
+| 20 bands x draw, each kind a line in the level | 0.64 / 0.49 |
+| 6 bands x draw, a table per decision (the ceiling for these kinds) | 0.72 / 0.56 |
+
+Out of position the solver's turn bet level runs from 4% to 100% across the 16 decisions.
+
 ### Adopted
 
 | # | Part | Setting | Evidence (loss to the best response, whole engine unless said) |
@@ -100,6 +138,10 @@ Mixing curves (`diagnosis/curves.mjs`, the range cut into 20 slices by equity):
 | 25 | mixer | Facing a turn bet, a value hand raises 25% of the time. | Located, in position: uncapped 17.85, 50% 14.11, 25% 13.19, 10% 12.86, never 12.68. Whole engine 14.31 -> 13.88. |
 | 26 | mixer | Turn, first to act: out of position value bets 45%; in position value with 85%+ equity always, thinner value 55%. | Whole engine turns-tune 13.40 -> 13.20 and -> 12.98. |
 | 27 | selector | In position facing a turn bet: calls by E[HS^2] + equity against his value when 2 or more pots are behind, by class otherwise (`turnCalls: 'ehs2-ip'`, `ehs2Depth: 2`). | Located (tune): by class 13.19, E[HS^2] 9.45. Whole engine without the depth condition it helped T4-B (19.4 -> 14.4) and wrecked T4 (9.4 -> 18.0). By depth: class 9.9 against 11.7 at 1.5 pots; 18.7 against 16.9 at 4 pots. By board: E[HS^2] wins on the draw-heavy `JsTs4h8d` (16.2 against 21.2), loses on the two dry boards. |
+
+| 28 | mixer | First to act on the turn: `KindMixer` with `TURN_KINDS`. A hand's kind is the rank of its strength now within the range (6 bands) and its draw (none, gutshot, strong, nut); each kind bets as often as the solver's does relative to the bet level, which is the engine's. | Located turn open 9.75 -> 8.59. Whole engine: turns-tune 11.98 -> 10.01, turns-held 9.88 -> 8.87, T4 9.09 -> 8.63, T4-B 13.54 -> 10.98. The out-of-position table alone also lifts the in-position seat (13.26 -> 10.58). |
+| 29 | mixer | The same table at flop decisions. Checked on four small flop trees, not fitted to them. | F1 12.08 -> 10.36; `flops-check` (3 trees) 12.00 -> 10.59. |
+| 30 | mixer | The turn value caps of 26 stay under the kind table: they set how much value is counted, hence the bet level the table spreads. | Without them T4 is 10.63 instead of 8.63. Scaling the level by 0.8 or 1.25 changes nothing (10.0-10.4). |
 
 Entries 1, 2 and 16 (the 0.7 value threshold inside NapkinSelector and the flat
 `oopValueChecks`) are superseded where a rule above covers the decision: the threshold is 0.6
@@ -116,6 +158,10 @@ for river opens under the tuner, and the mixer's curves replace the flat value-c
 | Turn bet frequency out of position from the fitted formula (r2 0.93) | Loss to the equilibrium falls 2.16 -> 1.90, to the best response rises 13.40 -> 13.60. |
 | Turn sizes 0.75 / 0.5 pots | 13.40 -> 14.11. |
 | Never raising a turn bet | Located it is the best (12.68), but the 25% cap is within half a point and keeps a raising range. |
+| River opens from a table over rank (the solver's curve, 13 bands) | rivers-tune 4.13 against 3.72 for the order with caps; with the level from the spot formula 4.68. |
+| Facing a turn bet from a kind table (`TURN_FACING_KINDS`) | Located: in position 9.4 -> 21.7, out of position 4.3 -> 12.5. Hands of a kind are not interchangeable when calling. |
+| The turn bet level from the solver's spot formula | Located 8.84 against 8.59 with the engine's own level. |
+| In position river value threshold of 0.7 or 0.8 inside turn trees | Located they are far better (18.1 at 0.6, 14.0 at 0.7, 10.9 at 0.8); whole engine 0.6 is best (11.98, 12.09, 12.43). |
 
 ### What the run says about method
 

@@ -170,3 +170,13 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   21.7; out of position 4.3 -> 12.5). Hands of a kind are not interchangeable when calling, as
   the interchange test said (5.9% within 10 points of equity). Not adopted; `tables.facing`
   stays as an unused option. Next: the bet level the turn table spreads (scale 0.8 / 1.2).
+- 06:55 **Results table refreshed** (TUNINGS.md, diagnosis/final-table.txt). Fitted against
+  napkin: rivers 3.3-3.8 against 3.9-4.6; turns 8.6-11.0 against 11.7-19.4, including
+  turns-held2 on two boards never used (13.74 -> 9.87); flop trees 10.4-10.6 against 14.9-16.1.
+  Mixing diagnosis (bin/diagnose.js step 3 with kinds): at turn opens, mixing evenly within
+  20 bands of strength now x draw costs 1.9%; 6 bands x draw 4.3%; 20 bands of equity 4.4%;
+  the whole range 18.1%. The kinds are right; what is left is how a kind's frequency moves
+  with the spot. Fitted finer tables in which each kind is a line in the bet level
+  (diagnosis/kinds-fit.py -> turn-kinds-{6,10,20}.json; they explain 0.58-0.64 of the per-hand
+  variation out of position against 0.52 for the adopted table). 42 tests pass.
+  Next: test those tables (diagnosis/v32.mjs), located then whole engine.
