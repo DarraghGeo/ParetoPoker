@@ -44,7 +44,9 @@ export async function measure(set, makeParts, options = {}) {
     const { opponent, ...own } = parts;
     // `strategist`, when given, is the class to build with the parts (default RangeStrategist)
     const { strategist: Strategist = RangeStrategist, ...rest } = own;
-    const result = await new SolverMatch(gameOf(spot), { strategist: new Strategist(rest), opponent: opponent ? new Strategist(opponent) : null }).play(hero, { iterations: 300, ...options });
+    // A strategist that plans ahead is told the game's menu of bets and raises, as it is told the stacks
+    if (Strategist !== RangeStrategist && rest.menu === undefined) rest.menu = menuOf(spot.sizes);
+    const result = await new SolverMatch(gameOf(spot), { strategist: new Strategist(rest), opponent: opponent ? new Strategist({ menu: rest.menu, ...opponent }) : null }).play(hero, { iterations: 300, ...options });
     return { spot: spot.name, pair: spot.pair, depth: spot.depth, board: spot.board, hero, versusGto: result.loss.versusGto, exploited: result.loss.exploited };
   });
   const out = { oop: [0, 0], ip: [0, 0], spots: results };
@@ -53,6 +55,14 @@ export async function measure(set, makeParts, options = {}) {
     out[r.hero][1] += r.exploited / spots.length;
   }
   return out;
+}
+
+/** A spot's sizes ('33%,75%' and '2.5x') as the menu ProfileStrategist takes. */
+export function menuOf(sizes) {
+  if (!sizes) return null;
+  const bet = String(sizes.bet ?? '').split(',').filter((x) => x.endsWith('%')).map((x) => parseFloat(x) / 100);
+  const raise = String(sizes.raise ?? '').split(',').filter((x) => x.endsWith('x')).map((x) => parseFloat(x));
+  return { ...(bet.length ? { bet } : {}), raise: raise.length ? raise[0] : 0 };
 }
 
 export function format(result) {

@@ -13,3 +13,4 @@ diagnosis/hands/*.log
 diagnosis/worth-engine.log
 diagnosis/dist-engine.log
 diagnosis/derived-defence-turns.log
+diagnosis/curve-turns.log
