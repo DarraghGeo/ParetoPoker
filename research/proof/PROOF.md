@@ -114,8 +114,9 @@ Lines at least half of each range takes:
 | River | random (40) | 0.01% vs 0.002% | 20,109 | **0** | 4,393 / 0 | 9,068 / 0 | 4,915 / 0 | 1,733 / 0 | — | 33,527 | 152 | 0.249 |
 | River | fresh random (60) | 0.01% vs 0.002% | 28,250 | **0** | 16,064 / 0 | 5,299 / 0 | 4,821 / 0 | 2,066 / 0 | — | 48,496 | 19 | 0.504 |
 | Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
+| Flop | fresh random, small (3) | 0.3% vs 0.02% | 2,522 | **0** | 1,061 / 0 | 346 / 0 | 289 / 0 | 67 / 0 | 759 / 0 | 2,483 | 0 | 1.388 |
 
-All sets together on those lines: **102,863 conclusions, 0 false.**
+All sets together on those lines: **105,385 conclusions, 0 false.**
 "Largest reversed gap" is the largest difference in worth, at page accuracy, whose direction a reference
 reversed: the gate for calling an action worse is 2% of the pot on these lines, several times that figure.
 
@@ -160,13 +161,19 @@ evidence is closer to "no false conclusion at any of the decisions explained on 
 independent trials. It is strong evidence, not a theorem. For "worse" there is also a reason it should
 hold: a strategy that is a best reply to one equilibrium is a best reply to all of them.
 
+### River decisions reached inside a turn spot
+
+A spot that starts on the turn is solved to 0.02% as a whole; the river decisions after a card has come are
+deeper and were tried apart, with gates fixed beforehand (an unused action 5% of the pot worse; lines at
+least half of each range takes), on 30 of the fresh random turn spots, three river cards each:
+**9,807 conclusions, 0 false** (44 decisions; largest reversed gap 0.731% of the pot).
 
 ### Flop spots, at the accuracy a browser reaches
 
 A flop cannot be solved in a browser tab much finer than 0.3% of the pot, so that is the page accuracy
 tested, against references at 0.02%. Flop decisions, and turn decisions after a card has come, on lines at
 least half of each range takes, with gates fixed beforehand from one flop spot measured in full:
-**1,879 conclusions on 2 spots, 0 false.** The numbers are another matter at this accuracy: 565 of 2,421
+**4,401 conclusions on 5 spots, 0 false.** The numbers are another matter at this accuracy: 565 of 4,904
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 
@@ -204,7 +211,7 @@ worded as, this solution's numbers, but a flop solved to 0.3% is a coarse soluti
 4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
    the two references differed by four points about the equity of hands against that range. Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
-   takes, 371 of 73,736 equities fell outside the tolerance (1 to 2 points) of a reference.
+   takes, 371 of 75,480 equities fell outside the tolerance (1 to 2 points) of a reference.
 
 ## Not proven: said nowhere on the page, to be proved later or dropped
 
@@ -214,7 +221,7 @@ worded as, this solution's numbers, but a flop solved to 0.3% is a coarse soluti
 | What an unused action costs, as a truth of the spot | Finding 2 | `accept.mjs`, random river set |
 | Why a hand bets 60% and not 40% | Finding 3 | `tolerance.mjs` |
 | Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
-| River and turn decisions reached inside a spot that started on an earlier street | The spot is solved to its own street's accuracy, and what follows a deal is less settled than that. Numbers only there | not yet run |
+| River decisions after a deal on lines under half of either range; anything two deals deep (a river inside a flop spot) | Not tried | — |
 | Conclusions about flop decisions | Tested at the accuracy a browser reaches (0.3%): see the table. No false conclusion so far, but on few spots: each flop takes the better part of an hour to test. | `accept.mjs "held flop" 0.3 0.02` |
 | "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |

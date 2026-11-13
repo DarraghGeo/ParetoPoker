@@ -101,6 +101,10 @@ export const TOLERANCE = {
   river: [
     { upTo: 0.01, lines: [{ from: 0.5, eq: 2, folds: 3, gap: 2.7, sign: 2, cmp: 7.8, lift: null, rest: null }, { from: 0.2, eq: 4, folds: 3, gap: 4, sign: 5, cmp: 10, lift: null, rest: null }] },
   ],
+  // The river once a card has come, inside a spot that started on the turn and was solved to 0.02% as a turn spot
+  'river after a deal': [
+    { upTo: 0.02, lines: [{ from: 0.5, eq: 3, folds: 3, gap: 4, sign: 5, cmp: 10, lift: null, rest: null }] },
+  ],
 };
 /**
  * Under test, not in use: flop spots at the accuracy a browser reaches. The proof harness tries these
@@ -112,8 +116,6 @@ export const ON_TRIAL = {
   // Gates are twice the largest differences measured on the one flop spot measured in full.
   flop: [{ upTo: 0.3, lines: [{ from: 0.5, eq: 1, folds: 2, gap: 2.8, sign: 3, cmp: 5, lift: 0.8, rest: 1.4 }] }],
   'turn after a deal': [{ upTo: 0.3, lines: [{ from: 0.5, eq: 2, folds: 2, gap: 2.4, sign: 3, cmp: 3.6, lift: 1, rest: 2 }] }],
-  // The river once a card has come, inside a spot that started on the turn (solved to 0.02% as a turn spot)
-  'river after a deal': [{ upTo: 0.02, lines: [{ from: 0.5, eq: 3, folds: 3, gap: 4, sign: 5, cmp: 10, lift: null, rest: null }] }],
 };
 /** The tolerances that apply: `street` is 'turn' or 'flop' (where the decision is), `exploit` the solve's accuracy in % of the pot. */
 export function tolerance(street, exploit, lineReach, table = TOLERANCE) {
@@ -299,5 +301,5 @@ export function explainStreet(s, m, T) {
       reasons.push({ id: 'behind', text: m.actions[i].sigma >= TAKES ? `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}, and the hand still does both.` : `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}${proven ? ': too close to call it worse' : ''}.` });
     }
   }
-  return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: turn and river decisions on lines at least a fifth of each range takes, in a solve fine enough.' };
+  return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: see the proof file for which decisions those are.' };
 }

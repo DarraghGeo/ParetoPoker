@@ -1,5 +1,5 @@
 // Writes PROOF.md from the result files in out/, so every figure in it is one a script produced.
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 const here = (f) => new URL(f, import.meta.url);
 const jsonl = (f) => (existsSync(here(f)) ? readFileSync(here(f), 'utf8').split('\n').filter((l) => l.startsWith('{')).map((l) => JSON.parse(l)) : []);
 const json = (f) => (existsSync(here(f)) ? JSON.parse(readFileSync(here(f), 'utf8').split('\n').find((l) => l.startsWith('{')) ?? 'null') : null);
@@ -11,6 +11,13 @@ const accept = [
   ['River', 'calibration (6 hand-built)', './out/accept-river-0.01.json'], ['River', 'held-out (6 hand-built)', './out/accept-held-river-0.01.json'], ['River', 'random (40)', './out/accept-random-river-0.01.json'], ['River', 'fresh random (60)', './out/accept-fresh-river-0.01.json'],
   ['Flop', 'held-out (2 hand-built)', './out/accept-held-flop-0.3.json'], ['Flop', 'fresh random (6)', './out/accept-fresh-flop-0.3.json'],
 ].map(([street, set, file]) => ({ street, set, r: json(file) })).filter((x) => x.r);
+// flop spots run one at a time: gather them into one set
+{ const parts = readdirSync(here('./out/')).filter((f) => /^part-(more|fresh)-flop-\d+\.json$/.test(f) && (f.includes('more') || !json('./out/accept-fresh-flop-0.3.json'))).map((f) => json(`./out/${f}`)).filter(Boolean);
+  if (parts.length) { const sum = { spots: [], pageAccuracy: parts[0].pageAccuracy, referenceAccuracy: parts[0].referenceAccuracy, conclusions: { made: 0, failed: 0 }, numbers: { made: 0, outsideTolerance: 0 }, decisionsExplained: 0, byKind: {}, largestReversedGapByLine: {} };
+    for (const r of parts) { sum.spots.push(...r.spots); sum.conclusions.made += r.conclusions.made; sum.conclusions.failed += r.conclusions.failed; sum.numbers.made += r.numbers.made; sum.numbers.outsideTolerance += r.numbers.outsideTolerance; sum.decisionsExplained += r.decisionsExplained;
+      for (const [k, v] of Object.entries(r.byKind)) { const t = (sum.byKind[k] ??= { made: 0, failed: 0, number: v.number }); t.made += v.made; t.failed += v.failed; }
+      for (const [k, v] of Object.entries(r.largestReversedGapByLine ?? {})) if (!(sum.largestReversedGapByLine[k]?.gap >= v.gap)) sum.largestReversedGapByLine[k] = v; }
+    accept.push({ street: 'Flop', set: `fresh random, small (${sum.spots.length})`, r: sum }); } }
 const byLine = (r, from) => { const out = { conclusions: 0, failed: 0, numbers: 0, outside: 0, kinds: {} }; for (const [k, v] of Object.entries(r.byKind)) { if (!k.endsWith(`line ${from}+`)) continue; const kind = k.split(' ')[0]; if (v.number) { out.numbers += v.made; out.outside += v.failed; } else { out.conclusions += v.made; out.failed += v.failed; } out.kinds[kind] = [v.made, v.failed]; } return out; };
 const rows = (from) => accept.map(({ street, set, r }) => { const b = byLine(r, from); if (!b.conclusions && !b.numbers) return null; const k = (x) => (b.kinds[x] ? `${n(b.kinds[x][0])} / ${b.kinds[x][1]}` : '—'); return `| ${street} | ${set} | ${r.pageAccuracy}% vs ${r.referenceAccuracy}% | ${n(b.conclusions)} | **${b.failed}** | ${k('worse')} | ${k('same')} | ${k('needs')} | ${k('builds')} | ${k('cards')} | ${n(b.numbers)} | ${b.outside} | ${r.largestReversedGapByLine?.[from]?.gap ?? '—'} |`; }).filter(Boolean).join('\n');
 const total = (from, street) => accept.filter((x) => !street || x.street === street).reduce((t, { r }) => { const b = byLine(r, from); return { c: t.c + b.conclusions, f: t.f + b.failed }; }, { c: 0, f: 0 });
@@ -209,7 +216,7 @@ const tail = `
 | What an unused action costs, as a truth of the spot | Finding 2 | \`accept.mjs\`, random river set |
 | Why a hand bets 60% and not 40% | Finding 3 | \`tolerance.mjs\` |
 | Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
-| River and turn decisions reached inside a spot that started on an earlier street | The spot is solved to its own street's accuracy, and what follows a deal is less settled than that. Numbers only there | not yet run |
+| River decisions after a deal on lines under half of either range; anything two deals deep (a river inside a flop spot) | Not tried | — |
 | Conclusions about flop decisions | ${flop.length ? `Tested at the accuracy a browser reaches (0.3%): see the table. ${flop.reduce((t, x) => t + byLine(x.r, '0.5').failed, 0) === 0 ? 'No false conclusion so far, but on few spots: each flop takes the better part of an hour to test.' : 'False conclusions were found.'}` : 'The test was still running when this was written.'} | \`accept.mjs "held flop" 0.3 0.02\` |
 | "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
