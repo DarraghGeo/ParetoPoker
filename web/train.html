@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<!-- A refresh, or a tab the browser reloads, opens on the choice between Study and Train; this address followed or typed stays here -->
+<script>if (performance.getEntriesByType('navigation')[0]?.type === 'reload') location.replace('./');</script>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Pareto: Train</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="style.css?v=__V__">
+</head>
+<body class="train">
+<div class="rule" id="rule"></div>
+<main>
+  <header>
+    <a class="icon" href="./" aria-label="Home"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 7.5L8 3l5.5 4.5M4 6.5V13h8V6.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <div class="board" id="board"></div>
+    <span class="grow"></span>
+    <button type="button" class="score" id="score" aria-label="Today's score. Opens the last questions."></button>
+    <button type="button" class="icon" id="open-settings" aria-label="Settings">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 4h8M13 4h1M2 8h2M7 8h7M2 12h6M11 12h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.5" cy="4" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="8" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9.5" cy="12" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
+    </button>
+  </header>
+  <section class="t-stage">
+    <div class="left">
+      <div class="where" id="where"></div>
+      <div class="minis" id="minis"></div>
+      <div class="curve" id="dist" hidden></div>
+    </div>
+    <div class="ask" id="ask" aria-live="polite"></div>
+  </section>
+</main>
+<div class="scrim" id="scrim" hidden></div>
+<section class="drawer" id="settings" hidden aria-label="Settings" tabindex="-1"></section>
+<section class="drawer" id="history" hidden aria-label="Last questions" tabindex="-1"></section>
+<script type="module" src="train.js?v=__V__"></script>
+</body>
+</html>

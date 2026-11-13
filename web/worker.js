@@ -23,7 +23,9 @@ function keep(key, entry) {
 }
 let current = null; // the solve on screen
 const studies = new Map(); // decisions already studied in it
-const use = (entry) => { solution = entry.solution; nodes = entry.nodes; last = { board: entry.board, run: entry.run }; current = entry; studies.clear(); };
+const use = (entry) => { solution = entry.solution; nodes = entry.nodes; last = { board: entry.board, run: entry.run, lite: entry.lite }; current = entry; studies.clear(); };
+/** The spot as the solver takes it. One list of bet sizes plays on every street; several, one for each street from the board's own. The solver counts the bet as the first raise. */
+const spotOf = (c, oop, ip) => ({ board: c.board, pot: c.pot, stack: c.stack, oop, ip, betSizes: Array.isArray(c.bets[0]) ? c.bets : [c.bets], raiseSizes: c.raises.length ? c.raises.map((times) => ({ times })) : undefined, maxRaises: 1 + (c.raises.length ? c.maxRaises : 0), allowAllIn: !!c.allIn });
 
 self.onmessage = async ({ data }) => {
   if (data.type === 'stop') { halt = true; return; }
@@ -33,7 +35,7 @@ self.onmessage = async ({ data }) => {
     try {
       const c = data.config;
       const held = kept.get(data.key);
-      if (held) { use(held); self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit: held.exploit, iterations: 0, ms: 0 }); return; }
+      if (held) { use(held); self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit: held.exploit, lite: held.lite, iterations: 0, ms: 0 }); return; }
       const board = fs.parseCards(c.board);
       if (board.length < 3 || board.length > 5) throw new Error('Three, four or five board cards are needed.');
       // The ranges as given, then as the dials reshape them
@@ -41,13 +43,13 @@ self.onmessage = async ({ data }) => {
       const turned = !isNeutral(c.dials?.oop) || !isNeutral(c.dials?.ip);
       const placed = turned ? [equities(board, given[0], given[1]), equities(board, given[1], given[0])] : null;
       const ranges = turned ? [reshape(given[0], placed[0], c.dials?.oop), reshape(given[1], placed[1], c.dials?.ip)] : given;
-      // One list of bet sizes plays on every street; several, one for each street from the board's own
-      const perStreet = Array.isArray(c.bets[0]) ? c.bets : [c.bets];
-      // The solver counts the bet as the first raise
-      const spot = fs.defineSpot({ board: c.board, pot: c.pot, stack: c.stack, oop: ranges[0], ip: ranges[1], betSizes: perStreet, raiseSizes: c.raises.length ? c.raises.map((times) => ({ times })) : undefined, maxRaises: 1 + (c.raises.length ? c.maxRaises : 0), allowAllIn: !!c.allIn });
-      // Same board as the solve before: carry its regrets over, which is quicker than starting cold
-      const warm = last && last.board === c.board ? last.run : undefined;
-      const run = fs.createRun(spot, warm ? { warmStart: warm } : {});
+      // Lite, for a spot too big to solve whole: the first street's betting as given, one bet size on the later ones
+      const whole = spotOf(c, ranges[0], ranges[1]);
+      const preset = c.lite ? fs.litePreset(whole) : null;
+      const spot = fs.defineSpot(preset ? preset.config : whole);
+      // Same board as the solve before, solved the same way: carry its regrets over, which is quicker than starting cold
+      const warm = last && last.board === c.board && !!last.lite === !!c.lite ? last.run : undefined;
+      const run = fs.createRun(spot, { ...(preset?.options ?? {}), ...(warm ? { warmStart: warm } : {}) });
       const started = Date.now();
       const river = board.length === 5;
       // A river is cheap enough to solve finely; earlier streets stop at the usual 0.3% of the pot, or when told to
@@ -57,20 +59,46 @@ self.onmessage = async ({ data }) => {
       let exploit = Infinity;
       self.postMessage({ type: 'progress', job: data.job, iterations: 0, exploit: Infinity, target, street: ['flop', 'turn', 'river'][board.length - 3] });
       await new Promise((resolve) => setTimeout(resolve));
-      while (mine === job && !halt && exploit > target && run.completed < 3000 && Date.now() - started < patience) {
-        run.step(chunk);
-        exploit = run.exploitabilityPercent();
-        self.postMessage({ type: 'progress', job: data.job, iterations: run.completed, exploit, target, street: ['flop', 'turn', 'river'][board.length - 3] });
-        await new Promise((resolve) => setTimeout(resolve));
+      if (preset) {
+        // a lite solve never reaches an accuracy target: it stops once the first decisions stop moving
+        const settle = fs.trackSettle(preset.options.settle || {}); const every = preset.options.settle?.every ?? 20; const still = preset.options.settle?.tolerance ?? 0.01;
+        let settled = false;
+        while (mine === job && !halt && !settled && run.completed < preset.options.iterations && Date.now() - started < 300000) {
+          run.step(5);
+          if (run.completed % every === 0) settled = settle.check(run.snapshot(), run.completed);
+          const moving = settle.movement;
+          self.postMessage({ type: 'progress', job: data.job, lite: true, iterations: run.completed, moving, done: Number.isNaN(moving) ? 0 : Math.min(1, Math.max(0, Math.log(0.35 / moving) / Math.log(0.35 / still))), street: ['flop', 'turn', 'river'][board.length - 3] });
+          await new Promise((resolve) => setTimeout(resolve));
+        }
+        if (mine === job && run.completed) exploit = run.exploitabilityPercent();
+      } else {
+        while (mine === job && !halt && exploit > target && run.completed < 3000 && Date.now() - started < patience) {
+          run.step(chunk);
+          exploit = run.exploitabilityPercent();
+          self.postMessage({ type: 'progress', job: data.job, iterations: run.completed, exploit, target, street: ['flop', 'turn', 'river'][board.length - 3] });
+          await new Promise((resolve) => setTimeout(resolve));
+        }
       }
       if (mine !== job) return;
       if (!run.completed) { run.step(1); exploit = run.exploitabilityPercent(); }
-      const entry = { solution: run.snapshot(), nodes: treeOf(fs, spot), run, board: c.board, exploit, bytes: spot.estimate.bytes };
+      const entry = { solution: run.snapshot(), nodes: treeOf(fs, spot), run, board: c.board, exploit, lite: !!preset, bytes: spot.estimate.bytes };
       use(entry); keep(data.key, entry);
-      self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit, iterations: run.completed, warm: !!warm, ms: Date.now() - started });
+      self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit, lite: !!preset, iterations: run.completed, warm: !!warm, ms: Date.now() - started });
     } catch (error) {
       self.postMessage({ type: 'error', job: data.job, message: String(error?.message ?? error).split('\n')[0] });
     }
+  } else if (data.type === 'fits') {
+    // Whether a spot can be solved whole, and if not whether lite can take it
+    let answer = { whole: true, lite: false, message: '' };
+    try {
+      const c = data.config;
+      try { fs.defineSpot(spotOf(c, c.oop, c.ip)); } catch (error) {
+        if (!(error instanceof fs.SpotTooLargeError)) throw error;
+        answer = { whole: false, lite: false, message: String(error.message).split('\n')[0] };
+        try { fs.defineSpot(fs.litePreset(spotOf(c, c.oop, c.ip)).config); answer.lite = true; } catch { /* too big for lite as well */ }
+      }
+    } catch { /* a spot that cannot be read says so when it is solved */ }
+    self.postMessage({ type: 'fits', id: data.id, ...answer });
   } else if (data.type === 'subgame' && solution) {
     // The spot that starts at a street's first decision on the cards dealt: the pot and stacks as they stand, the ranges as they arrive
     try {

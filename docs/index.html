@@ -6,97 +6,22 @@
 <title>Pareto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=86cd644951">
+<link rel="stylesheet" href="style.css?v=1ba22d67b7">
 </head>
 <body>
-<div class="rule" id="rule"></div>
-<main>
-  <header>
-    <div class="board" id="board"></div>
-    <nav class="versions" id="versions" aria-label="Versions" hidden>
-      <button type="button" class="icon" id="older" aria-label="Previous version"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      <span id="version"></span>
-      <button type="button" class="icon" id="newer" aria-label="Next version"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-    </nav>
-    <span class="grow"></span>
-    <button type="button" class="state" id="state" aria-live="polite" aria-label="Solve state; stops a solve in progress"></button>
-    <button type="button" class="icon" id="open-setup" aria-label="Setup">
-      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 4h8M13 4h1M2 8h2M7 8h7M2 12h6M11 12h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.5" cy="4" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="8" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9.5" cy="12" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
-    </button>
-  </header>
-  <section class="stage">
-    <div class="left">
-      <nav class="line" id="line" aria-label="Line"></nav>
-      <div class="box">
-        <div class="range" id="range"></div>
-        <div class="curve" id="dist" hidden></div>
-        <div class="deal" id="deal" hidden role="group" aria-label="Card dealt"></div>
-      </div>
-      <div class="stripbox"><div class="strip" id="strip"></div></div>
-      <div class="combos" id="combos"></div>
-    </div>
-    <aside class="why" id="why" aria-live="polite"></aside>
-  </section>
+<div class="rule"></div>
+<main class="home">
+  <h1>Pareto</h1>
+  <nav class="choose" aria-label="Study or train">
+    <a href="study.html">
+      <span class="kind">Study</span>
+      <span class="what">Solve a spot, walk the line, and read why each hand plays the way it does.</span>
+    </a>
+    <a href="train.html">
+      <span class="kind">Train</span>
+      <span class="what">Answer questions on fresh boards: who has the advantage, how big you can go, what a hand can do.</span>
+    </a>
+  </nav>
 </main>
-<div class="scrim" id="scrim" hidden></div>
-<div class="loader" id="loader" hidden role="status" aria-live="polite">
-  <div class="card">
-    <div class="title" id="l-title"></div>
-    <div class="track"><i id="l-fill"></i></div>
-    <div class="meta"><span id="l-now"></span><span class="grow"></span><button type="button" id="l-stop">Stop</button></div>
-  </div>
-</div>
-<div class="pop theirs" id="theirs" hidden role="img" aria-label="The other player's range"></div>
-<div class="deal pop" id="cardpick" hidden role="group" aria-label="Board card"></div>
-<section class="editor" id="editor" hidden aria-label="Edit ranges" tabindex="-1">
-  <div class="ed-head">
-    <div class="seg" role="group" aria-label="Range">
-      <button type="button" id="e-oop" aria-pressed="true">OOP</button>
-      <button type="button" id="e-ip" aria-pressed="false">IP</button>
-    </div>
-    <span class="count" id="e-count"></span>
-    <span class="grow"></span>
-    <button type="button" id="e-cancel">Cancel</button>
-    <button type="button" class="primary" id="e-save">Save</button>
-  </div>
-  <div class="ed-body">
-    <div class="paint" id="e-paint" role="group" aria-label="Range chart"></div>
-    <div class="curve" id="e-curve"></div>
-  </div>
-  <div class="sliders" id="e-sliders"></div>
-</section>
-<form class="drawer" id="drawer" hidden aria-label="Setup" tabindex="-1">
-  <div class="spot-only">
-    <button type="button" class="link" id="f-sub" hidden>Re-solve from this street</button>
-    <label>Board<input id="f-board" autocomplete="off" spellcheck="false"></label>
-    <div class="painter">
-      <div class="head">
-        <div class="seg" role="group" aria-label="Range">
-          <button type="button" id="p-oop" aria-pressed="true">OOP</button>
-          <button type="button" id="p-ip" aria-pressed="false">IP</button>
-        </div>
-        <span class="count" id="p-count"></span>
-        <button type="button" class="clear" id="p-clear">Clear</button>
-      </div>
-      <div class="paint" id="paint" role="group" aria-label="Range chart"></div>
-      <textarea id="f-range" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Range notation"></textarea>
-    </div>
-  </div>
-  <div class="row">
-    <label>Pot<input id="f-pot" inputmode="decimal"></label>
-    <label>Behind<input id="f-stack" inputmode="decimal"></label>
-  </div>
-  <div class="row">
-    <label>Bets %<input id="f-bets" autocomplete="off"></label>
-    <label>Raises x<input id="f-raise" autocomplete="off"></label>
-  </div>
-  <div class="row">
-    <label>Raises allowed<input id="f-max" inputmode="numeric"></label>
-    <label class="check">All-in<input id="f-allin" type="checkbox"></label>
-  </div>
-  <p class="error" id="f-error" role="alert"></p>
-  <button type="submit" class="primary">Solve</button>
-</form>
-<script type="module" src="app.js?v=86cd644951"></script>
 </body>
 </html>

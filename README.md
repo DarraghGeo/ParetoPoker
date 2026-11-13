@@ -23,9 +23,26 @@ Spots can start on the flop, the turn or the river, and are solved and walked st
 `docs/` is the built page. To publish it: repository Settings, Pages, deploy from a branch,
 folder `/docs`.
 
-A board of three, four or five cards, two ranges and a bet menu are solved in the browser. Walk
-the line, pick a hand, read what it does and why. The pen edits the ranges; each save is a version
-you can slide back to.
+The page opens on a choice between the two:
+
+- **Study** (`study.html`): a board of three, four or five cards, two ranges and a bet menu are
+  solved in the browser. Walk the line, pick a hand, read what it does and why. The pen edits the
+  ranges; each save is a version you can slide back to.
+  A spot too big to solve whole in a browser (most flops with several sizes, raises and all-in) is
+  offered as Solve (Lite): the first street's betting as given, one bet size on the later ones.
+- **Train** (`train.html`): questions on boards dealt at random, with the ranges, pot and bet sizes set up in
+  Study. Who has the range advantage, who has the nut advantage (hands with 90% equity or more),
+  the biggest bet or raise the range takes, and what a given hand can do. The two ranges sit side
+  by side, hero in ink and villain faded, or as the two equity curves. Settings choose the kinds
+  of question and the streets; each shows its last five days played. The day's score opens the
+  last questions with the answer given, the right one and why. A question whose answer is too
+  close to call is not asked.
+  A flop is solved with poker-flopsolve's lite preset (`litePreset`): the flop's betting as set up,
+  one bet size on the turn and river, stopped when the first decisions stop moving.
+  Solves run in the background until three boards wait behind the one on screen. A board is asked
+  about from several positions, and with nothing waiting it is gone round again with other hands.
+  Every third flop is dealt new; the two after it are each one card away from the flop before, and
+  start from its solve (`warmStart` with `warmCards`), which settles in about half the iterations.
 
 ```bash
 npm install

@@ -3,20 +3,8 @@ import { survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
 import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
+import { $, COLORS, DEFAULTS, GLYPH, RANKS, bar, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
-const $ = (id) => document.getElementById(id);
-const COLORS = ['--act-fold', '--act-check', '--act-small', '--act-big', '--act-allin'];
-const RANKS = 'AKQJT98765432';
-const GLYPH = { s: '♠︎', h: '♥︎', d: '♦︎', c: '♣︎' };
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const pct = (x) => `${Math.round(100 * x)}`;
-const cardsHtml = (text) => (text.match(/[2-9TJQKA][shdc]/g) ?? []).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join('');
-
-const DEFAULTS = {
-  board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, bets: [0.33, 0.75, 1.5], raises: [2.5], maxRaises: 1, allIn: false,
-  oop: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s',
-  ip: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
-};
 const state = {
   mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', split: false,
   spot: null, job: 0, status: '', stats: null,
@@ -37,17 +25,18 @@ const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ c
 const worker = new Worker(new URL('./worker.js', import.meta.url));
 worker.onmessage = ({ data }) => {
   if (data.type === 'preview') { onPreview(data); return; }
+  if (data.type === 'fits') { onFits(data); return; }
   if (data.job !== state.job) return;
-  if (data.type === 'progress') { loading(data); state.status = `solving ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; }
+  if (data.type === 'progress') { loading(data); state.status = data.lite ? 'solving lite' : `solving ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; }
   if (data.type === 'error') { loaded(); state.status = ''; $('state').textContent = ''; delete $('state').dataset.busy; openSetup(state.sub ? { sub: true } : undefined); $('f-error').textContent = data.message; }
   if (data.type === 'subgame') {
     // The street re-solved on its own becomes the next version: the cards dealt, the ranges as they arrive
     state.versions = state.versions.slice(0, state.at + 1);
-    state.versions.push({ id: ++versionId, oop: data.spot.oop, ip: data.spot.ip, dials: { oop: neutral(), ip: neutral() }, curves: new Map(), fixed: true, base: { board: data.spot.board, pot: data.spot.pot, stack: data.spot.stack, ...state.sub }, pos: { node: 0, dealt: [] } });
+    state.versions.push({ id: ++versionId, oop: data.spot.oop, ip: data.spot.ip, dials: { oop: neutral(), ip: neutral() }, curves: new Map(), fixed: true, base: { board: data.spot.board, pot: data.spot.pot, stack: data.spot.stack, ...state.sub, lite: false }, pos: { node: 0, dealt: [] } });
     state.sub = null; turnTo(state.versions.length - 1);
   }
   if (data.type === 'solved') {
-    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.status = `${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
     // back where this version was last looked at, if that place exists in it
     const pos = version().pos ?? { node: 0, dealt: [] }; const there = state.nodes[pos.node];
     const ok = there?.kind === 'decision' && pos.dealt.length >= there.round;
@@ -60,6 +49,13 @@ worker.onmessage = ({ data }) => {
 const load = { started: 0, first: null, timer: null, last: null };
 function loading(data) {
   if (!load.started) { load.started = Date.now(); load.first = null; load.timer = setTimeout(() => { $('loader').hidden = false; }, 350); }
+  if (data.lite) {
+    load.last = Math.max(load.last ?? 0, data.done);
+    $('l-title').innerHTML = `Solving the ${data.street} <span>${cardsHtml(conf().board)}</span>`;
+    $('l-fill').style.width = `${(100 * load.last).toFixed(1)}%`;
+    $('l-now').textContent = `Lite${data.moving > 0 ? `  \u00b7  first decisions still moving ${(100 * data.moving).toFixed(1)}%` : ''}  \u00b7  ${data.iterations} iterations  \u00b7  ${Math.round((Date.now() - load.started) / 1000)}s`;
+    return;
+  }
   if (data.exploit < Infinity && load.first == null) load.first = Math.max(data.exploit, data.target * 1.01);
   // accuracy closes in on the target by ratio, so the bar moves on a log scale
   const done = load.first == null ? 0 : Math.min(1, Math.max(0, Math.log(load.first / data.exploit) / Math.log(load.first / data.target)));
@@ -130,13 +126,6 @@ function show(decision) {
 }
 
 // ---- drawing ----
-const strataOf = (actions) => { let sized = 0; return actions.map((a) => (a.kind === 'fold' ? 0 : a.kind === 'check' || a.kind === 'call' ? 1 : a.kind === 'allin' ? 4 : sized++ === 0 ? 2 : 3)); };
-const bar = (mix, strata) => { const s = [0, 0, 0, 0, 0]; mix.forEach((p, a) => { s[strata[a]] += p; }); return s.map((x, i) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[i]})"></i>` : '')).join(''); };
-function cellOf(name) {
-  const a = RANKS.indexOf(name[0]); const b = RANKS.indexOf(name[2]);
-  const hi = Math.min(a, b); const lo = Math.max(a, b);
-  return a === b ? `${hi},${hi}` : name[1] === name[3] ? `${hi},${lo}` : `${lo},${hi}`;
-}
 function render() {
   const grid = state.view === 'grid'; const dealing = state.pick != null;
   $('range').hidden = !grid || dealing; $('dist').hidden = grid || dealing; $('deal').hidden = !dealing;
@@ -356,7 +345,6 @@ $('range').addEventListener('click', (ev) => {
 $('combos').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (b) { state.hand = b.dataset.hand; state.cell = cellOf(state.hand); render(); } });
 // ---- setup: the ranges are painted on a chart or typed, whichever is at hand ----
 const draft = { side: 'oop', oop: '', ip: '' };
-const cellName = (i, j) => (i === j ? RANKS[i] + RANKS[i] : i < j ? `${RANKS[i]}${RANKS[j]}s` : `${RANKS[j]}${RANKS[i]}o`);
 /** How much of each chart cell a range holds, 0 to 1, or null when the notation cannot be read. */
 function cellsOf(notation) {
   const cells = new Map();
@@ -408,12 +396,12 @@ window.addEventListener('pointermove', (ev) => { if (stroke) paintAt(ev); });
 const endStroke = () => {
   if (!stroke) return; stroke = null;
   draft[draft.side] = notationOf([...painted.entries()].filter(([, share]) => share > 0).map(([key]) => key));
-  $('f-range').value = draft[draft.side]; renderPaint();
+  $('f-range').value = draft[draft.side]; renderPaint(); checkFit();
 };
 window.addEventListener('pointerup', endStroke); window.addEventListener('pointercancel', endStroke);
 $('f-range').addEventListener('input', () => { draft[draft.side] = $('f-range').value; renderPaint(); });
 $('p-oop').onclick = () => showSide('oop'); $('p-ip').onclick = () => showSide('ip');
-$('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); };
+$('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); checkFit(); };
 function openSetup(how) {
   // from a street's first decision: only the betting is asked, the board and the ranges are what arrived there
   const sub = !!how?.sub; $('drawer').classList.toggle('sub', sub); $('drawer').dataset.sub = sub ? '1' : '';
@@ -422,6 +410,7 @@ function openSetup(how) {
   $('f-bets').value = (Array.isArray(c.bets[0]) ? c.bets : [c.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(' ')).join(' / '); $('f-raise').value = c.raises.join(' '); $('f-max').value = c.maxRaises; $('f-allin').checked = !!c.allIn;
   draft.oop = c.oop; draft.ip = c.ip; showSide(draft.side);
   $('drawer').hidden = false; $('scrim').hidden = false;
+  showFit(false); checkFit();
   // Focus the drawer itself, never a field: on a phone a focused field brings up the keyboard and zooms the page
   $('drawer').focus({ preventScroll: true });
 }
@@ -429,8 +418,8 @@ const closeSetup = () => { $('drawer').hidden = true; $('scrim').hidden = true; 
 $('open-setup').onclick = () => openSetup(); $('f-sub').onclick = () => openSetup({ sub: true }); $('scrim').onclick = () => { closeSetup(); closeEditor(); };
 $('state').onclick = () => { if ($('state').dataset.busy) worker.postMessage({ type: 'stop' }); };
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('drawer').hidden) closeSetup(); });
-$('drawer').addEventListener('submit', (ev) => {
-  ev.preventDefault();
+/** What the setup form holds: the betting, the board as typed, or what is missing. */
+function readForm() {
   // one list of sizes for every street, or one list a street, apart by a slash
   const lists = $('f-bets').value.split('/').map((part) => part.split(/[\s,]+/).map(Number).filter((x) => x > 0).map((x) => x / 100)).filter((list) => list.length);
   const bets = lists.length > 1 ? lists : lists[0] ?? [];
@@ -438,12 +427,36 @@ $('drawer').addEventListener('submit', (ev) => {
   const raises = $('f-raise').value.split(/[\s,x]+/i).map(Number).filter((x) => x > 1);
   const maxRaises = Math.max(0, Math.min(4, Math.round(Number($('f-max').value) || 0)));
   const board = ($('f-board').value.match(/[2-9TJQKAtjqka][shdcSHDC]/g) ?? []).map((c) => c[0].toUpperCase() + c[1].toLowerCase());
-  if (!(pot > 0) || !(stack >= 0) || !bets.length) { $('f-error').textContent = 'Pot, stack and at least one bet size are needed.'; return; }
-  const betting = { bets, raises: maxRaises > 0 ? raises : [], maxRaises: raises.length ? maxRaises : 0, allIn: $('f-allin').checked };
+  if (!(pot > 0) || !(stack >= 0) || !bets.length) return { error: 'Pot, stack and at least one bet size are needed.' };
+  return { pot, stack, board, betting: { bets, raises: maxRaises > 0 ? raises : [], maxRaises: raises.length ? maxRaises : 0, allIn: $('f-allin').checked } };
+}
+// ---- a spot too big to solve whole can still be solved lite: the button says so, in red ----
+const fit = { id: 0, timer: null, lite: false };
+function showFit(lite, note = '') { fit.lite = lite; $('f-solve').textContent = lite ? 'Solve (Lite)' : 'Solve'; $('f-solve').classList.toggle('lite', lite); $('f-fit').textContent = note; }
+/** Ask, a moment after the form last changed, whether the spot in it can be solved whole. */
+function checkFit() {
+  clearTimeout(fit.timer);
+  fit.timer = setTimeout(() => {
+    const form = readForm(); const id = ++fit.id;
+    if ($('drawer').hidden || $('drawer').dataset.sub || form.error || form.board.length < 3 || form.board.length > 5 || new Set(form.board).size !== form.board.length || !cellsOf(draft.oop)?.size || !cellsOf(draft.ip)?.size) { showFit(false); return; }
+    worker.postMessage({ type: 'fits', id, config: { ...form.betting, pot: form.pot, stack: form.stack, board: form.board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim() } });
+  }, 250);
+}
+function onFits(data) {
+  if (data.id !== fit.id) return;
+  const later = ($('f-board').value.match(/[2-9TJQKAtjqka][shdcSHDC]/g) ?? []).length === 3 ? 'the turn and river' : 'the river';
+  showFit(!data.whole && data.lite, data.whole ? '' : data.lite ? `${data.message} Lite solves it with your betting on this street and one bet size on ${later}.` : data.message);
+}
+$('drawer').addEventListener('input', checkFit);
+$('drawer').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const form = readForm();
+  if (form.error) { $('f-error').textContent = form.error; return; }
+  const { pot, stack, board, betting } = form;
   if ($('drawer').dataset.sub) { state.sub = betting; closeSetup(); state.status = 'solving'; $('state').textContent = state.status; worker.postMessage({ type: 'subgame', job: state.job, id: state.node, dealt: state.dealt }); return; }
   if (board.length < 3 || board.length > 5 || new Set(board).size !== board.length) { $('f-error').textContent = 'Three, four or five board cards are needed.'; return; }
   if ((!cellsOf(draft.oop)?.size || !cellsOf(draft.ip)?.size)) { $('f-error').textContent = 'Both ranges need hands.'; return; }
-  Object.assign(state.config, { pot, stack, ...betting, board: board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim() });
+  Object.assign(state.config, { pot, stack, ...betting, board: board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim(), lite: fit.lite });
   remember(); closeSetup(); state.node = 0; state.hand = null;
   begin();
 });
