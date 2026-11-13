@@ -24,9 +24,8 @@ export function treeOf(fs, spot) {
   const walk = (id) => {
     const node = nodes[id];
     const me = node.seat === 'oop' ? 0 : 1;
-    const toCall = node.invested[1 - me] - node.invested[me];
     node.edges.forEach((edge, k) => {
-      edge.label = notation(edge.kind, { add: edge.to - node.invested[me], toCall, pot: node.pot });
+      edge.label = notation(edge.kind, { add: edge.to - node.invested[me], pot: node.pot, to: edge.to, faced: node.invested[1 - me] });
       const child = nodes[edge.child];
       child.parent = id;
       child.via = k;
