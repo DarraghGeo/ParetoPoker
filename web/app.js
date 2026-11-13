@@ -19,6 +19,25 @@ try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (sa
   // an earlier visit saved one raise size as `raise`
   if (!Array.isArray(state.config.raises)) state.config.raises = state.config.raise > 0 ? [state.config.raise] : [];
   delete state.config.raise; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.split = !!saved?.split; } catch { /* first visit */ }
+// A spot handed over in the address (Train's "open in Study"): it becomes the setup, and the page opens at its decision and hand
+try {
+  const q = new URLSearchParams(location.search);
+  const board = (q.get('board') ?? '').match(/[2-9TJQKA][shdc]/g) ?? [];
+  if (board.length >= 3 && board.length <= 5 && new Set(board).size === board.length) {
+    const c = { board: board.join(' ') };
+    const num = (key, ok) => { const x = Number(q.get(key)); if (q.has(key) && Number.isFinite(x) && ok(x)) c[key] = x; };
+    num('pot', (x) => x > 0); num('stack', (x) => x >= 0);
+    const lists = (q.get('bets') ?? '').split('/').map((part) => part.split(',').map(Number).filter((x) => x > 0).map((x) => x / 100)).filter((list) => list.length);
+    if (lists.length) c.bets = lists.length > 1 ? lists : lists[0];
+    if (q.has('raises')) c.raises = q.get('raises').split(',').map(Number).filter((x) => x > 1);
+    if (q.has('max')) c.maxRaises = Math.max(0, Math.min(4, Math.round(Number(q.get('max')) || 0)));
+    if (q.has('allin')) c.allIn = q.get('allin') === '1';
+    for (const side of ['oop', 'ip']) if (q.get(side)?.trim()) c[side] = q.get(side).trim();
+    c.lite = q.get('lite') === '1';
+    Object.assign(state.config, c);
+    state.open = { line: (q.get('line') ?? '').split(',').filter(Boolean), hand: /^([2-9TJQKA][shdc]){2}$/.test(q.get('hand') ?? '') ? q.get('hand') : null };
+  }
+} catch { /* an address that cannot be read opens the saved spot */ }
 const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, detail: state.detail, view: state.view, split: state.split })); } catch { /* private window */ } };
 
 // ---- the solver, in a worker ----
@@ -38,6 +57,14 @@ worker.onmessage = ({ data }) => {
   if (data.type === 'solved') {
     loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
     // back where this version was last looked at, if that place exists in it
+    if (state.open) {
+      // the decision the address names: its line walked from the first decision, as far as this tree has it
+      let at = 0;
+      for (const label of state.open.line) { const edge = state.nodes[at].edges.find((e) => e.label === label); if (!edge || state.nodes[edge.child].kind !== 'decision') break; at = edge.child; }
+      version().pos = { node: at, dealt: [] };
+      if (state.open.hand) { state.hand = state.open.hand; state.cell = cellOf(state.open.hand); }
+      state.open = null;
+    }
     const pos = version().pos ?? { node: 0, dealt: [] }; const there = state.nodes[pos.node];
     const ok = there?.kind === 'decision' && pos.dealt.length >= there.round;
     state.dealt = ok ? [...pos.dealt] : []; state.pick = null; go(ok ? pos.node : 0);
