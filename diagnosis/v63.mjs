@@ -3,7 +3,9 @@
 import { SETS, measure, format } from '../bin/compare.js';
 import { ProfileStrategist, derivedTuner, fittedTuner, presets } from '../src/index.js';
 const [set, limit, rows] = process.argv.slice(2);
-const spots = limit && limit !== 'all' ? SETS[set].filter((_, i) => i % Math.ceil(SETS[set].length / Number(limit)) === 0) : SETS[set];
+let spots = limit && limit !== 'all' ? SETS[set].filter((_, i) => i % Math.ceil(SETS[set].length / Number(limit)) === 0) : SETS[set];
+// SLICE=i/n takes every n-th spot from the i-th: the calculation is single-threaded, so run the slices side by side
+if (process.env.SLICE) { const [k, n] = process.env.SLICE.split('/').map(Number); spots = spots.filter((_, i) => i % n === k); }
 const profile = (extra = {}) => () => ({ ...presets.fitted(), strategist: ProfileStrategist, ...extra });
 const ROWS = [
   ['fitted preset', presets.fitted, {}],
