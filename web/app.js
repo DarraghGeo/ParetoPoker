@@ -132,11 +132,10 @@ function render() {
   const d = state.decision;
   const strata = d ? strataOf(d.actions) : [];
   $('rule').innerHTML = d ? bar(state.survey.mix, strata) : '';
-  renderLine(strata);
-  renderStrip(strata);
-  if (grid) renderGrid(strata); else renderDist();
-  renderCombos(strata);
-  renderWhy();
+  // each part on its own: one that fails must not take the others with it
+  for (const part of [() => renderLine(strata), () => renderStrip(strata), () => (grid ? renderGrid(strata) : renderDist()), () => renderCombos(strata), renderWhy]) {
+    try { part(); } catch (error) { console.error(error); }
+  }
 }
 function renderLine(strata) {
   const nodes = state.nodes;
