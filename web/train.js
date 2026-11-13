@@ -53,6 +53,16 @@ const config = { ...DEFAULTS };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(config, saved.config); } catch { /* first visit */ }
 if (!Array.isArray(config.raises)) config.raises = [];
 // What is being asked about, and what waits: `board` is the board on screen with its positions, `boards` the ones solved ahead of it
+/** The address that opens a spot in Study: the setup, the board, the line to the decision and, when one is asked about, the hand. A flop is solved lite there as it is here. */
+function studyUrl(board, line, hand) {
+  const q = new URLSearchParams({ board: board.replace(/\s+/g, ''), pot: config.pot, stack: config.stack,
+    bets: (Array.isArray(config.bets[0]) ? config.bets : [config.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(',')).join('/'),
+    raises: config.raises.join(','), max: config.maxRaises, allin: config.allIn ? 1 : 0, oop: config.oop, ip: config.ip });
+  if (line?.length) q.set('line', line.join(','));
+  if (hand) q.set('hand', hand);
+  if ((board.match(/[2-9TJQKA][shdc]/g) ?? []).length === 3) q.set('lite', '1');
+  return `study.html?${q}`;
+}
 const game = { boards: [], board: null, spot: null, q: null, busy: null, progress: null, id: 0, failed: 0, error: '' };
 /** How many boards to keep solved ahead of the one on screen. */
 const AHEAD = 3;
@@ -217,6 +227,7 @@ function renderWhere() {
   const stands = !d.line.length ? 'First to act' : last === 'X' ? 'Checked to you' : `Facing ${last}`;
   const num = (x) => String(Math.round(10 * x) / 10);
   $('where').innerHTML = `<span class="who">Hero ${seatName(d.seat)}</span><span class="stands">${esc(stands)}</span><span class="grow"></span><span class="chips">Pot ${num(d.pot)}</span><span class="chips">Behind ${num(d.behind)}</span>`
+    + `<a class="icon" id="study" href="${esc(studyUrl(d.boardText, d.line, game.q?.hand))}" aria-label="Open this spot in Study" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
     + `<button type="button" class="icon" id="view" aria-label="${store.view === 'grid' ? 'Equity distribution' : 'Ranges'}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${store.view === 'grid' ? curveIcon : gridIcon}</svg></button>`;
 }
 /** The two ranges side by side, hero in ink and villain faded; or, in their place, the two equity curves drawn the same way. */
@@ -340,7 +351,7 @@ function renderHistory() {
     const open = openRows.has(e.t);
     const where = !e.line?.length ? 'first to act' : e.line[e.line.length - 1] === 'X' ? 'checked to' : `facing ${e.line[e.line.length - 1]}`;
     return `<li class="${e.ok ? 'good' : 'bad'}"><button type="button" class="past" aria-expanded="${open}" data-row="${e.t}"><i class="mark">${e.ok ? TICK : CROSS}</i><span class="q"><span>${esc(TYPES[e.type] ?? e.type)}${e.hand ? ` <b>${cardsHtml(e.hand)}</b>` : ''}</span><span class="spot"><b>${cardsHtml(e.board)}</b> ${seatName(e.seat)} ${esc(where)}</span></span></button>`
-      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}</dd></dl>` : '') + '</li>';
+      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}<p><a href="${esc(studyUrl(e.board, e.line, e.hand))}">Open in Study</a></p></dd></dl>` : '') + '</li>';
   };
   $('history').innerHTML = `<div class="total"><span class="big"><b>${t.ok}</b>/${t.n}</span><span>${t.n ? `${pct(t.ok / t.n)}% today` : 'Nothing answered today'}</span></div>`
     + (store.log.length ? `<h3>Last questions</h3><ul class="log">${store.log.map(row).join('')}</ul>` : '');
