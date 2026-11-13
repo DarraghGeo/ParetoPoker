@@ -90,8 +90,8 @@ pot, `R2.5x` a raise to 2.5 times the bet faced, `All-in`.
 Where conclusions are proven: rivers solved to 0.01% of the pot and turns to 0.02%, on lines at
 least a fifth of each range takes, and river decisions reached inside such a turn spot on lines at
 least half take. Elsewhere the page gives the numbers and says they are only that. Flop spots are
-solved and walked with numbers only: at the accuracy a browser reaches, one conclusion in seventeen
-thousand was false, and one is a failure.
+solved and walked with numbers only: at the accuracy a browser reaches, one conclusion in about
+twenty-seven thousand was false, and one is a failure.
 
 ## Where this came from
 

@@ -200,6 +200,7 @@ fresh sets and the accounting proofs were run again on it:
 |---|---|
 | Fresh random river spots (60) | 51,717 conclusions, **0 false** |
 | Fresh random turn spots (30) | 30,711 conclusions, **0 false** |
+| River decisions inside those turn spots (30) | 9,751 conclusions, **0 false** |
 | Best reply: same values as the solver when the hand follows its strategy (6 turn spots) | largest difference 5.1e-13% of the pot |
 | Best reply: both players' values for the whole game, averaged, against the solver's own exploitability | largest difference 2.5e-7 points of exploitability |
 | Accounting identities and independent play-out (6 turn spots) | largest error 1.2e-12% of the pot |
