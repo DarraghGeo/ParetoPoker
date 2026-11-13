@@ -28,7 +28,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .board button{font:500 28px/28px var(--mono);border:0;padding:2px 3px;border-radius:3px;background:none}
 .board button:hover{background:var(--surface)}
 .s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
-.line{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:30px}
+.line{display:flex;gap:8px;align-items:center;min-height:30px;min-width:0}
+.line .trail,.line .acts,.line .tools{display:flex;align-items:center;gap:4px}
+.line .trail{flex:0 1 auto;min-width:0;max-width:45%;overflow-x:auto;scrollbar-width:none}
+.line .acts{flex:1 1 0;min-width:0;overflow-x:auto;scrollbar-width:none}
+.line .tools{flex:none;gap:0}
+.line .trail::-webkit-scrollbar,.line .acts::-webkit-scrollbar{display:none}
+.line .trail > *,.line .acts > *{flex:none}
 .line .crumb{border-color:transparent;padding:5px 4px;color:var(--ink-3);font-family:var(--mono);font-size:12px}
 .line .sep{color:var(--line-strong);font-family:var(--mono)}
 .line .act{font-family:var(--mono);font-size:12px;color:var(--ink);display:flex;align-items:center;gap:6px}
@@ -100,9 +106,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .rows .name{font:400 11px/14px var(--mono);color:var(--ink-3)}
 .rows .name .short{display:none}
 @media (max-width:600px){.rows .name .long{display:none}.rows .name .short{display:inline}}
-.line .view + .view{margin-left:0}
 .curve .dot{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
-.line .view{margin-left:auto}
 .curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
 /* One column per hand, all the same width, edge to edge; a dot under the strip marks the hand picked */
 .strip{display:flex;height:72px;gap:0;align-items:stretch;margin:10px 0}
@@ -154,12 +158,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   main{--side:min(560px,calc(100dvh - 318px));height:100dvh;padding-top:14px;padding-bottom:14px;gap:18px;max-width:calc(var(--side) + 56px + 600px + 80px)}
   .stage{flex:1;min-height:0;grid-template-columns:var(--side) minmax(0,1fr);gap:56px;justify-content:start}
   .left{gap:12px;width:var(--side)}
-  .line{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:4px}
-  .line::-webkit-scrollbar{display:none}
-  .line > *{flex:none}
-  .line .act{padding-left:7px;padding-right:7px}
-  .line .view{position:sticky;background:var(--bg);padding:6px 5px}
-  #edit{right:52px}#split{right:26px}#view{right:0}
+  .line .act{padding-left:8px;padding-right:8px}
   .box{width:var(--side);height:var(--side);aspect-ratio:auto}
   .stripbox{height:132px;flex:none}
   .rows{height:132px;gap:2px}
@@ -192,3 +191,8 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .loader .track{height:6px;border-radius:3px;background:var(--surface);overflow:hidden}
 .loader .track i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .3s ease}
 .loader .meta{display:flex;align-items:center;gap:12px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+
+.theirs{width:190px;padding:10px}
+.theirs .paint b{cursor:default;padding:0}
+.drawer .link{align-self:flex-start;border:0;padding:0;color:var(--accent);font:500 13px/18px var(--sans)}
+.drawer.sub .link{display:none}

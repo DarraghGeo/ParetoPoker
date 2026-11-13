@@ -104,7 +104,7 @@ function turnTo(index) {
   solve(same);
 }
 function go(id) {
-  state.node = id; state.pick = null;
+  state.node = id; state.pick = null; $('theirs').hidden = true;
   worker.postMessage({ type: 'decision', job: state.job, id, dealt: state.dealt });
 }
 function show(decision) {
@@ -163,15 +163,18 @@ function renderLine(strata) {
   const onward = (e) => { const child = nodes[e.child]; if (child.kind === 'decision') return `data-go="${e.child}"`; if (child.kind === 'chance' && nodes[child.edges[0]?.child]?.kind === 'decision') return `data-deal="${child.id}"`; return 'disabled'; };
   const opensStreet = here => here.parent >= 0 && nodes[here.parent].kind === 'chance';
   const here = nodes[state.node];
-  $('line').innerHTML = path.map((p) => (p.deal != null ? `<button type="button" class="crumb card" data-deal="${p.deal}" aria-label="Change the card dealt">${cardsHtml(p.card ?? '')}</button>` : `<button type="button" class="crumb" data-go="${p.back}">${esc(p.label)}</button>`) + '<span class="sep">/</span>').join('')
-    + `<span class="who">${here.seat === 'oop' ? 'OOP' : 'IP'}</span>`
-    + here.edges.map((e, k) => { return `<button type="button" class="act" ${onward(e)}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)} ${pct(state.survey.mix[k])}</button>`; }).join('')
-    + (opensStreet(here) ? '<button type="button" class="icon view" id="resolve" aria-label="Re-solve from this street"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M13 8a5 5 0 1 1-1.6-3.7M13 2.5v2.4h-2.4" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' : '')
-    + (version().fixed ? '' : `<button type="button" class="icon view" id="edit" aria-label="Edit ranges"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>`) + `<button type="button" class="icon view" id="split" aria-pressed="${state.split}" aria-label="${state.split ? 'One bar' : 'By made hand'}">${state.split
-      ? '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 6.5h12v3H2z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'
-      : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</button><button type="button" class="icon view" id="view" aria-label="${state.view === 'grid' ? 'Equity distribution' : 'Grid'}">${state.view === 'grid'
-      ? '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 13c3 0 3-4 6-5s3-5 6-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
-      : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'}</button>`;
+  const icon = (id, label, path, extra = '') => `<button type="button" class="icon" id="${id}" aria-label="${label}" ${extra}><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${path}</svg></button>`;
+  const stroke = 'fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"';
+  // the line so far and the icons stay put; only the choices at this decision scroll
+  $('line').innerHTML = `<div class="trail">${path.map((p) => (p.deal != null ? `<button type="button" class="crumb card" data-deal="${p.deal}" aria-label="Change the card dealt">${cardsHtml(p.card ?? '')}</button>` : `<button type="button" class="crumb" data-go="${p.back}">${esc(p.label)}</button>`) + '<span class="sep">/</span>').join('')}<span class="who">${here.seat === 'oop' ? 'OOP' : 'IP'}</span></div>`
+    + `<div class="acts">${here.edges.map((e, k) => `<button type="button" class="act" ${onward(e)}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)}</button>`).join('')}</div>`
+    + '<div class="tools">'
+    + icon('villain', here.seat === 'oop' ? 'In position\'s range' : 'Out of position\'s range', `<circle cx="8" cy="5.2" r="2.6" ${stroke}/><path d="M2.8 13.6c.6-2.6 2.6-4 5.2-4s4.6 1.4 5.2 4" ${stroke}/>`)
+    + (version().fixed ? '' : icon('edit', 'Edit ranges', `<path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" ${stroke}/>`))
+    + icon('split', state.split ? 'One bar' : 'By made hand', state.split ? `<path d="M2 6.5h12v3H2z" ${stroke}/>` : `<path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" ${stroke}/>`, `aria-pressed="${state.split}"`)
+    + icon('view', state.view === 'grid' ? 'Equity distribution' : 'Grid', state.view === 'grid' ? `<path d="M2 13c3 0 3-4 6-5s3-5 6-5" ${stroke}/>` : `<path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" ${stroke}/>`)
+    + '</div>';
+  $('f-sub').hidden = !opensStreet(here);
 }
 /** Choosing the card dealt: every card still in the deck, a row a suit. */
 function renderDeal() {
@@ -183,6 +186,22 @@ function renderDeal() {
 function cardGrid(gone, now) {
   return ['s', 'h', 'd', 'c'].map((suit) => `<div>${[...RANKS].map((rank) => { const card = rank + suit; return `<button type="button" class="s-${suit}" data-card="${card}" ${gone.has(card) && card !== now ? 'disabled' : ''} aria-pressed="${card === now}" aria-label="${card}">${rank}${GLYPH[suit]}</button>`; }).join('')}</div>`).join('');
 }
+// ---- the other player's range at this decision: which hands, and how much of each ----
+function showVillain(anchor) {
+  const pop = $('theirs'); if (!pop.hidden) { pop.hidden = true; return; }
+  const cells = new Map();
+  for (const v of state.decision?.villain ?? []) { const key = cellOf(v.name); cells.set(key, (cells.get(key) ?? 0) + v.weight); }
+  let html = '';
+  for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) {
+    const share = Math.min(1, (cells.get(`${i},${j}`) ?? 0) / (i === j ? 6 : i < j ? 4 : 12));
+    html += `<b style="grid-column:${j + 1 + (j > 4) + (j > 8)};grid-row:${i + 1 + (i > 4) + (i > 8)}" title="${cellName(i, j)}"><i style="height:${Math.round(100 * share)}%"></i></b>`;
+  }
+  pop.innerHTML = `<div class="paint">${html}</div>`; pop.hidden = false;
+  const box = anchor.getBoundingClientRect(); const width = pop.offsetWidth;
+  pop.style.top = `${box.bottom + 8}px`; pop.style.left = `${Math.max(12, Math.min(box.left + box.width / 2 - width / 2, innerWidth - width - 12))}px`;
+}
+document.addEventListener('pointerdown', (ev) => { if (!$('theirs').hidden && !ev.target.closest('#theirs') && !ev.target.closest('#villain')) $('theirs').hidden = true; });
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') $('theirs').hidden = true; });
 // ---- the board: tap a card, pick another from the cards that drop down under it ----
 let swapping = null;
 const closeCards = () => { swapping = null; $('cardpick').hidden = true; };
@@ -309,7 +328,7 @@ function renderWhy() {
 const W = 560, PAD = 8;
 $('line').addEventListener('click', (ev) => {
   if (ev.target.closest('#edit')) { openEditor(); return; }
-  if (ev.target.closest('#resolve')) { openSetup({ sub: true }); return; }
+  if (ev.target.closest('#villain')) { showVillain(ev.target.closest('#villain')); return; }
   const deal = ev.target.closest('[data-deal]'); if (deal) { state.pick = +deal.dataset.deal; render(); return; }
   if (ev.target.closest('#split')) { state.split = !state.split; remember(); render(); $('split')?.focus(); return; }
   if (ev.target.closest('#view')) { state.view = state.view === 'grid' ? 'curve' : 'grid'; remember(); render(); $('view')?.focus(); return; }
@@ -397,7 +416,7 @@ function openSetup(how) {
   $('drawer').focus({ preventScroll: true });
 }
 const closeSetup = () => { $('drawer').hidden = true; $('scrim').hidden = true; $('f-error').textContent = ''; };
-$('open-setup').onclick = () => openSetup(); $('scrim').onclick = () => { closeSetup(); closeEditor(); };
+$('open-setup').onclick = () => openSetup(); $('f-sub').onclick = () => openSetup({ sub: true }); $('scrim').onclick = () => { closeSetup(); closeEditor(); };
 $('state').onclick = () => { if ($('state').dataset.busy) worker.postMessage({ type: 'stop' }); };
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('drawer').hidden) closeSetup(); });
 $('drawer').addEventListener('submit', (ev) => {

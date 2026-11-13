@@ -46,6 +46,7 @@
     <div class="meta"><span id="l-now"></span><span class="grow"></span><button type="button" id="l-stop">Stop</button></div>
   </div>
 </div>
+<div class="pop theirs" id="theirs" hidden role="img" aria-label="The other player's range"></div>
 <div class="deal pop" id="cardpick" hidden role="group" aria-label="Board card"></div>
 <section class="editor" id="editor" hidden aria-label="Edit ranges" tabindex="-1">
   <div class="ed-head">
@@ -66,6 +67,7 @@
 </section>
 <form class="drawer" id="drawer" hidden aria-label="Setup" tabindex="-1">
   <div class="spot-only">
+    <button type="button" class="link" id="f-sub" hidden>Re-solve from this street</button>
     <label>Board<input id="f-board" autocomplete="off" spellcheck="false"></label>
     <div class="painter">
       <div class="head">
