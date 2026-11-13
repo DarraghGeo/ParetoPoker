@@ -51,11 +51,13 @@ export class NapkinSelector {
    * @param {number} [options.airEquity] §2: equity below which a hand with no pair and no draw is air. Default 0.2.
    * @param {number} [options.callFloor] A hand needs this share of the pot odds in equity to call,
    *   and his continues are assumed to as well (as in EquitySelector). Default 0.5.
+   * @param {number} [options.drawBehind] §3: a draw calls ahead of made hands only when at least
+   *   this many pots are left behind after the call (a hit has to collect another bet). Default 1.
    * @param {number} [options.priorStrength] Weight, among the bluff-catcher marks, of equity
    *   against the range he started with. See WEIGHTS.priorStrength. 0 uses the guide's marks alone.
    */
-  constructor({ valueThreshold = 0.5, thinValue = [0.5, 0.7], trapShare = 1 / 6, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength } = {}) {
-    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength });
+  constructor({ valueThreshold = 0.5, thinValue = [0.5, 0.7], trapShare = 1 / 6, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1 } = {}) {
+    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind });
     this.cache = new WeakMap();
   }
 
@@ -149,17 +151,23 @@ export class NapkinSelector {
       return scores;
     }
 
+    const order = this.#roleOrder(context, view);
+
     if (context.street === 'flop') {
+      const drawsFirst = order.nutDraw > order.air;
       for (let i = 0; i < NUM_COMBOS; i++) {
         if (!(hero[i] > 0)) continue;
-        // Draws first (two cards to come), then blockers to his strong hands
-        scores[i] = classes.draw[i] ? 10 * classes.draw[i] + kept(i) : sized.blocksContinues[i];
+        // Draws first (two cards to come), then blockers to his strong hands. A pair has
+        // showdown value to give up, so pairs come last, the weakest first (as on the river).
+        // When the spot favours pure bluffs (see #roleOrder), the blockers go ahead of the draws.
+        if (classes.draw[i]) scores[i] = (drawsFirst ? 20 : 0) + classes.draw[i] + kept(i);
+        else if (!classes.pair[i]) scores[i] = 10 + sized.blocksContinues[i];
+        else scores[i] = -10 - strength[i];
       }
       return scores;
     }
 
     // Turn: six roles, each picked by its own mark. Which roles go first depends on the spot.
-    const order = this.#turnRoleOrder(context, view);
     for (let i = 0; i < NUM_COMBOS; i++) {
       if (!(hero[i] > 0)) continue;
       let role;
@@ -189,11 +197,11 @@ export class NapkinSelector {
   }
 
   /**
-   * A rank per turn bluff role, higher first. When he is ahead in range or stacks are deep,
+   * A rank per bluff role, higher first. When he is ahead in range or stacks are deep,
    * hands that keep equity when called go first; when we are ahead or stacks are shallow, pure
    * bluffs do. Made hands, which have showdown value to lose, go last either way.
    */
-  #turnRoleOrder(context, view) {
+  #roleOrder(context, view) {
     const { rangeGap, shallow, deep } = NapkinSelector.WEIGHTS;
     const { spot } = context;
     const heIsAhead = clamp((0.5 - view.rangeEquity) / rangeGap);
@@ -254,10 +262,11 @@ export class NapkinSelector {
     const pair = classes.pair[i];
     if (pair === PAIR.TOP_OR_BETTER) return 3;
     if (classes.draw[i]) {
-      // A draw goes first because a hit collects his next bet. With nothing behind after the
-      // call, or out of position on the turn, it is no better than its equity.
-      const behind = (context.spot.stack ?? Infinity) > context.spot.toCall;
-      if (!behind || (context.street === 'turn' && context.position === 'oop')) return 2;
+      // A draw goes first because a hit collects his next bet. With too little behind after
+      // the call, or out of position on the turn, it is no better than its equity.
+      const { spot } = context;
+      const behind = ((spot.stack ?? Infinity) - spot.toCall) / (spot.pot + spot.toCall);
+      if (behind < this.drawBehind || (context.street === 'turn' && context.position === 'oop')) return 2;
       return 4;
     }
     if (context.street === 'flop') {

@@ -167,7 +167,7 @@ new RangeStrategist({ engine, selector: new NapkinSelector() });
 | Value bets | Hands that beat more than half of his continues. Flat value first (equity that holds against his strong hands), then value that does not block his calls. Out of position on the river, thin value (50-70% against his range) checks, and so do some of the nuts, taken from the very top, as a sixth of the value that checks. |
 | River bluffs | Air first (no pair, under 20% equity), the hands that block his calls ahead; then the weakest of the rest. |
 | Turn bluffs | Six roles (air, overcards, made, gutshot, draw, nut draw), each ordered by its own mark. Draws go first when he is ahead in range or stacks are deep, pure bluffs when we are ahead or stacks are shallow. |
-| Flop bluffs | Draws first, then blockers to his strong hands. |
+| Flop bluffs | Draws first, then blockers to his strong hands, pairs last. When we are ahead in range or stacks are shallow, the blockers go ahead of the draws, as on the turn. |
 | River calls | Hands that beat half his value, then bluff-catchers (beat half his bluffs) by the marks below. Hands that beat neither fold. |
 | Turn and flop calls | By class: draws (when a hit can collect another bet), top pair or better, weaker pairs by equity, high cards last. On the flop, board pairs and pocket pairs above the bottom card move up with top pair. |
 | Bluff-catcher marks | Margin of equity over the price, equity against his value, blocking his value, and on the turn the rivers that help against those that hurt. |
@@ -182,8 +182,11 @@ Three things in it are not in the guide, and are marked in the code:
   with. Without it the engine called a river raise with ace high and folded straights, because
   both "only beat his bluffs" in its model of his range. `new NapkinSelector({ priorStrength: 0 })`
   uses the guide's marks alone.
-- A draw is only called ahead of made hands when chips are left behind after the call, and
-  bluff raises fall back to the weakest hands when the draws run out, so the raise keeps the
+- A draw only calls ahead of made hands when at least a pot is left behind after the call
+  (`drawBehind`): the guide's reason is that a hit collects his next bet.
+- Flop bluffs use the turn's rule for which roles go first. The guide says draws first on the
+  flop; with shallow stacks that cost up to 12% of the pot when exploited.
+- Bluff raises fall back to the weakest hands when the draws run out, so the raise keeps the
   engine's frequency.
 
 Not implemented: "avoid hands that leave him raises" and implied odds as a mark (both need a
@@ -195,11 +198,13 @@ Loss when fully exploited, as a share of the pot, over 4 rivers and 4 turns, bot
 | Selector | Rivers | Turns |
 |---|---|---|
 | `EquitySelector` | 10.7% | 26.1% |
-| `NapkinSelector` | 6.7% | 25.5% |
-| `NapkinSelector({ priorStrength: 0 })` | 15.2% | 27.0% |
+| `NapkinSelector` | 6.7% | 23.8% |
+| `NapkinSelector({ priorStrength: 0 })` | 15.2% | 25.2% |
 
-Against the solver's equilibrium the two are level: 1.4% and 1.5% on rivers, 3.5% and 3.6% on
-turns. `node bin/play.js --selector napkin` runs one spot.
+Against the solver's equilibrium the two are level: 1.4% and 1.5% on rivers, 3.5% and 3.4% on
+turns. On one flop tree (`Td9d6h`, one bet size, stack 1.5x pot) equity loses 27.0% out of
+position and 26.6% in position when exploited, and Napkin 26.4% and 28.4%.
+`node bin/play.js --selector napkin` runs one spot.
 
 `EquitySelector` takes the two equity settings, which can also be passed straight to
 `RangeStrategist`: `valueThreshold` (default 0.5) and `callFloor` (default 0.5: a
