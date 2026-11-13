@@ -31,6 +31,10 @@ The page opens on a choice between the two:
   close to call is not asked.
   A flop is solved with poker-flopsolve's lite preset (`litePreset`): the flop's betting as set up,
   one bet size on the turn and river, stopped when the first decisions stop moving.
+  Solves run in the background until three boards wait behind the one on screen. A board is asked
+  about from several positions, and with nothing waiting it is gone round again with other hands.
+  Every third flop is dealt new; the two after it are each one card away from the flop before, and
+  start from its solve (`warmStart` with `warmCards`), which settles in about half the iterations.
 
 ```bash
 npm install

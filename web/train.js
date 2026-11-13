@@ -1,7 +1,7 @@
 // Train: questions on boards dealt at random. The ranges, pot and bet sizes are the ones set up in Study.
 import { explain, survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
-import { $, COLORS, DEFAULTS, RANKS, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
+import { $, COLORS, DEFAULTS, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
 const TYPES = { range: 'Range advantage', nuts: 'Nut advantage', size: 'Maximum bet or raise', hand: 'What a hand can do' };
 const STREETS = { flop: 'Flop', turn: 'Turn', river: 'River' };
@@ -52,28 +52,30 @@ const dayName = (key) => { const [y, m, d] = key.split('-').map(Number); return 
 const config = { ...DEFAULTS };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(config, saved.config); } catch { /* first visit */ }
 if (!Array.isArray(config.raises)) config.raises = [];
-function dealBoard(n) {
-  const deck = []; for (const r of RANKS) for (const s of 'shdc') deck.push(r + s);
-  const out = []; while (out.length < n) out.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]);
-  return out.join(' ');
-}
-
-const game = { queue: [], spot: null, q: null, busy: null, progress: null, id: 0, failed: 0, error: '' };
+// What is being asked about, and what waits: `board` is the board on screen with its positions, `boards` the ones solved ahead of it
+const game = { boards: [], board: null, spot: null, q: null, busy: null, progress: null, id: 0, failed: 0, error: '' };
+/** How many boards to keep solved ahead of the one on screen. */
+const AHEAD = 3;
 const worker = new Worker(new URL('./train-worker.js', import.meta.url));
-/** Keep a spot or two solved ahead of the one being asked about. */
+/** Solve in the background until enough boards wait. The worker deals the board. */
 function want() {
-  if (game.busy || game.queue.length >= 2 || game.failed >= 3) return;
+  if (game.busy || game.boards.length >= AHEAD || game.failed >= 3) return;
   const streets = Object.keys(STREETS).filter((s) => store.streets[s]);
   const street = streets[Math.floor(Math.random() * streets.length)];
   game.busy = { id: ++game.id, street }; game.progress = null;
-  worker.postMessage({ type: 'deal', id: game.id, config: { ...config, board: dealBoard({ flop: 3, turn: 4, river: 5 }[street]) } });
+  worker.postMessage({ type: 'deal', id: game.id, street, config });
 }
 worker.onmessage = ({ data }) => {
   if (!game.busy || data.id !== game.busy.id) return;
   if (data.type === 'progress') { game.progress = data; if (!game.q) renderAsk(); return; }
   game.busy = null;
   if (data.type === 'error') { game.failed++; game.error = data.message; }
-  if (data.type === 'dealt') { game.failed = 0; game.error = ''; for (const d of data.decisions) game.queue.push(spotOf(d)); }
+  if (data.type === 'dealt') { game.failed = 0; game.error = ''; if (data.decisions.length) {
+      // a flop may be a card away from the one solved before it: it goes in anywhere in the queue, so the two do not always follow each other
+      const board = { street: data.street, spots: data.decisions.map(spotOf), at: 0, round: 0, got: 0 };
+      game.boards.splice(data.near ? Math.floor(Math.random() * (game.boards.length + 1)) : game.boards.length, 0, board);
+    }
+  }
   if (!game.q) advance(); else want();
 };
 
@@ -144,13 +146,15 @@ const BUILD = {
     return { text: 'What actions can it take?', hand: row.hand.name, multi: true, options: d.actions.map((a, k) => ({ label: a.label, action: k })), right: d.actions.map((a, k) => k).filter((k) => row.hand.strategy[k] >= TAKES), why };
   },
 };
-/** The next question on a spot, or null when it has none left to ask. Earlier streets cost more to solve, so a hand is asked about more than once there. */
-function ask(spot) {
+/** How many times a hand is asked about on one position, each time round the board. Earlier streets cost more to solve, so more there. */
+const HANDS = { river: 1, turn: 2, flop: 2 };
+/** The next question on a position, or null when it has none left to ask this time round. */
+function ask(spot, round) {
   const street = spot.decision.street;
   if (!store.streets[street]) return null;
   for (const type of Object.keys(TYPES)) {
     if (!store.types[type]) continue;
-    const limit = type === 'hand' ? { river: 1, turn: 2, flop: 3 }[street] : 1;
+    const limit = type === 'hand' ? HANDS[street] * (round + 1) : 1;
     if ((spot.asked[type] ?? 0) >= limit) continue;
     spot.asked[type] = (spot.asked[type] ?? 0) + 1;
     const q = BUILD[type](spot);
@@ -158,13 +162,24 @@ function ask(spot) {
   }
   return null;
 }
+/**
+ * On to the next question: the rest of this position, then the board's other positions, then the
+ * next board. With no board waiting, the board on screen is gone round again with other hands,
+ * which buys the solve in the background its time.
+ */
 function advance() {
   game.q = null;
   while (!game.q) {
-    if (game.spot) game.q = ask(game.spot);
-    if (game.q) break;
-    game.spot = game.queue.shift() ?? null;
-    if (!game.spot) break;
+    const b = game.board;
+    if (b) {
+      // with a full queue behind it a board is left after two positions: the solver is idle until one is taken
+      const most = game.boards.length >= AHEAD ? Math.min(2, b.spots.length) : b.spots.length;
+      for (; b.at < most; b.at++) { game.spot = b.spots[b.at]; game.q = ask(game.spot, b.round); if (game.q) { b.got++; break; } }
+      if (game.q) break;
+      if (!game.boards.length && b.got > 0 && b.round < 4 && store.types.hand && store.streets[b.street]) { b.round++; b.at = 0; b.got = 0; continue; }
+    }
+    game.board = game.boards.shift() ?? null;
+    if (!game.board) { game.spot = null; break; }
   }
   want(); render();
 }
@@ -311,10 +326,10 @@ $('settings').addEventListener('click', (ev) => {
   if (store[group][key] && Object.values(store[group]).filter(Boolean).length === 1) return;
   store[group][key] = !store[group][key]; save();
   if (group === 'streets') {
-    // spots solved ahead on a street no longer wanted are dropped, and one being solved is left to finish unseen
-    game.queue = game.queue.filter((s) => store.streets[s.decision.street]);
+    // boards solved ahead on a street no longer wanted are dropped, and one being solved is left to finish unseen
+    game.boards = game.boards.filter((b) => store.streets[b.street]);
     if (game.busy && !store.streets[game.busy.street]) { game.busy = null; game.progress = null; }
-    if (game.spot && !store.streets[game.spot.decision.street] && !game.q?.done) advance(); else { want(); if (!game.q) renderAsk(); }
+    if (game.board && !store.streets[game.board.street] && !game.q?.done) { game.board = null; advance(); } else { want(); if (!game.q) renderAsk(); }
   } else if (game.q && !game.q.done && !store.types[game.q.type]) advance();
   renderSettings(); $('settings').querySelector(`[data-key="${key}"]`)?.focus({ preventScroll: true });
 });
