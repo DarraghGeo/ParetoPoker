@@ -26,26 +26,27 @@ before the run, apart from fix 18 below, which applies to every preset.
 
 | Set | `presets.equity()` | `presets.napkin()` | `presets.fitted()` |
 |---|---|---|---|
-| rivers-tune (72 trees) | 9.01 (1.11) | 4.64 (0.70) | 3.72 (0.66) |
-| rivers-held (48) | 9.24 (1.19) | 4.51 (0.73) | 3.79 (0.70) |
-| R12 | 9.33 (1.19) | 3.87 (0.61) | 3.31 (0.77) |
-| R8-B (bets 50/100%, 3x raises) | 9.89 (1.13) | 4.41 (0.44) | 3.68 (0.56) |
-| rivers-alt (48, bets 25/50/100/200%, 3x raises) | 9.83 (1.12) | 5.08 (0.75) | 4.17 (0.71) |
-| turns-tune (16) | 29.20 (3.58) | 14.88 (2.65) | 9.97 (2.18) |
-| turns-held (8, one board) | 26.14 (4.41) | 12.70 (2.06) | 8.40 (1.92) |
-| turns-held2 (16, two boards never used before) | 29.35 (3.33) | 13.74 (2.20) | 9.59 (2.09) |
-| T4 | 26.09 (3.52) | 11.70 (1.77) | 8.68 (2.01) |
-| T4-B (bets 50/100%, 3x raises) | 34.70 (4.69) | 19.37 (1.93) | 10.74 (2.28) |
-| turns-alt (8, bets 25/50/100/200%, 3x raises) | 24.16 (4.40) | 12.09 (2.06) | 8.99 (2.14) |
-| F1 (one flop tree) | 26.81 (6.07) | 14.88 (5.60) | 10.41 (4.25) |
-| flops-check (3 flop trees) | 23.13 (3.64) | 16.13 (3.96) | 10.85 (3.31) |
+| rivers-tune (72 trees) | 9.01 (1.11) | 4.64 (0.70) | 3.53 (0.61) |
+| rivers-held (48) | 9.24 (1.19) | 4.51 (0.73) | 3.70 (0.67) |
+| R12 | 9.33 (1.19) | 3.87 (0.61) | 2.96 (0.62) |
+| R8-B (bets 50/100%, 3x raises) | 9.89 (1.13) | 4.41 (0.44) | 3.15 (0.50) |
+| rivers-alt (48, bets 25/50/100/200%, 3x raises) | 9.83 (1.12) | 5.08 (0.75) | 4.07 (0.74) |
+| turns-tune (16) | 29.20 (3.58) | 14.88 (2.65) | 9.91 (2.17) |
+| turns-held (8, one board) | 26.14 (4.41) | 12.70 (2.06) | 8.43 (1.92) |
+| turns-held2 (16, two boards never used before) | 29.35 (3.33) | 13.74 (2.20) | 9.51 (2.06) |
+| T4 | 26.09 (3.52) | 11.70 (1.77) | 8.68 (2.00) |
+| T4-B (bets 50/100%, 3x raises) | 34.70 (4.69) | 19.37 (1.93) | 10.46 (2.30) |
+| turns-alt (8, bets 25/50/100/200%, 3x raises) | 24.16 (4.40) | 12.09 (2.06) | 9.04 (2.17) |
+| F1 (one flop tree) | 26.81 (6.07) | 14.88 (5.60) | 10.36 (4.22) |
+| flops-check (3 flop trees) | 23.13 (3.64) | 16.13 (3.96) | 10.83 (3.29) |
 
 Fitted on: rivers-tune, turns-tune, and for the kind table also `turns-more` (32 further turn
 trees). Not fitted on, but used to choose between alternatives: R8-B and rivers-alt (the size
-rule, entries 22 and 32), T4 and T4-B (the depth condition of entry 27), the flop trees (entry
-29). Blind: rivers-held, R12, turns-held, turns-held2, turns-alt.
+rule, entries 22 and 32), rivers-held and rivers-alt (entries 33 and 34 were checked on them
+before being kept), T4 and T4-B (the depth condition of entry 27), the flop trees (entry 29).
+Blind throughout: R12, turns-held, turns-held2, turns-alt.
 
-`diagnosis/final-table.txt` has the seats apart.
+`diagnosis/final-table.txt` (equity, napkin) and `diagnosis/final-fitted.txt` have the seats apart.
 
 ### Where the loss was, street by street
 

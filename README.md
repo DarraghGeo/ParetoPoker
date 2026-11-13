@@ -428,21 +428,25 @@ averaged (loss to its equilibrium play in brackets):
 
 | Spots | `presets.equity()` | `presets.napkin()` | `presets.fitted()` |
 |---|---|---|---|
-| 72 rivers used for tuning (four range pairs, three depths) | 9.0% (1.1%) | 4.6% (0.7%) | 3.7% (0.7%) |
-| 48 rivers held out | 9.2% (1.2%) | 4.5% (0.7%) | 3.8% (0.7%) |
-| 48 rivers, a different menu of bet sizes | 9.8% (1.1%) | 5.1% (0.8%) | 4.2% (0.7%) |
-| 16 turns used for tuning | 29.2% (3.6%) | 14.9% (2.7%) | 10.0% (2.2%) |
-| 16 turns held out, boards never used | 29.4% (3.3%) | 13.7% (2.2%) | 9.6% (2.1%) |
-| 8 turns, a different menu of bet sizes | 24.2% (4.4%) | 12.1% (2.1%) | 9.0% (2.1%) |
-| 3 small flop trees, checked but not fitted | 23.1% (3.6%) | 16.1% (4.0%) | 10.9% (3.3%) |
+| 72 rivers used for tuning (four range pairs, three depths) | 9.0% (1.1%) | 4.6% (0.7%) | 3.5% (0.6%) |
+| 48 rivers held out | 9.2% (1.2%) | 4.5% (0.7%) | 3.7% (0.7%) |
+| 48 rivers, a different menu of bet sizes | 9.8% (1.1%) | 5.1% (0.8%) | 4.1% (0.7%) |
+| 16 turns used for tuning | 29.2% (3.6%) | 14.9% (2.7%) | 9.9% (2.2%) |
+| 16 turns held out, boards never used | 29.4% (3.3%) | 13.7% (2.2%) | 9.5% (2.1%) |
+| 8 turns, a different menu of bet sizes | 24.2% (4.4%) | 12.1% (2.1%) | 9.0% (2.2%) |
+| 3 small flop trees, checked but not fitted | 23.1% (3.6%) | 16.1% (4.0%) | 10.8% (3.3%) |
 
 The loss grows with stack depth and is largest in 3-bet pots. `TUNINGS.md` has every set, what
 was adopted and what was tried and dropped.
 
 ### Limits
 
-- The engine tracks the opponent's range by assuming they play the engine's own strategy.
-- Flop trees work but grow fast: one bet size and one raise size takes about 15 seconds.
+- The engine tracks the opponent's range by assuming they play the engine's own strategy. That
+  couples the two seats: a rule that is right for one seat can cost the other, which then
+  models its opponent wrongly. Several findings wait on a separate opponent model (TUNINGS.md).
+- The loss grows with stack depth and is largest in 3-bet pots.
+- Flop trees work but grow fast: one bet size and one raise size takes one to three minutes
+  with the fitted preset. Nothing was fitted on the flop.
 - No rake, heads-up only, postflop only.
 - postflop-solver is AGPL-3.0 and no longer maintained by its author; `solver-bridge` links it
   and is AGPL-3.0 as well. The JavaScript only talks to it over a pipe.

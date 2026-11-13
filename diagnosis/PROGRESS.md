@@ -246,3 +246,18 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   more out of position when well ahead is right for that seat and breaks the other seat's
   model of its opponent. Not adopted; recorded as needing a separate opponent model.
   Running: diagnosis/final-fitted.txt. Then final numbers into TUNINGS/README, and the summary.
+- 09:50 **Final numbers** (diagnosis/final-fitted.txt; napkin -> fitted, loss to the best
+  response): rivers-tune 4.64 -> 3.53; rivers-held 4.51 -> 3.70; R12 3.87 -> 2.96; R8-B 4.41 ->
+  3.15; rivers-alt 5.08 -> 4.07; turns-tune 14.88 -> 9.91; turns-held 12.70 -> 8.43;
+  turns-held2 13.74 -> 9.51; T4 11.70 -> 8.68; T4-B 19.37 -> 10.46; turns-alt 12.09 -> 9.04;
+  F1 14.88 -> 10.36; flops-check 16.13 -> 10.83. 42 tests pass.
+  **Run finished.** TUNINGS.md has the record (entries 18-34, what was dropped, where the
+  engine still loses, spot dependence of each item). Open, in order of size:
+  1. A separate opponent model, so that betting more out of position when well ahead in range
+     (3-bet pots) can be adopted without breaking the other seat.
+  2. How a kind's frequency moves with the spot at turn opens (the kinds are right: 1.9%
+     ceiling; one average table leaves about 8.6 located).
+  3. Depth: the loss rises with the stack-to-pot ratio on every street.
+  4. Calling order in position facing a turn bet: on a plateau at 9.4 located against 3.8 for
+     the solver's own order; nothing in the forms of equity closes it.
+  5. The flop has only been checked, never fitted.
