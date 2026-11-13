@@ -1,12 +1,13 @@
 {
   "name": "pareto-poker",
   "version": "0.1.0",
-  "description": "Indifference-math poker engine, scored against postflop-solver",
+  "description": "Explains why hands do what they do in a solved poker spot",
   "main": "src/index.js",
   "scripts": {
-    "test": "node --test",
-    "build:solver": "cargo build --release --manifest-path solver-bridge/Cargo.toml",
-    "play": "node bin/play.js"
+    "test": "node --test test/*.test.js",
+    "test:research": "node --test research/test/*.test.js",
+    "build": "node scripts/build.mjs",
+    "build:solver": "cargo build --release --manifest-path research/solver-bridge/Cargo.toml"
   },
   "repository": {
     "type": "git",
@@ -18,10 +19,14 @@
   "homepage": "https://github.com/DarraghGeo/ParetoPoker#readme",
   "dependencies": {
     "poker-bitvaljs": "^1.13.0",
+    "poker-flopsolve": "^0.4.1",
     "poker-rangeman": "^3.8.1"
   },
   "type": "module",
   "engines": {
     "node": ">=22.13.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
   }
 }
