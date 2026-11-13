@@ -56,13 +56,15 @@ export class SolverMatch {
    *   and deal them out. All three from the solver with 'solver-mixed' is the solver's strategy.
    *   'solver-by-order': the solver's frequencies and mixing laid along the selector's order, in
    *   `orderBands` slices of the range (default 20).
+   * @param {boolean} [options.kinds] With given frequencies: let the mixer's kind tables (its
+   *   `direct` answer) spread them over the hands, as they do in the engine's own play.
    * @param {(decision: Object) => boolean} [options.where] Which of
    *   hero's decisions the engine makes; the solver's own strategy is kept at the others. Gets
    *   `{ street, position, facing, raises, depth, spot }`.
    * @returns {Promise<Object>} Expected values in chips, losses as a share of the pot, and the
    *   engine's and the solver's action frequencies along the first decisions of the hand.
    */
-  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', hands = 'engine', orderBands = 20, where = null } = {}) {
+  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', hands = 'engine', orderBands = 20, kinds = false, where = null } = {}) {
     const seat = POSITIONS.indexOf(hero);
     if (seat < 0) throw new Error(`hero must be 'oop' or 'ip', got ${hero}`);
     const bridge = (this.bridge ??= new SolverBridge());
@@ -84,7 +86,7 @@ export class SolverMatch {
     if (source === 'solver' || frequencies === 'solver' || hands !== 'engine' || where || this.opponent !== this.strategist) {
       // 2. The engine decides at every node with whatever it is given from the solver, then all of it is locked
       const decisions = [];
-      await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, orderBands, where, decisions, lines });
+      await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, orderBands, kinds, where, decisions, lines });
       await bridge.reset();
       for (const { history, flat } of decisions) await bridge.lock(history, flat);
       locked = decisions.length;
@@ -195,7 +197,7 @@ export class SolverMatch {
    * while the equilibrium is still in the bridge.
    */
   async #walkSolverRanges(state, options) {
-    const { seat, source, frequencies, hands, orderBands, where, decisions, lines } = options;
+    const { seat, source, frequencies, hands, orderBands, kinds, where, decisions, lines } = options;
     const node = await this.bridge.node(state.history);
     if (node.terminal) return;
     if (node.chance) {
@@ -246,8 +248,8 @@ export class SolverMatch {
           strategist = new RangeStrategist({ engine: strategist.engine, equity: strategist.equity, selector: solverOrder(node.actions, solved, spot) });
         }
         mine = hands === 'solver-mixed'
-          ? rescaled(solved, state.own, targets, node.actions.findIndex((a) => a.type === (spot.toCall > 0 ? 'fold' : 'check')))
-          : strategist.decide({ ...base, targets }).strategy;
+          ? rescaled(solved, state.own, targets, node.actions.findIndex((a) => a.type === (spot.toCall > 0 ? 'fold' : 'check')), node.actions.flatMap((a, k) => (a.to != null ? [k] : [])))
+          : strategist.decide({ ...base, targets, direct: kinds }).strategy;
         decisions.push({ history: [...state.history], flat: this.#flatten(me, mine) });
         }
       } else {
@@ -386,21 +388,47 @@ function alongOrder(solved, range, order, bands) {
 }
 
 /**
- * The solver's strategy scaled so that each action is taken with `targets[a]` of `range`, keeping
- * which hands it prefers and how it mixes them. The passive action takes what is left.
+ * The solver's hands and mixing at someone else's frequencies: each action is taken with
+ * `targets[a]` of `range`, by the hands the solver takes it with. A hand's probability p becomes
+ * p f / (1 - p + p f), with f set so the target is met: hands the solver plays pure stay pure and
+ * the mixed ones move first. Bets and raises are scaled as one (how often the hand is
+ * aggressive at all) and split over the sizes by the solver's preference for each, so that a
+ * size the solver hardly uses is still filled with its betting hands. Probabilities under half a
+ * percent are taken as the solver's noise and left at zero. The passive action takes what is left.
  */
-function rescaled(solved, range, targets, passive) {
-  const now = aggregate(solved, range) ?? solved.map(() => 0);
+function rescaled(solved, range, targets, passive, aggressive) {
+  const now = aggregate(solved, range);
+  if (!now) return solved.map((probabilities) => Float64Array.from(probabilities));
+  let total = 0;
+  for (const w of range) total += w;
+  const shifted = (from, target) => {
+    const p = from.map((x) => (x < 0.005 ? 0 : Math.min(1, x)));
+    const at = (f) => { let got = 0; for (let i = 0; i < NUM_COMBOS; i++) if (range[i] > 0) got += range[i] * (p[i] * f) / (1 - p[i] + p[i] * f); return got / total; };
+    let low = -12; let high = 12;
+    for (let pass = 0; pass < 50; pass++) { const mid = (low + high) / 2; if (at(Math.exp(mid)) < target) low = mid; else high = mid; }
+    const f = Math.exp((low + high) / 2);
+    return p.map((x) => (x * f) / (1 - x + x * f));
+  };
   const out = solved.map(() => new Float64Array(NUM_COMBOS));
+  const pooled = new Float64Array(NUM_COMBOS);
+  for (const a of aggressive) for (let i = 0; i < NUM_COMBOS; i++) pooled[i] += solved[a][i];
+  const wanted = aggressive.reduce((sum, a) => sum + targets[a], 0);
+  const used = aggressive.reduce((sum, a) => sum + now[a], 0);
+  const often = wanted > 1e-6 ? shifted(pooled, wanted) : pooled.map(() => 0);
   for (let i = 0; i < NUM_COMBOS; i++) {
-    let used = 0;
-    solved.forEach((probabilities, a) => {
-      if (a === passive) return;
-      out[a][i] = now[a] > 1e-9 ? probabilities[i] * (targets[a] / now[a]) : 0;
-      used += out[a][i];
-    });
-    if (used > 1) solved.forEach((_, a) => { out[a][i] /= used; });
-    out[passive][i] = Math.max(0, 1 - Math.min(1, used));
+    let sum = 0;
+    const weights = aggressive.map((a) => { const w = (targets[a] * (solved[a][i] + 0.02 * pooled[i] + 1e-9)) / (now[a] + 0.02 * used + 1e-9); sum += w; return w; });
+    aggressive.forEach((a, k) => { out[a][i] = sum > 0 ? (often[i] * weights[k]) / sum : 0; });
+  }
+  for (let a = 0; a < solved.length; a++) {
+    if (a === passive || aggressive.includes(a)) continue;
+    const calls = targets[a] > 1e-6 ? shifted(solved[a], targets[a]) : solved[a].map(() => 0);
+    for (let i = 0; i < NUM_COMBOS; i++) out[a][i] = Math.min(calls[i], 1 - often[i]);
+  }
+  for (let i = 0; i < NUM_COMBOS; i++) {
+    let sum = 0;
+    for (let a = 0; a < solved.length; a++) if (a !== passive) sum += out[a][i];
+    out[passive][i] = Math.max(0, 1 - sum);
   }
   return out;
 }

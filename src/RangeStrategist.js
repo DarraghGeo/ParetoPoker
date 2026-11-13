@@ -59,12 +59,13 @@ export class RangeStrategist {
    *   order of `actions`. When given, these are filled in place of the engine's frequencies (each
    *   bet or raise still split into value and bluffs at the engine's ratio for its size), so that
    *   only the choice of hands is the selector's. Used to test hand selection on its own.
+   * @param {boolean} [node.direct] With `targets`: still let the mixer spread them by kind of hand.
    * @returns {{ frequencies: Object, played: number[], strategy: Float64Array[], actions: Object[] }}
    *   `strategy[a][combo]` is the probability that the combo takes `actions[a]`. `frequencies` is
    *   the engine's answer and `played[a]` the share of the range that ends up taking `actions[a]`
    *   (the two differ only when a selector offers too few hands, or sets its own share).
    */
-  decide({ position, spot, board, hero, villain, villainPrior, actions, targets = null }) {
+  decide({ position, spot, board, hero, villain, villainPrior, actions, targets = null, direct: kinds = false }) {
     // A line villain should never take (by our model of them) leaves no range to compare with
     if (villainPrior && !(sumOf(villain) > 1e-9)) villain = villainPrior;
 
@@ -119,7 +120,7 @@ export class RangeStrategist {
     // A mixer may say outright how often each hand bets or raises (`direct`): the frequency is
     // then spread over the sizes the engine chose, and nothing is dealt for those actions.
     // Facing a bet it may also give how often each hand calls: `{ aggressive, call }`.
-    const answer = targets ? null : this.mixer.direct?.(context, frequencies);
+    const answer = targets && !kinds ? null : this.mixer.direct?.(context, frequencies);
     const direct = answer ? answer.aggressive ?? answer : null;
     const directCall = answer?.call ?? null;
     if (directCall) {
