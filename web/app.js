@@ -136,7 +136,7 @@ function renderDist() {
   const Xd = (x) => x * W;
   const Yd = (y) => DH - PAD - y * (DH - 2 * PAD);
   const steps = (list) => { const total = list.reduce((t, r) => t + r.w, 0); let x = 0; const pts = []; for (const r of list) { const w = r.w / total; pts.push(`${Xd(x).toFixed(1)},${Yd(r.e).toFixed(1)} ${Xd(x + w).toFixed(1)},${Yd(r.e).toFixed(1)}`); r.mid = x + w / 2; x += w; } return pts.join(' '); };
-  const mine = [...s.rows].sort((a, b) => a.hand.strength - b.hand.strength || a.equity - b.equity).map((r) => ({ w: r.hand.weight, e: r.equity, name: r.hand.name }));
+  const mine = handsInOrder(s).map((r) => ({ w: 1, e: r.equity, name: r.hand.name }));
   // his hands against the range to act, with the cards each removes
   const his = d.villain.map((v) => { let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
@@ -153,38 +153,33 @@ function renderDist() {
 }
 const SHORT = { 'High card': 'HC', Pair: 'P', 'Two pair': '2P', 'Three of a kind': '3K', Straight: 'ST', Flush: 'FL', 'Full house': 'FH', 'Four of a kind': '4K', 'Straight flush': 'SF' };
 /**
- * The strategy along the range, weakest to strongest: one column per strength, as wide as its
- * share. Split, it opens into a row for each made hand, strongest first, each in its own place on
- * the same scale.
+ * The strategy along the range, weakest to strongest: one column per hand, all the same width.
+ * Split, it opens into a row for each made hand, strongest first, each in its own place on the
+ * same scale.
  */
 function renderStrip(strata) {
   const s = state.survey; const el = $('strip');
   if (!s) { el.innerHTML = ''; return; }
-  const picked = s.byName.get(state.hand)?.hand.strength;
-  const column = ([strength, level]) => {
-    const parts = [0, 0, 0, 0, 0]; level.mix.forEach((p, a) => { parts[strata[a]] += p; });
-    return `<button type="button" style="flex:${level.weight.toFixed(4)} 1 0" data-level="${strength}" aria-pressed="${strength === picked}" aria-label="${pct(level.rows[0].equity)}%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</button>`;
+  const hands = handsInOrder(s);
+  const column = (row) => {
+    const parts = [0, 0, 0, 0, 0]; row.hand.strategy.forEach((p, a) => { parts[strata[a]] += p; });
+    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</button>`;
   };
-  const levels = [...s.levels.entries()].sort((a, b) => a[0] - b[0]);
   const names = state.decision.categories;
-  if (!state.split || !names) { el.className = 'strip'; el.innerHTML = levels.map(column).join(''); return; }
-  const total = levels.reduce((t, [, level]) => t + level.weight, 0);
+  if (!state.split || !names) { el.className = 'strip'; el.innerHTML = hands.map(column).join(''); return; }
   // Every row keeps the whole range's scale: a made hand sits where it sits in the single bar, with gaps either side
-  const classOf = (entry) => entry[1].rows[0].hand.category;
-  const space = ([, level]) => `<span style="flex:${level.weight.toFixed(4)} 1 0"></span>`;
-  const rows = new Map();
-  for (const entry of levels) { const c = classOf(entry); if (!rows.has(c)) rows.set(c, []); rows.get(c).push(entry); }
+  const span = new Map();
+  hands.forEach((row, k) => { const c = row.hand.category; if (!span.has(c)) span.set(c, [k, k]); span.get(c)[1] = k + 1; });
   el.className = 'rows';
-  // Where each made hand starts and ends along the range; its name goes in the free space beside it
-  const span = new Map(); let seen = 0;
-  for (const entry of levels) { const c = classOf(entry); const w = entry[1].weight / total; if (!span.has(c)) span.set(c, [seen, seen]); span.get(c)[1] = seen + w; seen += w; }
-  el.innerHTML = [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([c, list]) => {
+  el.innerHTML = [...span.entries()].sort((a, b) => b[0] - a[0]).map(([c, [from, to]]) => {
     const name = names[c] ?? ''; const nice = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-    const [from, to] = span.get(c);
-    const place = (from + to) / 2 < 0.5 ? `left:calc(${(100 * to).toFixed(2)}% + 8px)` : `right:calc(${(100 * (1 - from)).toFixed(2)}% + 8px)`;
-    return `<div class="row"><div class="strip">${levels.map((entry) => (classOf(entry) === c ? column(entry) : space(entry))).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct(list.reduce((t, [, level]) => t + level.weight, 0) / total)}</span></div>`;
+    const n = hands.length;
+    const place = (from + to) / 2 < n / 2 ? `left:calc(${(100 * to / n).toFixed(2)}% + 8px)` : `right:calc(${(100 * (1 - from / n)).toFixed(2)}% + 8px)`;
+    return `<div class="row"><div class="strip">${hands.map((row) => (row.hand.category === c ? column(row) : '<span></span>')).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct((to - from) / n)}</span></div>`;
   }).join('');
 }
+/** The hands of the range to act, weakest first: the order of the strategy chart and of the equity curve above it. */
+const handsInOrder = (s) => [...s.rows].sort((a, b) => a.hand.strength - b.hand.strength || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
 /** Under the equity chart: what one range looks like, as four numbers that can be dragged to reshape it. */
 function renderDials() {
   const who = state.dials.who; const d = state.dials[who]; const st = state.stats?.[who];
@@ -277,9 +272,8 @@ $('line').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-go]'); if (b) go(+b.dataset.go);
 });
 $('strip').addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-level]'); if (!b) return;
-  const rows = [...state.survey.levels.get(+b.dataset.level).rows].sort((x, y) => y.hand.weight - x.hand.weight);
-  state.hand = rows[0].hand.name; state.cell = state.decision.abstract ? null : cellOf(state.hand); render();
+  const b = ev.target.closest('[data-hand]'); if (!b) return;
+  state.hand = b.dataset.hand; state.cell = state.decision.abstract ? null : cellOf(state.hand); render();
 });
 $('range').addEventListener('click', (ev) => {
   const cell = ev.target.closest('[data-cell]'); const hand = ev.target.closest('[data-hand]');

@@ -7,11 +7,6 @@
   --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--float:0 12px 40px rgba(0,0,0,.22);
   color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root{
-  --bg:#16171A;--surface:#202125;--line:#2D2F34;--line-strong:#3E4047;--ink:#EDECE7;--ink-2:#B4B6BC;--ink-3:#8E9199;
-  --accent:#8E9BFF;--accent-ink:#0E1030;--danger:#FF8466;--ok:#4CC3B1;
-  --act-fold:#3E4047;--act-check:#1F7468;--act-small:#856219;--act-big:#B04A2D;--act-allin:#94508A;
-  --suit-s:#EDECE7;--suit-h:#FF7A6B;--suit-d:#5BB0FF;--suit-c:#4FD083;color-scheme:dark}}
 *{box-sizing:border-box}
 [hidden]{display:none!important}
 body{margin:0;background:var(--bg);color:var(--ink);font:400 13px/18px var(--sans)}
@@ -87,8 +82,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .rows{display:flex;flex-direction:column;gap:3px}
 .rows .row{position:relative}
 .rows .name{position:absolute;top:4px;white-space:nowrap;pointer-events:none}
-.rows .strip{height:22px}
-.rows .strip span{min-width:0}
+.rows .strip{height:22px;margin-bottom:0}
+.rows .strip button[aria-pressed="true"]::after{display:none}
+.rows .strip button[aria-pressed="true"]{filter:brightness(.82)}
 .rows .name{font:400 11px/14px var(--mono);color:var(--ink-3)}
 .rows .name .short{display:none}
 @media (max-width:600px){.rows .name .long{display:none}.rows .name .short{display:inline}}
@@ -96,10 +92,12 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .curve .dot{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
 .line .view{margin-left:auto}
 .curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
-.strip{display:flex;height:72px;gap:1px;align-items:stretch}
-.strip button{min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column-reverse;background:var(--surface)}
+/* One column per hand, all the same width, edge to edge; a dot under the strip marks the hand picked */
+.strip{display:flex;height:72px;gap:0;align-items:stretch;margin-bottom:12px}
+.strip button{flex:1 1 0;position:relative;min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column-reverse;background:var(--surface)}
 .strip button i{display:block;width:100%}
-.strip button[aria-pressed="true"]{box-shadow:0 0 0 1.5px var(--ink);z-index:1}
+.strip button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;bottom:-9px;width:5px;height:5px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
+.strip span{flex:1 1 0;min-width:0}
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:10}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(360px,100%);background:var(--bg);box-shadow:var(--float);z-index:11;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px 20px;display:flex;flex-direction:column;gap:16px;overflow:auto}
 .drawer label{display:flex;flex-direction:column;gap:4px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:1}
