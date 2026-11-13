@@ -8,6 +8,38 @@ capping). Add a row when a number changes; do not delete the old result.
 All losses are the share of the pot lost to the solver's best response ("exploited"), both
 seats averaged, unless a row says otherwise. Lower is better.
 
+## Principle: exploitability first, the solver's strategy second
+
+The target is losing less to the best response. Comparing with the solver's strategy is a way
+to find leads, not a target: copying what the solver does is tuning, not deriving, and a copy
+tends to fall apart when exploited. The run below shows it: three formulas that fit the
+solver's frequencies with r2 near 0.9 all lost more, and so did calling orders and tables that
+matched its play more closely.
+
+So each number in the engine is one of three things, and the record says which:
+
+- **Derived**: follows from a stated reason, and would stand without the solver.
+- **Measured**: a value chosen by sweeping it against the best response. The solver's play may
+  have suggested where to look.
+- **Copied**: the number itself is read off the solver's strategy. Kept only where the whole
+  engine loses less with it on spots it was not fitted on, and marked as the first thing to
+  replace with a reason.
+
+| Entries (see Adopted, below) | Kind |
+|---|---|
+| 18 bluff raises capped at the defence frequency; 19 frequencies always filled | Derived |
+| 20 defence 0.95; 22 river size and value threshold, and its range-advantage condition; 23 river value curve; 24 defence 1.25 facing a turn raise; 25 cap on raising a turn bet; 26, 30 turn value caps; 27 depth condition on the calling order; 32 one size, never a split; 33, 34 range-advantage conditions | Measured |
+| 21 river raise share (coefficients fitted to the solver); 28, 29, 31 the kind table for turn and flop opens (the solver's average bet frequency per kind); the turn bluff score of entry 15 (chosen by how well it ranks the solver's bluffs, then checked) | Copied |
+
+The copied items are the largest single gain of the run (the kind table) and the least
+understood: there is no stated reason why each kind bets as often as it does. They hold on
+held-out boards, a second menu of sizes and the flop trees, which is why they stay, but that
+is validation, not derivation.
+
+The same caution applies to the tools. `bin/locate.js` and the "located" setting of
+`diagnosis/try.mjs` put the engine inside the solver's own strategy; they found every lead and
+disagreed with the whole-engine result often enough that nothing was adopted on them alone.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,
