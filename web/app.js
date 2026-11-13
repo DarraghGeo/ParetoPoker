@@ -2,6 +2,7 @@ import { RangeManager } from 'poker-rangeman';
 import { explain, survey } from '../src/explain/river.js';
 import { profile } from '../src/explain/profile.js';
 import { warpGame } from '../src/warp/game.js';
+import { NEUTRAL, isNeutral } from '../src/warp/reshape.js';
 
 const $ = (id) => document.getElementById(id);
 const COLORS = ['--act-fold', '--act-check', '--act-small', '--act-big', '--act-allin'];
@@ -18,7 +19,8 @@ const DEFAULTS = {
 };
 const state = {
   mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', split: false,
-  spot: null, job: 0, status: '', warp: { knobs: [0.03, 0.2, 0.42, 0.6, 0.8, 0.97], game: null, n: 40 },
+  spot: null, job: 0, status: '', dials: { who: 'oop', oop: { ...NEUTRAL }, ip: { ...NEUTRAL } }, stats: null, base: new Map(),
+  warp: { knobs: [0.03, 0.2, 0.42, 0.6, 0.8, 0.97], game: null, n: 40 },
 };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config); if (saved?.knobs?.length === 6) state.warp.knobs = saved.knobs; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.split = !!saved?.split; } catch { /* first visit */ }
 const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, knobs: state.warp.knobs, detail: state.detail, view: state.view, split: state.split })); } catch { /* private window */ } };
@@ -29,15 +31,17 @@ worker.onmessage = ({ data }) => {
   if (data.job !== state.job || state.mode !== 'spot') return;
   if (data.type === 'progress') { state.status = `${data.iterations}`; $('state').textContent = state.status; }
   if (data.type === 'error') { state.status = ''; $('state').textContent = ''; $('f-error').textContent = data.message; openSetup(); }
-  if (data.type === 'solved') { state.nodes = data.nodes; state.status = `${data.exploit.toFixed(2)}%`; go(0); }
+  if (data.type === 'solved') { state.nodes = data.nodes; state.stats = data.stats; state.status = `${data.exploit.toFixed(2)}%`; go(state.nodes[state.keep]?.kind === 'decision' ? state.keep : 0); state.keep = 0; }
   if (data.type === 'decision') show(data.decision);
 };
-function solve() {
+/** Solve the spot. `reshaped`: the dials moved, so stay on the same decision and hand. */
+function solve(reshaped = false) {
   state.job++;
-  state.nodes = null; state.decision = null; state.survey = null; state.spot = null; state.hand = null; state.cell = null;
-  state.status = '0';
-  render();
-  worker.postMessage({ type: 'solve', job: state.job, config: state.config });
+  if (reshaped) state.keep = state.node;
+  else { state.nodes = null; state.decision = null; state.survey = null; state.spot = null; state.hand = null; state.cell = null; state.keep = 0; state.base.clear(); state.dials.oop = { ...NEUTRAL }; state.dials.ip = { ...NEUTRAL }; render(); }
+  state.status = '0'; $('state').textContent = state.status;
+  worker.postMessage({ type: 'solve', job: state.job, config: { ...state.config, dials: { oop: state.dials.oop, ip: state.dials.ip } } });
+  if (reshaped) return;
   const board = state.config.board.match(/[2-9TJQKA][shdc]/g) ?? [];
   const job = state.job;
   profile(RangeManager, { oop: state.config.oop, ip: state.config.ip, board }).then((p) => { if (job === state.job) { state.spot = p; renderWhy(); } });
@@ -72,7 +76,7 @@ function render() {
   const spot = state.mode === 'spot';
   $('mode-spot').setAttribute('aria-pressed', String(spot)); $('mode-warp').setAttribute('aria-pressed', String(!spot));
   const grid = spot && state.view === 'grid';
-  $('board').hidden = !spot; $('curve').hidden = spot; $('combos').hidden = !spot; $('range').hidden = !grid; $('dist').hidden = !spot || grid;
+  $('board').hidden = !spot; $('curve').hidden = spot; $('combos').hidden = !spot; $('range').hidden = !grid; $('dist').hidden = !spot || grid; $('dials').hidden = !spot || grid;
   document.querySelector('.spot-only').hidden = !spot;
   $('state').textContent = spot ? state.status : '';
   $('board').innerHTML = cardsHtml(state.config.board);
@@ -81,7 +85,7 @@ function render() {
   $('rule').innerHTML = d ? bar(state.survey.mix, strata) : '';
   renderLine(strata);
   renderStrip(strata);
-  if (grid) renderGrid(strata); else if (spot) renderDist(); else renderCurve();
+  if (grid) renderGrid(strata); else if (spot) { renderDist(); renderDials(); } else renderCurve();
   if (spot) renderCombos(strata);
   renderWhy();
 }
@@ -127,7 +131,7 @@ function renderCombos(strata) {
 /** The two equity curves at this decision: the player to act and, in the other colour, the other range. */
 function renderDist() {
   const s = state.survey; if (!s) { $('dist').innerHTML = ''; return; }
-  const d = state.decision; const DH = 220;
+  const d = state.decision; const DH = 330;
   // the same horizontal scale as the strip above: the full width
   const Xd = (x) => x * W;
   const Yd = (y) => DH - PAD - y * (DH - 2 * PAD);
@@ -136,10 +140,15 @@ function renderDist() {
   // his hands against the range to act, with the cards each removes
   const his = d.villain.map((v) => { let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
+  // The curve before any reshaping stays as a dotted line, to show what the dials changed
+  const untouched = isNeutral(state.dials.oop) && isNeutral(state.dials.ip);
+  if (untouched) state.base.set(state.node, minePts);
+  const ghost = !untouched && state.base.get(state.node);
+  const ceiling = state.dials[d.seat].cap < 1 ? state.dials[d.seat].cap : null;
   const pick = mine.find((r) => r.name === state.hand);
   $('dist').innerHTML = `<svg viewBox="0 0 ${W} ${DH}" role="img" aria-label="Equity distribution">`
     + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="${Xd(0)}" x2="${Xd(1)}" y1="${Yd(v)}" y2="${Yd(v)}"/>`).join('')
-    + `<line class="axis" x1="${Xd(0)}" x2="${Xd(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/><polyline class="wait" points="${hisPts}"/><polyline class="act" points="${minePts}"/>`
+    + `<line class="axis" x1="${Xd(0)}" x2="${Xd(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/>${ceiling != null ? `<line class="ceiling" x1="0" x2="${W}" y1="${Yd(ceiling)}" y2="${Yd(ceiling)}"/>` : ''}${ghost ? `<polyline class="ghost" points="${ghost}"/>` : ''}<polyline class="wait" points="${hisPts}"/><polyline class="act" points="${minePts}"/>`
     + (pick ? `<circle class="dot" cx="${Xd(pick.mid).toFixed(1)}" cy="${Yd(pick.e).toFixed(1)}" r="5"/>` : '') + '</svg>';
 }
 const SHORT = { 'High card': 'HC', Pair: 'P', 'Two pair': '2P', 'Three of a kind': '3K', Straight: 'ST', Flush: 'FL', 'Full house': 'FH', 'Four of a kind': '4K', 'Straight flush': 'SF' };
@@ -176,6 +185,36 @@ function renderStrip(strata) {
     return `<div class="row"><div class="strip">${levels.map((entry) => (classOf(entry) === c ? column(entry) : space(entry))).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct(list.reduce((t, [, level]) => t + level.weight, 0) / total)}</span></div>`;
   }).join('');
 }
+/** Under the equity chart: what one range looks like, as four numbers that can be dragged to reshape it. */
+function renderDials() {
+  const who = state.dials.who; const d = state.dials[who]; const st = state.stats?.[who];
+  const held = document.activeElement?.dataset?.dial;
+  if (held && $('dials').querySelector('[data-dial]')) {
+    // a dial is in hand: refresh the numbers only, so the drag is not interrupted
+    const set = (key, text) => { const o = $('dials').querySelector(`[data-dial="${key}"]`)?.previousElementSibling; if (o) o.textContent = text; };
+    if (st) { set('edge', pct(st.equity)); set('polar', pct(st.polar)); set('nuts', pct(st.nuts)); }
+    set('cap', d.cap < 1 ? pct(d.cap) : '\u2014');
+    return;
+  }
+  const dial = (key, name, value, min, max, step, at) => `<label class="dial"><span class="cap">${name}</span><output>${value}</output><input type="range" data-dial="${key}" min="${min}" max="${max}" step="${step}" value="${at}" aria-label="${name}"></label>`;
+  const changed = !isNeutral(state.dials.oop) || !isNeutral(state.dials.ip);
+  $('dials').innerHTML = `<div class="who"><div class="seg" role="group" aria-label="Range"><button type="button" data-who="oop" aria-pressed="${who === 'oop'}">OOP</button><button type="button" data-who="ip" aria-pressed="${who === 'ip'}">IP</button></div>${changed ? '<button type="button" class="undo" id="undo">Reset</button>' : ''}</div>`
+    + dial('edge', 'Equity', st ? pct(st.equity) : '', -100, 100, 5, Math.round(100 * d.edge))
+    + dial('polar', 'Polar', st ? pct(st.polar) : '', -100, 100, 5, Math.round(100 * d.polar))
+    + dial('nuts', 'Nuts', st ? pct(st.nuts) : '', 0, 200, 10, Math.round(100 * d.nuts))
+    + dial('cap', 'Cap', d.cap < 1 ? pct(d.cap) : '\u2014', 50, 100, 2, Math.round(100 * d.cap));
+}
+let dialTimer = null;
+$('dials').addEventListener('input', (ev) => {
+  const key = ev.target.dataset?.dial; if (!key) return;
+  state.dials[state.dials.who][key] = Number(ev.target.value) / 100;
+  clearTimeout(dialTimer); dialTimer = setTimeout(() => solve(true), 180);
+});
+$('dials').addEventListener('click', (ev) => {
+  const who = ev.target.closest('[data-who]');
+  if (who) { state.dials.who = who.dataset.who; renderDials(); return; }
+  if (ev.target.id === 'undo') { state.dials.oop = { ...NEUTRAL }; state.dials.ip = { ...NEUTRAL }; solve(true); }
+});
 function renderWhy() {
   const s = state.survey; const told = s && state.hand ? explain(s, state.hand) : null;
   if (!told) { $('why').innerHTML = ''; return; }

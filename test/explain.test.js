@@ -64,3 +64,16 @@ test('the spot profile reads the two ranges', async () => {
   const p = await profile(RangeManager, { oop: '66+,A8s+,AJo+,KQs', ip: 'QQ-22,AQs-A2s,KJs+', board: ['Td', '9d', '6h', 'Qc', '7s'] });
   assert.ok(p && typeof p.advantage.range === 'number' && p.text.length > 20);
 });
+
+test('reshaping a range: the dials move its equity, its nuts, its shape and its ceiling', async () => {
+  const { describe, reshape, NEUTRAL } = await import('../src/warp/reshape.js');
+  const n = 200;
+  const weights = new Float64Array(n).fill(1);
+  const equity = Float64Array.from({ length: n }, (_, i) => (i + 0.5) / n);
+  const base = describe(weights, equity);
+  assert.deepEqual(Array.from(reshape(weights, equity, NEUTRAL)), Array.from(weights));
+  assert.ok(describe(reshape(weights, equity, { ...NEUTRAL, edge: 0.8 }), equity).equity > base.equity + 0.05);
+  assert.ok(describe(reshape(weights, equity, { ...NEUTRAL, polar: 0.8 }), equity).polar > base.polar + 0.05);
+  assert.ok(describe(reshape(weights, equity, { ...NEUTRAL, nuts: 0 }), equity).nuts < 0.001);
+  assert.ok(describe(reshape(weights, equity, { ...NEUTRAL, cap: 0.7 }), equity).top <= 0.7);
+});
