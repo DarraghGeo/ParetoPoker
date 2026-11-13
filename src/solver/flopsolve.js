@@ -75,7 +75,8 @@ export function decisionAt(fs, solution, nodes, id) {
   view.combos.forEach((combo, i) => {
     if (!(mine[combo] > 1e-6)) return;
     const mass = facing(combo);
-    hands.push({ id: combo, name: fs.formatCombo(combo), cards: cardsOf(combo), weight: mine[combo], strength: strength(combo),
+    const made = strength(combo);
+    hands.push({ id: combo, name: fs.formatCombo(combo), cards: cardsOf(combo), weight: mine[combo], strength: made, category: fs.categoryOf(made),
       strategy: Array.from({ length: n }, (_, a) => view.probs[i * n + a]), values: mass > 0 ? values.map((v) => v[combo] / mass) : null });
   });
   // His range here, and how each of his hands answers each bet or raise
@@ -95,5 +96,5 @@ export function decisionAt(fs, solution, nodes, id) {
     if (!(his[c] > 1e-6)) continue;
     villain.push({ id: c, name: fs.formatCombo(c), cards: cardsOf(c), weight: his[c], strength: strength(c), answers: answers.map((map) => map?.get(c) ?? null) });
   }
-  return { street: 'river', board: [...board], boardText: fs.formatCards(board), seat: node.seat, pot: node.pot, toCall: hisIn - mineIn, invested: mineIn, actions, hands, villain };
+  return { street: 'river', board: [...board], boardText: fs.formatCards(board), categories: [...fs.CATEGORY_NAMES], seat: node.seat, pot: node.pot, toCall: hisIn - mineIn, invested: mineIn, actions, hands, villain };
 }

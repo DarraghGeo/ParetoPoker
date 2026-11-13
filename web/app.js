@@ -17,11 +17,11 @@ const DEFAULTS = {
   ip: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
 };
 const state = {
-  mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid',
+  mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', split: false,
   spot: null, job: 0, status: '', warp: { knobs: [0.03, 0.2, 0.42, 0.6, 0.8, 0.97], game: null, n: 40 },
 };
-try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config); if (saved?.knobs?.length === 6) state.warp.knobs = saved.knobs; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; } catch { /* first visit */ }
-const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, knobs: state.warp.knobs, detail: state.detail, view: state.view })); } catch { /* private window */ } };
+try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config); if (saved?.knobs?.length === 6) state.warp.knobs = saved.knobs; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.split = !!saved?.split; } catch { /* first visit */ }
+const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, knobs: state.warp.knobs, detail: state.detail, view: state.view, split: state.split })); } catch { /* private window */ } };
 
 // ---- the solver, in a worker ----
 const worker = new Worker(new URL('./worker.js', import.meta.url));
@@ -94,7 +94,9 @@ function renderLine(strata) {
   $('line').innerHTML = path.map((p) => `<button type="button" class="crumb" data-go="${p.back}">${esc(p.label)}</button><span class="sep">/</span>`).join('')
     + `<span class="who">${here.seat === 'oop' ? 'OOP' : 'IP'}</span>`
     + here.edges.map((e, k) => { const open = nodes[e.child].kind === 'decision'; return `<button type="button" class="act" ${open ? `data-go="${e.child}"` : 'disabled'}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)} ${pct(state.survey.mix[k])}</button>`; }).join('')
-    + (state.mode === 'spot' ? `<button type="button" class="icon view" id="view" aria-label="${state.view === 'grid' ? 'Equity distribution' : 'Grid'}">${state.view === 'grid'
+    + (state.mode === 'spot' ? `<button type="button" class="icon view" id="split" aria-pressed="${state.split}" aria-label="${state.split ? 'One bar' : 'By made hand'}">${state.split
+      ? '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 6.5h12v3H2z" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'
+      : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>'}</button><button type="button" class="icon view" id="view" aria-label="${state.view === 'grid' ? 'Equity distribution' : 'Grid'}">${state.view === 'grid'
       ? '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 13c3 0 3-4 6-5s3-5 6-5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>'
       : '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>'}</button>` : '');
 }
@@ -138,13 +140,29 @@ function renderDist() {
     + `<line class="axis" x1="${X(0)}" x2="${X(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/><polyline class="wait" points="${hisPts}"/><polyline class="act" points="${minePts}"/>`
     + (pick ? `<circle class="dot" cx="${X(pick.mid).toFixed(1)}" cy="${Yd(pick.e).toFixed(1)}" r="5"/>` : '') + '</svg>';
 }
-/** The strategy along the range, weakest to strongest: one column per strength, as wide as its share. */
+const SHORT = { 'High card': 'HC', Pair: 'P', 'Two pair': '2P', 'Three of a kind': '3K', Straight: 'ST', Flush: 'FL', 'Full house': 'FH', 'Four of a kind': '4K', 'Straight flush': 'SF' };
+/**
+ * The strategy along the range, weakest to strongest: one column per strength, as wide as its
+ * share. Split, it opens into a row for each made hand, strongest first, each on its own scale.
+ */
 function renderStrip(strata) {
-  const s = state.survey; if (!s) { $('strip').innerHTML = ''; return; }
+  const s = state.survey; const el = $('strip');
+  if (!s) { el.innerHTML = ''; return; }
   const picked = s.byName.get(state.hand)?.hand.strength;
-  $('strip').innerHTML = [...s.levels.entries()].sort((a, b) => a[0] - b[0]).map(([strength, level]) => {
+  const column = ([strength, level]) => {
     const parts = [0, 0, 0, 0, 0]; level.mix.forEach((p, a) => { parts[strata[a]] += p; });
     return `<button type="button" style="flex:${level.weight.toFixed(4)} 1 0" data-level="${strength}" aria-pressed="${strength === picked}" aria-label="${pct(level.rows[0].equity)}%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</button>`;
+  };
+  const levels = [...s.levels.entries()].sort((a, b) => a[0] - b[0]);
+  const names = state.decision.categories;
+  if (!state.split || !names) { el.className = 'strip'; el.innerHTML = levels.map(column).join(''); return; }
+  const total = levels.reduce((t, [, level]) => t + level.weight, 0);
+  const rows = new Map();
+  for (const entry of levels) { const c = entry[1].rows[0].hand.category; if (!rows.has(c)) rows.set(c, []); rows.get(c).push(entry); }
+  el.className = 'rows';
+  el.innerHTML = [...rows.entries()].sort((a, b) => b[0] - a[0]).map(([c, list]) => {
+    const name = names[c] ?? ''; const nice = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
+    return `<span class="name"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span></span><div class="strip">${list.map(column).join('')}</div><span class="share">${pct(list.reduce((t, [, level]) => t + level.weight, 0) / total)}</span>`;
   }).join('');
 }
 function renderWhy() {
@@ -204,6 +222,7 @@ function setMode(mode) {
 }
 $('mode-spot').onclick = () => setMode('spot'); $('mode-warp').onclick = () => setMode('warp');
 $('line').addEventListener('click', (ev) => {
+  if (ev.target.closest('#split')) { state.split = !state.split; remember(); render(); $('split')?.focus(); return; }
   if (ev.target.closest('#view')) { state.view = state.view === 'grid' ? 'curve' : 'grid'; remember(); render(); $('view')?.focus(); return; }
   const b = ev.target.closest('[data-go]'); if (b) go(+b.dataset.go);
 });

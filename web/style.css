@@ -66,6 +66,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .curve .axis{stroke:var(--line-strong);stroke-width:1}.curve .gridl{stroke:var(--line);stroke-width:1}
 /* Both ranges in ink: the player to act at full strength, the other faded */
 .curve .act{fill:none;stroke:var(--ink);stroke-width:1.75}.curve .wait{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28}
+.rows{display:grid;grid-template-columns:max-content minmax(0,1fr) max-content;gap:3px 10px;align-items:center}
+.rows .strip{height:22px}
+.rows .name,.rows .share{font:400 11px/14px var(--mono);color:var(--ink-3)}
+.rows .share{text-align:right}
+.rows .name .short{display:none}
+@media (max-width:600px){.rows .name .long{display:none}.rows .name .short{display:inline}}
+.line .view + .view{margin-left:0}
 .curve .dot{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
 .line .view{margin-left:auto}
 .curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
