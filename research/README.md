@@ -1,3 +1,5 @@
+> This folder is the earlier work: an engine that played from indifference maths, and the tests that measured it against a solver. It is kept as the record behind the explainer in the repository root. Paths below are relative to this folder.
+
 # ParetoPoker
 
 A small Node.js engine that plays heads-up postflop poker at game-theory frequencies without

@@ -28,6 +28,10 @@ const AGGRESSIVE = new Set(['bet', 'raise', 'allin']);
 const pct = (x) => `${Math.round(100 * x)}%`;
 const shares = (a, b) => (a === b ? false : !!a && !!b && (a[0] === b[0] || a[0] === b[1] || a[1] === b[0] || a[1] === b[1]));
 
+/** A bluff: a bet that loses to most of what calls, by a hand that would rarely win by checking. */
+const BLUFF = 1 / 3;
+const isBluff = (row, a) => (row.whenCalled[a] ?? row.equity) < 0.5 && row.equity < BLUFF;
+
 /** What the decision looks like for every hand at once: computed once, read per hand. */
 export function survey(decision) {
   const { hands, villain, actions, pot, toCall } = decision;
@@ -89,7 +93,7 @@ export function survey(decision) {
     for (const row of rows) {
       const w = row.hand.weight * row.hand.strategy[a];
       all += w;
-      if ((row.whenCalled[a] ?? row.equity) < 0.5) bluffs += w;
+      if (isBluff(row, a)) bluffs += w;
     }
     const s = action.add > toCall ? (action.add - toCall) / (pot + toCall) : 0; // the bet as a share of the pot it is made into
     return { frequency: all / total, bluffShare: all > 0 ? bluffs / all : 0, s, wanted: s / (1 + 2 * s), needsFolds: s / (1 + s) };
@@ -133,7 +137,8 @@ export function explain(s, name) {
       say('forced', 'solver', `Only ${label(main)} is right for this hand. The next best action gives up ${(100 * next).toFixed(1)}% of the pot.`);
     } else {
       const ok = actions.filter((_, a) => row.fine[a]).map((x) => x.label);
-      say('optional', 'solver', `${ok.join(', ').replace(/, ([^,]*)$/, ' and $1')} are worth the same to this hand (within ${(100 * MISTAKE).toFixed(1)}% of the pot). Its mix is the range's choice, not the hand's.`);
+      const list = ok.join(', ').replace(/, ([^,]*)$/, ' and $1');
+      say('optional', 'solver', `${list} are worth the same to this hand (within ${(100 * MISTAKE).toFixed(1)}% of the pot). Its mix is the range's choice, not the hand's.`, `Indifferent: ${list} are worth the same to it.`);
     }
   }
 
@@ -167,6 +172,8 @@ export function explain(s, name) {
       const called = row.whenCalled[mainBet] ?? row.equity;
       if (called >= 0.5) {
         say('value', 'solver', `It bets for value: it beats ${pct(called)} of what calls ${label(mainBet)}.`, `Bets for value: beats ${pct(called)} of what calls.`);
+      } else if (!isBluff(row, mainBet)) {
+        say('merged', 'solver', `It bets ${label(mainBet)} with a middling hand: it beats ${pct(row.equity)} of his range, and ${pct(called)} of what calls. That is neither a value bet nor a bluff; the bet is worth what a check is, and the range uses hands like this to fill out the size.`, `Bets a middling hand: beats ${pct(row.equity)} of his range and ${pct(called)} of what calls.`);
       } else {
         say('bluff', 'solver', `It bets as a bluff: checked, it wins ${pct(row.equity)} at showdown; he folds ${pct(row.folds[mainBet] ?? 0)} to ${label(mainBet)}, and a bluff of this size needs ${pct(size.needsFolds)}.`, `Bluffs: wins ${pct(row.equity)} if checked; he folds ${pct(row.folds[mainBet] ?? 0)}, and it needs ${pct(size.needsFolds)}.`);
         say('quota', 'formula', `Bluffs are ${pct(size.bluffShare)} of the range's ${label(mainBet)}. The price he gets to call allows ${pct(size.wanted)}.`);
@@ -205,7 +212,10 @@ export function explain(s, name) {
     }
   }
 
-  const first = reasons.find((r) => r.short) ?? reasons[0];
+  // The one-line answer: the reason for what the hand mostly does
+  const wanted = AGGRESSIVE.has(actions[main].kind) ? ['raise-value', 'raise-bluff', 'value', 'bluff'] : [];
+  const mixed = status === 'optional' && Math.max(...hand.strategy) < 0.85;
+  const first = (mixed ? reasons.find((r) => r.id === 'optional') : null) ?? reasons.find((r) => r.short && wanted.includes(r.id)) ?? reasons.find((r) => r.short && r.id !== 'optional') ?? reasons[0];
   return { name, strategy: hand.strategy, status, equity: row.equity, line: first ? first.short ?? first.text : '', reasons };
 }
 

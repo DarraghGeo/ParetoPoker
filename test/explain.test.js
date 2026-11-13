@@ -6,7 +6,7 @@ import { explain, survey } from '../src/explain/river.js';
 
 const spot = fs.defineSpot({ board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200,
   oop: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s', ip: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
-  betSizes: [[0.33, 0.75, 1.5]], raiseSizes: [[2.5]], maxRaises: 2 });
+  betSizes: [[0.33, 0.75, 1.5]], raiseSizes: [{ times: 2.5 }], maxRaises: 2 });
 const run = fs.createRun(spot, {});
 run.step(400);
 const solution = run.snapshot();
@@ -43,4 +43,24 @@ test('first to act: every hand gets a status and at least one reason beyond it',
   // Bluffs are close to the share the price allows
   const size = s.sizes.find((x) => x && x.frequency > 0.1);
   assert.ok(Math.abs(size.bluffShare - size.wanted) < 0.12, `${size.bluffShare} against ${size.wanted}`);
+});
+
+test('warp: a drawn curve solves and its levels can be explained', async () => {
+  const { warpGame } = await import('../src/warp/game.js');
+  const n = 40;
+  const game = warpGame({ equities: Array.from({ length: n }, (_, i) => (i + 0.5) / n), pot: 100, stack: 200, bets: [0.75], raise: 0 });
+  assert.equal(game.nodes[0].seat, 'oop');
+  const s = survey(game.decisionAt(0));
+  assert.equal(s.rows.length, n);
+  // weakest and strongest cards bet more than the middle
+  const bet = (i) => 1 - s.rows[i].hand.strategy[0];
+  assert.ok(bet(0) > bet(20) && bet(n - 3) > bet(20), `${bet(0)} ${bet(20)} ${bet(n - 3)}`);
+  assert.ok(explain(s, s.rows[n - 3].hand.name).line.length > 10);
+});
+
+test('the spot profile reads the two ranges', async () => {
+  const { RangeManager } = await import('poker-rangeman');
+  const { profile } = await import('../src/explain/profile.js');
+  const p = await profile(RangeManager, { oop: '66+,A8s+,AJo+,KQs', ip: 'QQ-22,AQs-A2s,KJs+', board: ['Td', '9d', '6h', 'Qc', '7s'] });
+  assert.ok(p && typeof p.advantage.range === 'number' && p.text.length > 20);
 });
