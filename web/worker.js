@@ -37,7 +37,7 @@ self.onmessage = async ({ data }) => {
       const placed = [equities(board, given[0], given[1]), equities(board, given[1], given[0])];
       const ranges = [reshape(given[0], placed[0], c.dials?.oop), reshape(given[1], placed[1], c.dials?.ip)];
       const stats = { oop: describe(ranges[0], equities(board, ranges[0], ranges[1])), ip: describe(ranges[1], equities(board, ranges[1], ranges[0])) };
-      const spot = fs.defineSpot({ board: c.board, pot: c.pot, stack: c.stack, oop: ranges[0], ip: ranges[1], betSizes: [c.bets], raiseSizes: c.raise > 0 ? [{ times: c.raise }] : undefined, maxRaises: c.raise > 0 ? c.maxRaises : 0 });
+      const spot = fs.defineSpot({ board: c.board, pot: c.pot, stack: c.stack, oop: ranges[0], ip: ranges[1], betSizes: [c.bets], raiseSizes: c.raises.length ? c.raises.map((times) => ({ times })) : undefined, maxRaises: c.raises.length ? c.maxRaises : 0, allowAllIn: !!c.allIn });
       const run = fs.createRun(spot, {});
       const started = Date.now();
       let exploit = Infinity;

@@ -13,7 +13,7 @@ const pct = (x) => `${Math.round(100 * x)}`;
 const cardsHtml = (text) => (text.match(/[2-9TJQKA][shdc]/g) ?? []).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join('');
 
 const DEFAULTS = {
-  board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, bets: [0.33, 0.75, 1.5], raise: 2.5, maxRaises: 2,
+  board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, bets: [0.33, 0.75, 1.5], raises: [2.5], maxRaises: 2, allIn: false,
   oop: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s',
   ip: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
 };
@@ -22,7 +22,10 @@ const state = {
   spot: null, job: 0, status: '', dials: { who: 'oop', oop: neutral(), ip: neutral() }, stats: null, base: new Map(), baseQ: { oop: null, ip: null },
   warp: { knobs: [0.03, 0.2, 0.42, 0.6, 0.8, 0.97], game: null, n: 40 },
 };
-try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config); if (saved?.knobs?.length === 6) state.warp.knobs = saved.knobs; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.split = !!saved?.split; } catch { /* first visit */ }
+try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config);
+  // an earlier visit saved one raise size as `raise`
+  if (!Array.isArray(state.config.raises)) state.config.raises = state.config.raise > 0 ? [state.config.raise] : [];
+  delete state.config.raise; if (saved?.knobs?.length === 6) state.warp.knobs = saved.knobs; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.split = !!saved?.split; } catch { /* first visit */ }
 const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, knobs: state.warp.knobs, detail: state.detail, view: state.view, split: state.split })); } catch { /* private window */ } };
 
 // ---- the solver, in a worker ----
@@ -261,7 +264,7 @@ function equitiesOf(knobs, n) {
 }
 function solveWarp() {
   const c = state.config;
-  state.warp.game = warpGame({ equities: equitiesOf(state.warp.knobs, state.warp.n), pot: c.pot, stack: c.stack, bets: c.bets, raise: c.raise, iterations: 250 });
+  state.warp.game = warpGame({ equities: equitiesOf(state.warp.knobs, state.warp.n), pot: c.pot, stack: c.stack, bets: c.bets, raise: c.raises[0] ?? 0, iterations: 250 });
   if (!state.warp.game.nodes[state.node] || state.warp.game.nodes[state.node].kind !== 'decision') state.node = 0;
   go(state.node);
 }
@@ -374,7 +377,7 @@ $('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); };
 function openSetup() {
   const c = state.config;
   $('f-board').value = c.board; $('f-pot').value = c.pot; $('f-stack').value = c.stack;
-  $('f-bets').value = c.bets.map((b) => Math.round(100 * b)).join(' '); $('f-raise').value = c.raise;
+  $('f-bets').value = c.bets.map((b) => Math.round(100 * b)).join(' '); $('f-raise').value = c.raises.join(' '); $('f-max').value = c.maxRaises; $('f-allin').checked = !!c.allIn;
   draft.oop = c.oop; draft.ip = c.ip; showSide(draft.side);
   $('drawer').hidden = false; $('scrim').hidden = false;
   // Focus the drawer itself, never a field: on a phone a focused field brings up the keyboard and zooms the page
@@ -386,12 +389,14 @@ document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('dr
 $('drawer').addEventListener('submit', (ev) => {
   ev.preventDefault();
   const bets = $('f-bets').value.split(/[\s,]+/).map(Number).filter((x) => x > 0).map((x) => x / 100);
-  const pot = Number($('f-pot').value); const stack = Number($('f-stack').value); const raise = Number($('f-raise').value) || 0;
+  const pot = Number($('f-pot').value); const stack = Number($('f-stack').value);
+  const raises = $('f-raise').value.split(/[\s,x]+/i).map(Number).filter((x) => x > 1);
+  const maxRaises = Math.max(0, Math.min(4, Math.round(Number($('f-max').value) || 0)));
   const board = ($('f-board').value.match(/[2-9TJQKAtjqka][shdcSHDC]/g) ?? []).map((c) => c[0].toUpperCase() + c[1].toLowerCase());
   if (!(pot > 0) || !(stack >= 0) || !bets.length) { $('f-error').textContent = 'Pot, stack and at least one bet size are needed.'; return; }
   if (state.mode === 'spot' && board.length !== 5) { $('f-error').textContent = 'Five board cards are needed.'; return; }
   if (state.mode === 'spot' && (!cellsOf(draft.oop)?.size || !cellsOf(draft.ip)?.size)) { $('f-error').textContent = 'Both ranges need hands.'; return; }
-  Object.assign(state.config, { pot, stack, bets, raise }, state.mode === 'spot' ? { board: board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim() } : {});
+  Object.assign(state.config, { pot, stack, bets, raises: maxRaises > 0 ? raises : [], maxRaises: raises.length ? maxRaises : 0, allIn: $('f-allin').checked }, state.mode === 'spot' ? { board: board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim() } : {});
   remember(); closeSetup(); state.node = 0; state.hand = null;
   if (state.mode === 'spot') solve(); else solveWarp();
 });

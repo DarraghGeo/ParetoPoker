@@ -107,6 +107,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .drawer .spot-only{display:flex;flex-direction:column;gap:16px}
 .drawer input,.drawer textarea{font:500 13px/18px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:3px;padding:7px 8px;width:100%;resize:vertical;letter-spacing:0;text-transform:none}
 .drawer .row{display:flex;gap:12px}
+.drawer .check{justify-content:flex-start}
+.drawer .check input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);padding:0;position:relative;cursor:pointer;margin-top:8px}
+.drawer .check input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--ink-3);transition:transform .12s}
+.drawer .check input:checked{background:var(--ink);border-color:var(--ink)}
+.drawer .check input:checked::after{transform:translateX(14px);background:var(--bg)}
 .drawer:focus{outline:none}
 /* Typing into a field must not make a phone zoom the page: its text is 16px there */
 @media (max-width:600px){.drawer input,.drawer textarea{font-size:16px}}
