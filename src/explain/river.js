@@ -1,4 +1,9 @@
 /**
+ * NOT USED BY THE PAGE ANY MORE. `survey` still lays a river decision out for the charts; `explain`
+ * is the earlier river wording, kept for reference. An audit against far finer solves found many of
+ * its sentences absent or reshaped in them (research/proof/PROOF.md, "the river audit"): the page
+ * now words rivers from proven claims only (street.js).
+ *
  * Why a hand does what it does on the river.
  *
  * Takes one decision as a solver left it (each hand's strategy and what each action is worth to

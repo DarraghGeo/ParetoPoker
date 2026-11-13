@@ -3,7 +3,7 @@
 //   node tolerance.mjs <file filter> [json]
 import { readFileSync, readdirSync } from 'node:fs';
 const dir = new URL('./out/', import.meta.url); const want = process.argv[2] ?? ''; const asJson = process.argv[3] === 'json';
-const files = readdirSync(dir).filter((f) => f.startsWith('measure-') && f.endsWith('.jsonl') && f.includes(want) && !f.includes('held'));
+const files = readdirSync(dir).filter((f) => f.startsWith('measure-') && f.endsWith('.jsonl') && f.includes(want) && !f.includes('held') && !f.includes('final') && !f.includes('random'));
 export const ON = 0.05;
 const LINE = [['line 50%+', 0.5], ['line 20-50%', 0.2], ['line 5-20%', 0.05]];
 const stats = new Map(); const add = (key, x) => { if (x == null || Number.isNaN(x)) return; let s = stats.get(key); if (!s) stats.set(key, s = []); s.push(x); };

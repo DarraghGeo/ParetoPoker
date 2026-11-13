@@ -51,8 +51,8 @@ self.onmessage = async ({ data }) => {
       const started = Date.now();
       const river = board.length === 5;
       // A river is cheap enough to solve finely; earlier streets stop at the usual 0.3% of the pot, or when told to
-      // Reasons for turn decisions are proven for solves of 0.02% or finer, so a turn is taken that far
-      const target = river ? 0.05 : board.length === 4 ? 0.02 : 0.3; const patience = river ? 8000 : board.length === 4 ? 90000 : 180000;
+      // Conclusions are proven for rivers solved to 0.01% and turns to 0.02%, so each is taken that far
+      const target = river ? 0.01 : board.length === 4 ? 0.02 : 0.3; const patience = river ? 15000 : board.length === 4 ? 90000 : 180000;
       const chunk = river ? (warm ? 10 : 50) : board.length === 4 ? 10 : 2;
       let exploit = Infinity;
       self.postMessage({ type: 'progress', job: data.job, iterations: 0, exploit: Infinity, target, street: ['flop', 'turn', 'river'][board.length - 3] });
@@ -123,7 +123,7 @@ self.onmessage = async ({ data }) => {
       const dealt = fs.parseCards((data.dealt ?? []).join(' '));
       const key = `${data.id}|${dealt.join(',')}`;
       let st = studies.get(key); if (!st) studies.set(key, st = study(fs, solution, nodes, data.id, dealt));
-      const street = st.f.board.length === 3 ? 'flop' : 'turn';
+      const street = ['flop', 'turn', 'river'][st.f.board.length - 3];
       const T = st.f.round === 0 ? tolerance(street, current.exploit, st.lineReach) : tolerance(`${street} after a deal`, current.exploit, st.lineReach);
       const m = measure(st, data.combo, { worth: !!T });
       const told = explainStreet(st, m, T);

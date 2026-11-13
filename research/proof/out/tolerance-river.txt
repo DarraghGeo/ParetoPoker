@@ -1,0 +1,134 @@
+
+equity (points)
+  round 0 line 20-50%            level 0    n=   6352  median     0.2  p99     2.5  p99.9       3  max      3.1
+  round 0 line 20-50%            level 1    n=   6672  median     0.1  p99     1.8  p99.9     2.6  max      2.6
+  round 0 line 20-50%            level 2    n=   6672  median     0.1  p99     1.2  p99.9     1.7  max      1.7
+  round 0 line 20-50%            ref v ref  n=   3947  median       0  p99     0.3  p99.9     0.6  max      0.7
+  round 0 line 5-20%             level 0    n=  12852  median     0.3  p99     4.6  p99.9     6.7  max     13.2
+  round 0 line 5-20%             level 1    n=  12532  median     0.2  p99     2.3  p99.9       3  max      4.1
+  round 0 line 5-20%             level 2    n=  12532  median     0.1  p99     1.3  p99.9     2.2  max      2.6
+  round 0 line 5-20%             ref v ref  n=   5655  median     0.1  p99     0.9  p99.9     1.5  max      1.7
+  round 0 line 50%+              level 0    n=   6252  median       0  p99     0.9  p99.9       2  max        2
+  round 0 line 50%+              level 1    n=   6252  median       0  p99     0.7  p99.9     1.8  max      1.9
+  round 0 line 50%+              level 2    n=   6252  median       0  p99     0.4  p99.9     1.2  max      1.3
+  round 0 line 50%+              ref v ref  n=   3126  median       0  p99     0.2  p99.9     0.2  max      0.3
+
+gap between two actions (% pot)
+  round 0 line 20-50% often      level 0    n=   7848  median    0.24  p99   3.365  p99.9   4.284  max    4.484
+  round 0 line 20-50% often      level 1    n=   9288  median   0.151  p99   2.454  p99.9   3.709  max    4.247
+  round 0 line 20-50% often      level 2    n=   9288  median   0.097  p99    1.52  p99.9   2.394  max    2.544
+  round 0 line 20-50% often      ref v ref  n=   5879  median    0.04  p99   0.533  p99.9   0.925  max    1.019
+  round 0 line 20-50% seldom     level 0    n=  11284  median   0.441  p99   4.071  p99.9   5.609  max    6.117
+  round 0 line 20-50% seldom     level 1    n=  10804  median   0.368  p99   2.742  p99.9   3.749  max    5.208
+  round 0 line 20-50% seldom     level 2    n=  10804  median   0.223  p99   1.838  p99.9   2.455  max    2.902
+  round 0 line 20-50% seldom     ref v ref  n=   5050  median   0.073  p99   1.085  p99.9   1.441  max    1.495
+  round 0 line 5-20% often       level 0    n=  15936  median   0.388  p99   6.161  p99.9   8.152  max   16.402
+  round 0 line 5-20% often       level 1    n=  14976  median   0.225  p99   3.092  p99.9   3.878  max    5.108
+  round 0 line 5-20% often       level 2    n=  14976  median    0.12  p99   1.784  p99.9    2.87  max    3.178
+  round 0 line 5-20% often       ref v ref  n=   6253  median   0.062  p99   1.229  p99.9   1.882  max    2.121
+  round 0 line 5-20% seldom      level 0    n=   5640  median   0.696  p99   6.933  p99.9  11.273  max   12.462
+  round 0 line 5-20% seldom      level 1    n=   5640  median   0.287  p99   3.291  p99.9   7.588  max    7.666
+  round 0 line 5-20% seldom      level 2    n=   5640  median   0.181  p99   1.965  p99.9   4.798  max    4.889
+  round 0 line 5-20% seldom      ref v ref  n=   2820  median   0.115  p99   1.096  p99.9   1.992  max    2.103
+  round 0 line 50%+ often        level 0    n=   8520  median   0.271  p99   2.221  p99.9   2.687  max    2.993
+  round 0 line 50%+ often        level 1    n=   8520  median    0.14  p99   1.847  p99.9    2.54  max    2.901
+  round 0 line 50%+ often        level 2    n=   8520  median   0.091  p99   1.263  p99.9   1.587  max    1.759
+  round 0 line 50%+ often        ref v ref  n=   4559  median   0.032  p99   0.309  p99.9   0.399  max    0.466
+  round 0 line 50%+ seldom       level 0    n=   7264  median    0.31  p99   4.387  p99.9   5.078  max    5.578
+  round 0 line 50%+ seldom       level 1    n=   7264  median   0.169  p99   1.374  p99.9   1.921  max    2.054
+  round 0 line 50%+ seldom       level 2    n=   7264  median   0.117  p99   1.024  p99.9   1.336  max    1.389
+  round 0 line 50%+ seldom       ref v ref  n=   3333  median   0.075  p99   0.934  p99.9   1.269  max    1.276
+
+he folds (points)
+  round 0 line 20-50% often      level 0    n=    988  median     0.1  p99     0.9  p99.9     1.5  max      1.5
+  round 0 line 20-50% often      level 1    n=   1788  median     0.1  p99     1.3  p99.9     1.5  max      1.5
+  round 0 line 20-50% often      level 2    n=   1788  median     0.1  p99     0.9  p99.9     1.1  max      1.1
+  round 0 line 20-50% often      ref v ref  n=   1206  median       0  p99     0.3  p99.9     0.4  max      0.5
+  round 0 line 20-50% seldom     level 0    n=   5642  median     0.3  p99     1.9  p99.9     3.1  max        4
+  round 0 line 20-50% seldom     level 1    n=   5162  median     0.2  p99     1.3  p99.9     1.7  max      2.1
+  round 0 line 20-50% seldom     level 2    n=   5162  median     0.1  p99     0.8  p99.9       1  max      1.2
+  round 0 line 20-50% seldom     ref v ref  n=   2405  median       0  p99     0.3  p99.9     0.5  max      0.5
+  round 0 line 5-20% often       level 0    n=   1542  median     0.2  p99     1.6  p99.9     2.8  max      3.2
+  round 0 line 5-20% often       level 1    n=   1222  median     0.2  p99     0.9  p99.9     1.1  max      1.5
+  round 0 line 5-20% often       level 2    n=   1222  median     0.1  p99     0.7  p99.9     0.8  max      0.9
+  round 0 line 5-20% often       ref v ref  n=    299  median       0  p99     0.7  p99.9     0.8  max      0.8
+  round 0 line 5-20% seldom      level 0    n=   2820  median     0.4  p99     2.4  p99.9       4  max      4.2
+  round 0 line 5-20% seldom      level 1    n=   2820  median     0.1  p99     1.6  p99.9     2.8  max      2.9
+  round 0 line 5-20% seldom      level 2    n=   2820  median     0.1  p99     1.1  p99.9       2  max      2.1
+  round 0 line 5-20% seldom      ref v ref  n=   1410  median     0.1  p99     0.5  p99.9     0.7  max        1
+  round 0 line 50%+ often        level 0    n=   6310  median     0.2  p99     0.9  p99.9     1.1  max      1.4
+  round 0 line 50%+ often        level 1    n=   6310  median     0.1  p99     0.7  p99.9       1  max      1.2
+  round 0 line 50%+ often        level 2    n=   6310  median     0.1  p99     0.5  p99.9     0.9  max      1.1
+  round 0 line 50%+ often        ref v ref  n=   3454  median       0  p99     0.2  p99.9     0.3  max      0.4
+  round 0 line 50%+ seldom       level 0    n=   3734  median     0.1  p99     0.6  p99.9     0.8  max      0.8
+  round 0 line 50%+ seldom       level 1    n=   3734  median     0.1  p99     0.4  p99.9     0.5  max      0.6
+  round 0 line 50%+ seldom       level 2    n=   3734  median       0  p99     0.3  p99.9     0.6  max      0.7
+  round 0 line 50%+ seldom       ref v ref  n=   1568  median       0  p99     0.2  p99.9     0.2  max      0.2
+
+strategy (points)
+  round 0 line 20-50%            level 0    n=  18854  median       0  p99    40.6  p99.9    75.1  max     98.8
+  round 0 line 20-50%            level 1    n=  19814  median       0  p99    31.1  p99.9      63  max     99.2
+  round 0 line 20-50%            level 2    n=  19814  median       0  p99    22.9  p99.9      63  max     99.2
+  round 0 line 20-50%            ref v ref  n=  11441  median       0  p99    38.2  p99.9    75.1  max       98
+  round 0 line 5-20%             level 0    n=  30692  median       0  p99    63.3  p99.9    89.9  max     99.2
+  round 0 line 5-20%             level 1    n=  29732  median       0  p99    62.1  p99.9    87.1  max     93.9
+  round 0 line 5-20%             level 2    n=  29732  median       0  p99    59.2  p99.9    82.3  max     93.9
+  round 0 line 5-20%             ref v ref  n=  13332  median     0.1  p99      69  p99.9      83  max     93.9
+  round 0 line 50%+              level 0    n=  18014  median       0  p99    36.5  p99.9    61.4  max     72.3
+  round 0 line 50%+              level 1    n=  18014  median       0  p99    26.4  p99.9    50.2  max     61.9
+  round 0 line 50%+              level 2    n=  18014  median       0  p99    19.2  p99.9    37.1  max       55
+  round 0 line 50%+              ref v ref  n=   9007  median       0  p99     8.8  p99.9    18.3  max     32.4
+
+worth when he continues (% pot)
+  round 0 line 20-50% often      level 0    n=    988  median       0  p99    5.98  p99.9   6.921  max    6.921
+  round 0 line 20-50% often      level 1    n=   1788  median   0.019  p99   5.833  p99.9   7.704  max    7.787
+  round 0 line 20-50% often      level 2    n=   1788  median   0.005  p99   3.733  p99.9   4.366  max    4.624
+  round 0 line 20-50% often      ref v ref  n=   1206  median   0.001  p99   1.826  p99.9   2.027  max    2.027
+  round 0 line 20-50% seldom     level 0    n=   5642  median   0.001  p99   9.086  p99.9  21.202  max   21.544
+  round 0 line 20-50% seldom     level 1    n=   5162  median       0  p99   6.123  p99.9  10.799  max   15.461
+  round 0 line 20-50% seldom     level 2    n=   5162  median       0  p99   4.164  p99.9   6.424  max     8.89
+  round 0 line 20-50% seldom     ref v ref  n=   2405  median   0.001  p99   1.894  p99.9   2.273  max    2.325
+  round 0 line 5-20% often       level 0    n=   1542  median       0  p99  14.548  p99.9  16.348  max   17.118
+  round 0 line 5-20% often       level 1    n=   1222  median       0  p99   4.652  p99.9   4.995  max    5.321
+  round 0 line 5-20% often       level 2    n=   1222  median       0  p99    4.09  p99.9   4.863  max    4.863
+  round 0 line 5-20% often       ref v ref  n=    299  median   0.001  p99   3.083  p99.9   3.912  max    3.912
+  round 0 line 5-20% seldom      level 0    n=   2820  median   0.001  p99  16.726  p99.9  60.761  max   61.193
+  round 0 line 5-20% seldom      level 1    n=   2820  median       0  p99   6.601  p99.9  17.224  max   17.354
+  round 0 line 5-20% seldom      level 2    n=   2820  median       0  p99   3.807  p99.9  10.829  max   10.959
+  round 0 line 5-20% seldom      ref v ref  n=   1410  median   0.001  p99    2.53  p99.9   5.249  max    5.249
+  round 0 line 50%+ often        level 0    n=   6310  median   0.357  p99   5.418  p99.9   7.677  max    8.845
+  round 0 line 50%+ often        level 1    n=   6310  median   0.201  p99   4.246  p99.9   5.633  max    6.168
+  round 0 line 50%+ often        level 2    n=   6310  median   0.129  p99   2.764  p99.9   3.427  max    3.703
+  round 0 line 50%+ often        ref v ref  n=   3454  median   0.056  p99   0.781  p99.9   1.331  max    1.701
+  round 0 line 50%+ seldom       level 0    n=   3734  median    0.26  p99    9.22  p99.9  10.704  max   11.793
+  round 0 line 50%+ seldom       level 1    n=   3734  median   0.165  p99   3.438  p99.9   4.383  max    5.253
+  round 0 line 50%+ seldom       level 2    n=   3734  median   0.126  p99   2.966  p99.9   4.031  max    5.142
+  round 0 line 50%+ seldom       ref v ref  n=   1568  median    0.07  p99   2.079  p99.9   2.347  max    2.347
+
+worth when he continues, less the passive action (% pot)
+  round 0 line 20-50% often      level 0    n=    988  median   0.249  p99   4.503  p99.9   6.038  max    6.038
+  round 0 line 20-50% often      level 1    n=   1788  median   0.198  p99   4.131  p99.9   5.061  max    5.112
+  round 0 line 20-50% often      level 2    n=   1788  median   0.141  p99   2.721  p99.9       3  max    3.191
+  round 0 line 20-50% often      ref v ref  n=   1206  median   0.038  p99    1.35  p99.9   1.729  max     1.73
+  round 0 line 20-50% seldom     level 0    n=   5642  median   0.452  p99   7.742  p99.9  19.403  max   19.541
+  round 0 line 20-50% seldom     level 1    n=   5162  median   0.264  p99   4.844  p99.9   9.485  max   13.915
+  round 0 line 20-50% seldom     level 2    n=   5162  median   0.159  p99   3.488  p99.9   6.146  max     8.01
+  round 0 line 20-50% seldom     ref v ref  n=   2405  median   0.049  p99   1.897  p99.9    2.29  max    2.324
+  round 0 line 5-20% often       level 0    n=   1542  median   0.236  p99  12.298  p99.9  13.457  max    14.18
+  round 0 line 5-20% often       level 1    n=   1222  median   0.149  p99   4.106  p99.9   4.409  max    4.662
+  round 0 line 5-20% often       level 2    n=   1222  median   0.084  p99   3.182  p99.9   4.087  max    4.088
+  round 0 line 5-20% often       ref v ref  n=    299  median   0.047  p99   2.861  p99.9   3.652  max    3.652
+  round 0 line 5-20% seldom      level 0    n=   2820  median   0.659  p99   13.79  p99.9  55.241  max    55.66
+  round 0 line 5-20% seldom      level 1    n=   2820  median   0.321  p99   5.297  p99.9  13.166  max   13.322
+  round 0 line 5-20% seldom      level 2    n=   2820  median   0.165  p99    3.15  p99.9   8.177  max    8.333
+  round 0 line 5-20% seldom      ref v ref  n=   1410  median   0.093  p99   1.913  p99.9   4.476  max    4.476
+  round 0 line 50%+ often        level 0    n=   6310  median   0.332  p99   4.529  p99.9   6.851  max    7.983
+  round 0 line 50%+ often        level 1    n=   6310  median     0.2  p99   3.521  p99.9    5.07  max    5.327
+  round 0 line 50%+ often        level 2    n=   6310  median   0.135  p99   2.422  p99.9   3.449  max    3.803
+  round 0 line 50%+ often        ref v ref  n=   3454  median    0.05  p99   0.738  p99.9   1.104  max    1.412
+  round 0 line 50%+ seldom       level 0    n=   3734  median   0.282  p99   9.245  p99.9  10.807  max   11.861
+  round 0 line 50%+ seldom       level 1    n=   3734  median   0.165  p99   3.384  p99.9   4.106  max    5.294
+  round 0 line 50%+ seldom       level 2    n=   3734  median   0.128  p99   2.925  p99.9   3.918  max    5.152
+  round 0 line 50%+ seldom       ref v ref  n=   1568  median   0.071  p99   2.076  p99.9   2.291  max    2.291
+
+files: measure-river-brick-deep.jsonl, measure-river-default.jsonl, measure-river-dry.jsonl, measure-river-flush.jsonl, measure-river-four-straight.jsonl, measure-river-paired.jsonl

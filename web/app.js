@@ -1,5 +1,5 @@
 import { RangeManager } from 'poker-rangeman';
-import { explain, survey } from '../src/explain/river.js';
+import { survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
 import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
@@ -315,8 +315,9 @@ const handsInOrder = (s) => [...s.rows].sort((a, b) => (a.hand.strength ?? 0) - 
 function renderWhy() {
   const s = state.survey; const row = s?.byName.get(state.hand);
   // before the river there is the hand and what it does; the reasons are a river matter for now
-  let told = !s || !state.hand ? null : s.outline ? (row ? { name: row.hand.name, strategy: row.hand.strategy, equity: row.equity, line: '', reasons: [] } : null) : explain(s, state.hand);
-  if (told && s.outline) {
+  let told = !s || !state.hand || !row ? null : { name: row.hand.name, strategy: row.hand.strategy, equity: row.equity, line: '', reasons: [] };
+  // the reasons come from the worker on every street: only what has been proven is said (research/proof/PROOF.md)
+  if (told && row) {
     // the reasons come from the worker: asked for once a hand, shown when they arrive
     const key = `${state.node}|${state.dealt.join(' ')}|${row.hand.id}`; const got = state.told.get(key);
     if (got) told = { ...told, line: got.line, reasons: got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : got.reasons };

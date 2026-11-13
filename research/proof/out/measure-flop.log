@@ -42,3 +42,5 @@
   solved flop rainbow dry: 75 iterations, 0.275%, 60.8s
   solved flop rainbow dry: 130 iterations, 0.098%, 99.8s
   dcfr flop rainbow dry: 325 its 0.0198% 238s
+  cfr+ flop rainbow dry: 1000 its 0.0199% 829s
+  flop rainbow dry node 0 [] round 0 done, 454s

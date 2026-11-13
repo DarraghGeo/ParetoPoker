@@ -4,16 +4,16 @@
 //   node measure.mjs <spot name prefix> <levels> <reference accuracy>      MINLINE: thinnest line looked at
 import { writeFileSync } from 'node:fs';
 import { fs, solveSpot, decisions } from './lib.mjs';
-import { TURNS, FLOPS, HELD_TURNS, HELD_FLOPS, HELD2_TURNS, config } from './spots.mjs';
+import { TURNS, FLOPS, HELD_TURNS, HELD_FLOPS, HELD2_TURNS, RIVERS, HELD_RIVERS, config } from './spots.mjs';
 import { study, measure } from '../../src/explain/street.js';
 
 const [only, levelText = '0.3,0.05,0.02', fineTarget = '0.01'] = process.argv.slice(2);
 const LEVELS = levelText.split(',').map(Number); const MINLINE = +(process.env.MINLINE ?? 0.05);
-const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS, ...HELD2_TURNS].filter((s) => !only || s.name.startsWith(only));
-const other = (s, algorithm, target) => { const spot = fs.defineSpot(config(s)); const run = fs.createRun(spot, { workers: 3, algorithm }); let e = Infinity; const t = Date.now(); while (e > target && run.completed < 40000) { run.step(spot.board.length === 3 ? 5 : 20); e = run.exploitabilityPercent(); } console.error(`  ${algorithm} ${s.name}: ${run.completed} its ${e.toFixed(4)}% ${((Date.now() - t) / 1000).toFixed(0)}s`); return { spot, run, solution: run.snapshot(), exploit: e }; };
+const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS, ...HELD2_TURNS, ...RIVERS, ...HELD_RIVERS].filter((s) => !only || s.name.startsWith(only));
+const other = (s, algorithm, target) => { const spot = fs.defineSpot(config(s)); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 3), algorithm }); let e = Infinity; const t = Date.now(); while (e > target && run.completed < 40000) { run.step(spot.board.length === 3 ? 5 : 20); e = run.exploitabilityPercent(); } console.error(`  ${algorithm} ${s.name}: ${run.completed} its ${e.toFixed(4)}% ${((Date.now() - t) / 1000).toFixed(0)}s`); return { spot, run, solution: run.snapshot(), exploit: e }; };
 const r3 = (x) => (x == null || Number.isNaN(x) ? null : Math.round(x * 1000) / 1000);
 for (const s of spots) {
-  const solves = LEVELS.map((level) => solveSpot(s, level, { cap: 40000 }));
+  const solves = LEVELS.map((level) => solveSpot(s, level, { cap: 40000, workers: +(process.env.WORKERS ?? 3) }));
   for (const algorithm of ['dcfr', 'cfr+']) solves.push({ ...other(s, algorithm, +fineTarget), nodes: solves[0].nodes });
   const lines = []; const t0 = Date.now(); const flop = s.board.replace(/\s/g, '').length === 6;
   for (const { id, dealt } of decisions(solves[0], { perRound: flop ? [99, 2, 0] : [99, 3, 0] })) {
