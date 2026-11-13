@@ -110,7 +110,11 @@ export class RangeStrategist {
     if (facing) {
       const candidates = this.#candidates('call', context);
       const share = own(candidates, frequencies.call);
-      if (share > 0) give(candidates, strategy[index('call')], share);
+      if (share > 0) {
+        const unplaced = give(candidates, strategy[index('call')], share);
+        // More calls asked for than the selector has candidates: the next strongest hands make it up
+        if (targets && unplaced > 1e-9) give({ scores: context.strength, limit: null }, strategy[index('call')], unplaced / total);
+      }
     }
     for (const wager of biggestFirst) {
       if (!(wager.bluff > 0)) continue;

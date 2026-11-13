@@ -8,6 +8,61 @@ capping). Add a row when a number changes; do not delete the old result.
 All losses are the share of the pot lost to the solver's best response ("exploited"), both
 seats averaged, unless a row says otherwise. Lower is better.
 
+## Where the engine loses
+
+`node bin/decompose.js --set <name> --selector <name>` hands each of the engine's jobs to the
+solver in turn: its estimate of his range, its frequencies (how often each action, which sizes),
+and its choice of hands. Loss to the best response, both seats averaged:
+
+| | his range | frequencies | hands | R12 Napkin | R12 equity | T4 Napkin | T4 equity |
+|---|---|---|---|---|---|---|---|
+| the engine as it is | engine | engine | engine | 3.9 | 9.3 | 11.7 | 26.1 |
+| given his range | solver | engine | engine | 4.7 | 8.0 | 27.4 | 32.7 |
+| given the frequencies | engine | solver | engine | 5.1 | 6.5 | 9.6 | 13.8 |
+| given both: hand selection alone | solver | solver | engine | 5.3 | 8.4 | 13.3 | 18.1 |
+| given the hands, in order | engine | engine | solver, all-or-nothing | 9.8 | 16.9 | 18.1 | 27.8 |
+| given the hands, with mixing | engine | engine | solver | 8.7 | 9.1 | 18.1 | 24.8 |
+| given his range and the hands | solver | engine | solver | 10.9 | 7.1 | 32.8 | 31.9 |
+| the solver, dealt all-or-nothing | solver | solver | solver, all-or-nothing | 4.8 | 4.8 | 10.1 | 10.1 |
+| the solver | solver | solver | solver | 0.3 | 0.3 | 0.3 | 0.3 |
+
+"All-or-nothing" is how a selector's order is dealt: hands are taken from the front until the
+frequency is filled, so each hand takes one action (only the hand on the boundary is mixed).
+
+Read from the solver down, where each step changes one thing:
+
+1. **Dealing all-or-nothing, even in the solver's own order: 4.5 points on rivers, 9.8 on turns.**
+   The largest single loss, and no order can remove it: the solver mixes most hands.
+2. **The selector's order instead of the solver's: Napkin 0.5 on rivers and 3.2 on turns; equity
+   3.6 and 8.0.** This is what a better order alone could still gain.
+3. **The engine's own frequencies and its estimate of his range: Napkin -1.4 on rivers and -1.6
+   on turns.** It does better with its own than with the solver's, because its frequencies and
+   its hands were tuned together.
+
+What this says about hand selection as a target:
+
+- With an order alone, Napkin is already within half a point of the solver's own order on rivers
+  and about 3 points on turns. That is the ceiling for a better order.
+- The bigger prize is mixing: up to 4.5 and 9.8 points. A selector can express it (a cap on how
+  often a hand takes a role, as `oopValueChecks` does), so it is within reach of hand selection,
+  but it means choosing how often as well as which.
+- The three jobs are not separable by swapping one at a time from the engine's side: every
+  single swap makes the engine worse (rows 2 to 7). The engine's frequencies with the solver's
+  hands are the worst pairing of all. Its frequencies are the part furthest from the solver's,
+  but they only make sense with its own hands.
+- Nothing here shows that estimating his range is what costs the engine. On rivers the solver's
+  range changes little (+0.8 Napkin, -1.3 equity). On turns it makes things much worse, which is
+  not believable as a finding: with its own bet sizes the engine takes lines the solver never
+  does, where the solver's range for the opponent means little.
+
+Per-board levels in the rows that use the solver's frequencies still move by about 5 points
+with the solver's precision; the averages over a set are steadier.
+
+The hand-selection-alone row was first measured without making up calls the selector had no
+candidates for, so part of it was under-calling: 21.9 on T4 for Napkin and 26.2 for equity
+before, 13.3 and 18.1 after. The two tables in the next section were measured before that fix;
+their order of selectors and rules stands, their levels on turns are too high.
+
 ## How results are measured
 
 `node bin/compare.js --set <name>` reports three settings (`SolverMatch.play` options):

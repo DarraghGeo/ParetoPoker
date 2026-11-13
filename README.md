@@ -208,10 +208,20 @@ Loss when fully exploited, as a share of the pot, both seats averaged:
 | 4 turns, other ranges and boards, stack 5x pot | 34.9% | 19.5% |
 | 1 flop `Td9d6h`, one bet size, stack 1.5x pot | 26.8% | 14.9% |
 
-Those are the whole engine, including frequency tunings that live in the selector. With hand
-selection tested alone (the solver's range for the opponent and its frequencies), Napkin loses
-5.7% on the rivers against equity's 8.7%, and 21.9% and 23.8% on the two sets of turns against
-26.2% and 26.4%.
+Those are the whole engine, including frequency tunings that live in the selector. Taking the
+engine apart (`bin/decompose.js`, details in [TUNINGS.md](TUNINGS.md)):
+
+| Loss to the best response | 12 rivers | 4 turns |
+|---|---|---|
+| The solver's own strategy | 0.3% | 0.3% |
+| The solver's range, frequencies and order of hands, dealt as a selector's order is | 4.8% | 10.1% |
+| The same with Napkin's order of hands | 5.3% | 13.3% |
+| The same with the equity selector's order | 8.4% | 18.1% |
+| The whole engine with Napkin | 3.9% | 11.7% |
+
+The largest loss is not which hands come first but that an order is dealt all-or-nothing, where
+the solver mixes. Napkin's order is within half a point of the solver's own on rivers and about
+3 points on turns.
 
 Against the solver's equilibrium Napkin loses 0.6% on those rivers (equity 1.2%), 1.8% and 1.9%
 on the two sets of turns (3.5% and 4.8%) and 5.6% on the flop (6.1%).
@@ -305,9 +315,14 @@ await match.play('ip', { ranges: 'solver', where: (d) => d.street === 'turn' });
 With `ranges: 'solver'` the engine keeps its own range (it knows what it did) and is handed
 the opponent's from the equilibrium. With `frequencies: 'solver'` it also fills the solver's
 action frequencies, so only its choice of hands is tested. `where` keeps the solver's own
-strategy at the decisions it turns down. `node bin/compare.js --set turns` runs all three for
-both selectors; `node bin/interchange.js` tests whether a group of hands is interchangeable
-by reassigning them inside the solver's own strategy.
+strategy at the decisions it turns down. A third option, `hands: 'solver'` or
+`'solver-mixed'`, fills the frequencies with the solver's own hands instead of the selector's.
+
+- `node bin/decompose.js --set turns` hands each job (his range, frequencies, hands) to the
+  solver in turn and shows where the loss comes from.
+- `node bin/compare.js --set turns` runs the settings for both selectors.
+- `node bin/interchange.js` tests whether a group of hands is interchangeable by reassigning
+  them inside the solver's own strategy.
 
 - `gto`: both players at equilibrium.
 - `versusGto`: the engine against the solver's equilibrium strategy.

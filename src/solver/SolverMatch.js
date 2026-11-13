@@ -43,13 +43,19 @@ export class SolverMatch {
    * @param {'engine'|'solver'} [options.frequencies] With `ranges: 'solver'`: 'solver' also gives
    *   it the solver's action frequencies at the decision, so that only the choice of hands is
    *   the engine's.
-   * @param {(decision: Object) => boolean} [options.where] With `ranges: 'solver'`: which of
+   * @param {'engine'|'solver'|'solver-mixed'} [options.hands] Whose choice of hands fills the
+   *   frequencies. 'solver': the solver's order (the hands it takes each action with most often,
+   *   first), dealt the way a selector's order is, each hand all or nothing. 'solver-mixed': the
+   *   solver's hands with its own mixing, scaled to the frequencies. With the other two options
+   *   this separates what the engine does: estimate his range, set frequencies, choose hands,
+   *   and deal them out. All three from the solver with 'solver-mixed' is the solver's strategy.
+   * @param {(decision: Object) => boolean} [options.where] Which of
    *   hero's decisions the engine makes; the solver's own strategy is kept at the others. Gets
    *   `{ street, position, facing, raises, depth, spot }`.
    * @returns {Promise<Object>} Expected values in chips, losses as a share of the pot, and the
    *   engine's and the solver's action frequencies along the first decisions of the hand.
    */
-  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', where = null } = {}) {
+  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', hands = 'engine', where = null } = {}) {
     const seat = POSITIONS.indexOf(hero);
     if (seat < 0) throw new Error(`hero must be 'oop' or 'ip', got ${hero}`);
     const bridge = (this.bridge ??= new SolverBridge());
@@ -68,10 +74,10 @@ export class SolverMatch {
     const lines = [];
     const start = { history: [], ranges, priors: ranges, streetBase: 0, last: [0, 0], raises: 0, depth: 0 };
     let locked = 0;
-    if (source === 'solver') {
-      // 2. The engine decides on the solver's ranges at every node, then all of it is locked
+    if (source === 'solver' || frequencies === 'solver' || hands === 'solver' || where) {
+      // 2. The engine decides at every node with whatever it is given from the solver, then all of it is locked
       const decisions = [];
-      await this.#walkSolverRanges({ ...start, own: ranges[seat] }, { seat, frequencies, where, decisions, lines });
+      await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, where, decisions, lines });
       await bridge.reset();
       for (const { history, flat } of decisions) await bridge.lock(history, flat);
       locked = decisions.length;
@@ -121,7 +127,8 @@ export class SolverMatch {
       stack: info.effective_stack,
       lockedNodes: locked,
       ranges: source,
-      frequencies: source === 'solver' ? frequencies : 'engine',
+      frequencies,
+      hands,
       solverExploitability: exploitability,
       ev: { gto: gto[seat], versusGto: versusGto[seat], exploited: pot - exploited },
       loss: {
@@ -181,14 +188,14 @@ export class SolverMatch {
    * while the equilibrium is still in the bridge.
    */
   async #walkSolverRanges(state, options) {
-    const { seat, frequencies, where, decisions, lines } = options;
+    const { seat, source, frequencies, hands, where, decisions, lines } = options;
     const node = await this.bridge.node(state.history);
     if (node.terminal) return;
     if (node.chance) {
       for (const { card } of node.actions) {
         const dead = (range) => range.map((w, i) => (COMBO_A[i] === card || COMBO_B[i] === card ? 0 : w));
         await this.#walkSolverRanges({
-          ...state, history: [...state.history, card], own: dead(state.own), priors: state.priors.map(dead),
+          ...state, history: [...state.history, card], own: dead(state.own), model: dead(state.model), priors: state.priors.map(dead),
           streetBase: node.bets[0], last: [0, 0], raises: 0, dealt: true,
         }, options);
       }
@@ -209,14 +216,24 @@ export class SolverMatch {
       const solver = this.#solverFrequencies(me, strategy, weights, node.actions.length);
       const asked = !where || where({ street: spot.street, position: POSITIONS[me], facing: spot.toCall > 0, raises: spot.raises, depth: state.depth, spot });
       if (asked) {
+        const solved = node.actions.map((_, a) => spread(this.hands[me], strategy.slice(a * n, (a + 1) * n)));
+        const base = {
+          position: POSITIONS[me], spot, board: node.board, actions: node.actions, hero: state.own, villainPrior: state.priors[1 - me],
+          // His range: the solver's, or the engine's own model of it
+          villain: source === 'solver' ? spread(this.hands[1 - me], weights[1 - me]) : state.model,
+        };
         // The solver's frequencies only mean something where the solver itself gets to
         const reached = weights[me].some((w) => w > 1e-9);
-        const decision = this.strategist.decide({
-          position: POSITIONS[me], spot, board: node.board, actions: node.actions,
-          hero: state.own, villain: spread(this.hands[1 - me], weights[1 - me]), villainPrior: state.priors[1 - me],
-          targets: frequencies === 'solver' && reached ? solver : null,
-        });
-        mine = decision.strategy;
+        let targets = frequencies === 'solver' && reached ? solver : null;
+        let strategist = this.strategist;
+        if (hands !== 'engine') {
+          // The engine's frequencies are whatever it would play here with its own hands
+          targets ??= strategist.decide(base).played;
+          strategist = new RangeStrategist({ engine: strategist.engine, equity: strategist.equity, selector: solverOrder(node.actions, solved, spot) });
+        }
+        mine = hands === 'solver-mixed'
+          ? rescaled(solved, state.own, targets, node.actions.findIndex((a) => a.type === (spot.toCall > 0 ? 'fold' : 'check')))
+          : strategist.decide({ ...base, targets }).strategy;
         decisions.push({ history: [...state.history], flat: this.#flatten(me, mine) });
       } else {
         mine = node.actions.map((_, a) => spread(this.hands[me], strategy.slice(a * n, (a + 1) * n)));
@@ -227,9 +244,18 @@ export class SolverMatch {
       }
     }
 
+    // The engine's model of him: he plays the engine's own strategy against hero's range
+    let his = null;
+    if (me !== seat && source !== 'solver') {
+      his = this.strategist.decide({
+        position: POSITIONS[me], spot, board: node.board, actions: node.actions, hero: state.model, villain: state.own, villainPrior: state.priors[seat],
+      }).strategy;
+    }
+
     for (const [a, action] of node.actions.entries()) {
       const own = mine ? state.own.map((w, i) => w * mine[a][i]) : state.own;
       if (!own.some((w) => w > 1e-9)) continue; // hero never gets here
+      const model = his ? state.model.map((w, i) => w * his[a][i]) : state.model;
       const last = [...state.last];
       let raises = state.raises;
       if (action.to != null) {
@@ -237,7 +263,7 @@ export class SolverMatch {
         if (spot.toCall > 0) raises++;
       }
       await this.#walkSolverRanges({
-        ...state, history: [...state.history, a], path: `${state.path ? `${state.path} ` : ''}${label(action)}`, own, last, raises, depth: state.depth + 1,
+        ...state, history: [...state.history, a], path: `${state.path ? `${state.path} ` : ''}${label(action)}`, own, model, last, raises, depth: state.depth + 1,
       }, options);
     }
   }
@@ -303,6 +329,40 @@ export class SolverMatch {
       }, { visit, dryRun, prune });
     }
   }
+}
+
+/**
+ * A selector that fills frequencies the way the solver does: for each action, the hands the
+ * solver takes it with most often come first. `solved[a][combo]` is the solver's strategy.
+ */
+function solverOrder(actions, solved, spot) {
+  const most = (spot.invested ?? 0) + (spot.stack ?? Infinity);
+  const sized = (wager) => solved[actions.findIndex((a) => a.to != null && Math.min(a.to, most) === wager.to)];
+  return {
+    value: (context, wager) => sized(wager),
+    bluff: (context, wager) => sized(wager),
+    call: () => solved[actions.findIndex((a) => a.type === 'call')],
+  };
+}
+
+/**
+ * The solver's strategy scaled so that each action is taken with `targets[a]` of `range`, keeping
+ * which hands it prefers and how it mixes them. The passive action takes what is left.
+ */
+function rescaled(solved, range, targets, passive) {
+  const now = aggregate(solved, range) ?? solved.map(() => 0);
+  const out = solved.map(() => new Float64Array(NUM_COMBOS));
+  for (let i = 0; i < NUM_COMBOS; i++) {
+    let used = 0;
+    solved.forEach((probabilities, a) => {
+      if (a === passive) return;
+      out[a][i] = now[a] > 1e-9 ? probabilities[i] * (targets[a] / now[a]) : 0;
+      used += out[a][i];
+    });
+    if (used > 1) solved.forEach((_, a) => { out[a][i] /= used; });
+    out[passive][i] = Math.max(0, 1 - Math.min(1, used));
+  }
+  return out;
 }
 
 function aggregate(strategy, range) {
