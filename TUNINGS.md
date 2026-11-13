@@ -112,6 +112,34 @@ throughout. Loss to the solver's best response, % of the pot (to its equilibrium
   (we bet 75% of the pot where it mostly bets 33% far more often), and its hands for one size
   do not belong in another.
 
+### The turn bet-frequency sweep (complete)
+
+`diagnosis/level-sweep.mjs`, 2,880 measurements: 10 pairs of ranges, 8 turn boards, 3 depths,
+both seats, the fitted engine forced to bet 10%, 30%, 50%, 70% or 90% first to act, and at its
+own frequency. Summary by `diagnosis/level_sweep_summary.py` in `diagnosis/level-sweep-summary.txt`,
+per spot in `diagnosis/level-sweep-best.csv`. Nothing in the engine was changed.
+
+| | out of position | in position |
+|---|---|---|
+| loss at the engine's own frequency | 10.47 | 10.56 |
+| loss at the best of the five frequencies | 10.13 | 10.14 |
+| loss at the worst of them | 23.27 | 27.74 |
+| engine bets / solver bets / least exploitable | 0.14 / 0.38 / 0.28 | 0.29 / 0.48 / 0.23 |
+| least exploitable against the solver's (rank correlation) | +0.68 | +0.40 |
+
+- With our hands and mixing, the right bet frequency is worth about 0.3 to 0.4 points on
+  average. Frequency is not where the turn loss is. The exceptions are the pots where out of
+  position holds the stronger range: the 3-bettor (C) 11.8 to 9.9 at a frequency of 0.61, the
+  4-bet pot (H) 15.5 to 14.1, the polar 3-bettor (I) 10.3 to 9.5. There the engine bets about
+  0.2 and should bet 0.5 to 0.6.
+- For our engine the least exploitable frequency is below the solver's: by 0.10 out of position
+  and by 0.25 in position. Betting as often as the solver with our hands is a mistake.
+- Out of position it follows the spot: 0.42 + 1.22 x range advantage - 0.29 x nut advantage
+  + 0.93 x polarisation advantage - 0.055 x depth (R2 0.51; the solver's own frequency fits the
+  same form with R2 0.80). In position it barely moves (0.23, sd 0.13).
+- Depth is the larger effect on the loss: 6% at one pot behind, 10.5% at 2.5, 14.5% at 5,
+  whatever the frequency.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,

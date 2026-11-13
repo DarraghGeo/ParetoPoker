@@ -1,0 +1,24 @@
+2880 measurements, 480 complete spot-seats
+
+== ip: 240 spots
+   loss at the engine's own frequency 10.56%; at the best of the five levels 10.14%; at the worst 27.74%
+   bet frequency: engine 0.29, solver 0.48, least exploitable 0.23 (sd 0.13)
+   least-exploitable frequency against the solver's: correlation +0.40; mean difference -0.25; mean absolute difference 0.26
+   least-exploitable frequency against the engine's: correlation +0.63; mean absolute difference 0.11
+   it moves with: equity +0.61, rangeAdvantage +0.61, nutAdvantage +0.44, polarization +0.15, polarizationAdvantage +0.04, depth -0.06
+   the solver's frequency moves with: equity +0.71, rangeAdvantage +0.71, nutAdvantage +0.40, polarization -0.37, polarizationAdvantage -0.17, depth -0.11
+   bestLevel = 0.26 +0.41 x range advantage +0.25 x nut advantage +0.30 x polarisation advantage -0.008 x depth   (R2 0.47)
+   solverBets = 0.51 +0.64 x range advantage -0.05 x nut advantage +0.21 x polarisation advantage -0.006 x depth   (R2 0.55)
+   by pair: A: best 0.18, solver 0.42, engine 0.19, loss 8.0->7.8 | B: best 0.29, solver 0.50, engine 0.38, loss 8.1->7.9 | C: best 0.17, solver 0.41, engine 0.19, loss 12.3->12.1 | D: best 0.18, solver 0.44, engine 0.22, loss 7.6->7.4 | E: best 0.28, solver 0.56, engine 0.37, loss 8.9->8.6 | F: best 0.38, solver 0.64, engine 0.50, loss 14.4->13.2 | G: best 0.20, solver 0.48, engine 0.25, loss 7.7->7.6 | H: best 0.17, solver 0.42, engine 0.20, loss 16.7->15.8 | I: best 0.15, solver 0.40, engine 0.19, loss 11.1->10.9 | J: best 0.30, solver 0.58, engine 0.43, loss 10.8->10.1
+   by depth: 1.0x: best 0.23, solver 0.50, loss 6.4->6.2 | 2.5x: best 0.26, solver 0.49, loss 10.8->10.4 | 5.0x: best 0.20, solver 0.47, loss 14.5->13.8
+== oop: 240 spots
+   loss at the engine's own frequency 10.47%; at the best of the five levels 10.13%; at the worst 23.27%
+   bet frequency: engine 0.14, solver 0.38, least exploitable 0.28 (sd 0.31)
+   least-exploitable frequency against the solver's: correlation +0.68; mean difference -0.10; mean absolute difference 0.18
+   least-exploitable frequency against the engine's: correlation +0.67; mean absolute difference 0.17
+   it moves with: equity +0.62, rangeAdvantage +0.63, nutAdvantage +0.36, polarization +0.23, polarizationAdvantage +0.06, depth -0.32
+   the solver's frequency moves with: equity +0.85, rangeAdvantage +0.86, nutAdvantage +0.46, polarization +0.15, polarizationAdvantage +0.03, depth -0.16
+   bestLevel = 0.42 +1.22 x range advantage -0.29 x nut advantage +0.93 x polarisation advantage -0.055 x depth   (R2 0.51)
+   solverBets = 0.43 +1.76 x range advantage -0.70 x nut advantage +1.34 x polarisation advantage -0.025 x depth   (R2 0.80)
+   by pair: A: best 0.30, solver 0.51, engine 0.18, loss 8.0->7.7 | B: best 0.10, solver 0.15, engine 0.08, loss 8.7->9.0 | C: best 0.61, solver 0.75, engine 0.21, loss 11.8->9.9 | D: best 0.27, solver 0.42, engine 0.16, loss 7.8->7.5 | E: best 0.10, solver 0.11, engine 0.08, loss 9.4->9.6 | F: best 0.13, solver 0.16, engine 0.09, loss 14.8->15.2 | G: best 0.21, solver 0.31, engine 0.13, loss 7.7->7.6 | H: best 0.51, solver 0.67, engine 0.23, loss 15.5->14.1 | I: best 0.46, solver 0.63, engine 0.19, loss 10.3->9.5 | J: best 0.10, solver 0.11, engine 0.07, loss 10.7->11.3
+   by depth: 1.0x: best 0.40, solver 0.46, loss 6.3->5.6 | 2.5x: best 0.27, solver 0.33, loss 10.4->9.9 | 5.0x: best 0.17, solver 0.35, loss 14.7->14.9
