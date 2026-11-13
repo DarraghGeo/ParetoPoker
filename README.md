@@ -253,13 +253,9 @@ Where it departs from the guide, each marked in the code and each with an option
 - **Value needs 70% against his continues, not half** (`valueThreshold`). The largest single
   gain: about a third less lost when exploited, on rivers and turns, and it held on ranges and
   stack depths it was not tuned on.
-- **Out of position on the river, every value hand checks 20% of the time** (`oopValueChecks`),
-  in place of the guide's thin-value and trap rules (`thinValue`, `trapShare`), which never
-  applied at the engine's bet sizes. The solver checks 30-50% of its strong hands there.
-- **Turn bluffs use one score in place of the guide's six roles** (`turnBluffs`). It ranks the
-  solver's must-bluffs above its can't-bluffs 89% of the time, against 70% for the roles.
-- **Out of position on the turn, every value hand checks 40% of the time** (`oopValueChecks`).
-  The solver's value hands are interchangeable there and it checks about that share of each.
+- **Value hands do not always bet.** This began as flat value-checking shares inside the
+  selector and is now the mixer's job (see Mixing above and `fittedMixer()`); the guide's
+  thin-value and trap rules (`thinValue`, `trapShare`) never applied at the engine's bet sizes.
 - **River bluffs are weakest first** (`riverBluffs`). The guide's order, air with blockers
   first, matched the solver's bluffs less well (0.78 against 0.91, see the diagnosis below).
 - **`priorStrength`**: one more bluff-catcher mark, equity against the range he started the
