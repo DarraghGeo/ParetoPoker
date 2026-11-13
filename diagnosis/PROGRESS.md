@@ -278,3 +278,6 @@ engine's own frequency and at 10%, 30%, 50%, 70%, 90%: 2,880 measurements of the
 best response. The opponent is modelled as the fitted engine unchanged. Results append to
 `diagnosis/level-sweep.jsonl` (one line each); the run resumes if restarted with the same command:
 `nohup node diagnosis/level-sweep.mjs diagnosis/level-sweep.jsonl > diagnosis/level-sweep.log 2>&1 &`
+While the sweep runs, `level-sweep.jsonl` is not tracked (it changes every second). Check-ins
+copy it to `diagnosis/level-sweep-snapshot.jsonl` and commit that; to resume after a restart,
+copy the snapshot back to `level-sweep.jsonl` first.

@@ -2,3 +2,5 @@ node_modules/
 solver-bridge/target/
 diagnosis/open-hands-rivers-*.json
 diagnosis/level-sweep.log
+diagnosis/level-sweep.jsonl
+diagnosis/level-sweep.jsonl.errors
