@@ -69,6 +69,10 @@ export const SPOTS = {
 SPOTS['turns-held2'] = ['Qh7d3c2s', 'Tc8c5d4h'].flatMap((board) => Object.entries(PAIRS).flatMap(([pair, ranges]) => DEPTHS.turns.map((depth) => (
   { name: `${pair} ${board} ${depth}x`, pair, ...ranges, board, pot: 100, stack: Math.round(100 * depth), depth, sizes: SIZES }))));
 
+/** More turn spots for fitting tables over kinds of hand: four further boards, every pair, both depths. */
+SPOTS['turns-more'] = ['QsJd6c3h', 'Ac9c5d5h', '7h6h5c2d', 'KdQd4s9h'].flatMap((board) => Object.entries(PAIRS).flatMap(([pair, ranges]) => DEPTHS.turns.map((depth) => (
+  { name: `${pair} ${board} ${depth}x`, pair, ...ranges, board, pot: 100, stack: Math.round(100 * depth), depth, sizes: SIZES }))));
+
 /** Small flop trees (one bet size, 3x raises), for checking that turn and river findings carry to the flop. */
 SPOTS['flops-check'] = [
   { name: 'C Ks7h2d 1x', pair: 'C', ...PAIRS.C, board: 'Ks7h2d', pot: 100, stack: 100, depth: 1, sizes: { bet: '75%', raise: '3x' } },

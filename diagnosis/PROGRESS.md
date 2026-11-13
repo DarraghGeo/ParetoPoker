@@ -193,3 +193,22 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   Rivers: raise sizes, raise caps, deep-stack thresholds, sizes and bluff scales all tried
   (diagnosis/v33-v35.mjs): nothing beats 3.72. Rivers are on a plateau for this design.
   README and TUNINGS updated with the results, the mixing diagnosis and what was dropped.
+- 07:50 River calling orders (diagnosis/v38.mjs): ordering by equity against the range he
+  started the hand with does as well as the fitted order (3.72); ordering by equity against his
+  betting range alone is far worse (7.72), and blockers add nothing either way. On the river,
+  how strong the hand is in absolute terms is what carries; the engine's picture of his betting
+  range is not a reliable ruler. In position facing a turn bet (v37.mjs) eight orders all land
+  within 9.3-9.5 located, apart from draw bonuses, which are worse: an order alone will not
+  close the gap to the solver's own (3.8) there.
+- 08:15 Turn kind table refitted on 48 decisions (turns-tune + `turns-more`, four more boards):
+  the same shape, and on the four sets it was not fitted on it is level or slightly better
+  (held 8.78, held2 9.69, T4 8.70, T4-B 10.96). Adopted as `TURN_KINDS`.
+  Facing a turn bet, which kinds are interchangeable (bin/diagnose.js): the whole range 29.0%;
+  20 bands of equity against his bets 1.7%; of equity x draw 0.42%; of E[HS^2] x draw 0.37%;
+  with pair class 0.24%. So calls are interchangeable within those kinds. But an average table
+  over them (diagnosis/v42.mjs) is far worse located than the order (in position 20.4 against
+  9.4): the solver's continue curve is sharp at a threshold that moves with the bet size, and
+  an average smears it. For calls the order is the right tool; for opens the table is.
+  Raising a turn bet is not what separates the engine's order from the solver's: never raising
+  gives 8.7 located against 9.4. Turn calling orders built on starting-range equity: no change
+  (9.94-10.27 whole engine). Selection is on a plateau on both streets.

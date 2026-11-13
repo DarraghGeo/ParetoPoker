@@ -235,9 +235,34 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
       const blocksBluffs = blocked(hisBluffs);
       const callScores = Object.fromEntries(Object.entries(selectors).map(([name, s]) => [name, plain(s.call(callContext))]));
       const foldIndex = reply.node.actions.findIndex((a) => a.type === 'fold');
-      mixEvenly('call', reply, () => true, callContext.strength);
       const callForms = handFeatures({ equity, board: boardIds, hero: range, villain: bettor, pot: pot + 2 * bet.to, behind: stack - bet.to });
       const callClasses = classifyHands(boardIds, range);
+      mixEvenly('call', reply, () => true, callContext.strength);
+      if (callForms.strengthNow) {
+        // Candidate kinds for facing a bet: bands of rank by different measures, with and without the draw
+        const rankBy = (values) => {
+          const order = [...range.keys()].filter((i) => range[i] > 1e-4).sort((x, y) => values[x] - values[y]);
+          const all = order.reduce((t, i) => t + range[i], 0);
+          const rank = new Map();
+          let seen = 0;
+          for (const i of order) { rank.set(i, (seen + range[i] / 2) / all); seen += range[i]; }
+          return (i) => Math.min(19, Math.floor(rank.get(i) * 20));
+        };
+        const byNow = rankBy(callForms.strengthNow);
+        const byEhs2 = rankBy(callForms.ehs2);
+        const byEquity = rankBy(callContext.strength);
+        const byPrior = rankBy(callContext.priorStrength);
+        mixEvenly('facing a bet, every hand', reply, () => true, callContext.strength, {
+          'the whole range': () => 0,
+          '20 bands of equity vs his bets': (e, i) => byEquity(i),
+          '20 bands of equity x draw': (e, i) => `${byEquity(i)}/${callClasses.draw[i]}`,
+          '20 bands of strength now x draw': (e, i) => `${byNow(i)}/${callClasses.draw[i]}`,
+          '20 bands of E[HS^2]': (e, i) => byEhs2(i),
+          '20 bands of E[HS^2] x draw': (e, i) => `${byEhs2(i)}/${callClasses.draw[i]}`,
+          '20 bands of starting-range equity x draw': (e, i) => `${byPrior(i)}/${callClasses.draw[i]}`,
+          '20 bands of E[HS^2] x draw x pair class': (e, i) => `${byEhs2(i)}/${callClasses.draw[i]}/${callClasses.pair[i]}`,
+        });
+      }
       for (let i = 0; i < cards.NUM_COMBOS; i++) {
         if (!(range[i] > 1e-4)) continue;
         samples.call.push({

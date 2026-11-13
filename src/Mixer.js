@@ -131,13 +131,17 @@ export class KindMixer extends Mixer {
 
   /**
    * Facing a first bet: `tables.facing[street][position]` is `{ continue, raise }`, each
-   * `[draw][band]`. The continue table is scaled so the range continues as often as the engine
+   * `[draw][band]`, with optional `bands` (edges) and `by` (the measure hands are ranked by, a
+   * name from handFeatures such as 'ehs2'). The continue table is scaled so the range continues as often as the engine
    * says, the raise table so it raises as often; a hand calls the difference.
    */
   #facing(context, frequencies) {
     const entry = (context.spot.raises ?? 0) === 0 ? this.tables.facing?.[context.street]?.[context.position] : null;
     if (!entry) return null;
-    const strengthNow = context.street === 'river' ? context.strength : context.features.strengthNow;
+    // The measure the kinds are ranked by: strength now unless the table names another (`by`)
+    const measure = context.street === 'river' ? context.strength : context.features[entry.by ?? 'strengthNow'];
+    const strengthNow = measure;
+    const bands = entry.bands ?? RANKS;
     const draws = context.kinds.draw;
     const order = [];
     let total = 0;
@@ -153,8 +157,8 @@ export class KindMixer extends Mixer {
     for (const i of order) {
       const rank = (seen + context.hero[i] / 2) / total;
       seen += context.hero[i];
-      let k = RANKS.length - 2;
-      while (k > 0 && rank < RANKS[k]) k--;
+      let k = bands.length - 2;
+      while (k > 0 && rank < bands[k]) k--;
       band.set(i, k);
     }
     const fit = (table, level) => {
@@ -198,21 +202,22 @@ export const TURN_FACING_KINDS = { turn: {
 } };
 
 /**
- * The solver's turn opening play on the tuning spots, relative to how often it bets:
+ * The solver's turn opening play on 48 turn spots (turns-tune and turns-more), relative to how
+ * often it bets:
  * `[draw][rank band]`, bands 0-20%, 20-40%, 40-60%, 60-80%, 80-90%, 90-100% of the range by
  * strength now. From diagnosis/open-table.mjs; empty cells take a neighbour's value.
  */
 export const TURN_KINDS = { turn: {
   oop: [
-    [0.55, 0.31, 0.28, 0.80, 1.57, 1.80],
-    [2.05, 0.50, 0.30, 1.42, 2.56, 2.69],
-    [2.78, 0.56, 0.70, 1.07, 2.55, 2.55],
-    [2.07, 1.15, 0.17, 0.12, 0.12, 0.12],
+    [0.55, 0.27, 0.25, 0.88, 1.69, 1.52],
+    [1.80, 1.02, 0.46, 0.91, 2.81, 2.94],
+    [2.99, 1.15, 0.35, 1.34, 2.68, 2.78],
+    [2.67, 1.16, 0.21, 0.35, 0.35, 0.35],
   ],
   ip: [
-    [1.49, 0.51, 0.31, 0.93, 1.32, 1.95],
-    [1.20, 0.90, 0.27, 0.96, 1.78, 1.93],
-    [1.07, 1.15, 0.50, 1.06, 2.42, 2.42],
-    [0.95, 1.22, 0.96, 1.47, 1.47, 1.47],
+    [1.32, 0.60, 0.26, 0.80, 1.45, 1.99],
+    [1.25, 0.89, 0.41, 0.91, 1.95, 1.81],
+    [1.24, 1.16, 0.41, 1.32, 2.10, 2.29],
+    [1.43, 1.42, 1.01, 1.47, 1.47, 1.47],
   ],
 } };
