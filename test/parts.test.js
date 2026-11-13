@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { Mixer, ParetoEngine, Range, RangeStrategist, Tuner, cards, presets } from '../src/index.js';
+import { KindMixer, Mixer, ParetoEngine, Range, RangeStrategist, Tuner, cards, fittedTuner, presets } from '../src/index.js';
 
 const board = cards.parseCards('Td9d6hQc7s');
 const hero = Range.from('66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s').without(board).weights;
@@ -81,4 +81,62 @@ test('presets bundle a selector, a mixer and a tuner', () => {
   assert.ok(bet[cards.parseCombo('TsTh')] > 0 && bet[cards.parseCombo('TsTh')] < 1); // top set is mixed
   // Every hand's probabilities still add up to 1
   for (let i = 0; i < cards.NUM_COMBOS; i++) near(decided.strategy[0][i] + decided.strategy[1][i], 1);
+});
+
+test('bluff raises never take the range past the defence frequency', () => {
+  const engine = new ParetoEngine();
+  // Nearly everything counts as value-raise material: the bluffs on top are trimmed, the value is not
+  const spot = { street: 'river', pot: 175, toCall: 75, stack: 600 };
+  const answer = engine.inPositionFacingBet(spot, { valueShare: 0.5 });
+  near(answer.raise, answer.mdf);
+  near(answer.sizes.reduce((t, w) => t + w.value, 0), 0.5);
+  near(engine.inPositionFacingBet(spot, { valueShare: 0.7 }).raise, 0.7); // value alone may exceed it
+  assert.ok(engine.inPositionFacingBet(spot, { valueShare: 0.1 }).raise < answer.mdf);
+});
+
+test('with a tuner the frequency is always filled; without one the selector may refuse', () => {
+  // Hero holds only hands that beat nothing in his betting range
+  const river = cards.parseCards('2s3h4d6c7c');
+  const node = {
+    position: 'oop', spot: { street: 'river', pot: 200, toCall: 100, stack: 300 }, board: river,
+    hero: Range.from('QQ').without(river).weights, villain: Range.from('KK').without(river).weights,
+    actions: [{ type: 'fold' }, { type: 'call' }],
+  };
+  near(new RangeStrategist().decide(node).played[1], 0);                                  // no bluff catcher: no call
+  near(new RangeStrategist({ tuner: new Tuner([{ set: {} }]) }).decide(node).played[1], 0.5); // the fundamental, filled
+  near(new RangeStrategist({ tuner: new Tuner([{ set: { defence: 0 } }]) }).decide(node).played[1], 0); // the tuner's call
+});
+
+test('the fitted tuner follows the spot', () => {
+  const tuner = fittedTuner();
+  const context = (overrides) => ({ street: 'river', position: 'oop', facing: false, spot: { raises: 0, facing: 0, pot: 100 }, profile: { rangeAdvantage: 0.1, nutAdvantage: 0, polarization: 0.5, spr: 2 }, ...overrides });
+  // Out of position on the river the smaller, thinner bet is only used when ahead in range
+  assert.equal(tuner.tune(context({})).valueThreshold, 0.6);
+  assert.equal(tuner.tune(context({ profile: { rangeAdvantage: -0.1, nutAdvantage: 0, polarization: 0.5, spr: 2 } })).valueThreshold, undefined);
+  assert.equal(tuner.tune(context({ position: 'ip', profile: { rangeAdvantage: -0.1, nutAdvantage: 0, polarization: 0.5, spr: 2 } })).valueThreshold, 0.6);
+  // Facing a river bet: a little under the fundamental. Facing a turn raise: over it.
+  near(tuner.tune(context({ facing: true, spot: { raises: 0, facing: 75, pot: 175 } })).defence, 0.95);
+  near(tuner.tune(context({ street: 'turn', facing: true, spot: { raises: 1, facing: 150, pot: 300 } })).defence, 1.25);
+  // It always answers, so frequencies are always filled
+  assert.ok(tuner.tune(context({ street: 'flop' })) !== null);
+});
+
+test('a kind mixer says how often each kind of hand bets', () => {
+  const turn = cards.parseCards('Td9d6h2c');
+  const node = {
+    position: 'ip', spot: { street: 'turn', pot: 100, stack: 300 }, board: turn,
+    hero: Range.from('QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+').without(turn).weights,
+    villain: Range.from('66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s').without(turn).weights,
+    actions: [{ type: 'check' }, { type: 'bet', to: 75 }],
+  };
+  // Only the strongest fifth and the weakest fifth of hands with no draw bet, and draws never do
+  const table = [[1, 0, 0, 0, 1, 1], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0], [0, 0, 0, 0, 0, 0]];
+  const mixer = new KindMixer({ tables: { turn: { ip: table } }, level: () => 0.2 });
+  const { strategy, played } = new RangeStrategist({ mixer }).decide(node);
+  near(played[1], 0.2, 1e-4);                                   // the level asked for
+  assert.equal(strategy[1][cards.parseCombo('QsJs')], 0);       // an open-ender
+  assert.ok(strategy[1][cards.parseCombo('9s9h')] > 0);         // a set, among the strongest
+  assert.equal(strategy[1][cards.parseCombo('As9s')], 0);       // a middling pair
+  // Outside its tables it is an ordinary mixer
+  assert.equal(new KindMixer({ tables: {} }).direct({ facing: false, street: 'turn', position: 'ip' }, {}), null);
 });

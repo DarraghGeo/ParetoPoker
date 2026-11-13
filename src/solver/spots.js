@@ -65,6 +65,10 @@ export const SPOTS = {
   'turns-held': build('turns', 'held'),
 };
 
+/** A second held-out turn set, on boards nothing was tuned or checked on before the final table. */
+SPOTS['turns-held2'] = ['Qh7d3c2s', 'Tc8c5d4h'].flatMap((board) => Object.entries(PAIRS).flatMap(([pair, ranges]) => DEPTHS.turns.map((depth) => (
+  { name: `${pair} ${board} ${depth}x`, pair, ...ranges, board, pot: 100, stack: Math.round(100 * depth), depth, sizes: SIZES }))));
+
 /** Small flop trees (one bet size, 3x raises), for checking that turn and river findings carry to the flop. */
 SPOTS['flops-check'] = [
   { name: 'C Ks7h2d 1x', pair: 'C', ...PAIRS.C, board: 'Ks7h2d', pot: 100, stack: 100, depth: 1, sizes: { bet: '75%', raise: '3x' } },

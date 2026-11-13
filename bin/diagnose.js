@@ -95,15 +95,15 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
   const gto = await bridge.currentEv();
   const jobs = [{ seat: 0 }, { seat: 1 }]; // the solver's own strategy, for the floor
   // Gives every hand of a group the group's average strategy at one decision, the rest untouched
-  const mixEvenly = (role, at, member, equityOf) => {
+  const mixEvenly = (role, at, member, equityOf, widths = WIDTHS) => {
     if (args['no-interchange']) return;
     const me = at.player;
     const weights = at.ranges[me];
-    for (const [width, key] of Object.entries(WIDTHS)) {
+    for (const [width, key] of Object.entries(widths)) {
       const groups = new Map();
       for (let i = 0; i < cards.NUM_COMBOS; i++) {
         if (!(weights[i] > 1e-4) || !member(i)) continue;
-        const k = key(equityOf[i]);
+        const k = key(equityOf[i], i);
         if (!groups.has(k)) groups.set(k, { weight: 0, sum: at.strategy.map(() => 0), hands: [] });
         const group = groups.get(k);
         group.weight += weights[i];
@@ -171,6 +171,24 @@ for (const stack of args.stack.split(',').map(Number)) for (const board of board
 
     mixEvenly('value bet', open, (i) => versusContinues[i] > 0.5, context.strength);
     mixEvenly('bluff bet', open, (i) => !(versusContinues[i] > 0.5), context.strength);
+    if (forms.strengthNow) {
+      // Kinds: the rank of the hand's strength now within the range, in bands, and its draw
+      const order = [...hero.keys()].filter((i) => hero[i] > 1e-4).sort((x, y) => forms.strengthNow[x] - forms.strengthNow[y]);
+      const all = order.reduce((t, i) => t + hero[i], 0);
+      const rank = new Map();
+      let seen = 0;
+      for (const i of order) { rank.set(i, (seen + hero[i] / 2) / all); seen += hero[i]; }
+      const bandOf = (edges) => (i) => { let k = edges.length - 2; while (k > 0 && rank.get(i) < edges[k]) k--; return k; };
+      const six = bandOf([0, 0.2, 0.4, 0.6, 0.8, 0.9, 1]);
+      const twenty = (i) => Math.min(19, Math.floor(rank.get(i) * 20));
+      mixEvenly('first to act, every hand', open, () => true, context.strength, {
+        'the whole range': () => 0,
+        'kinds: 6 bands of strength now x draw': (e, i) => `${six(i)}/${classes.draw[i]}`,
+        'kinds: 20 bands of strength now x draw': (e, i) => `${twenty(i)}/${classes.draw[i]}`,
+        'kinds: 20 bands x draw x pair class': (e, i) => `${twenty(i)}/${classes.draw[i]}/${classes.pair[i]}`,
+        '20 bands of equity alone': (e) => Math.min(19, Math.floor(e * 20)),
+      });
+    }
 
     // Step 6: how the spot is defined, next to what the solver does in it
     const asRange = (weights) => Object.fromEntries([...weights.keys()].filter((i) => weights[i] > 1e-4).map((i) => [cards.comboName(i), Math.min(1, weights[i])]));
@@ -259,6 +277,14 @@ bridge.close();
 
 const percent = (x) => `${(100 * x).toFixed(0)}%`.padStart(4);
 const summary = {};
+for (const [role, results] of Object.entries(interchange)) {
+  if (samples[role]) continue;
+  console.log(`\n=== ${role}: interchange test (loss as a share of the pot when every hand of a group gets the group's average strategy)`);
+  for (const [width, losses] of Object.entries(results)) {
+    const average = (set) => set.reduce((t, x) => t + x.loss, 0) / (set.length || 1);
+    console.log(`            ${width.padEnd(40)} ${(100 * average(losses)).toFixed(2).padStart(5)}% on average (out of position ${(100 * average(losses.filter((x) => x.seat === 'oop'))).toFixed(2)}%, in position ${(100 * average(losses.filter((x) => x.seat === 'ip'))).toFixed(2)}%)`);
+  }
+}
 for (const [role, rows] of Object.entries(samples)) {
   const total = rows.reduce((t, r) => t + r.weight, 0);
   const musts = rows.filter((r) => r.frequency >= MUST);
