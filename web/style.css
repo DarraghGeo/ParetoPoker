@@ -37,7 +37,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .line .act{font-family:var(--mono);font-size:12px;color:var(--ink);display:flex;align-items:center;gap:6px}
 .line .who{font:400 11px/14px var(--mono);letter-spacing:.08em;color:var(--ink-3);margin-right:2px}
 .sw{width:8px;height:8px;display:inline-block}
-.range{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:2px}
+.range{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 8px repeat(4,minmax(0,1fr)) 8px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 8px repeat(4,auto) 8px repeat(4,auto);gap:2px}
 .cell{position:relative;aspect-ratio:1;background:var(--surface);border:0;border-radius:0;padding:0;overflow:hidden;cursor:pointer;min-width:0}
 .cell.out{cursor:default}
 .cell .fill{position:absolute;left:0;right:0;bottom:0;display:flex}
@@ -45,7 +45,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .cell span{position:absolute;left:3px;top:2px;font:400 10px/12px var(--mono);color:var(--ink);pointer-events:none}
 .cell.out span{color:var(--ink-3);opacity:.5}
 .cell[aria-pressed="true"]{box-shadow:inset 0 0 0 1.5px var(--ink);z-index:1}
-@media (max-width:480px){.cell span{font-size:8px;left:2px;top:1px}}
+@media (max-width:600px){.cell span{display:none}.range{grid-template-columns:repeat(5,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 5px repeat(4,auto) 5px repeat(4,auto)}}
 .combos{display:flex;flex-wrap:wrap;gap:4px;min-height:30px}
 .combos button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
 .combos button[aria-pressed="true"]{border-color:var(--ink)}
@@ -65,9 +65,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .curve svg{display:block;width:100%;height:auto;touch-action:none}
 .curve .axis{stroke:var(--line-strong);stroke-width:1}.curve .gridl{stroke:var(--line);stroke-width:1}
 .curve .oop{fill:none;stroke:var(--ink);stroke-width:1.5}.curve .ip{fill:none;stroke:var(--accent);stroke-width:1.5}
+.curve .dot{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
+.line .view{margin-left:auto}
 .curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
-.strip{display:flex;height:120px;gap:1px;align-items:stretch}
-.strip button{flex:1 1 0;min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column-reverse;background:var(--surface)}
+.strip{display:flex;height:72px;gap:1px;align-items:stretch}
+.strip button{min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column-reverse;background:var(--surface)}
 .strip button i{display:block;width:100%}
 .strip button[aria-pressed="true"]{box-shadow:0 0 0 1.5px var(--ink);z-index:1}
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:10}
