@@ -68,3 +68,22 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   rivers-tune whole engine: 4.95 at the start of the run -> 4.22. Located "facing a bet":
   5.84 -> 3.36; "facing a raise": 2.25 -> 0.77.
   Next: river opens (sizing, bet frequency), then mixing out of position, then held-out check.
+- 05:15 **Rivers: tuner and mixer fitted and validated.** `presets.fitted()` = NapkinSelector +
+  `fittedMixer()` + `fittedTuner()`. Whole engine, loss to best response (napkin -> fitted):
+  rivers-tune 4.64 -> 3.72; rivers-held 4.51 -> 3.79; R12 3.87 -> 3.31; R8-B 4.41 -> 3.34.
+  What went in (each tested by diagnosis/try.mjs on rivers-tune, variant files diagnosis/v*.mjs):
+  - tuner: defence 0.95 facing a bet; raise share of continuing from polarization and SPR;
+    first to act, size aimed at 0.75 pot and value threshold 0.6 (in position always; out of
+    position only when ahead in range by 0.03: `diagnosis/delta.mjs` shows the rule gains 1.27
+    points when range advantage is 0.1 or more and loses 0.45 when behind).
+  - mixer: out of position on the river the strongest value (90%+ equity) bets half the time,
+    the rest three quarters. No mixing 5.9, a flat 80% 4.1, this curve 3.5 (oop seat, tune set).
+  - `diagnosis/curves.mjs`: the solver's mixing curves over hand strength (20 slices).
+  Not adopted, although they match the solver: the fitted bet-frequency formula and the fitted
+  size formula (both lose more in the whole engine), and the defence slope in range advantage.
+  Lesson recorded: located tests (one decision inside the solver's strategy) are leads; a change
+  is adopted only if the whole engine improves on the tune set and holds on the others.
+  Turn locate finished: see diagnosis/locate-turns-tune.txt.
+  Next: turns. diagnose-tuning on turns-tune, curves, then tuner/mixer rules for the turn, then
+  the calling order in position facing a turn bet (located: 14.0 with the solver's frequencies,
+  3.8 with its order too).

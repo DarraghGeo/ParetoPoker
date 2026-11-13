@@ -69,6 +69,25 @@ export async function collect(spot) {
         const context = new SelectionContext({ equity, position: POSITIONS[me], spot: s, board, hero, villain, actions: node.actions });
         const base = { spot: spot.name, pair: spot.pair, depth: spot.depth, board: spot.board, path, position: POSITIONS[me], reach: reach[me] * reach[them], profile: context.profile };
         const frequencies = at.strategy.map((p) => share(hero, p));
+        // The mixing curve: the range cut into 20 slices of equal weight by equity against his
+        // range (weakest first), with how often each slice takes each action
+        const order = [...hero.keys()].filter((i) => hero[i] > 1e-6 && !Number.isNaN(context.strength[i])).sort((x, y) => context.strength[x] - context.strength[y]);
+        const totalWeight = order.reduce((t, i) => t + hero[i], 0);
+        base.curve = Array.from({ length: 20 }, () => ({ weight: 0, equity: 0, actions: node.actions.map(() => 0) }));
+        let seen = 0;
+        for (const i of order) {
+          const slice = base.curve[Math.min(19, Math.floor((20 * (seen + hero[i] / 2)) / totalWeight))];
+          seen += hero[i];
+          slice.weight += hero[i];
+          slice.equity += hero[i] * context.strength[i];
+          at.strategy.forEach((p, a) => { slice.actions[a] += hero[i] * p[i]; });
+        }
+        for (const slice of base.curve) {
+          if (!(slice.weight > 0)) continue;
+          slice.equity /= slice.weight;
+          slice.actions = slice.actions.map((x) => x / slice.weight);
+        }
+        base.actions = node.actions.map((x) => ({ type: x.type, pots: x.to != null ? (x.to - node.bets[me]) / pot : 0 }));
         if (toCall > 0) {
           const fold = node.actions.findIndex((x) => x.type === 'fold');
           const mdf = 1 - last[them] / pot;

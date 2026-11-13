@@ -4,7 +4,7 @@ export { EquitySelector, SelectionContext } from './HandSelector.js';
 export { NapkinSelector } from './NapkinSelector.js';
 export { Mixer, PureMixer } from './Mixer.js';
 export { Tuner, NoTuner, fittedTuner, sizeNear, FITTED } from './Tuner.js';
-export { presets, valueChecks } from './presets.js';
+export { presets, valueChecks, fittedMixer } from './presets.js';
 export { classifyHands, PAIR, DRAW } from './handClass.js';
 export { handFeatures } from './handFeatures.js';
 export { Equity } from './Equity.js';

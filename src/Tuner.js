@@ -128,6 +128,16 @@ export function fittedTuner(params = {}) {
       },
     });
   }
+  // First to act: which size to aim at (in pots) and how much of his continues value must beat
+  if (p.open) {
+    rules.push({
+      when: (c) => !c.facing && p.open[c.street]?.[c.position] && c.profile.rangeAdvantage >= (p.open[c.street][c.position].ahead ?? -Infinity),
+      set: (c) => {
+        const { size, valueThreshold } = p.open[c.street][c.position];
+        return { ...(size != null ? { sizing: sizeNear(size) } : {}), ...(valueThreshold != null ? { valueThreshold } : {}) };
+      },
+    });
+  }
   // Which size: a target in pots from the seat and the nut advantage
   if (p.size) {
     rules.push({
@@ -160,6 +170,13 @@ export const FITTED = {
   hisDefence: { river: { oop: [1, 0, 0, 1.1], ip: [1, 0, 0, 1.1] } },
   /** raises = continue x (base + a x hero's polarization + b x stack-to-pot), within [low, high]. */
   raise: { river: { oop: [-0.02, 0.21, 0.08, 0, 0.5], ip: [-0.25, 1.47, 0.01, 0, 0.6] } },
+  /**
+   * First to act: the bet size aimed at, in pots, and the value threshold. `ahead` applies the
+   * rule only when hero's range advantage is at least that much: out of position and behind in
+   * range, the thinner, smaller bets lose (see TUNINGS.md).
+   */
+  open: { river: { oop: { size: 0.75, valueThreshold: 0.6, ahead: 0.03 }, ip: { size: 0.75, valueThreshold: 0.6 } } },
+  /** Fitted to the solver but not adopted: they lose more to the best response (TUNINGS.md). */
   size: null,
   bet: null,
 };
