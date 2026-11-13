@@ -16,7 +16,7 @@ const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS, ...HELD2_TURNS,
   ...freshFlops(24, 3303, (x) => { try { return fs.defineSpot(config(x)).estimate.bytes < 160 * 2 ** 20; } catch { return false; } }).map((x, i) => ({ ...x, name: `extra flop ${String(i + 1).padStart(2, '0')}` }))].filter((s) => s.name.startsWith(only));
 const other = (s, algorithm, target) => { const spot = fs.defineSpot(config(s)); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 3), algorithm }); let e = Infinity; while (e > target && run.completed < 40000) { run.step(spot.board.length === 3 ? 5 : 20); e = run.exploitabilityPercent(); } return { spot, run, solution: run.snapshot(), exploit: e }; };
 const tally = {}; const failures = []; let hands = 0, decisionsSeen = 0, silent = 0;
-const flip = { gap: 0, where: '' }; const flips = {}; // the largest gap, at page accuracy, whose sign a reference reverses
+const flip = { gap: 0, where: '' }; const flips = {}; const spread = { apart: 0 }; const eqSpread = { apart: 0 }; // the largest gap, at page accuracy, whose sign a reference reverses
 for (const s of spots) {
   try { fs.defineSpot(config(s)); } catch (error) { console.error(`  ${s.name}: skipped (${String(error.message).split('\n')[0]})`); continue; }
   const page = solveSpot(s, level, { cap: 40000, workers: +(process.env.WORKERS ?? 3) });
@@ -43,6 +43,9 @@ for (const s of spots) {
         const bucket = `${claim.kind} line ${T.from}+`; const t = tally[bucket] ?? (tally[bucket] = { made: 0, failed: 0 }); t.made++;
         const ok = claim.contrary ? truth.every((mm) => mm && !holds(claim, mm, T)) : truth.every((mm) => mm && holds(claim, mm, T));
         t.number = !!claim.number;
+        // how far apart the two references are about what an unused action costs: the amount is not the equilibrium's to fix
+        if (claim.kind === 'worse' && truth.every(Boolean)) { const g = truth.map((mm) => mm.actions[claim.best].worth - mm.actions[claim.a].worth); const d = Math.abs(g[0] - g[1]); if (d > spread.apart) Object.assign(spread, { apart: +d.toFixed(2), references: g.map((x) => +x.toFixed(2)), page: +claim.gap.toFixed(2), where: `${s.name} node ${id} ${m.name} ${m.actions[claim.a].label}` }); }
+        if (claim.kind === 'equity' && truth.every(Boolean) && st.f.round === 0 && id !== 0) { const d = 100 * Math.abs(truth[0].equity - truth[1].equity); if (d > eqSpread.apart) Object.assign(eqSpread, { apart: +d.toFixed(1), references: truth.map((mm) => +(100 * mm.equity).toFixed(1)), line: st.lineReach.map((x) => +x.toFixed(2)), where: `${s.name} node ${id} ${m.name}` }); }
         if (!ok) { t.failed++; if (failures.length < 400) failures.push({ spot: s.name, id, dealt, hand: m.name, line: st.lineReach.map((x) => +x.toFixed(2)), claim, refs: truth.map((mm) => mm && { eq: +mm.equity.toFixed(3), a: mm.actions.map((x) => ({ w: x.worth == null ? null : +x.worth.toFixed(2), f: x.folds == null ? undefined : +x.folds.toFixed(3), c: x.whenContinued == null ? undefined : +x.whenContinued.toFixed(2) })) }) }); }
       }
     }
@@ -53,6 +56,6 @@ const total = Object.values(tally).reduce((t, x) => t + x.made, 0); const failed
 const conclusions = Object.values(tally).filter((t) => !t.number); const numbers = Object.values(tally).filter((t) => t.number);
 const sum = (list, k) => list.reduce((t, x) => t + x[k], 0);
 const solverVersion = JSON.parse(readFileSync(new URL('../../node_modules/poker-flopsolve/package.json', import.meta.url), 'utf8')).version;
-const result = { proof: 'claims hold in both references', solver: solverVersion, conclusions: { made: sum(conclusions, 'made'), failed: sum(conclusions, 'failed') }, numbers: { made: sum(numbers, 'made'), outsideTolerance: sum(numbers, 'failed') }, spots: spots.map((s) => s.name), pageAccuracy: level, referenceAccuracy: +fineTarget, decisionsExplained: decisionsSeen, decisionsLeftSilent: silent, hands, claims: total, failed, largestReversedGap: flip, largestReversedGapByLine: flips, byKind: tally };
+const result = { proof: 'claims hold in both references', solver: solverVersion, conclusions: { made: sum(conclusions, 'made'), failed: sum(conclusions, 'failed') }, numbers: { made: sum(numbers, 'made'), outsideTolerance: sum(numbers, 'failed') }, spots: spots.map((s) => s.name), pageAccuracy: level, referenceAccuracy: +fineTarget, decisionsExplained: decisionsSeen, decisionsLeftSilent: silent, hands, claims: total, failed, largestReversedGap: flip, largestReversedGapByLine: flips, costOfAnUnusedAction: spread, equityAfterHisAction: eqSpread, byKind: tally };
 console.log(JSON.stringify(result));
 if (failures.length) writeFileSync(new URL(`./out/failures-${only.replace(/\W+/g, '-')}-${levelText}.json`, import.meta.url), JSON.stringify(failures, null, 1));

@@ -1,7 +1,8 @@
 # What is proven about the explanations
 
 This file is written by `research/proof/report.mjs` from the result files in `research/proof/out/`.
-Every figure below is one a script produced; none is typed in.
+Every figure in a table, and every figure in the prose that a result file holds, is one a script produced.
+The few that come from a run whose record was not kept say so.
 
 ## The standard
 
@@ -9,7 +10,7 @@ An explanation is made of two sorts of statement, and each is held to its own st
 
 **A number** is a fact of the solution on screen: how often he folds in it, the hand's equity against the
 range he arrives with in it, what an action is worth against his strategy in it. A number is *exact*: it is
-arithmetic on the strategies shown, and the arithmetic is checked three independent ways (proofs 1 to 5).
+arithmetic on the strategies shown, and the arithmetic is checked independently (proofs 1 to 3).
 It is worded as being about this solution ("in this solution", "against his strategy here"). Another
 equally good solution of the same spot can have a different number, and where that was measured it is
 reported, not hidden.
@@ -18,7 +19,7 @@ reported, not hidden.
 is worse", "these two are worth the same", "this bet earns through his folds", "this call is for the cards
 that improve it". A conclusion is made only where it clears a gate, and the gates are kept only if, on spots
 never used to set them, **every** conclusion made at the accuracy the page solves to is also true of the same
-hand in two far finer solves by two different algorithms (proof 6). One false conclusion fails the set.
+hand in two far finer solves by two different algorithms (proof 4). One false conclusion fails the set.
 
 Anything that did not meet its standard is not said, and is listed under "Not proven" at the end.
 
@@ -57,8 +58,7 @@ become a flush or a straight it did not have, and the board alone has not.
 ## Proof 3. What an action a hand does not take is "worth" needed fixing
 
 The solver's own value for an action assumes the hand then follows its solved strategy. For an action the
-hand never takes, that later strategy was never trained. Measured on six turn spots, two solves each within
-0.01% of the pot of perfect disagreed about such values by up to 33% of the pot on the main line.
+hand never takes, that later strategy was never trained. Measured on the main lines of six turn spots (`untrained.mjs`, 2,758 hands), two solves each within 0.01% of the pot of perfect disagreed about how far an action is behind the best by up to **34.8% of the pot** with the solver's values, and by 0.4% with the best reply.
 `best.js` values an action by taking it and then playing the best reply to his solved strategy. Checked
 (`best.mjs`): with the hand following its solved strategy instead, the walk reproduces the solver's values;
 with the best reply it is never worth less; and at the first decision it equals the solver's own
@@ -180,14 +180,14 @@ worse was raised from 3% to 5%; the "final gates" set was run after that.
 | Street | Set of spots | Page vs reference accuracy | Conclusions | False | worse (made / false) | same | needs | builds | cards | Numbers | Outside tolerance | Largest reversed gap (% pot) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
-| Flop | fresh random, first gates (14) | 0.3% vs 0.02% | 9,725 | **1** | 3,016 / 0 | 2,591 / 1 | 2,396 / 0 | 631 / 0 | 1,091 / 0 | 16,317 | 167 | 2.798 |
-| Flop | fresh random, final gates (8) | 0.3% vs 0.02% | 5,556 | **0** | 1,380 / 0 | 1,403 / 0 | 1,354 / 0 | 418 / 0 | 1,001 / 0 | 9,060 | 292 | 1.452 |
+| Flop | fresh random, first gates (15) | 0.3% vs 0.02% | 10,293 | **1** | 3,112 / 0 | 2,729 / 1 | 2,597 / 0 | 669 / 0 | 1,186 / 0 | 17,281 | 167 | 2.798 |
+| Flop | fresh random, final gates (9) | 0.3% vs 0.02% | 6,152 | **0** | 1,548 / 0 | 1,517 / 0 | 1,471 / 0 | 434 / 0 | 1,182 / 0 | 9,949 | 292 | 1.452 |
 
-**17,160 conclusions on 24 spots, 1 false.**
+**18,324 conclusions on 26 spots, 1 false.**
 
-**Not adopted.** same: 4,385 made, 1 false; needs: 4,196 made, 0 false; worse: 5,064 made, 0 false; builds: 1,117 made, 0 false; cards: 2,398 made, 0 false. The false one: a hand on a turn inside a flop spot that the 0.3% solve mixes between checking and betting ("worth the same to within 2.9% of the pot") where both finer solves have the bet 3.1% worse. One false conclusion is a failure, so the page draws no conclusions on flop spots: it gives the numbers and says they are only that. What would change this: flop solves finer than a browser tab manages, or gates widened and tested on spots not yet seen.
+**Not adopted.** same: 4,637 made, 1 false; needs: 4,514 made, 0 false; worse: 5,328 made, 0 false; builds: 1,171 made, 0 false; cards: 2,674 made, 0 false. The false one: a hand on a turn inside a flop spot that the 0.3% solve mixes between checking and betting ("worth the same to within 2.9% of the pot") where both finer solves have the bet 3.1% worse. One false conclusion is a failure, so the page draws no conclusions on flop spots: it gives the numbers and says they are only that. What would change this: flop solves finer than a browser tab manages, or gates widened and tested on spots not yet seen.
 
-The numbers are another matter at this accuracy: 1,024 of 27,798
+The numbers are another matter at this accuracy: 1,024 of 29,651
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 
@@ -228,7 +228,7 @@ fresh sets and the accounting proofs were run again on it:
    hand's own untrained later play (proof 3). Anything that quotes "this would lose X" from those values is
    unreliable. The page now values every action with the best reply afterwards.
 2. **Even valued properly, what an unused action costs is not fixed by the equilibrium.** Two river solves,
-   each within 0.002% of the pot of perfect, put the same deviation at 12.4% and at 5.9% of the pot. Only
+   each within 0.002% of the pot of perfect, put the same deviation at 16.73% and at 8.81% of the pot (fresh river 12 node 12 AsJs All-in). Only
    the direction carries over, which is what theory says: a strategy that is a best reply to one
    equilibrium is a best reply to every other, so an action it rejects is never better, but nothing fixes
    how much worse it is. Hence "worse" is a conclusion and the amount is a number of this solution.
@@ -236,10 +236,9 @@ fresh sets and the accounting proofs were run again on it:
    spots the two references differ about a single hand's frequency by up to 51.3 points
    (99th percentile 6.1). No sentence rests on a hand's own frequency beyond whether
    it takes an action at all (10% of the time or more).
-4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
-   the two references differed by four points about the equity of hands against that range. Equity after
+4. **Which hands he holds after his own action is not fixed.** On one river line (60% and 24% of the two ranges take it), the two references put the same hand's equity against the range he arrives with at 5.2% and 9.1%. Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
-   takes, 661 of 88,287 equities fell outside the tolerance (1 to 2 points) of a reference.
+   takes, 661 of 89,435 equities fell outside the tolerance (1 to 2 points) of a reference.
 
 ## Not proven: said nowhere on the page, to be proved later or dropped
 
@@ -248,7 +247,7 @@ fresh sets and the accounting proofs were run again on it:
 | "Betting gains against his draws and loses to his strong hands": an action's gain split by what he holds | Not fixed by the equilibrium: which of his hands call is arbitrary among those indifferent | Two references (0.01%), main lines of six turn spots, 19,688 comparisons: the parts differ by up to **27.86% of the pot** (99th percentile 5.95%). `holding.mjs` |
 | What an unused action costs, as a truth of the spot | Finding 2 | `accept.mjs`, random river set |
 | Why a hand bets 60% and not 40% | Finding 3 | `tolerance.mjs` |
-| Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
+| Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%: from the run's log, not kept as a file) | proof 4, step 2 |
 | River decisions after a deal on lines under half of either range; anything two deals deep (a river inside a flop spot) | Not tried | — |
 | Conclusions about flop decisions, and about turn decisions inside a flop spot | Tested at the accuracy a browser reaches (0.3%): a false conclusion was found, so none are drawn. Numbers only on flop spots | "Flop spots" above |
 | "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |

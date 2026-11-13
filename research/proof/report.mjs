@@ -30,7 +30,8 @@ const head = '| Street | Set of spots | Page vs reference accuracy | Conclusions
 const md = `# What is proven about the explanations
 
 This file is written by \`research/proof/report.mjs\` from the result files in \`research/proof/out/\`.
-Every figure below is one a script produced; none is typed in.
+Every figure in a table, and every figure in the prose that a result file holds, is one a script produced.
+The few that come from a run whose record was not kept say so.
 
 ## The standard
 
@@ -38,7 +39,7 @@ An explanation is made of two sorts of statement, and each is held to its own st
 
 **A number** is a fact of the solution on screen: how often he folds in it, the hand's equity against the
 range he arrives with in it, what an action is worth against his strategy in it. A number is *exact*: it is
-arithmetic on the strategies shown, and the arithmetic is checked three independent ways (proofs 1 to 5).
+arithmetic on the strategies shown, and the arithmetic is checked independently (proofs 1 to 3).
 It is worded as being about this solution ("in this solution", "against his strategy here"). Another
 equally good solution of the same spot can have a different number, and where that was measured it is
 reported, not hidden.
@@ -47,7 +48,7 @@ reported, not hidden.
 is worse", "these two are worth the same", "this bet earns through his folds", "this call is for the cards
 that improve it". A conclusion is made only where it clears a gate, and the gates are kept only if, on spots
 never used to set them, **every** conclusion made at the accuracy the page solves to is also true of the same
-hand in two far finer solves by two different algorithms (proof 6). One false conclusion fails the set.
+hand in two far finer solves by two different algorithms (proof 4). One false conclusion fails the set.
 
 Anything that did not meet its standard is not said, and is listed under "Not proven" at the end.
 
@@ -77,8 +78,7 @@ become a flush or a straight it did not have, and the board alone has not.
 ## Proof 3. What an action a hand does not take is "worth" needed fixing
 
 The solver's own value for an action assumes the hand then follows its solved strategy. For an action the
-hand never takes, that later strategy was never trained. Measured on six turn spots, two solves each within
-0.01% of the pot of perfect disagreed about such values by up to 33% of the pot on the main line.
+hand never takes, that later strategy was never trained. ${(() => { const u = json('./out/untrained.json'); return u ? `Measured on the main lines of six turn spots (\`untrained.mjs\`, ${n(u.hands)} hands), two solves each within 0.01% of the pot of perfect disagreed about how far an action is behind the best by up to **${u.solverValues}% of the pot** with the solver's values, and by ${u.bestReply}% with the best reply.` : ''; })()}
 \`best.js\` values an action by taking it and then playing the best reply to his solved strategy. Checked
 (\`best.mjs\`): with the hand following its solved strategy instead, the walk reproduces the solver's values;
 with the best reply it is never worth less; and at the first decision it equals the solver's own
@@ -222,8 +222,8 @@ const tail = `
 1. **The solver's value for an action a hand never takes is not what that action is worth.** It assumes the
    hand's own untrained later play (proof 3). Anything that quotes "this would lose X" from those values is
    unreliable. The page now values every action with the best reply afterwards.
-2. **Even valued properly, what an unused action costs is not fixed by the equilibrium.** Two river solves,
-   each within 0.002% of the pot of perfect, put the same deviation at 12.4% and at 5.9% of the pot. Only
+2. **Even valued properly, what an unused action costs is not fixed by the equilibrium.** ${(() => { const c = (json('./out/v05/accept-fresh-river-0.01.json') ?? json('./out/accept-fresh-river-0.01.json'))?.costOfAnUnusedAction; return c?.references ? `Two river solves,
+   each within 0.002% of the pot of perfect, put the same deviation at ${c.references[0]}% and at ${c.references[1]}% of the pot (${c.where}).` : 'Two river solves, each within 0.002% of the pot of perfect, can put the same deviation several points of the pot apart.'; })()} Only
    the direction carries over, which is what theory says: a strategy that is a best reply to one
    equilibrium is a best reply to every other, so an action it rejects is never better, but nothing fixes
    how much worse it is. Hence "worse" is a conclusion and the amount is a number of this solution.
@@ -231,8 +231,7 @@ const tail = `
    spots the two references differ about a single hand's frequency by up to ${strategySpread?.max ?? '?'} points
    (99th percentile ${strategySpread?.p99 ?? '?'}). No sentence rests on a hand's own frequency beyond whether
    it takes an action at all (10% of the time or more).
-4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
-   the two references differed by four points about the equity of hands against that range. Equity after
+4. **Which hands he holds after his own action is not fixed.** ${(() => { const c = (json('./out/v05/accept-fresh-river-0.01.json') ?? {}).equityAfterHisAction; return c?.references ? `On one river line (${Math.round(100 * c.line[0])}% and ${Math.round(100 * c.line[1])}% of the two ranges take it), the two references put the same hand's equity against the range he arrives with at ${c.references[0]}% and ${c.references[1]}%.` : 'Two references can differ by several points about a hand\'s equity against the range he arrives with.'; })()} Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
    takes, ${n(eqOut.out)} of ${n(eqOut.made)} equities fell outside the tolerance (1 to 2 points) of a reference.
 
@@ -243,7 +242,7 @@ const tail = `
 | "Betting gains against his draws and loses to his strong hands": an action's gain split by what he holds | Not fixed by the equilibrium: which of his hands call is arbitrary among those indifferent | Two references (0.01%), main lines of six turn spots, ${n(holding?.comparisons ?? 0)} comparisons: the parts differ by up to **${holding?.max ?? '?'}% of the pot** (99th percentile ${holding?.p99 ?? '?'}%). \`holding.mjs\` |
 | What an unused action costs, as a truth of the spot | Finding 2 | \`accept.mjs\`, random river set |
 | Why a hand bets 60% and not 40% | Finding 3 | \`tolerance.mjs\` |
-| Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
+| Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%: from the run's log, not kept as a file) | proof 4, step 2 |
 | River decisions after a deal on lines under half of either range; anything two deals deep (a river inside a flop spot) | Not tried | — |
 | Conclusions about flop decisions, and about turn decisions inside a flop spot | ${flop.length ? (flop.reduce((t, x) => t + x.r.conclusions.failed, 0) === 0 ? 'Tested at the accuracy a browser reaches (0.3%) with no false conclusion, but on far fewer spots than the turn and river' : 'Tested at the accuracy a browser reaches (0.3%): a false conclusion was found, so none are drawn. Numbers only on flop spots') : 'The test was still running when this was written.'} | "Flop spots" above |
 | "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |
