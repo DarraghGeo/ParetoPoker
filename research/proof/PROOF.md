@@ -153,10 +153,22 @@ under the final rules. Below a fifth of either range nothing is concluded.
 
 Turn and river, every set: **193,387 conclusions on 190 spots (85,828 turn, 107,559 river), 0 false.** Of these, 114,919 are on the 120 fresh random spots that the final rules had never seen.
 
+**Control.** A test that never fails proves nothing unless it can fail. Run again on the held-out turn set with every conclusion turned into its opposite ("worse" with the two actions swapped, "needs" for "builds", the next-card directions reversed, "same" required to be false), the harness rejected **7,746 of 7,746**.
+
 What "none false" can and cannot mean: conclusions about the same decision stand or fall together, so the
 evidence is closer to "no false conclusion at any of the decisions explained on 190 spots" than to that many
 independent trials. It is strong evidence, not a theorem. For "worse" there is also a reason it should
 hold: a strategy that is a best reply to one equilibrium is a best reply to all of them.
+
+
+### Flop spots, at the accuracy a browser reaches
+
+A flop cannot be solved in a browser tab much finer than 0.3% of the pot, so that is the page accuracy
+tested, against references at 0.02%. Flop decisions, and turn decisions after a card has come, on lines at
+least half of each range takes, with gates fixed beforehand from one flop spot measured in full:
+**1,879 conclusions on 2 spots, 0 false.** The numbers are another matter at this accuracy: 565 of 2,421
+equities and fold frequencies fell more than one or two points from a reference. They remain what they are
+worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 
 ## What the page says, and what each sentence rests on
 

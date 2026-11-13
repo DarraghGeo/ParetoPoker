@@ -89,3 +89,29 @@ test('river: how often the hand is ahead when called, read off the bet\'s worth,
   const one = [...Array(fs.COMBOS).keys()].map((c) => measure(facing, c)).find(Boolean);
   assert.match(explainStreet(facing, one, T).line, /He has bet 50 into 100, so a call has to win 25% of the time\./);
 });
+
+test('numbers: equity is the brute-force count, his fold frequency is the count over his hands, card weights add to one', async () => {
+  const { equityVs, decisionAt } = await import('../src/solver/flopsolve.js');
+  const s = study(fs, solution, nodes, 0); const f = s.f; const board = f.board;
+  const cc = (c) => [fs.COMBO_CARDS[2 * c], fs.COMBO_CARDS[2 * c + 1]];
+  const eq = equityVs(fs, board, f.mine, f.his);
+  const d = decisionAt(fs, solution, nodes, 0); const bet = d.actions.findIndex((a) => a.kind === 'bet');
+  let checked = 0;
+  for (const hand of d.hands.filter((_, i) => i % 5 === 0)) {
+    const [a, b] = cc(hand.id); let win = 0, mass = 0;
+    // every river card, every hand of his that can be held with ours and with that card
+    for (let r = 0; r < 52; r++) { if (board.includes(r) || r === a || r === b) continue; const mine = fs.evaluateCards([...board, r, a, b]);
+      for (let v = 0; v < fs.COMBOS; v++) { if (!(f.his[v] > 0)) continue; const [x, y] = cc(v); if ([a, b, r].includes(x) || [a, b, r].includes(y)) continue; const his = fs.evaluateCards([...board, r, x, y]); mass += f.his[v]; win += f.his[v] * (mine > his ? 1 : mine < his ? 0 : 0.5); } }
+    assert.ok(Math.abs(eq[hand.id] - win / mass) < 1e-9, `equity ${hand.name}`);
+    const m = measure(s, hand.id, { onlyOn: false });
+    assert.ok(Math.abs(m.equity - win / mass) < 1e-9);
+    // he folds: his folding hands over all he can hold against this one
+    let folds = 0, all = 0; for (const v of d.villain) { if (v.cards.some((c) => hand.cards.includes(c))) continue; all += v.weight; folds += v.weight * v.answers[bet].fold; }
+    assert.ok(Math.abs(m.actions[bet].folds - folds / all) < 1e-9, `folds ${hand.name}`);
+    checked++;
+  }
+  assert.ok(checked >= 10);
+  // facing the bet: the cards to come are weighted so that they add to one, and lifted cards are counted by the evaluator
+  const facing = study(fs, solution, nodes, nodes[0].edges[bet].child); const call = facing.actions.findIndex((a) => a.kind === 'call');
+  for (let c = 0; c < fs.COMBOS; c += 7) { const m = measure(facing, c, { onlyOn: false }); if (!m || !m.actions[call].cards) continue; const k = m.actions[call].cards; assert.ok(Math.abs(k.lift.weight + k.rest.weight - 1) < 1e-9); assert.equal(k.lift.n + k.rest.n, 46); assert.ok(Math.abs(k.lift.part + k.rest.part - m.actions[call].worth) < 1e-7); }
+});

@@ -33,9 +33,12 @@ for (const s of spots) {
       const truth = others.map((o) => measure(o, c, { onlyOn: false }));
       { const onIdx = m.actions.map((x, i) => (x.on && x.worth != null ? i : -1)).filter((i) => i >= 0); const bestIdx = onIdx.reduce((bb, i) => (bb < 0 || m.actions[i].worth > m.actions[bb].worth ? i : bb), -1);
         for (const i of onIdx) { if (i === bestIdx) continue; const gap = m.actions[bestIdx].worth - m.actions[i].worth; const ref = Math.min(...truth.map((mm) => mm.actions[bestIdx].worth - mm.actions[i].worth)); if (ref <= 0 && gap > flip.gap) { flip.gap = gap; flip.where = `${s.name} node ${id} ${m.name} ${m.actions[i].label}`; } const fb = (flips[T.from] ??= { gap: 0, where: '' }); if (ref <= 0 && gap > fb.gap) { fb.gap = +gap.toFixed(3); fb.where = `${s.name} node ${id} ${m.name} ${m.actions[i].label}`; } } }
+      // CONTROL: with CONTROL=1 every conclusion is turned into its opposite before it is tested. A harness that can tell
+      // true from false must then fail nearly all of them.
+      if (process.env.CONTROL === '1') for (const claim of made) { if (claim.kind === 'worse') { const t = claim.best; claim.best = claim.a; claim.a = t; } else if (claim.kind === 'needs') claim.kind = 'builds'; else if (claim.kind === 'builds') claim.kind = 'needs'; else if (claim.kind === 'cards') { claim.lift = -claim.lift; claim.rest = -claim.rest; } else if (claim.kind === 'same') claim.contrary = true; }
       for (const claim of made) {
         const bucket = `${claim.kind} line ${T.from}+`; const t = tally[bucket] ?? (tally[bucket] = { made: 0, failed: 0 }); t.made++;
-        const ok = truth.every((mm) => mm && holds(claim, mm, T));
+        const ok = claim.contrary ? truth.every((mm) => mm && !holds(claim, mm, T)) : truth.every((mm) => mm && holds(claim, mm, T));
         t.number = !!claim.number;
         if (!ok) { t.failed++; if (failures.length < 400) failures.push({ spot: s.name, id, dealt, hand: m.name, line: st.lineReach.map((x) => +x.toFixed(2)), claim, refs: truth.map((mm) => mm && { eq: +mm.equity.toFixed(3), a: mm.actions.map((x) => ({ w: x.worth == null ? null : +x.worth.toFixed(2), f: x.folds == null ? undefined : +x.folds.toFixed(3), c: x.whenContinued == null ? undefined : +x.whenContinued.toFixed(2) })) }) }); }
       }
