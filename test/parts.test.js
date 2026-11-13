@@ -115,7 +115,12 @@ test('the fitted tuner follows the spot', () => {
   assert.equal(tuner.tune(context({ profile: { rangeAdvantage: -0.1, nutAdvantage: 0, polarization: 0.5, spr: 2 } })).valueThreshold, undefined);
   assert.equal(tuner.tune(context({ position: 'ip', profile: { rangeAdvantage: -0.1, nutAdvantage: 0, polarization: 0.5, spr: 2 } })).valueThreshold, 0.6);
   // Facing a river bet: a little under the fundamental. Facing a turn raise: over it.
-  near(tuner.tune(context({ facing: true, spot: { raises: 0, facing: 75, pot: 175 } })).defence, 0.95);
+  const level = { rangeAdvantage: 0, nutAdvantage: 0, polarization: 0.5, spr: 2 };
+  near(tuner.tune(context({ facing: true, spot: { raises: 0, facing: 75, pot: 175 }, profile: level })).defence, 0.95);
+  near(tuner.tune(context({ facing: true, spot: { raises: 0, facing: 75, pot: 175 } })).defence, 1); // ahead by 0.1: the fundamental
+  // Far behind in range the raise rule steps aside
+  assert.ok(tuner.tune(context({ facing: true, spot: { raises: 0, facing: 75, pot: 175 }, profile: level })).frequency > 0);
+  assert.equal(tuner.tune(context({ facing: true, spot: { raises: 0, facing: 75, pot: 175 }, profile: { ...level, rangeAdvantage: -0.3 } })).frequency, undefined);
   near(tuner.tune(context({ street: 'turn', facing: true, spot: { raises: 1, facing: 150, pot: 300 } })).defence, 1.25);
   // It always answers, so frequencies are always filled
   assert.ok(tuner.tune(context({ street: 'flop' })) !== null);

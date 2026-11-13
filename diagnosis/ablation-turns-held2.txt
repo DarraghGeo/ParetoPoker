@@ -1,0 +1,8 @@
+turns-held2  engine     fitted                                       oop  2.30 /  9.36 | ip  1.88 /  9.83 | both  2.09 /  9.59  (111s)
+turns-held2  engine     without the kind table (order with caps instead) oop  2.27 / 10.66 | ip  1.81 / 12.79 | both  2.04 / 11.72  (102s)
+turns-held2  engine     without the cap on raising a turn bet        oop  2.25 / 10.09 | ip  1.96 / 10.25 | both  2.11 / 10.17  (102s)
+turns-held2  engine     without the turn value caps                  oop  2.10 / 10.18 | ip  1.84 / 12.57 | both  1.97 / 11.38  (99s)
+turns-held2  engine     without defence 1.25 facing a turn raise     oop  2.34 / 10.97 | ip  1.92 / 11.05 | both  2.13 / 11.01  (104s)
+turns-held2  engine     without E[HS^2] calls in position when deep  oop  2.30 /  9.67 | ip  1.92 / 10.82 | both  2.11 / 10.25  (97s)
+turns-held2  engine     without the river rules                      oop  2.17 /  9.63 | ip  1.79 /  9.42 | both  1.98 /  9.52  (97s)
+turns-held2  engine     without any tuner rule (frequencies still filled) oop  2.20 / 10.65 | ip  1.82 / 10.54 | both  2.01 / 10.60  (101s)

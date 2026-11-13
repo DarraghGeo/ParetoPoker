@@ -96,6 +96,9 @@ export function fittedTuner(params = {}) {
       when: (c) => c.facing && (c.spot.raises ?? 0) === 0 && p.defence[c.street],
       set: (c) => {
         const [base, slope, low, high] = p.defence[c.street][c.position];
+        // Ahead in range at this decision, the fundamental is kept
+        const ahead = p.defenceWhenAhead?.[c.street];
+        if (ahead && c.profile.rangeAdvantage >= ahead[0]) return { defence: ahead[1] };
         return { defence: clamp(base + slope * c.profile.rangeAdvantage, low, high) };
       },
     });
@@ -121,7 +124,8 @@ export function fittedTuner(params = {}) {
   // How much of the continuing range raises: more the more polarized hero's range is against his
   if (p.raise) {
     rules.push({
-      when: (c) => c.facing && (c.spot.raises ?? 0) === 0 && p.raise[c.street],
+      // Far behind in range the rule is left out and raises come from counting value, as in the fundamentals
+      when: (c) => c.facing && (c.spot.raises ?? 0) === 0 && p.raise[c.street] && c.profile.rangeAdvantage >= (p.raiseFrom?.[c.street] ?? -Infinity),
       set: (c, tuning) => {
         const [base, polarization, spr, low, high] = p.raise[c.street][c.position];
         const share = clamp(base + polarization * c.profile.polarization + spr * Math.min(c.profile.spr, 5), low, high);
@@ -168,6 +172,10 @@ export function fittedTuner(params = {}) {
 export const FITTED = {
   /** continue = MDF x (base + slope x range advantage), kept within [low, high]. */
   defence: { river: { oop: [0.95, 0, 0, 1.1], ip: [0.95, 0, 0, 1.1] } },
+  /** Facing a bet with a range advantage of at least the first number, continue = MDF x the second. */
+  defenceWhenAhead: { river: [0.1, 1] },
+  /** The raise rule applies from this range advantage up. */
+  raiseFrom: { river: -0.1 },
   /** continue = MDF x this, facing a raise. On the turn the solver continues at about 1.2. */
   defenceVsRaise: { turn: { oop: 1.25, ip: 1.25 } },
   /** The same for the opponent's answer to hero's bet, by the opponent's seat. */

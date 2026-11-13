@@ -221,3 +221,19 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   alt 4.34. Recorded as a tuning that depends on the configuration (the menu), not the spot.
   In-position river opens (bluff scale, value caps, sizes): nothing beats the fitted setting.
   Next: final table on every set, final docs, summary.
+- 09:20 **Held-out ablations.** turns-held2 (fitted 9.59), taking one adopted item away:
+  kind table 11.72; turn value caps 11.38; defence 1.25 facing a turn raise 11.01; E[HS^2] calls
+  in position when deep 10.25; cap on raising a turn bet 10.17; river rules 9.52 (they do not
+  matter inside turn trees); every tuner rule 10.60. rivers-held (fitted 3.79): river value
+  curve 5.27; in-position open rule 4.41; out-of-position open rule 4.02; defence 0.95 4.00;
+  raise rule 3.90; every tuner rule 4.60. Files: diagnosis/ablation-*.txt.
+  **Spot dependence of each river item** (diagnosis/spot-dependence-rivers.txt, delta.mjs on
+  rivers-tune): the gain from defence 0.95 falls with range advantage (correlation -0.93 out of
+  position, -0.75 in position; +0.9 / +1.5 when behind by 0.1, -0.15 / -0.2 when ahead by 0.1);
+  the raise rule gains 0.79 in position when ahead and loses 1.75 when far behind; the river
+  value curve gains more the deeper the stacks (correlation 0.79 with SPR); the in-position
+  open rule gains everywhere except far behind.
+  Acting on it: the raise rule now applies only from a range advantage of -0.1 at the decision,
+  and defence is the fundamental when ahead by 0.1. rivers-tune 3.72 -> 3.53, rivers-held 3.79
+  -> 3.70, R12 3.31 -> 2.96, R8-B 3.68 -> 3.15, rivers-alt 4.17 -> 4.07. Defence as a line in
+  range advantage is still worse (4.23).

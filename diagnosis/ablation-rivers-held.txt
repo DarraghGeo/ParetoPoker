@@ -1,0 +1,7 @@
+rivers-held  engine     fitted                                       oop  0.77 /  3.48 | ip  0.63 /  4.09 | both  0.70 /  3.79  (3s)
+rivers-held  engine     without defence 0.95 facing a river bet      oop  0.78 /  3.72 | ip  0.63 /  4.29 | both  0.71 /  4.00  (3s)
+rivers-held  engine     without the river raise rule                 oop  0.74 /  3.55 | ip  0.57 /  4.25 | both  0.66 /  3.90  (3s)
+rivers-held  engine     without the in-position river open rule      oop  0.77 /  3.92 | ip  0.93 /  4.90 | both  0.85 /  4.41  (3s)
+rivers-held  engine     without the out-of-position river open rule  oop  0.86 /  3.89 | ip  0.63 /  4.16 | both  0.75 /  4.02  (3s)
+rivers-held  engine     without the river value curve (out of position) oop  0.88 /  5.29 | ip  0.75 /  5.24 | both  0.82 /  5.27  (3s)
+rivers-held  engine     without any tuner rule (frequencies still filled) oop  0.83 /  4.41 | ip  0.77 /  4.78 | both  0.80 /  4.60  (3s)

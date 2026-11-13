@@ -1,0 +1,126 @@
+oop: gain of "fitted" over "without defence 0.95 facing a river bet" per spot (points of pot), 72 spots; mean 0.26
+  correlation with rangeAdvantage         -0.93
+  correlation with nutAdvantage           -0.60
+  correlation with polarizationAdvantage  0.31
+  correlation with polarization           0.23
+  correlation with villainPolarization    -0.38
+  correlation with nutShare               -0.45
+  correlation with villainNutShare        0.62
+  correlation with spr                    -0.00
+  range advantage -1 to -0.1: 15 spots, gain 0.91
+  range advantage -0.1 to -0.03: 6 spots, gain 0.67
+  range advantage -0.03 to 0.03: 6 spots, gain 0.41
+  range advantage 0.03 to 0.1: 12 spots, gain 0.32
+  range advantage 0.1 to 1: 33 spots, gain -0.15
+  nut advantage -1 to -0.05: 24 spots, gain 0.69
+  nut advantage -0.05 to 0: 21 spots, gain 0.03
+  nut advantage 0 to 0.05: 9 spots, gain 0.28
+  nut advantage 0.05 to 1: 18 spots, gain -0.04
+ip: gain of "fitted" over "without defence 0.95 facing a river bet" per spot (points of pot), 72 spots; mean 0.41
+  correlation with rangeAdvantage         -0.75
+  correlation with nutAdvantage           -0.59
+  correlation with polarizationAdvantage  0.74
+  correlation with polarization           0.77
+  correlation with villainPolarization    -0.68
+  correlation with nutShare               -0.58
+  correlation with villainNutShare        0.45
+  correlation with spr                    0.08
+  range advantage -1 to -0.1: 6 spots, gain 1.46
+  range advantage -0.1 to -0.03: 11 spots, gain 0.85
+  range advantage -0.03 to 0.03: 12 spots, gain 0.72
+  range advantage 0.03 to 0.1: 17 spots, gain 0.45
+  range advantage 0.1 to 1: 26 spots, gain -0.20
+  nut advantage -1 to -0.05: 11 spots, gain 0.92
+  nut advantage -0.05 to 0: 14 spots, gain 0.91
+  nut advantage 0 to 0.05: 21 spots, gain 0.41
+  nut advantage 0.05 to 1: 26 spots, gain -0.09
+oop: gain of "fitted" over "without the river raise rule" per spot (points of pot), 72 spots; mean 0.07
+  correlation with rangeAdvantage         0.19
+  correlation with nutAdvantage           0.39
+  correlation with polarizationAdvantage  0.07
+  correlation with polarization           0.09
+  correlation with villainPolarization    -0.05
+  correlation with nutShare               0.41
+  correlation with villainNutShare        -0.27
+  correlation with spr                    0.22
+  range advantage -1 to -0.1: 15 spots, gain -0.19
+  range advantage -0.1 to -0.03: 6 spots, gain 0.29
+  range advantage -0.03 to 0.03: 6 spots, gain 0.09
+  range advantage 0.03 to 0.1: 12 spots, gain 0.07
+  range advantage 0.1 to 1: 33 spots, gain 0.15
+  nut advantage -1 to -0.05: 24 spots, gain -0.12
+  nut advantage -0.05 to 0: 21 spots, gain 0.12
+  nut advantage 0 to 0.05: 9 spots, gain -0.02
+  nut advantage 0.05 to 1: 18 spots, gain 0.33
+ip: gain of "fitted" over "without the river raise rule" per spot (points of pot), 72 spots; mean 0.12
+  correlation with rangeAdvantage         0.42
+  correlation with nutAdvantage           0.13
+  correlation with polarizationAdvantage  -0.46
+  correlation with polarization           -0.46
+  correlation with villainPolarization    0.44
+  correlation with nutShare               0.09
+  correlation with villainNutShare        -0.15
+  correlation with spr                    0.28
+  range advantage -1 to -0.1: 6 spots, gain -1.75
+  range advantage -0.1 to -0.03: 11 spots, gain -0.03
+  range advantage -0.03 to 0.03: 12 spots, gain -0.19
+  range advantage 0.03 to 0.1: 17 spots, gain 0.09
+  range advantage 0.1 to 1: 26 spots, gain 0.79
+  nut advantage -1 to -0.05: 11 spots, gain -0.05
+  nut advantage -0.05 to 0: 14 spots, gain -0.23
+  nut advantage 0 to 0.05: 21 spots, gain 0.22
+  nut advantage 0.05 to 1: 26 spots, gain 0.31
+ip: gain of "fitted" over "without the in-position river open rule" per spot (points of pot), 72 spots; mean 0.71
+  correlation with rangeAdvantage         0.13
+  correlation with nutAdvantage           -0.05
+  correlation with polarizationAdvantage  -0.19
+  correlation with polarization           -0.21
+  correlation with villainPolarization    0.17
+  correlation with nutShare               -0.06
+  correlation with villainNutShare        0.02
+  correlation with spr                    0.06
+  range advantage -1 to -0.1: 6 spots, gain -0.19
+  range advantage -0.1 to -0.03: 11 spots, gain 0.98
+  range advantage -0.03 to 0.03: 12 spots, gain 0.71
+  range advantage 0.03 to 0.1: 17 spots, gain 0.93
+  range advantage 0.1 to 1: 26 spots, gain 0.66
+  nut advantage -1 to -0.05: 11 spots, gain 0.74
+  nut advantage -0.05 to 0: 14 spots, gain 0.63
+  nut advantage 0 to 0.05: 21 spots, gain 1.02
+  nut advantage 0.05 to 1: 26 spots, gain 0.49
+oop: gain of "fitted" over "without the out-of-position river open rule" per spot (points of pot), 72 spots; mean 0.60
+  correlation with rangeAdvantage         0.45
+  correlation with nutAdvantage           0.29
+  correlation with polarizationAdvantage  0.27
+  correlation with polarization           0.31
+  correlation with villainPolarization    -0.24
+  correlation with nutShare               0.20
+  correlation with villainNutShare        -0.32
+  correlation with spr                    0.38
+  range advantage -1 to -0.1: 15 spots, gain 0.00
+  range advantage -0.1 to -0.03: 6 spots, gain 0.00
+  range advantage -0.03 to 0.03: 6 spots, gain 0.00
+  range advantage 0.03 to 0.1: 12 spots, gain 0.12
+  range advantage 0.1 to 1: 33 spots, gain 1.27
+  nut advantage -1 to -0.05: 24 spots, gain 0.51
+  nut advantage -0.05 to 0: 21 spots, gain 0.37
+  nut advantage 0 to 0.05: 9 spots, gain 0.68
+  nut advantage 0.05 to 1: 18 spots, gain 0.97
+oop: gain of "fitted" over "without the river value curve (out of position)" per spot (points of pot), 72 spots; mean 1.86
+  correlation with rangeAdvantage         0.03
+  correlation with nutAdvantage           -0.05
+  correlation with polarizationAdvantage  -0.18
+  correlation with polarization           -0.20
+  correlation with villainPolarization    0.16
+  correlation with nutShare               -0.08
+  correlation with villainNutShare        0.00
+  correlation with spr                    0.79
+  range advantage -1 to -0.1: 15 spots, gain 1.58
+  range advantage -0.1 to -0.03: 6 spots, gain 1.81
+  range advantage -0.03 to 0.03: 6 spots, gain 0.64
+  range advantage 0.03 to 0.1: 12 spots, gain 2.59
+  range advantage 0.1 to 1: 33 spots, gain 1.94
+  nut advantage -1 to -0.05: 24 spots, gain 1.53
+  nut advantage -0.05 to 0: 21 spots, gain 2.06
+  nut advantage 0 to 0.05: 9 spots, gain 2.30
+  nut advantage 0.05 to 1: 18 spots, gain 1.83
