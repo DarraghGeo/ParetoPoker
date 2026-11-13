@@ -180,7 +180,7 @@ export function decisionAt(fs, solution, nodes, id, dealt = []) {
   const villain = [];
   for (let c = 0; c < fs.COMBOS; c++) {
     if (!(his[c] > 1e-6)) continue;
-    villain.push({ id: c, name: fs.formatCombo(c), cards: cardsOf(c), weight: his[c], strength: river ? made(c) : null, equity: equity ? equity[1][c] : undefined, answers: answers.map((map) => map?.get(stored[c]) ?? null) });
+    villain.push({ id: c, name: fs.formatCombo(c), cards: cardsOf(c), weight: his[c], strength: river ? made(c) : null, category: fs.categoryOf(made(c)), equity: equity ? equity[1][c] : undefined, answers: answers.map((map) => map?.get(stored[c]) ?? null) });
   }
   return { street: ['flop', 'turn', 'river'][board.length - 3], board: [...board], boardText: fs.formatCards(board), categories: [...fs.CATEGORY_NAMES], seat: node.seat, pot: node.pot, toCall: hisIn - mineIn, invested: mineIn, actions, hands, villain };
 }

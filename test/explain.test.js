@@ -30,7 +30,7 @@ test('facing a bet: hands clear of the price never fold, hands short of it are t
   const told = explain(s, weak.hand.name);
   // Calling is a mistake for it (folding and a bluff raise may both be fine)
   assert.ok(weak.gaps[1] > 0.005, `calling costs ${weak.gaps[1]}`);
-  assert.ok(told.reasons.some((x) => x.id === 'price' && /short/.test(x.text)));
+  assert.ok(/short of the price/.test(told.line));
   // nothing in an explanation only restates the strategy
   assert.ok(!/are worth the same to it\.$|^Indifferent/.test(told.line));
 });

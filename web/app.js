@@ -128,7 +128,9 @@ function render() {
   $('version').textContent = `${state.at + 1}/${state.versions.length}`;
   $('older').disabled = state.at === 0; $('newer').disabled = state.at >= state.versions.length - 1;
   const round = state.nodes?.[state.node]?.round ?? 0;
-  $('board').innerHTML = cardsHtml(conf().board) + (round ? `<span class="dealt">${cardsHtml(state.dealt.slice(0, round).join(' '))}</span>` : '');
+  // every board card is a button: tap one to change it
+  const own = boardCards(conf().board); const shown = [...own, ...state.dealt.slice(0, round)];
+  $('board').innerHTML = shown.map((c, i) => `<button type="button" class="s-${c[1]}${i >= own.length ? ' dealt' : ''}" data-board="${i}" aria-label="Change ${c}">${c[0]}${GLYPH[c[1]]}</button>`).join('');
   const d = state.decision;
   const strata = d ? strataOf(d.actions) : [];
   $('rule').innerHTML = d ? bar(state.survey.mix, strata) : '';
@@ -160,8 +162,36 @@ function renderLine(strata) {
 function renderDeal() {
   const chance = state.nodes[state.pick]; const gone = new Set([...boardCards(conf().board), ...state.dealt.slice(0, chance.round)]);
   const now = state.dealt[chance.round];
-  $('deal').innerHTML = ['s', 'h', 'd', 'c'].map((suit) => `<div>${[...RANKS].map((rank) => { const card = rank + suit; return `<button type="button" class="s-${suit}" data-card="${card}" ${gone.has(card) ? 'disabled' : ''} aria-pressed="${card === now}" aria-label="${card}">${rank}${GLYPH[suit]}</button>`; }).join('')}</div>`).join('');
+  $('deal').innerHTML = cardGrid(gone, now);
 }
+/** Every card, a row a suit; the ones in use cannot be taken. */
+function cardGrid(gone, now) {
+  return ['s', 'h', 'd', 'c'].map((suit) => `<div>${[...RANKS].map((rank) => { const card = rank + suit; return `<button type="button" class="s-${suit}" data-card="${card}" ${gone.has(card) && card !== now ? 'disabled' : ''} aria-pressed="${card === now}" aria-label="${card}">${rank}${GLYPH[suit]}</button>`; }).join('')}</div>`).join('');
+}
+// ---- the board: tap a card, pick another from the cards that drop down under it ----
+let swapping = null;
+const closeCards = () => { swapping = null; $('cardpick').hidden = true; };
+$('board').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-board]'); if (!b) return;
+  const i = +b.dataset.board; if (swapping === i) { closeCards(); return; }
+  const own = boardCards(conf().board); const round = state.nodes?.[state.node]?.round ?? 0; const all = [...own, ...state.dealt.slice(0, round)];
+  swapping = i;
+  const pick = $('cardpick'); pick.innerHTML = cardGrid(new Set(all), all[i]); pick.hidden = false;
+  const box = b.getBoundingClientRect(); const width = pick.offsetWidth;
+  pick.style.top = `${box.bottom + 10}px`; pick.style.left = `${Math.max(12, Math.min(box.left, innerWidth - width - 12))}px`;
+});
+$('cardpick').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-card]'); if (!b || swapping == null) return;
+  const own = boardCards(conf().board); const i = swapping; closeCards();
+  if (i >= own.length) { state.dealt[i - own.length] = b.dataset.card; state.hand = null; state.cell = null; go(state.node); return; }
+  // one of the spot's own cards: a new spot, solved again
+  own[i] = b.dataset.card;
+  const v = version();
+  if (v.base) { v.base = { ...v.base, board: own.join(' ') }; v.id = ++versionId; v.pos = { node: 0, dealt: [] }; state.hand = null; solve(); return; }
+  state.config.board = own.join(' '); remember(); state.node = 0; state.hand = null; begin();
+});
+document.addEventListener('pointerdown', (ev) => { if (swapping != null && !ev.target.closest('#cardpick') && !ev.target.closest('#board')) closeCards(); });
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeCards(); });
 $('deal').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-card]'); if (!b || state.pick == null) return;
   const chance = state.nodes[state.pick];
@@ -254,11 +284,11 @@ function renderWhy() {
   const title = d.abstract ? `${pct(told.equity)}%` : cardsHtml(told.name);
   const reasons = [...told.reasons];
   // the spot sentence is about the ranges as they start, so it stays with the street they start on
-  if (state.spot?.text && !d.abstract && !(state.nodes?.[state.node]?.round > 0)) reasons.push({ basis: 'spot', text: state.spot.text });
+  if (state.spot?.text && !d.abstract && !(state.nodes?.[state.node]?.round > 0)) reasons.push({ text: state.spot.text });
   $('why').innerHTML = `<h2>${title}</h2>`
     + `<div class="mix"><span class="bar">${bar(told.strategy, strata)}</span><div class="nums">${d.actions.map((a, k) => (told.strategy[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(told.strategy[k])}</span>` : '')).join('')}</div></div>`
     + (told.line ? `<p class="lead">${esc(told.line)}</p>` : '')
-    + `<ol>${reasons.map((r) => `<li><small>${esc(r.basis)}</small><span>${esc(r.text)}</span></li>`).join('')}</ol>`;
+    + reasons.map((r) => `<p>${esc(r.text)}</p>`).join('');
 }
 
 const W = 560, PAD = 8;
@@ -352,7 +382,7 @@ function openSetup(how) {
   $('drawer').focus({ preventScroll: true });
 }
 const closeSetup = () => { $('drawer').hidden = true; $('scrim').hidden = true; $('f-error').textContent = ''; };
-$('open-setup').onclick = () => openSetup(); $('board').onclick = () => openSetup(); $('scrim').onclick = closeSetup;
+$('open-setup').onclick = () => openSetup(); $('scrim').onclick = () => { closeSetup(); closeEditor(); };
 $('state').onclick = () => { if ($('state').dataset.busy) worker.postMessage({ type: 'stop' }); };
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('drawer').hidden) closeSetup(); });
 $('drawer').addEventListener('submit', (ev) => {
@@ -397,10 +427,10 @@ const Ye = (y) => EH - PAD - y * (EH - 2 * PAD);
 function openEditor() {
   const v = version();
   Object.assign(edit, { who: state.decision?.seat ?? 'oop', oop: v.oop, ip: v.ip, dials: JSON.parse(JSON.stringify(v.dials)), view: null, built: null, busy: false, stale: false });
-  $('editor').hidden = false; $('editor').focus({ preventScroll: true });
+  $('editor').hidden = false; $('scrim').hidden = false; $('editor').focus({ preventScroll: true });
   drawEditor(); preview();
 }
-const closeEditor = () => { $('editor').hidden = true; };
+function closeEditor() { if ($('editor').hidden) return; $('editor').hidden = true; $('scrim').hidden = true; }
 /** Ask for the picture of the ranges as they stand. One request at a time: while one is out, the latest change waits for it. */
 function preview() {
   if (edit.busy) { edit.stale = true; return; }

@@ -24,7 +24,9 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .stage{display:grid;grid-template-columns:minmax(0,1fr);gap:40px}
 @media (min-width:900px){.stage{grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:64px}}
 .left{display:flex;flex-direction:column;gap:20px;min-width:0}
-.board{display:flex;gap:10px;font:500 28px/28px var(--mono);cursor:pointer;width:max-content}
+.board{display:flex;gap:6px;width:max-content}
+.board button{font:500 28px/28px var(--mono);border:0;padding:2px 3px;border-radius:3px;background:none}
+.board button:hover{background:var(--surface)}
 .s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
 .line{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:30px}
 .line .crumb{border-color:transparent;padding:5px 4px;color:var(--ink-3);font-family:var(--mono);font-size:12px}
@@ -56,9 +58,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .why .nums span{display:inline-flex;align-items:center;gap:6px}
 .why p{margin:0;font:400 15px/23px var(--sans);text-wrap:pretty}
 .why .lead{font-weight:500}
-.why ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
-.why li{display:grid;grid-template-columns:52px 1fr;gap:10px;font:400 14px/21px var(--sans)}
-.why li small{font:400 11px/21px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.why p:not(.lead){color:var(--ink-2)}
 
 .curve svg{display:block;width:100%;height:auto;touch-action:none}
 .curve .axis{stroke:var(--line-strong);stroke-width:1}.curve .gridl{stroke:var(--line);stroke-width:1}
@@ -74,32 +74,29 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .stage.in-left{transform:translateX(-48px);opacity:0;transition:none}.stage.in-right{transform:translateX(48px);opacity:0;transition:none}
 @media (prefers-reduced-motion:reduce){.stage{transition:none}}
 /* The editor: a sheet over the page. Nothing is solved in here; Save solves. */
-.editor{position:fixed;inset:0;z-index:12;background:var(--bg);overflow:auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px}
+.editor{position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(840px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:22px}
 .editor:focus{outline:none}
-@media (min-width:900px){.editor{padding:16px 40px 40px}}
-.ed-head{display:flex;align-items:center;gap:12px;max-width:1120px;width:100%;margin:0 auto}
+.ed-head{display:flex;align-items:center;gap:12px}
 .ed-head .count{font:400 12px/16px var(--mono);color:var(--ink-3)}
-.ed-body{display:grid;grid-template-columns:minmax(0,1fr);gap:32px;max-width:1120px;width:100%;margin:0 auto}
-@media (min-width:900px){.ed-body{grid-template-columns:minmax(0,520px) minmax(0,1fr);gap:64px}}
-.ed-side{display:flex;flex-direction:column;gap:24px;min-width:0}
-#e-curve svg{touch-action:none}
-.sliders{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 24px}
-@media (max-width:600px){.sliders{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.ed-body{display:grid;grid-template-columns:minmax(0,270px) minmax(0,1fr);gap:28px;align-items:center}
+@media (max-width:700px){.ed-body{grid-template-columns:minmax(0,1fr);gap:18px}.editor{padding:16px}}
+#e-paint b span{display:none}
+.sliders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 32px}
+@media (max-width:600px){.sliders{gap:12px 20px}.ed-body #e-paint{width:100%;max-width:230px;margin:0 auto}}
 .sliders label{display:flex;flex-direction:column;gap:0;min-width:0;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .sliders output{font:500 14px/20px var(--mono);color:var(--ink);letter-spacing:0}
-.sliders input{appearance:none;-webkit-appearance:none;width:100%;height:16px;margin:0;background:transparent;cursor:ew-resize}
-.sliders input::-webkit-slider-runnable-track{height:1px;background:var(--line-strong)}
-.sliders input::-moz-range-track{height:1px;background:var(--line-strong)}
-.sliders input::-webkit-slider-thumb{-webkit-appearance:none;width:9px;height:9px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink);margin-top:-4px}
-.sliders input::-moz-range-thumb{width:7px;height:7px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink)}
+.sliders input{appearance:none;-webkit-appearance:none;width:100%;height:28px;margin:0;background:transparent;cursor:ew-resize}
+.sliders input::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:var(--line-strong)}
+.sliders input::-moz-range-track{height:3px;border-radius:2px;background:var(--line-strong)}
+.sliders input::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--bg);border:2px solid var(--ink);margin-top:-9px}
+.sliders input::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink)}
 .curve .ghost{fill:none;stroke:var(--ink);stroke-width:1;stroke-dasharray:2 4;opacity:.45}
 .curve .ceiling{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:1 4}
 .rows{display:flex;flex-direction:column;gap:3px}
 .rows .row{position:relative}
 .rows .name{position:absolute;top:4px;white-space:nowrap;pointer-events:none}
-.rows .strip{height:22px;margin-bottom:0}
-.rows .strip button[aria-pressed="true"]::after{display:none}
-.rows .strip button[aria-pressed="true"]{filter:brightness(.82)}
+.rows .strip{height:22px;margin:0}
+.rows{margin:10px 0}
 .rows .name{font:400 11px/14px var(--mono);color:var(--ink-3)}
 .rows .name .short{display:none}
 @media (max-width:600px){.rows .name .long{display:none}.rows .name .short{display:inline}}
@@ -108,7 +105,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .line .view{margin-left:auto}
 .curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
 /* One column per hand, all the same width, edge to edge; a dot under the strip marks the hand picked */
-.strip{display:flex;height:72px;gap:0;align-items:stretch;margin-bottom:12px}
+.strip{display:flex;height:72px;gap:0;align-items:stretch;margin:10px 0}
 .strip button{flex:1 1 0;position:relative;min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column;justify-content:flex-end;background:var(--surface)}
 .strip button b{display:flex;flex-direction:column-reverse;width:100%;min-height:2px}
 .strip button i{display:block;width:100%}
@@ -117,7 +114,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 /* the equity chart is wider than tall, in the middle of the square the grid takes */
 #dist:not([hidden]){flex:1;min-height:0;display:flex;align-items:center}
 #dist svg{flex:1 1 auto;min-width:0;width:100%;height:auto;aspect-ratio:560/350}
-.strip button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;bottom:-9px;width:5px;height:5px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
+.strip button[aria-pressed="true"]{z-index:2}
+.strip button[aria-pressed="true"]::before,.strip button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;transform:translateX(-50%);border:5px solid transparent;pointer-events:none}
+.strip button[aria-pressed="true"]::before{top:-9px;border-top:7px solid var(--ink);border-bottom:0}
+.strip button[aria-pressed="true"]::after{bottom:-9px;border-bottom:7px solid var(--ink);border-top:0}
 .strip span{flex:1 1 0;min-width:0}
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:10}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(360px,100%);background:var(--bg);box-shadow:var(--float);z-index:11;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px 20px;display:flex;flex-direction:column;gap:16px;overflow:auto}
@@ -151,7 +151,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
    nothing scrolls but the explanation, inside its own box. The chart area is as big as the height allows. */
 @media (min-width:900px) and (min-height:520px){
   html,body{height:100%;overflow:hidden}
-  main{--side:min(560px,calc(100dvh - 318px));height:100dvh;padding-top:14px;padding-bottom:14px;gap:18px;max-width:none}
+  main{--side:min(560px,calc(100dvh - 318px));height:100dvh;padding-top:14px;padding-bottom:14px;gap:18px;max-width:calc(var(--side) + 56px + 600px + 80px)}
   .stage{flex:1;min-height:0;grid-template-columns:var(--side) minmax(0,1fr);gap:56px;justify-content:start}
   .left{gap:12px;width:var(--side)}
   .line{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;gap:4px}
@@ -166,13 +166,13 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
   .rows .row{flex:1 1 0;min-height:0;max-height:24px}
   .rows .strip{height:100%}
   .rows .name{top:50%;transform:translateY(-50%)}
-  .why{overflow-y:auto;min-height:0;max-height:100%;padding-bottom:24px}
-  .editor{overflow:hidden}
-  .ed-body{grid-template-columns:min(520px,calc(100dvh - 120px)) minmax(0,1fr)}
+  .why{overflow-y:auto;min-height:0;max-height:100%;padding-bottom:24px;max-width:none}
 }
 
 /* flop and turn spots: the cards dealt, and choosing one */
-.board .dealt{margin-left:.35em;opacity:.75}
+.board .dealt{opacity:.75}
+.pop{position:fixed;z-index:9;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:10px;width:min(430px,calc(100vw - 24px))}
+.pop:not([hidden]){flex:none;display:flex;flex-direction:column;gap:4px}
 .state{border:0;background:none;padding:0;cursor:default}
 .state[data-busy]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}
 .line .crumb.card{font-family:var(--sans);font-size:13px;color:var(--ink)}

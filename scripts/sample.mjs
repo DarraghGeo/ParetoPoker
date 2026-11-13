@@ -6,5 +6,5 @@ const run = fs.createRun(spot, {}); run.step(400); const solution = run.snapshot
 for (const [id, names] of [[0, ['AcAd', 'KdQd', '5s4s', 'AhKs', 'JsTs', '8c8s']], [nodes[0].edges[1].child, ['AcQc', 'Ac7c', '5s3s', 'KcJc', '8c8s']]]) {
   const d = decisionAt(fs, solution, nodes, id); const s = survey(d);
   console.log(`\n== ${d.seat} ${d.toCall ? 'facing ' + d.toCall : 'first to act'}: ${d.actions.map((a) => a.label).join(' / ')}`);
-  for (const n of names) { const t = explain(s, n); if (!t) { console.log(n, '(not in range)'); continue; } console.log(`\n${n}  [${t.strategy.map((x) => Math.round(100 * x)).join(' ')}]  ${t.status}\n  LINE: ${t.line}`); for (const r of t.reasons) console.log(`  - (${r.basis}) ${r.text}`); }
+  for (const n of names) { const t = explain(s, n); if (!t) { console.log(n, '(not in range)'); continue; } console.log(`\n${n}  [${t.strategy.map((x) => Math.round(100 * x)).join(' ')}]  ${t.status}\n  LINE: ${t.line}`); for (const r of t.reasons) console.log(`  - ${r.text}`); }
 }
