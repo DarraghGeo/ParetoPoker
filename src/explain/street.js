@@ -179,7 +179,7 @@ export function claims(s, m, T) {
       const lift = a.cards.lift.part - f * a.cards.lift.weight; const rest = a.cards.rest.part - f * a.cards.rest.weight;
       // each half is concluded only when it is clear of zero by twice its tolerance
       const liftSure = Math.abs(lift) >= 2 * T.lift; const restSure = T.rest != null && Math.abs(rest) >= 2 * T.rest;
-      if (liftSure || restSure) out.push({ kind: 'cards', a: i, fold, n: a.cards.lift.n, others: a.cards.rest.n, lift, rest, liftSure, restSure });
+      if (liftSure || restSure) out.push({ kind: 'cards', a: i, fold, n: a.cards.lift.n, others: a.cards.rest.n, lift, rest, liftSure, restSure, liftWeight: a.cards.lift.weight, restWeight: a.cards.rest.weight });
     }
   }
   return out;
@@ -259,8 +259,10 @@ export function explainStreet(s, m, T) {
   }
   // a call: which cards it is for
   for (const c of made.filter((x) => x.kind === 'cards')) {
-    const up = c.liftSure ? `on the ${c.n} cards that improve the hand it ${c.lift > 0 ? 'gains' : 'loses'} ${pot(c.lift)} of the pot` : '';
-    const down = c.restSure ? `on the other ${c.others} it ${c.rest > 0 ? 'gains' : 'loses'} ${pot(c.rest)}` : '';
+    // said per time such a card comes: the part of the gain that arrives on those cards, over how often they come
+    const each = (part, weight) => (weight > 0 ? part / weight : 0);
+    const up = c.liftSure ? `when one of the ${c.n} cards that improve the hand comes (${pts(c.liftWeight)} of the time) it is ${pot(each(c.lift, c.liftWeight))} of the pot ${c.lift > 0 ? 'better' : 'worse'} off` : '';
+    const down = c.restSure ? `on the other ${c.others} cards it is ${pot(each(c.rest, c.restWeight))} ${c.rest > 0 ? 'better' : 'worse'} off` : '';
     const moral = c.liftSure && c.restSure ? (c.lift > 0 && c.rest < 0 ? ' The call is for those cards.' : c.lift > 0 && c.rest > 0 ? ' The call pays whether or not it improves.' : '') : '';
     reasons.push({ id: 'cards', text: `${label(c.a)}, set against folding: ${[up, down].filter(Boolean).join(', and ')}.${moral}` });
   }
@@ -275,7 +277,7 @@ export function explainStreet(s, m, T) {
     else for (const c of same) reasons.push({ id: 'same', text: `${list([c.a, c.b])} earn the same with this hand, to within ${pot(c.within)} of the pot.` });
   }
   // what it does not do, and what that would cost
-  for (const c of made.filter((x) => x.kind === 'worse')) reasons.push({ id: 'worse', text: `${label(c.a)} is worse with this hand: against his strategy in this solution it gives up ${pot(c.gap)} of the pot.` });
+  for (const c of made.filter((x) => x.kind === 'worse')) reasons.push({ id: 'worse', text: `${label(c.a)} is worse with this hand: against his strategy in this solution it gives up ${pot(c.gap)} of the pot${m.actions[c.a].sigma >= TAKES ? `, though this solution still plays it ${pts(m.actions[c.a].sigma)} of the time` : ''}.` });
   // numbers where no conclusion is drawn: what this solution has, said as that
   {
     const on = m.actions.map((x, i) => (x.on && x.worth != null ? i : -1)).filter((i) => i >= 0);
@@ -284,7 +286,7 @@ export function explainStreet(s, m, T) {
       if (i === best || made.some((c) => (c.kind === 'worse' && c.a === i) || (c.kind === 'same' && (c.a === i || c.b === i)))) continue;
       const gap = m.actions[best].worth - m.actions[i].worth;
       if (gap < 0.25) { reasons.push({ id: 'level', text: `In this solution ${label(i)} and ${label(best)} come out level with this hand.` }); continue; }
-      reasons.push({ id: 'behind', text: m.actions[i].sigma >= TAKES ? `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}, and the hand still does both.` : `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}: too close to call it worse.` });
+      reasons.push({ id: 'behind', text: m.actions[i].sigma >= TAKES ? `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}, and the hand still does both.` : `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}${proven ? ': too close to call it worse' : ''}.` });
     }
   }
   return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: on lines at least half of each range takes, in a solve fine enough.' };

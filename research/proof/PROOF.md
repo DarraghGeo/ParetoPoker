@@ -84,8 +84,24 @@ This also corrected the river, where "the next best play loses X" had been using
 
 `accept.mjs`. A spot is solved as the page solves it. Every claim the explainer makes about every hand, at
 every decision it explains, is tested against the same hand measured in two reference solves (discounted
-CFR and CFR+). Gates were set on the calibration sets and then left alone; the held-out and random sets are
-the test. Lines at least half of each range takes:
+CFR and CFR+).
+
+How the rules came to be what they are, since that decides which sets count as a test:
+
+1. Tolerances were measured on the calibration sets. The first held-out turn set then failed (106 of 22,036
+   claims): claims that an unused action costs "about x" and next-card splits for hands that never call.
+   Those were restated (costs as a direction; value claims only about actions the hand takes).
+2. The second held-out turn set failed at one decision on a thin line (he had just shoved with a fifth of
+   his range, and the references disagreed about how often he shoves). Conclusions were restricted to lines
+   at least half of each range takes.
+3. Forty random river spots then showed that the cost of an unused action and equity after his action are
+   not fixed by the equilibrium (findings 2 and 4 below). Numbers and conclusions were separated, and each
+   conclusion's truth test made its direction.
+4. With the rules fixed as they stand, **fresh random sets were drawn and run once**: these are the test.
+   The earlier sets were then run again under the final rules and are shown for completeness; the rules
+   were shaped on them.
+
+Lines at least half of each range takes:
 
 | Street | Set of spots | Page vs reference accuracy | Conclusions | False | worse (made / false) | same | needs | builds | cards | Numbers | Outside tolerance | Largest reversed gap (% pot) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -136,3 +152,82 @@ All sets: 25,373 conclusions, 0 false. See "Not proven" for why these are not ye
 | "B75 is worse with this hand: against his strategy in this solution it gives up 4% of the pot" | conclusion (worse) + number | proof 4 for "worse"; the amount is this solution's (proof 3) |
 | "on the 9 cards that improve the hand it gains 12% of the pot, on the other 37 it loses 6%. The call is for those cards." | conclusion (cards) + numbers | proof 4 for the directions; proofs 1 and 3 for the amounts |
 | "In this solution B33 comes out 1.6% of the pot behind X: too close to call it worse" | number | proof 3; no conclusion is drawn |
+
+## What was found on the way
+
+1. **The solver's value for an action a hand never takes is not what that action is worth.** It assumes the
+   hand's own untrained later play (proof 3). Anything that quotes "this would lose X" from those values is
+   unreliable. The page now values every action with the best reply afterwards.
+2. **Even valued properly, what an unused action costs is not fixed by the equilibrium.** Two river solves,
+   each within 0.002% of the pot of perfect, put the same deviation at 12.4% and at 5.9% of the pot. Only
+   the direction carries over, which is what theory says: a strategy that is a best reply to one
+   equilibrium is a best reply to every other, so an action it rejects is never better, but nothing fixes
+   how much worse it is. Hence "worse" is a conclusion and the amount is a number of this solution.
+3. **How often an individual hand takes each action is not fixed either.** On the main lines of the six turn
+   spots the two references differ about a single hand's frequency by up to 51.3 points
+   (99th percentile 6.1). No sentence rests on a hand's own frequency beyond whether
+   it takes an action at all (10% of the time or more).
+4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
+   the two references differed by four points about the equity of hands against that range. Equity after
+   his action is therefore a number of this solution: across every set, on lines at least half of each range
+   takes, 171 of 50,071 equities fell outside the tolerance (1 to 2 points) of a reference.
+
+## Not proven: said nowhere on the page, to be proved later or dropped
+
+| Claim | Why it is not made | Evidence |
+|---|---|---|
+| "Betting gains against his draws and loses to his strong hands": an action's gain split by what he holds | Not fixed by the equilibrium: which of his hands call is arbitrary among those indifferent | Two references (0.01%), main lines of six turn spots, 19,688 comparisons: the parts differ by up to **27.86% of the pot** (99th percentile 5.95%). `holding.mjs` |
+| What an unused action costs, as a truth of the spot | Finding 2 | `accept.mjs`, random river set |
+| Why a hand bets 60% and not 40% | Finding 3 | `tolerance.mjs` |
+| Conclusions on lines a fifth to a half of each range takes | On trial. 25,373 conclusions, 0 false so far, but at one such decision (he had just shoved) the two references disagreed about how often he shoves at all (12.5% against 20%) and three kinds of claim then failed under an earlier wording. Left out until a rule for which thin lines are settled has been found and tested | table above; `out/failures-final-turn-0.02.json` as first run |
+| Flop decisions, and turn decisions inside a flop spot | The test was still running when this was written. | `accept.mjs "held flop" 0.3 0.02` |
+| Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
+| Which of his hands fold, call or raise, by made hand | Not measured; the split by holding above suggests it will not be stable | — |
+| Why one bet size and not another when the range uses both | The "same" and "worse" conclusions cover the hand's own actions; no claim about sizes as such has a test | — |
+| What a check-behind is worth by the card that comes | The call-against-fold split is tested; a check has no fold to be set against | — |
+| Comparisons between hands ("this one bets because it is weaker than that one") | No test | — |
+
+## The river audit
+
+Before this work the page worded river decisions from `river.js`. Each of its sentences, written at page
+accuracy, was compared with what it writes about the same hand in two finer solves (`river-audit.mjs`, six
+river spots, main lines): is the sentence there at all, and how far apart are the numbers in it?
+
+| Sentence | Written | Absent or reshaped in a finer solve | Largest difference in a number (99th pct / max) |
+|---|---|---|---|
+| arbitrary | 123 | 31.3% | 46 / 56 |
+| block | 62 | 14.5% | 14 / 14 |
+| blockers | 84 | 15.5% | 44 / 48 |
+| bluff | 470 | 22.8% | 17 / 25 |
+| cost | 1,735 | 6.8% | 2 / 2 |
+| defence | 78 | 22.4% | 31 / 32 |
+| give-up | 472 | 1.6% | 20 / 20 |
+| line | 160 | 30.0% | 10 / 10 |
+| mix | 53 | 23.6% | 54 / 54 |
+| no-raise | 1 | 0.0% | 0 / 0 |
+| price | 114 | 5.3% | 2 / 2 |
+| quota | 282 | 19.5% | 14 / 18 |
+| raise | 67 | 2.2% | 1 / 1 |
+| showdown | 815 | 6.0% | 3 / 4 |
+| size | 485 | 8.1% | 2 / 2 |
+| trap | 401 | 17.2% | 35 / 59 |
+| value | 911 | 8.2% | 5 / 14 |
+
+Many did not hold up, so the page no longer uses that wording. Rivers are now worded from the same proven
+claims as turns (solved to 0.01%), with the price of a call and how often the hand is ahead when called
+as numbers.
+
+## Running it again
+
+```
+node research/proof/identities.mjs  > research/proof/out/identities.jsonl     # proof 1
+node research/proof/features.mjs    > research/proof/out/features.json        # proof 2
+node research/proof/best.mjs        > research/proof/out/best.jsonl           # proof 3
+node research/proof/accept.mjs "held turn" 0.02    > research/proof/out/accept-held-turn-0.02.json   # proof 4, one set
+node research/proof/accept.mjs "fresh river" 0.01 0.002 > research/proof/out/accept-fresh-river-0.01.json
+node research/proof/holding.mjs     > research/proof/out/holding.json         # not proven: the evidence
+node research/proof/river-audit.mjs > research/proof/out/river-audit.txt
+node research/proof/report.mjs                                                # this file
+```
+
+The fast versions of proofs 1 to 3 and of the claims' truth tests also run with `npm test` (`test/street.test.js`).
