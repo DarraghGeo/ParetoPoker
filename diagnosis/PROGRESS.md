@@ -237,3 +237,12 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   and defence is the fundamental when ahead by 0.1. rivers-tune 3.72 -> 3.53, rivers-held 3.79
   -> 3.70, R12 3.31 -> 2.96, R8-B 3.68 -> 3.15, rivers-alt 4.17 -> 4.07. Defence as a line in
   range advantage is still worse (4.23).
+- 09:40 **Spot dependence of each turn item** (diagnosis/spot-dependence-turns.txt): the turn
+  value caps lose a point out of position when ahead in range by 0.1 (the 3-bet pot) and gain
+  a point otherwise; defence 1.25 facing a turn raise gains 2.9 out of position when ahead and
+  0.6 when behind; the kind table gains most in position and deep. A cap that follows range
+  advantage (v49.mjs): the seat gains (9.84 -> 9.52), the other seat loses more (9.98 -> 10.64).
+  Third time this pattern has appeared (range-bet rule, capped range-bet rule, this): betting
+  more out of position when well ahead is right for that seat and breaks the other seat's
+  model of its opponent. Not adopted; recorded as needing a separate opponent model.
+  Running: diagnosis/final-fitted.txt. Then final numbers into TUNINGS/README, and the summary.

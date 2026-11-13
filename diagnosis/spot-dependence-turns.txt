@@ -1,0 +1,104 @@
+oop: gain of "fitted" over "without the kind table (order with caps instead)" per spot (points of pot), 16 spots; mean 1.00
+  correlation with rangeAdvantage         0.38
+  correlation with nutAdvantage           -0.23
+  correlation with polarizationAdvantage  0.28
+  correlation with polarization           0.37
+  correlation with villainPolarization    0.05
+  correlation with nutShare               -0.10
+  correlation with villainNutShare        0.14
+  correlation with spr                    0.21
+  by range advantage: 1 behind: 0.72 (4)  2 level: 0.85 (8)  3 ahead: 1.56 (4)
+  by nut advantage: 1 behind: 1.16 (10)  2 ahead: 0.71 (6)
+  by depth: 1.5x: 0.85 (8)  4x: 1.14 (8)
+  by pair: A: 1.53 (4)  B: 0.72 (4)  C: 1.29 (4)  D: 0.46 (4)
+ip: gain of "fitted" over "without the kind table (order with caps instead)" per spot (points of pot), 14 spots; mean 2.93
+  correlation with rangeAdvantage         0.36
+  correlation with nutAdvantage           -0.20
+  correlation with polarizationAdvantage  -0.28
+  correlation with polarization           -0.22
+  correlation with villainPolarization    0.19
+  correlation with nutShare               -0.04
+  correlation with villainNutShare        0.24
+  correlation with spr                    0.41
+  by range advantage: 1 behind: 0.63 (4)  2 level: 4.05 (4)  3 ahead: 3.71 (6)
+  by nut advantage: 1 behind: 4.27 (5)  2 ahead: 2.18 (9)
+  by depth: 1.5x: 1.78 (7)  4x: 4.08 (7)
+  by pair: A: 2.75 (4)  B: 5.09 (4)  C: 0.96 (2)  D: 1.93 (4)
+oop: gain of "fitted" over "without defence 1.25 facing a turn raise" per spot (points of pot), 16 spots; mean 1.31
+  correlation with rangeAdvantage         0.76
+  correlation with nutAdvantage           -0.26
+  correlation with polarizationAdvantage  0.42
+  correlation with polarization           0.69
+  correlation with villainPolarization    0.21
+  correlation with nutShare               0.04
+  correlation with villainNutShare        0.25
+  correlation with spr                    0.15
+  by range advantage: 1 behind: 0.55 (4)  2 level: 0.88 (8)  3 ahead: 2.93 (4)
+  by nut advantage: 1 behind: 1.75 (10)  2 ahead: 0.59 (6)
+  by depth: 1.5x: 1.13 (8)  4x: 1.49 (8)
+  by pair: A: 1.46 (4)  B: 0.55 (4)  C: 2.29 (4)  D: 0.95 (4)
+ip: gain of "fitted" over "without defence 1.25 facing a turn raise" per spot (points of pot), 14 spots; mean 1.41
+  correlation with rangeAdvantage         0.05
+  correlation with nutAdvantage           0.26
+  correlation with polarizationAdvantage  -0.00
+  correlation with polarization           0.21
+  correlation with villainPolarization    0.38
+  correlation with nutShare               0.42
+  correlation with villainNutShare        0.31
+  correlation with spr                    0.38
+  by range advantage: 1 behind: 1.39 (4)  2 level: 1.28 (4)  3 ahead: 1.51 (6)
+  by nut advantage: 1 behind: 1.47 (5)  2 ahead: 1.38 (9)
+  by depth: 1.5x: 1.07 (7)  4x: 1.75 (7)
+  by pair: A: 1.02 (4)  B: 1.82 (4)  C: 0.90 (2)  D: 1.65 (4)
+oop: gain of "fitted" over "without the cap on raising a turn bet" per spot (points of pot), 16 spots; mean 0.24
+  correlation with rangeAdvantage         0.40
+  correlation with nutAdvantage           -0.01
+  correlation with polarizationAdvantage  0.41
+  correlation with polarization           0.69
+  correlation with villainPolarization    0.22
+  correlation with nutShare               0.17
+  correlation with villainNutShare        0.12
+  correlation with spr                    0.43
+  by range advantage: 1 behind: -0.06 (4)  2 level: -0.21 (8)  3 ahead: 1.43 (4)
+  by nut advantage: 1 behind: 0.25 (10)  2 ahead: 0.22 (6)
+  by depth: 1.5x: -0.20 (8)  4x: 0.68 (8)
+  by pair: A: 0.06 (4)  B: -0.06 (4)  C: 0.93 (4)  D: 0.03 (4)
+ip: gain of "fitted" over "without the cap on raising a turn bet" per spot (points of pot), 14 spots; mean 0.27
+  correlation with rangeAdvantage         -0.06
+  correlation with nutAdvantage           0.41
+  correlation with polarizationAdvantage  0.10
+  correlation with polarization           0.40
+  correlation with villainPolarization    0.50
+  correlation with nutShare               0.52
+  correlation with villainNutShare        0.25
+  correlation with spr                    0.15
+  by range advantage: 1 behind: 0.33 (4)  2 level: 0.19 (4)  3 ahead: 0.28 (6)
+  by nut advantage: 1 behind: -0.07 (5)  2 ahead: 0.46 (9)
+  by depth: 1.5x: 0.09 (7)  4x: 0.45 (7)
+  by pair: A: -0.23 (4)  B: 0.27 (4)  C: 0.32 (2)  D: 0.75 (4)
+oop: gain of "fitted" over "without the turn value caps" per spot (points of pot), 16 spots; mean 0.59
+  correlation with rangeAdvantage         -0.56
+  correlation with nutAdvantage           0.14
+  correlation with polarizationAdvantage  -0.63
+  correlation with polarization           -0.66
+  correlation with villainPolarization    0.08
+  correlation with nutShare               0.03
+  correlation with villainNutShare        -0.10
+  correlation with spr                    0.11
+  by range advantage: 1 behind: 1.08 (4)  2 level: 1.15 (8)  3 ahead: -1.01 (4)
+  by nut advantage: 1 behind: 0.29 (10)  2 ahead: 1.09 (6)
+  by depth: 1.5x: 0.41 (8)  4x: 0.77 (8)
+  by pair: A: 1.42 (4)  B: 1.08 (4)  C: -1.22 (4)  D: 1.09 (4)
+ip: gain of "fitted" over "without the turn value caps" per spot (points of pot), 14 spots; mean 0.91
+  correlation with rangeAdvantage         -0.28
+  correlation with nutAdvantage           0.44
+  correlation with polarizationAdvantage  0.32
+  correlation with polarization           0.53
+  correlation with villainPolarization    0.27
+  correlation with nutShare               0.53
+  correlation with villainNutShare        0.20
+  correlation with spr                    0.09
+  by range advantage: 1 behind: 1.75 (4)  2 level: 0.45 (4)  3 ahead: 0.67 (6)
+  by nut advantage: 1 behind: 0.48 (5)  2 ahead: 1.16 (9)
+  by depth: 1.5x: 0.78 (7)  4x: 1.05 (7)
+  by pair: A: 1.68 (4)  B: 0.94 (4)  C: 0.12 (2)  D: 0.51 (4)

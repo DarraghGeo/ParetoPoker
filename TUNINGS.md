@@ -150,9 +150,63 @@ Out of position the solver's turn bet level runs from 4% to 100% across the 16 d
 | 31 | mixer | `TURN_KINDS` refitted on 48 turn decisions (`turns-tune` and `turns-more`). | The table keeps its shape with three times the data. On the four sets it was not fitted on it is level or slightly better: held 8.87 -> 8.78, held2 9.87 -> 9.69, T4 8.63 -> 8.70, T4-B 10.98 -> 10.96. |
 | 32 | tuner | `sizeNear` puts all the weight on the one nearest size (the smaller on a tie); it used to split between the two sizes either side of the target. | A configuration dependence, not a spot one. On a 25/50/100/200 menu the split lost the whole river gain (napkin 5.08, split 5.07, one size 4.17); on 50/100 the split was better (3.34 against 3.68); on 33/75/150 they are the same. |
 
+| 33 | tuner | The river raise rule (21) applies only from a range advantage of -0.1 at the decision (`raiseFrom`); below that, raises come from counting value. | From the spot-dependence record below: in position the rule gains 0.79 when ahead and loses 1.75 when far behind. rivers-tune 3.72 -> 3.56, held 3.79 -> 3.74, alt 4.17 -> 4.11. |
+| 34 | tuner | Facing a river bet with a range advantage of 0.1 or more, defence is the fundamental, not 0.95 (`defenceWhenAhead`). | Small and the same sign on three sets (3.72 -> 3.68, 3.79 -> 3.75, 4.17 -> 4.13). With 33: rivers-tune 3.53, held 3.70, R12 2.96, R8-B 3.15, alt 4.07. |
+
 Entries 1, 2 and 16 (the 0.7 value threshold inside NapkinSelector and the flat
 `oopValueChecks`) are superseded where a rule above covers the decision: the threshold is 0.6
 for river opens under the tuner, and the mixer's curves replace the flat value-checking shares.
+
+### What each adopted item is worth on spots it was not fitted on
+
+The fitted preset with one item taken away (`diagnosis/v46.mjs`, `v47.mjs`; before entries 33
+and 34):
+
+| Taken away | turns-held2 (fitted 9.59) | | Taken away | rivers-held (fitted 3.79) |
+|---|---|---|---|---|
+| the kind table (28) | 11.72 | | the river value curve (23) | 5.27 |
+| the turn value caps (26, 30) | 11.38 | | the in-position open rule (22) | 4.41 |
+| defence 1.25 facing a turn raise (24) | 11.01 | | the out-of-position open rule (22) | 4.02 |
+| E[HS^2] calls in position when deep (27) | 10.25 | | defence 0.95 (20) | 4.00 |
+| the cap on raising a turn bet (25) | 10.17 | | the raise rule (21) | 3.90 |
+| the river rules | 9.52 | | every tuner rule | 4.60 |
+| every tuner rule | 10.60 | | | |
+
+Mixing is worth the most on both streets. The river rules do nothing inside turn trees.
+
+### Does each tuning depend on the spot?
+
+`diagnosis/delta.mjs`: per spot, the gain from an item against how the spot is defined at that
+seat's first decision. Rivers (`diagnosis/spot-dependence-rivers.txt`, 72 spots a seat):
+
+| Item | Depends on | Detail |
+|---|---|---|
+| defence 0.95 facing a river bet | range advantage, strongly | Correlation -0.93 out of position, -0.75 in position. Behind by 0.1 or more it gains 0.9 / 1.5 points; ahead by 0.1 or more it loses 0.15 / 0.2. In position it also rises with hero's polarization (0.77). |
+| river raise rule | range advantage, in position | Gains 0.79 when ahead by 0.1, loses 1.75 when behind by 0.1 (6 spots). Out of position it barely moves. |
+| in-position river open rule | little | Gains 0.7-1.0 everywhere except when behind by 0.1 or more (-0.19, 6 spots). |
+| out-of-position river open rule | range advantage | By construction: gains 1.27 when ahead by 0.1, nothing otherwise. Also rises with stack depth (0.38). |
+| river value curve | stack depth | Correlation 0.79 with the stack-to-pot ratio; positive in every range-advantage band (0.6 to 2.6). |
+
+Entries 33 and 34 came from this table. Turning the first row into a line in range advantage
+still loses (4.23 against 3.72): the dependence is on the spot as the street begins, and at
+the decision itself the range advantage has already moved with the bet being faced.
+
+Turns (`diagnosis/spot-dependence-turns.txt`, 16 and 14 spots a seat, so only large effects
+count; out of position / in position):
+
+| Item | Depends on | Detail |
+|---|---|---|
+| kind table (28) | depth, in position | Gains everywhere. In position 4.08 at 4 pots behind against 1.78 at 1.5, and 0.63 when behind in range against about 3.9 otherwise. |
+| defence 1.25 facing a turn raise (24) | range advantage, out of position | Correlation 0.76: 2.93 when ahead by 0.1, 0.55 when behind. In position about 1.4 everywhere. |
+| cap on raising a turn bet (25) | range advantage and depth, out of position | 1.43 when ahead, about zero otherwise; 0.68 at 4 pots, -0.20 at 1.5. In position 0.1-0.5 everywhere. |
+| turn value caps (26, 30) | range advantage, out of position | They gain about 1.1 when behind or level and lose 1.0 when ahead by 0.1 (the 3-bet pot: -1.22). In position they gain in every band. |
+
+The last row is the same finding as the range-bet rule: where hero is well ahead in range out
+of position, betting more is right for that seat. Letting the cap follow range advantage
+(`diagnosis/v49.mjs`) again helps that seat (9.84 -> 9.52) and costs the other more (9.98 ->
+10.64), because the other seat models its opponent as the engine. Three attempts at this have
+now failed the same way; it needs the opponent model to be separate from the engine's own play.
+
 
 ### Tried and not adopted
 
