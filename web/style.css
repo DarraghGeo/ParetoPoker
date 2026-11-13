@@ -94,8 +94,11 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
 /* One column per hand, all the same width, edge to edge; a dot under the strip marks the hand picked */
 .strip{display:flex;height:72px;gap:0;align-items:stretch;margin-bottom:12px}
-.strip button{flex:1 1 0;position:relative;min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column-reverse;background:var(--surface)}
+.strip button{flex:1 1 0;position:relative;min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column;justify-content:flex-end;background:var(--surface)}
+.strip button b{display:flex;flex-direction:column-reverse;width:100%;min-height:2px}
 .strip button i{display:block;width:100%}
+.curve .grab{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:ns-resize}
+#dist svg{touch-action:none}
 .strip button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;bottom:-9px;width:5px;height:5px;border-radius:50%;background:var(--ink);transform:translateX(-50%)}
 .strip span{flex:1 1 0;min-width:0}
 .scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:10}

@@ -2,7 +2,7 @@ import { RangeManager } from 'poker-rangeman';
 import { explain, survey } from '../src/explain/river.js';
 import { profile } from '../src/explain/profile.js';
 import { warpGame } from '../src/warp/game.js';
-import { NEUTRAL, isNeutral } from '../src/warp/reshape.js';
+import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
 
 const $ = (id) => document.getElementById(id);
 const COLORS = ['--act-fold', '--act-check', '--act-small', '--act-big', '--act-allin'];
@@ -19,7 +19,7 @@ const DEFAULTS = {
 };
 const state = {
   mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', split: false,
-  spot: null, job: 0, status: '', dials: { who: 'oop', oop: { ...NEUTRAL }, ip: { ...NEUTRAL } }, stats: null, base: new Map(),
+  spot: null, job: 0, status: '', dials: { who: 'oop', oop: neutral(), ip: neutral() }, stats: null, base: new Map(), baseQ: { oop: null, ip: null },
   warp: { knobs: [0.03, 0.2, 0.42, 0.6, 0.8, 0.97], game: null, n: 40 },
 };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config); if (saved?.knobs?.length === 6) state.warp.knobs = saved.knobs; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.split = !!saved?.split; } catch { /* first visit */ }
@@ -38,7 +38,7 @@ worker.onmessage = ({ data }) => {
 function solve(reshaped = false) {
   state.job++;
   if (reshaped) state.keep = state.node;
-  else { state.nodes = null; state.decision = null; state.survey = null; state.spot = null; state.hand = null; state.cell = null; state.keep = 0; state.base.clear(); state.dials.oop = { ...NEUTRAL }; state.dials.ip = { ...NEUTRAL }; render(); }
+  else { state.nodes = null; state.decision = null; state.survey = null; state.spot = null; state.hand = null; state.cell = null; state.keep = 0; state.base.clear(); state.baseQ = { oop: null, ip: null }; state.dials.oop = neutral(); state.dials.ip = neutral(); render(); }
   state.status = '0'; $('state').textContent = state.status;
   worker.postMessage({ type: 'solve', job: state.job, config: { ...state.config, dials: { oop: state.dials.oop, ip: state.dials.ip } } });
   if (reshaped) return;
@@ -85,7 +85,7 @@ function render() {
   $('rule').innerHTML = d ? bar(state.survey.mix, strata) : '';
   renderLine(strata);
   renderStrip(strata);
-  if (grid) renderGrid(strata); else if (spot) { renderDist(); renderDials(); } else renderCurve();
+  if (grid) renderGrid(strata); else if (spot) { if (grabbed == null) renderDist(); renderDials(); } else renderCurve();
   if (spot) renderCombos(strata);
   renderWhy();
 }
@@ -136,20 +136,28 @@ function renderDist() {
   const Xd = (x) => x * W;
   const Yd = (y) => DH - PAD - y * (DH - 2 * PAD);
   const steps = (list) => { const total = list.reduce((t, r) => t + r.w, 0); let x = 0; const pts = []; for (const r of list) { const w = r.w / total; pts.push(`${Xd(x).toFixed(1)},${Yd(r.e).toFixed(1)} ${Xd(x + w).toFixed(1)},${Yd(r.e).toFixed(1)}`); r.mid = x + w / 2; x += w; } return pts.join(' '); };
-  const mine = handsInOrder(s).map((r) => ({ w: 1, e: r.equity, name: r.hand.name }));
+  const mine = handsInOrder(s).map((r) => ({ w: r.hand.weight, e: r.equity, name: r.hand.name }));
   // his hands against the range to act, with the cards each removes
   const his = d.villain.map((v) => { let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
   // The curve before any reshaping stays as a dotted line, to show what the dials changed
   const untouched = isNeutral(state.dials.oop) && isNeutral(state.dials.ip);
   if (untouched) state.base.set(state.node, minePts);
+  // At the first decision the curves are the ranges as given: there one of them can be dragged
+  const who = state.dials.who; const root = state.node === 0;
+  const held = root ? (who === d.seat ? mine : his) : null;
+  const equityAt = (list, x) => { const total = list.reduce((t, r) => t + r.w, 0); let seen = 0; for (const r of list) { seen += r.w / total; if (seen >= x) return r.e; } return list[list.length - 1]?.e ?? 0; };
+  if (root && untouched) { state.baseQ[d.seat] = KNOBS.map((x) => equityAt(mine, x)); state.baseQ[d.seat === 'oop' ? 'ip' : 'oop'] = KNOBS.map((x) => equityAt(his, x)); }
+  const baseQ = held ? state.baseQ[who] : null;
+  const knobs = baseQ ? KNOBS.map((x, k) => `<circle class="grab" data-grab="${k}" cx="${Xd(x).toFixed(1)}" cy="${Yd(Math.min(1, Math.max(0, baseQ[k] + state.dials[who].curve[k]))).toFixed(1)}" r="7" tabindex="0" role="slider" aria-label="Equity at ${Math.round(100 * x)}% of the range" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct(Math.min(1, Math.max(0, baseQ[k] + state.dials[who].curve[k])))}"/>`).join('') : '';
   const ghost = !untouched && state.base.get(state.node);
   const ceiling = state.dials[d.seat].cap < 1 ? state.dials[d.seat].cap : null;
   const pick = mine.find((r) => r.name === state.hand);
   $('dist').innerHTML = `<svg viewBox="0 0 ${W} ${DH}" role="img" aria-label="Equity distribution">`
     + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="${Xd(0)}" x2="${Xd(1)}" y1="${Yd(v)}" y2="${Yd(v)}"/>`).join('')
     + `<line class="axis" x1="${Xd(0)}" x2="${Xd(1)}" y1="${Yd(0)}" y2="${Yd(0)}"/>${ceiling != null ? `<line class="ceiling" x1="0" x2="${W}" y1="${Yd(ceiling)}" y2="${Yd(ceiling)}"/>` : ''}${ghost ? `<polyline class="ghost" points="${ghost}"/>` : ''}<polyline class="wait" points="${hisPts}"/><polyline class="act" points="${minePts}"/>`
-    + (pick ? `<circle class="dot" cx="${Xd(pick.mid).toFixed(1)}" cy="${Yd(pick.e).toFixed(1)}" r="5"/>` : '') + '</svg>';
+    + (pick ? `<circle class="dot" cx="${Xd(pick.mid).toFixed(1)}" cy="${Yd(pick.e).toFixed(1)}" r="${knobs ? 3 : 5}"/>` : '') + knobs + '</svg>';
+  $('dist').dataset.h = DH;
 }
 const SHORT = { 'High card': 'HC', Pair: 'P', 'Two pair': '2P', 'Three of a kind': '3K', Straight: 'ST', Flush: 'FL', 'Full house': 'FH', 'Four of a kind': '4K', 'Straight flush': 'SF' };
 /**
@@ -161,9 +169,11 @@ function renderStrip(strata) {
   const s = state.survey; const el = $('strip');
   if (!s) { el.innerHTML = ''; return; }
   const hands = handsInOrder(s);
+  // a column is as tall as its hand is present: full when the whole hand is in the range here
+  const most = Math.max(...hands.map((r) => r.hand.weight), 1e-9);
   const column = (row) => {
     const parts = [0, 0, 0, 0, 0]; row.hand.strategy.forEach((p, a) => { parts[strata[a]] += p; });
-    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</button>`;
+    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:${Math.max(3, Math.round((100 * row.hand.weight) / most))}%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</b></button>`;
   };
   const names = state.decision.categories;
   if (!state.split || !names) { el.className = 'strip'; el.innerHTML = hands.map(column).join(''); return; }
@@ -199,6 +209,25 @@ function renderDials() {
     + dial('nuts', 'Nuts', st ? pct(st.nuts) : '', 0, 200, 10, Math.round(100 * d.nuts))
     + dial('cap', 'Cap', d.cap < 1 ? pct(d.cap) : '\u2014', 50, 100, 2, Math.round(100 * d.cap));
 }
+// Dragging the curve: a handle moves up or down, the range is reweighted to match and solved again
+let grabbed = null;
+const grabTo = (clientY) => {
+  const svg = $('dist').querySelector('svg'); if (!svg || grabbed == null) return;
+  const box = svg.getBoundingClientRect(); const DH = Number($('dist').dataset.h);
+  const y = 1 - (((clientY - box.top) / box.height) * DH - PAD) / (DH - 2 * PAD);
+  const who = state.dials.who; const base = state.baseQ[who]?.[grabbed]; if (base == null) return;
+  state.dials[who].curve[grabbed] = Math.round(100 * (Math.min(1, Math.max(0, y)) - base)) / 100;
+  svg.querySelector(`[data-grab="${grabbed}"]`)?.setAttribute('cy', String(DH - PAD - Math.min(1, Math.max(0, y)) * (DH - 2 * PAD)));
+  clearTimeout(dialTimer); dialTimer = setTimeout(() => solve(true), 160);
+};
+$('dist').addEventListener('pointerdown', (ev) => { const k = ev.target.dataset?.grab; if (k == null) return; ev.preventDefault(); grabbed = +k; });
+window.addEventListener('pointermove', (ev) => { if (grabbed != null) grabTo(ev.clientY); });
+const release = () => { if (grabbed == null) return; grabbed = null; clearTimeout(dialTimer); solve(true); };
+window.addEventListener('pointerup', release); window.addEventListener('pointercancel', release);
+$('dist').addEventListener('keydown', (ev) => {
+  const k = ev.target.dataset?.grab; const step = ev.key === 'ArrowUp' ? 0.02 : ev.key === 'ArrowDown' ? -0.02 : 0; if (k == null || !step) return;
+  ev.preventDefault(); const who = state.dials.who; state.dials[who].curve[+k] = Math.round(100 * (state.dials[who].curve[+k] + step)) / 100; solve(true);
+});
 let dialTimer = null;
 $('dials').addEventListener('input', (ev) => {
   const key = ev.target.dataset?.dial; if (!key) return;
@@ -207,8 +236,8 @@ $('dials').addEventListener('input', (ev) => {
 });
 $('dials').addEventListener('click', (ev) => {
   const who = ev.target.closest('[data-who]');
-  if (who) { state.dials.who = who.dataset.who; renderDials(); return; }
-  if (ev.target.id === 'undo') { state.dials.oop = { ...NEUTRAL }; state.dials.ip = { ...NEUTRAL }; solve(true); }
+  if (who) { state.dials.who = who.dataset.who; renderDist(); renderDials(); return; }
+  if (ev.target.id === 'undo') { state.dials.oop = neutral(); state.dials.ip = neutral(); solve(true); }
 });
 function renderWhy() {
   const s = state.survey; const told = s && state.hand ? explain(s, state.hand) : null;

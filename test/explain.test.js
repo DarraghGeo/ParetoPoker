@@ -77,3 +77,19 @@ test('reshaping a range: the dials move its equity, its nuts, its shape and its 
   assert.ok(describe(reshape(weights, equity, { ...NEUTRAL, nuts: 0 }), equity).nuts < 0.001);
   assert.ok(describe(reshape(weights, equity, { ...NEUTRAL, cap: 0.7 }), equity).top <= 0.7);
 });
+
+test('bending the curve: lifting the middle moves weight up, and no hand gains weight', async () => {
+  const { bend, describe, KNOBS } = await import('../src/warp/reshape.js');
+  const n = 200;
+  const weights = new Float64Array(n).fill(1);
+  const equity = Float64Array.from({ length: n }, (_, i) => (i + 0.5) / n);
+  const flat = bend(weights, equity, KNOBS.map(() => 0));
+  assert.ok(Math.abs(describe(flat, equity).equity - 0.5) < 0.01);
+  const lifted = bend(weights, equity, [0, 0.15, 0.2, 0.15, 0]);
+  assert.ok(describe(lifted, equity).equity > 0.55);
+  for (let i = 0; i < n; i++) assert.ok(lifted[i] <= 1 + 1e-9);
+  // the median hand of the new range has about the equity asked for
+  const order = [...lifted.keys()]; let seen = 0; const total = lifted.reduce((a, b) => a + b, 0); let median = 0;
+  for (const i of order) { seen += lifted[i]; if (seen >= total / 2) { median = equity[i]; break; } }
+  assert.ok(Math.abs(median - 0.7) < 0.04, `median ${median}`);
+});
