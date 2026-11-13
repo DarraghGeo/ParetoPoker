@@ -22,6 +22,8 @@ The page opens on a choice between the two:
 
 - **Study**: a board, two ranges and a bet menu are solved in the browser. Walk the line, pick a
   hand, read why. Ranges are edited on a chart, and each edit is a version to go back and forth between.
+  A spot too big to solve whole in a browser (most flops with several sizes, raises and all-in) is
+  offered as Solve (Lite): the first street's betting as given, one bet size on the later ones.
 - **Train**: questions on boards dealt at random, with the ranges, pot and bet sizes set up in
   Study. Who has the range advantage, who has the nut advantage (hands with 90% equity or more),
   the biggest bet or raise the range takes, and what a given hand can do. The two ranges sit side

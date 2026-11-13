@@ -294,3 +294,8 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .log dd{margin:0;font:500 13px/18px var(--mono);color:var(--ink)}
 .log dd p{margin:0 0 8px;font:400 14px/21px var(--sans);color:var(--ink-2);text-wrap:pretty}
 .log dd .soon{color:var(--ink-3)}
+
+/* a spot too big to solve whole: the button offers the lite solve, in red */
+.primary.lite{background:var(--danger);border-color:var(--danger)}
+.error.fit{min-height:auto;flex:none;font-family:var(--sans);font-size:13px;line-height:18px;text-wrap:pretty}
+.error.fit:empty{display:none}
