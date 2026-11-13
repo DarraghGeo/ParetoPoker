@@ -11,7 +11,7 @@
 // The selectors are scored the same way: how well their order separates musts from can'ts
 // when given the solver's own ranges at the node.
 //   node bin/diagnose.js [--street river|turn|flop] [--boards a,b,c] [--stack 250,600] [--bet 33%,75%,150%]
-//                        [--raise 2.5x] [--pot 100] [--hands 8] [--out file.json]
+//                        [--raise 2.5x] [--pot 100] [--hands 8] [--out file.json] [--rows file.json]
 // Characteristics include the forms of equity in src/handFeatures.js: spread and slope against his
 // enumerated range and, with cards to come, draw equity, swing, E[HS^2] and an implied-odds proxy.
 import { writeFileSync } from 'node:fs';
@@ -33,6 +33,7 @@ const { values: args } = parseArgs({
     raise: { type: 'string', default: '2.5x' },
     hands: { type: 'string', default: '8' },
     out: { type: 'string' },
+    rows: { type: 'string' },
   },
 });
 const MUST = 0.85;
@@ -292,6 +293,11 @@ for (const seat of POSITIONS) {
     correlations[seat][solverKey] = Object.fromEntries(spotKeys.map((k) => [k, correlation(of.map((s) => [s.spot[k], s.solver[solverKey]]))]));
     console.log(`  ${solverKey.padEnd(34)} ${spotKeys.map((k) => short(correlations[seat][solverKey][k]).padStart(22)).join(' ')}   ${short(values.reduce((a, b) => a + b, 0) / values.length)}   ${short(Math.min(...values))} to ${short(Math.max(...values)).trim()}`);
   }
+}
+if (args.rows) {
+  // Every hand of every decision, for trying out a rule before building it
+  writeFileSync(args.rows, `${JSON.stringify(samples)}\n`);
+  console.log(`\n  hands written to ${args.rows}`);
 }
 if (args.out) {
   writeFileSync(args.out, `${JSON.stringify({ settings: { ...args, boards: boardList.join(','), out: undefined }, characteristics: summary, spots, correlations }, null, 1)}\n`);

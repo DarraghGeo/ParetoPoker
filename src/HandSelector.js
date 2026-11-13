@@ -1,5 +1,6 @@
 import { NUM_COMBOS } from './cards.js';
 import { Range } from './Range.js';
+import { handFeatures } from './handFeatures.js';
 
 /**
  * The connector for choosing hands.
@@ -114,6 +115,18 @@ export class SelectionContext {
   get priorStrength() {
     if (!this.villainPrior) return this.strength;
     return (this.cachedPriorStrength ??= this.calculator.against(this.board, this.villainPrior, this.hero));
+  }
+
+  /**
+   * The forms of equity for every hand in hero's range (see handFeatures): spread and slope
+   * against his enumerated range and, with cards to come, strength now, draw equity, swing,
+   * E[HS^2], best-card equity and the implied-odds proxy (for the stack as it is now).
+   */
+  get features() {
+    return (this.cachedFeatures ??= handFeatures({
+      equity: this.calculator, board: this.board, hero: this.hero, villain: this.villain,
+      pot: this.spot.pot, behind: this.spot.stack ?? 0,
+    }));
   }
 
   /** Each villain combo's equity against hero's range. */

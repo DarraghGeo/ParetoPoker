@@ -2,6 +2,7 @@
  "settings": {
   "street": "turn",
   "stack": "250,600",
+  "rows": "/tmp/claude-0/-home-user-ParetoPoker/0777e153-c21f-574b-b259-33f239cc3453/scratchpad/turn-rows.json",
   "oop": "66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s",
   "ip": "QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+",
   "pot": "100",

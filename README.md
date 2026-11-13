@@ -164,9 +164,9 @@ new RangeStrategist({ engine, selector: new NapkinSelector() });
 
 | Role | Rule |
 |---|---|
-| Value bets | Hands that beat more than 70% of his continues. Flat value first (equity that holds against his strong hands), then value that does not block his calls. Out of position on the river every value hand checks a fifth of the time. |
+| Value bets | Hands that beat more than 70% of his continues. Flat value first (equity that holds against his strong hands), then value that does not block his calls. Out of position every value hand checks a fifth of the time on the river and two fifths on the turn. |
 | River bluffs | The weakest hand first. Among twins (hands within 2 points of equity) the one that blocks his calls and not his folds. |
-| Turn bluffs | Six roles (air, overcards, made, gutshot, draw, nut draw), each ordered by its own mark. Draws go first when he is ahead in range or stacks are deep, pure bluffs when we are ahead or stacks are shallow. |
+| Turn bluffs | One score: draw equity, minus strength now, minus twice the share of his folds the hand blocks. Hands that are behind, win from behind, and leave his folding hands alone. |
 | Flop bluffs | Draws first, then blockers to his strong hands, pairs last. When we are ahead in range or stacks are shallow, the blockers go ahead of the draws, as on the turn. |
 | River calls | Hands that beat half his value, then bluff-catchers (beat half his bluffs) by the marks below. Hands that beat neither fold. |
 | Turn and flop calls | By class: draws (when a hit can collect another bet), top pair or better, weaker pairs by equity, high cards last. On the flop, board pairs and pocket pairs above the bottom card move up with top pair. |
@@ -182,6 +182,10 @@ Where it departs from the guide, each marked in the code and each with an option
 - **Out of position on the river, every value hand checks 20% of the time** (`oopValueChecks`),
   in place of the guide's thin-value and trap rules (`thinValue`, `trapShare`), which never
   applied at the engine's bet sizes. The solver checks 30-50% of its strong hands there.
+- **Turn bluffs use one score in place of the guide's six roles** (`turnBluffs`). It ranks the
+  solver's must-bluffs above its can't-bluffs 89% of the time, against 70% for the roles.
+- **Out of position on the turn, every value hand checks 40% of the time** (`oopValueChecks`).
+  The solver's value hands are interchangeable there and it checks about that share of each.
 - **River bluffs are weakest first** (`riverBluffs`). The guide's order, air with blockers
   first, matched the solver's bluffs less well (0.78 against 0.91, see the diagnosis below).
 - **`priorStrength`**: one more bluff-catcher mark, equity against the range he started the
@@ -200,11 +204,13 @@ Loss when fully exploited, as a share of the pot, both seats averaged:
 |---|---|---|
 | 12 rivers, stack 2.5x pot (tuned on these) | 9.3% | 3.9% |
 | 8 rivers, other ranges, stack 4x pot | 9.9% | 4.4% |
-| 4 turns, stack 2.5x pot | 26.1% | 14.3% |
+| 4 turns, stack 2.5x pot (tuned on these) | 26.1% | 11.7% |
+| 4 turns, other ranges and boards, stack 5x pot | 34.9% | 19.5% |
 | 1 flop `Td9d6h`, one bet size, stack 1.5x pot | 26.8% | 14.9% |
 
-Against the solver's equilibrium Napkin loses 0.6% on those rivers (equity 1.2%), 2.3% on the
-turns (3.5%) and 6.0% on the flop (6.1%). `node bin/play.js --selector napkin` runs one spot.
+Against the solver's equilibrium Napkin loses 0.6% on those rivers (equity 1.2%), 1.8% and 1.9%
+on the two sets of turns (3.5% and 4.8%) and 5.6% on the flop (6.1%).
+`node bin/play.js --selector napkin` runs one spot.
 
 ### Diagnosing hand selection
 
@@ -244,7 +250,7 @@ decision (1.00 is perfect, 0.50 is no better than chance).
 
 | Role | Rivers: equity | Rivers: Napkin | Turns: equity | Turns: Napkin |
 |---|---|---|---|---|
-| Bluff bets | 0.90 | 0.91 | 0.70 | 0.70 |
+| Bluff bets | 0.90 | 0.91 | 0.70 | 0.89 |
 | Calls | 0.99 | 0.98 | 0.94 | 0.96 |
 | Value bets | 0.84 | 0.70 | 0.90 | 0.85 |
 

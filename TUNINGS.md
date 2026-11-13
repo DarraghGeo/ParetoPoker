@@ -16,6 +16,8 @@ seats averaged, unless a row says otherwise. Lower is better.
 | R4 | the first 4 rivers of R12 | A | 2.5x pot | 33%, 75%, 150% / 2.5x |
 | R8-B | 8 rivers: `Kh8s4d2cJs As7d6d3hTc QdTd5s9c2h 9h9c4s7dAd JsTh2c5dKd 6s5s2h8cQs Ad5c3h9sQc Th8h7c2sAc` | B | 4x pot | 50%, 100% / 3x |
 | T4 | 4 turns: `Ks7h2d5c JsTs4h8d Td9d6hQc Ah8c3d6s` | A | 2.5x pot | 33%, 75%, 150% / 2.5x |
+| T4-B | 4 turns: `Kh8s4d2c QdTd5s9c 9h9c4s7d 6s5s2h8c` | B | 5x pot | 50%, 100% / 3x |
+| D-T8 | diagnosis only: 8 turns (`Ks7h2d5c JsTs4h8d Td9d6hQc Ah8c3d6s QsJd6c3h Ac9c5d5h 7h6h5c2d KdQd4s9h`) | A | 2.5x and 6x pot | 33%, 75%, 150% / 2.5x |
 | F1 | 1 flop: `Td9d6h` | A | 1.5x pot | 75% / 3x |
 | M6 | 4 rivers and 2 turns (R4 plus `Ks7h2d5c JsTs4h8d`) | A | 2.5x pot | 33%, 75%, 150% / 2.5x |
 
@@ -32,7 +34,7 @@ been run with other engine settings, other pot sizes, or preflop.
 | # | Tuning | Where | Value | From | Tuned on | Checked on | Spot-dependence |
 |---|---|---|---|---|---|---|---|
 | 1 | `valueThreshold` | NapkinSelector | 0.7 | guide: 0.5 | R12 | R8-B, T4 | not tested; see note |
-| 2 | `oopValueChecks` | NapkinSelector | 0.2 | new | R12 | R8-B, T4 | likely; see note |
+| 2 | `oopValueChecks.river` | NapkinSelector | 0.2 | new | R12 | R8-B, T4 | likely; see note |
 | 3 | `riverBluffs` | NapkinSelector | `'weakest'` | guide: `'air'` | R12 | - | not tested |
 | 4 | `twinEquity` | NapkinSelector | 0.02 | chosen | R12 (no effect) | - | not tested |
 | 5 | `priorStrength` | NapkinSelector | 0.13 | new | R4 | R12 | not tested |
@@ -45,6 +47,9 @@ been run with other engine settings, other pot sizes, or preflop.
 | 12 | `barrelSize` | ParetoEngine | 0.75 pot | chosen | never tuned | - | not tested |
 | 13 | `sizing` | ParetoEngine | `'geometric'` | theory | never tuned | - | not tested |
 | 14 | untuned guide numbers | NapkinSelector | see below | guide | never tuned | - | not tested |
+| 15 | `turnBluffs` | NapkinSelector | `'draws'` | guide: `'roles'` | D-T8, T4 | T4-B | held across seats and depths |
+| 16 | `oopValueChecks.turn` | NapkinSelector | 0.4 | new | T4 | T4-B | not tested |
+| 17 | `turnCalls` | NapkinSelector | `'classes'` (guide) | `'ehs2'` tried, not adopted | T4 | T4-B | differs by seat |
 
 ## Each tuning
 
@@ -185,14 +190,70 @@ obvious untested lever.
 `thinValue` 0.5-0.7 and `trapShare` 1/6 (both inactive by default), the 0.1 blocker weight in
 the value order, and the diagnosis's must and can't cut-offs (85% and 15%).
 
-## Not yet used: forms of equity on the turn
+### 15. Napkin `turnBluffs` = `'draws'`
 
-The diagnosis on 8 turns at two depths (`diagnosis/turns.json`) scores both selectors' turn
-bluffs at 0.70, the weakest role measured. Characteristics that separate must-bluffs from
-can't-bluffs better than either selector: equity spread 0.85, draw equity 0.83, low strength now
-0.83, equity swing 0.80, the implied-odds proxy 0.78, not blocking his folds 0.75. For turn
-calls, E[HS^2] and equity against his value both reach 0.98 (selectors: 0.94 and 0.96). None of
-this has been turned into a selection rule or measured against the best response.
+Turn bluffs ordered by `draw equity - strength now - 2 x (share of his folds the hand blocks)`,
+in place of the guide's six roles. Found by scoring candidate rules on D-T8 for how often they
+rank a must-bluff above a can't-bluff from the same decision:
+
+| Rule | All | Out of position | In position | Stack 2.5x | Stack 6x |
+|---|---|---|---|---|---|
+| guide's roles | 0.70 | 0.60 | 0.73 | 0.59 | 0.80 |
+| equity selector (weakest first) | 0.70 | 0.83 | 0.67 | 0.75 | 0.66 |
+| draw equity | 0.83 | 0.98 | 0.79 | 0.79 | 0.87 |
+| low strength now | 0.83 | 0.92 | 0.80 | 0.83 | 0.82 |
+| equity spread | 0.85 | 0.93 | 0.84 | 0.84 | 0.87 |
+| draw equity - strength now | 0.86 | 0.94 | 0.84 | 0.84 | 0.87 |
+| equity spread - blocks his folds | 0.90 | 0.94 | 0.89 | 0.88 | 0.92 |
+| **draw equity - strength now - 2 x blocks his folds** | 0.92 | 0.97 | 0.90 | 0.91 | 0.93 |
+
+(Built into the selector it scores 0.89, because the selector sees each bet size's folding range
+and the table used the main size's.) The weight of 2 on blockers was the only value tried.
+
+| Set | `'roles'` | `'draws'` |
+|---|---|---|
+| T4, exploited / against equilibrium | 14.32 / 2.31 | 13.26 / 1.93 |
+| T4-B | 21.52 / 2.86 | 20.39 / 2.09 |
+
+The gain is out of position (12.7 to 10.5 on T4, 18.4 to 15.5 on T4-B); in position it is flat.
+
+### 16. Napkin `oopValueChecks.turn` = 0.4
+
+On D-T8 no characteristic separates the solver's out-of-position turn value bets from its value
+checks (best 0.53): the hands are interchangeable, and it bets 36-65% of every band and 28% of
+the nuts. So this is a frequency, applied evenly.
+
+| Set | 0 | 0.2 | 0.4 |
+|---|---|---|---|
+| T4, exploited / against equilibrium | 13.26 / 1.93 | 12.18 / 1.82 | 11.70 / 1.77 |
+| T4-B | 20.39 / 2.09 | 22.67 / 2.03 | 19.49 / 1.94 |
+
+The out-of-position seat improves steadily on both sets (10.5, 9.8, 9.1 and 15.5, 14.2, 13.1).
+The in-position seat's result moves by several points with no pattern (25.3, 31.2, 25.9 on
+T4-B), although only its model of the opponent changed. Differences of that size on four boards
+should be read as noise.
+
+### 17. Napkin `turnCalls`: `'ehs2'` tried, not adopted
+
+Ordering turn calls by `E[HS^2] + equity against his value` ranks must-calls above must-folds at
+0.99 on D-T8, against 0.96 for the guide's classes and 0.94 for equity. Against the best
+response it did not carry over:
+
+| Set | classes | `'ehs2'` | `'ehs2-ip'` (in position only) |
+|---|---|---|---|
+| T4, out of position / in position | 10.5 / 16.0 | 30.5 / 14.2 | 10.9 / 14.2 |
+| T4-B | 15.5 / 25.3 | 20.2 / 19.6 | 17.7 / 20.2 |
+
+Out of position it is much worse (it calls draws that then cannot realize their equity, which
+the guide warns about). In position it helps, but combined with `oopValueChecks.turn` the gain
+disappeared on both sets. Left as an option.
+
+## Not yet used
+
+On D-T8 the solver's must-calls on the turn are also marked by equity swing (0.93 among twins)
+and draw equity (0.90 among twins). Bluff raises and value raises are not covered by the
+diagnosis on any street. The turn rules have not been tried on the flop, where only one shallow
+tree has been diagnosed.
 
 ## Spot data
 

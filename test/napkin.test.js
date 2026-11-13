@@ -138,6 +138,31 @@ test('river raises need more equity the bigger they are', () => {
   assert.ok(half > pot && pot >= three && three > 0);
 });
 
+test('turn bluffs are hands that are behind now and win from behind', () => {
+  const c = context({ board: 'Td9d6h2c', position: 'ip', hero: `${IP},AdKd`, spot: { street: 'turn', pot: 100, stack: 400 } });
+  const wager = new ParetoEngine().wager('ip', c.spot, 75);
+  const scores = new NapkinSelector().bluff(c, wager);
+  // An open-ender bluffs before a small pair, which is ahead of much of his range as it stands
+  assert.ok(scores[id('QsJs')] > scores[id('3s3h')]);
+  assert.ok(scores[id('QsJs')] > scores[id('As9s')]);
+  // The context hands the selector the forms of equity it used
+  assert.ok(c.features.drawEquity[id('QsJs')] > c.features.drawEquity[id('3s3h')]);
+  // The guide's roles are still there
+  const roles = new NapkinSelector({ turnBluffs: 'roles' }).bluff(c, wager);
+  assert.ok(roles[id('AdKd')] !== scores[id('AdKd')]);
+});
+
+test('out of position on the turn every value hand keeps two fifths of its combos back', () => {
+  const board = cards.parseCards('Td9d6h2c');
+  const hero = Range.from(OOP).without(board).weights;
+  const villain = Range.from(IP).without(board).weights;
+  const node = { position: 'oop', spot: { street: 'turn', pot: 100, stack: 400 }, board, hero, villain, actions: [{ type: 'check' }, { type: 'bet', to: 75 }] };
+  const { strategy } = new RangeStrategist({ selector: new NapkinSelector() }).decide(node);
+  assert.ok(Math.abs(strategy[0][id('TsTh')] - 0.4) < 1e-9); // top set
+  const always = new RangeStrategist({ selector: new NapkinSelector({ oopValueChecks: 0 }) }).decide(node).strategy;
+  assert.equal(always[1][id('TsTh')], 1);
+});
+
 test('turn bluff raises are draws first, and every hand is a candidate after them', () => {
   const c = context({ board: 'Td9d6h2c', position: 'ip', spot: { street: 'turn', pot: 150, toCall: 50, stack: 400 } });
   const scores = new NapkinSelector().bluff(c, new ParetoEngine().wager('ip', c.spot, 150));

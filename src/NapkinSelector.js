@@ -47,12 +47,20 @@ export class NapkinSelector {
    *   Default 0.7. The guide says half; measured against the solver's best response, 0.7 loses
    *   about a third less on rivers and turns (the range that really continues is stronger than
    *   the engine's model of it).
-   * @param {number} [options.oopValueChecks] The share of every value hand that checks out of
-   *   position on the river, so that the checking range is not all weak. Default 0.2. The solver
-   *   checks 30-50% of its strong hands there. 0 uses the guide's trap rule (`trapShare`) instead.
+   * @param {number|Object} [options.oopValueChecks] The share of every value hand that checks out
+   *   of position, so that the checking range is not all weak: a share per street, default
+   *   `{ river: 0.2, turn: 0.4 }` (a number sets the river alone). Out of position the solver's
+   *   value hands are interchangeable on the turn and it checks about 40% of each band; on the
+   *   river it checks 30-50% of its strong hands. 0 on the river uses the guide's trap rule.
+   * @param {'classes'|'ehs2'|'ehs2-ip'} [options.turnCalls] 'classes' (default): the guide's class
+   *   order. 'ehs2': E[HS^2] plus equity against his value, which matches the solver's turn calls
+   *   best (0.99) but lost more when exploited out of position; 'ehs2-ip' uses it in position only.
    * @param {'weakest'|'air'} [options.riverBluffs] 'weakest' (default): the hand with the least
    *   equity bluffs first, and blockers choose among twins. 'air': the guide's order, air with
    *   blockers to his calls first. Measured on rivers, 'weakest' follows the solver's bluffs better.
+   * @param {'draws'|'roles'} [options.turnBluffs] 'draws' (default): turn bluffs by one score,
+   *   draw equity minus strength now minus twice the share of his folds the hand blocks. 'roles':
+   *   the guide's six roles. Measured on turns, 'draws' follows the solver's bluffs far better.
    * @param {number} [options.twinEquity] How close in equity two river hands must be to count as
    *   twins. Default 0.02.
    * @param {[number, number]} [options.thinValue] §1: equity against his range that counts as thin
@@ -67,8 +75,10 @@ export class NapkinSelector {
    * @param {number} [options.priorStrength] Weight, among the bluff-catcher marks, of equity
    *   against the range he started with. See WEIGHTS.priorStrength. 0 uses the guide's marks alone.
    */
-  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 1 / 6, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, oopValueChecks = 0.2 } = {}) {
-    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, oopValueChecks });
+  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 1 / 6, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, oopValueChecks = { river: 0.2, turn: 0.4 }, turnBluffs = 'draws', turnCalls = 'classes' } = {}) {
+    // One number is the river's share; an object gives a share per street
+    if (typeof oopValueChecks === 'number') oopValueChecks = { river: oopValueChecks };
+    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, oopValueChecks, turnBluffs, turnCalls });
     this.cache = new WeakMap();
   }
 
@@ -101,9 +111,8 @@ export class NapkinSelector {
     // Measured on the river: out of position the solver checks a good part of every value band,
     // strong hands included, so that its checks are not all weak. The hands are interchangeable:
     // each keeps `oopValueChecks` of its combos back.
-    if (context.position === 'oop' && context.street === 'river' && this.oopValueChecks > 0) {
-      return { hands: scores, limit: new Float64Array(NUM_COMBOS).fill(1 - this.oopValueChecks) };
-    }
+    const checks = context.position === 'oop' ? (this.oopValueChecks[context.street] ?? 0) : 0;
+    if (checks > 0) return { hands: scores, limit: new Float64Array(NUM_COMBOS).fill(1 - checks) };
     if (!thinChecks || !(this.trapShare > 0) || !(checked > 0)) return scores;
 
     // Some of the nuts check too, to check-raise: taken from the very top, sized so that they
@@ -192,7 +201,17 @@ export class NapkinSelector {
       return scores;
     }
 
-    // Turn: six roles, each picked by its own mark. Which roles go first depends on the spot.
+    if (this.turnBluffs === 'draws') {
+      // Measured on the turn: the hands the solver must bluff are behind now, win from behind,
+      // and do not hold the cards his folding hands hold. One score, no roles.
+      const { drawEquity, strengthNow } = context.features;
+      for (let i = 0; i < NUM_COMBOS; i++) {
+        if (hero[i] > 0) scores[i] = drawEquity[i] - strengthNow[i] - 2 * sized.blocksFolds[i];
+      }
+      return scores;
+    }
+
+    // Turn, the guide's way: six roles, each picked by its own mark. Which roles go first depends on the spot.
     for (let i = 0; i < NUM_COMBOS; i++) {
       if (!(hero[i] > 0)) continue;
       let role;
@@ -269,6 +288,11 @@ export class NapkinSelector {
         const catcher = Number.isNaN(view.versusHisBluffs[i]) || view.versusHisBluffs[i] >= 0.5;
         if (!catcher) continue; // weak: beats neither
         tier = 2;
+      } else if (context.street === 'turn' && (this.turnCalls === 'ehs2' || (this.turnCalls === 'ehs2-ip' && context.position === 'ip'))) {
+        // Measured on the turn: the hands the solver must call have the highest E[HS^2] (they
+        // end up strong often, whatever they are now) and the most equity against his value
+        tier = 2;
+        marks = context.features.ehs2[i] + versusValue;
       } else {
         tier = this.#classTier(context, classes, i);
         // Weaker pairs are twins that equity alone orders
