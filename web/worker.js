@@ -1,7 +1,7 @@
 // Solves a spot with poker-flopsolve off the main thread and answers questions about it.
 import * as fs from 'poker-flopsolve';
 import { decisionAt, treeOf } from '../src/solver/flopsolve.js';
-import { describe, reshape } from '../src/warp/reshape.js';
+import { KNOBS, describe, reshape } from '../src/warp/reshape.js';
 
 let solution = null;
 let nodes = null;
@@ -53,6 +53,34 @@ self.onmessage = async ({ data }) => {
       self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit, iterations: run.completed, ms: Date.now() - started, stats });
     } catch (error) {
       self.postMessage({ type: 'error', job: data.job, message: String(error?.message ?? error) });
+    }
+  } else if (data.type === 'preview') {
+    // What two ranges look like before anything is solved: each one's curve, numbers and chart cells
+    try {
+      const c = data.config;
+      const board = fs.parseCards(c.board);
+      const given = [fs.parseRange(c.oop || 'AA:0'), fs.parseRange(c.ip || 'AA:0')];
+      const placed = [equities(board, given[0], given[1]), equities(board, given[1], given[0])];
+      const ranges = [reshape(given[0], placed[0], c.dials?.oop), reshape(given[1], placed[1], c.dials?.ip)];
+      const after = [equities(board, ranges[0], ranges[1]), equities(board, ranges[1], ranges[0])];
+      const curveOf = (weights, equity) => { const list = []; for (let i = 0; i < fs.COMBOS; i++) if (weights[i] > 1e-6 && !Number.isNaN(equity[i])) list.push([Math.round(weights[i] * 1000) / 1000, Math.round(equity[i] * 1000) / 1000]); return list.sort((a, b) => a[1] - b[1]); };
+      const at = (list, x) => { const total = list.reduce((t, r) => t + r[0], 0); let seen = 0; for (const r of list) { seen += r[0] / total; if (seen >= x) return r[1]; } return list.length ? list[list.length - 1][1] : 0; };
+      const cellsOf = (weights) => {
+        const sum = {}; const dead = new Set(board);
+        for (let i = 0; i < fs.COMBOS; i++) {
+          const a = fs.COMBO_CARDS[2 * i]; const b = fs.COMBO_CARDS[2 * i + 1];
+          if (dead.has(a) || dead.has(b)) continue;
+          const ra = 12 - fs.rankOf(a); const rb = 12 - fs.rankOf(b); const hi = Math.min(ra, rb); const lo = Math.max(ra, rb);
+          const key = ra === rb ? `${hi},${hi}` : fs.suitOf(a) === fs.suitOf(b) ? `${hi},${lo}` : `${lo},${hi}`;
+          (sum[key] ??= [0, 0])[0] += weights[i]; sum[key][1] += 1;
+        }
+        const out = {}; for (const [key, [w, n]] of Object.entries(sum)) if (w > 0) out[key] = Math.round((100 * w) / n) / 100;
+        return out;
+      };
+      const side = (p) => ({ curve: curveOf(ranges[p], after[p]), base: curveOf(given[p], placed[p]), knobs: KNOBS.map((x) => at(curveOf(given[p], placed[p]), x)), stats: describe(ranges[p], after[p]), cells: cellsOf(ranges[p]) });
+      self.postMessage({ type: 'preview', id: data.id, sides: { oop: side(0), ip: side(1) } });
+    } catch (error) {
+      self.postMessage({ type: 'preview', id: data.id, error: String(error?.message ?? error) });
     }
   } else if (data.type === 'decision' && solution) {
     self.postMessage({ type: 'decision', job: data.job, id: data.id, decision: decisionAt(fs, solution, nodes, data.id) });
