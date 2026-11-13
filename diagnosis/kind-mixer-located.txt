@@ -1,0 +1,6 @@
+turns-tune   turn:open  fitted                                       oop  0.16 / 11.06 | ip  0.08 /  8.44 | both  0.12 /  9.75  (63s)
+turns-tune   turn:open  kind table x the engine's bet frequency      oop  0.23 / 10.21 | ip  0.24 /  6.98 | both  0.24 /  8.59  (63s)
+turns-tune   turn:open  kind table x the level from the spot         oop  0.23 / 10.04 | ip  0.18 /  7.65 | both  0.21 /  8.84  (62s)
+turns-tune   turn:open  kind table, out of position only             oop  0.23 / 10.21 | ip  0.08 /  8.44 | both  0.15 /  9.32  (61s)
+turns-tune   turn:open  kind table, in position only                 oop  0.16 / 11.06 | ip  0.24 /  6.98 | both  0.20 /  9.02  (62s)
+turns-tune   turn:open  kind table x spot level, out of position only oop  0.23 / 10.04 | ip  0.08 /  8.44 | both  0.16 /  9.24  (63s)

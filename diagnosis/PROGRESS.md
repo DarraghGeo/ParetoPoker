@@ -146,3 +146,14 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   per-hand variation; the best any kind table could do is 72% / 56%.
   Built `KindMixer` (src/Mixer.js) with `direct()`: how often each hand bets, from that table.
   Running: diagnosis/kind-mixer-located.txt (turn:open, located). Next: whole engine if it helps.
+- 06:10 **Kind-table mixer adopted for turn opens** (`KindMixer`, `TURN_KINDS`, in `fittedMixer`).
+  Located turn open: 9.75 -> 8.59. Whole engine, fitted before -> with the kind table:
+  turns-tune 11.98 -> 10.01; turns-held 9.88 -> 8.87; T4 9.09 -> 8.63; T4-B 13.54 -> 10.98;
+  flop tree 12.35 -> 12.09. The out-of-position table alone also helps the in-position seat
+  (13.26 -> 10.58): its model of the opponent's checking range is no longer all weak.
+  The turn value caps (0.45 oop; 1 / 0.55 ip) stay: they set how much value is counted, hence
+  the bet level the table spreads. Without them T4 was 10.63 instead of 8.63.
+  The level from the solver's spot formula instead of the engine's: located 8.84 against 8.59,
+  not better.
+  Next: the same for river opens (a table over rank, no draws) and for the flop tree's flop
+  decisions; then facing-a-bet decisions by kind.

@@ -1,5 +1,5 @@
 import { EquitySelector } from './HandSelector.js';
-import { Mixer } from './Mixer.js';
+import { KindMixer, Mixer, TURN_KINDS } from './Mixer.js';
 import { NapkinSelector } from './NapkinSelector.js';
 import { NoTuner, fittedTuner } from './Tuner.js';
 
@@ -24,21 +24,27 @@ export const presets = {
 };
 
 /**
- * The mixer fitted to the solver. Out of position and first to act, value hands do not always
- * bet: on the river the strongest (90% equity or more against his range) bet half the time and
- * the rest three quarters; on the turn every value hand bets 45% of the time. Facing a turn bet,
- * a value hand raises a quarter of the time and calls the rest.
+ * The mixer fitted to the solver. First to act on the turn, each kind of hand (how strong it is
+ * now, what it draws to) bets as often as the solver's does, relative to the engine's bet
+ * frequency. Out of position on the river the strongest value (90% equity or more against his
+ * range) bets half the time and the rest three quarters. Facing a turn bet, a value hand raises
+ * a quarter of the time and calls the rest.
  */
 export function fittedMixer() {
   const open = (street) => (context) => context.position === 'oop' && !context.facing && context.street === street;
-  return new Mixer([
-    { role: 'value', when: open('turn'), share: 0.45 },
-    // In position on the turn the strongest value always bets; thinner value bets about half the time
-    { role: 'value', when: (context) => context.position === 'ip' && !context.facing && context.street === 'turn', share: (context) => context.strength.map((e) => (e >= 0.85 ? 1 : 0.55)) },
-    { role: 'value', when: open('river'), share: (context) => context.strength.map((e) => (e >= 0.9 ? 0.5 : 0.75)) },
-    // Facing a turn bet the solver mostly calls with its strongest hands; raising them all loses
-    { role: 'value', when: (context) => context.street === 'turn' && context.facing && (context.spot.raises ?? 0) === 0, share: 0.25 },
-  ]);
+  return new KindMixer({
+    // First to act on the turn: how often each kind of hand bets, from the solver (TURN_KINDS)
+    tables: TURN_KINDS,
+    rules: [
+      // On the turn these caps set how much value is counted, and so how often the range bets;
+      // the table then spreads that frequency over the kinds
+      { role: 'value', when: open('turn'), share: 0.45 },
+      { role: 'value', when: (context) => context.position === 'ip' && !context.facing && context.street === 'turn', share: (context) => context.strength.map((e) => (e >= 0.85 ? 1 : 0.55)) },
+      { role: 'value', when: open('river'), share: (context) => context.strength.map((e) => (e >= 0.9 ? 0.5 : 0.75)) },
+      // Facing a turn bet the solver mostly calls with its strongest hands; raising them all loses
+      { role: 'value', when: (context) => context.street === 'turn' && context.facing && (context.spot.raises ?? 0) === 0, share: 0.25 },
+    ],
+  });
 }
 
 /** A mixer in which every value hand checks `share[street]` of the time when out of position and first to act. */

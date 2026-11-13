@@ -73,5 +73,12 @@ test('presets bundle a selector, a mixer and a tuner', () => {
   // The fitted preset has a tuner and a mixer of its own
   const fitted = presets.fitted();
   assert.ok(fitted.tuner.rules.length > 1 && fitted.mixer.rules.length > 1);
-  near(new RangeStrategist(fitted).decide(node).strategy[0][cards.parseCombo('TsTh')], 0.55);
+  // On the turn its mixer says outright how often each kind of hand bets
+  const turnNode = { ...node, hero: Range.from('TT,99,AKs,KQs,87s,33,A5s').without(turn).weights, villain: Range.from('QQ-JJ,AQs,T9s,98s').without(turn).weights };
+  const decided = new RangeStrategist(fitted).decide(turnNode);
+  const bet = decided.strategy[1];
+  near(decided.played[1], decided.frequencies.bet, 0.02);        // the range bets about as often as the engine says
+  assert.ok(bet[cards.parseCombo('TsTh')] > 0 && bet[cards.parseCombo('TsTh')] < 1); // top set is mixed
+  // Hands of one kind bet equally often
+  near(bet[cards.parseCombo('AsKs')], bet[cards.parseCombo('AhKh')]);
 });

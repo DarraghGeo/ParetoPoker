@@ -63,29 +63,32 @@ export function capsOf(answer) {
   return typeof answer === 'number' ? new Float64Array(NUM_COMBOS).fill(answer) : answer;
 }
 
-/** Draw classes as columns of a kind table: none, gutshot, strong draw, nut draw. */
-const RANKS = [0, 0.2, 0.4, 0.6, 0.8, 0.9, 1.0001];
+/** The rank bands of a kind table unless it brings its own: shares of the range by strength now. */
+const RANKS = [0, 0.2, 0.4, 0.6, 0.8, 0.9, 1];
 
 /**
  * Mixing by kind of hand, for decisions with cards to come and no bet to face.
  *
- * A hand's kind is how strong it is right now, as a rank within hero's range (six bands), and
- * what it is drawing to (none, gutshot, strong draw, nut draw). `tables[position][draw][band]`
- * is how often that kind bets relative to how often the whole range bets, which is taken from
- * the engine's frequencies (or `level(context, frequencies)` when given). Every hand of a kind
- * bets equally often: the hands of a kind are treated as interchangeable.
+ * A hand's kind is how strong it is right now, as a rank within hero's range (in bands), and
+ * what it is drawing to (none, gutshot, strong draw, nut draw). `tables[street][position]` is
+ * `[draw][band]`: how often that kind bets relative to how often the whole range bets, which is
+ * taken from the engine's frequencies (or `level(context, frequencies)` when given). A table may
+ * be `{ bands, table }` to bring its own band edges. Every hand of a kind bets equally often:
+ * the hands of a kind are treated as interchangeable.
  *
  * `rules` are ordinary Mixer rules for every other decision.
  */
 export class KindMixer extends Mixer {
-  constructor({ tables, streets = ['turn'], level = null, rules = [] }) {
+  constructor({ tables, level = null, rules = [] }) {
     super(rules);
-    Object.assign(this, { tables, streets, level });
+    Object.assign(this, { tables, level });
   }
 
   direct(context, frequencies) {
-    if (context.facing || !this.streets.includes(context.street) || !this.tables[context.position]) return null;
-    const table = this.tables[context.position];
+    const entry = context.facing ? null : this.tables[context.street]?.[context.position];
+    if (!entry) return null;
+    const table = entry.table ?? entry;
+    const bands = entry.bands ?? RANKS;
     const { strengthNow } = context.features;
     const draws = context.kinds.draw;
     // Rank of each hand within the range by strength now
@@ -105,13 +108,14 @@ export class KindMixer extends Mixer {
     for (const i of order) {
       const rank = (seen + context.hero[i] / 2) / total;
       seen += context.hero[i];
-      const band = RANKS.findIndex((low, k) => rank >= low && rank < RANKS[k + 1]);
-      out[i] = table[draws[i]][band];
+      let band = bands.length - 2;
+      while (band > 0 && rank < bands[band]) band--;
+      out[i] = (table[draws[i]] ?? table[0])[band];
       sum += context.hero[i] * out[i];
     }
     // Scale so that the range bets `level` in all (the table is relative), capping each hand at 1
     let scale = sum > 0 ? (level * total) / sum : 0;
-    for (let pass = 0; pass < 4; pass++) {
+    for (let pass = 0; pass < 20; pass++) {
       let got = 0;
       for (const i of order) got += context.hero[i] * Math.min(1, out[i] * scale);
       if (got <= 0 || Math.abs(got - level * total) < 1e-6 * total) break;
@@ -127,7 +131,7 @@ export class KindMixer extends Mixer {
  * `[draw][rank band]`, bands 0-20%, 20-40%, 40-60%, 60-80%, 80-90%, 90-100% of the range by
  * strength now. From diagnosis/open-table.mjs; empty cells take a neighbour's value.
  */
-export const TURN_KINDS = {
+export const TURN_KINDS = { turn: {
   oop: [
     [0.55, 0.31, 0.28, 0.80, 1.57, 1.80],
     [2.05, 0.50, 0.30, 1.42, 2.56, 2.69],
@@ -140,4 +144,4 @@ export const TURN_KINDS = {
     [1.07, 1.15, 0.50, 1.06, 2.42, 2.42],
     [0.95, 1.22, 0.96, 1.47, 1.47, 1.47],
   ],
-};
+} };
