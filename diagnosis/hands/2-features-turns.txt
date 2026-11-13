@@ -1,0 +1,172 @@
+fitted on ['turns-tune', 'turns-more'], scored on ['turns-held2']
+
+== facing-bet ip: continue (call or raise)   (84 decisions to fit, 25 to score; solver average 0.62)
+   rank within range + the frequencies                                                R2 0.699   cost 0.63%
+   + equity (absolute, and against his best quarter)                                  R2 0.796   cost 0.30%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.832   cost 0.19%
+   + spread and slope of its equity                                                   R2 0.834   cost 0.18%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.829   cost 0.20%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.837   cost 0.20%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.824   cost 0.20%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.796   cost 0.30%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.829   cost 0.21%
+      + spread and slope of its equity                                                R2 0.770   cost 0.38%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.697   cost 0.68%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.695   cost 0.66%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.658   cost 0.44%
+   the full model leans on: rank 0.571, fPassive 0.115, eqCalled 0.091, faced 0.075, ehs2 0.071, fCall 0.037, draw 0.016, drawEq 0.014, hisAirShare 0.011, implied 0.010
+
+== facing-bet ip: bet or raise   (79 decisions to fit, 24 to score; solver average 0.16)
+   rank within range + the frequencies                                                R2 0.431   cost 0.19%
+   + equity (absolute, and against his best quarter)                                  R2 0.473   cost 0.17%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.467   cost 0.17%
+   + spread and slope of its equity                                                   R2 0.480   cost 0.18%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.493   cost 0.18%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.507   cost 0.18%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.476   cost 0.18%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.473   cost 0.17%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.476   cost 0.18%
+      + spread and slope of its equity                                                R2 0.425   cost 0.19%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.409   cost 0.22%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.497   cost 0.18%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.435   cost 0.19%
+   the full model leans on: fAgg 0.282, eqCalled 0.185, implied 0.118, rankNow 0.067, rank 0.056, drawEq 0.033, bFold 0.028, ehs2 0.024, spr 0.018, eqTop 0.017
+
+== facing-bet oop: continue (call or raise)   (83 decisions to fit, 28 to score; solver average 0.56)
+   rank within range + the frequencies                                                R2 0.708   cost 0.44%
+   + equity (absolute, and against his best quarter)                                  R2 0.811   cost 0.21%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.850   cost 0.15%
+   + spread and slope of its equity                                                   R2 0.854   cost 0.15%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.856   cost 0.16%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.856   cost 0.17%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.848   cost 0.17%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.811   cost 0.21%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.848   cost 0.17%
+      + spread and slope of its equity                                                R2 0.774   cost 0.31%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.698   cost 0.54%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.728   cost 0.46%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.758   cost 0.33%
+   the full model leans on: rank 0.632, fPassive 0.338, ehs2 0.206, best 0.035, pairClass 0.019, eqCalled 0.017, fCall 0.017, implied 0.015, hisAirShare 0.010, rankNow 0.010
+
+== facing-bet oop: bet or raise   (81 decisions to fit, 28 to score; solver average 0.15)
+   rank within range + the frequencies                                                R2 0.461   cost 0.21%
+   + equity (absolute, and against his best quarter)                                  R2 0.550   cost 0.15%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.588   cost 0.14%
+   + spread and slope of its equity                                                   R2 0.599   cost 0.14%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.602   cost 0.14%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.603   cost 0.14%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.612   cost 0.15%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.550   cost 0.15%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.584   cost 0.15%
+      + spread and slope of its equity                                                R2 0.501   cost 0.19%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.433   cost 0.24%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.522   cost 0.21%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.580   cost 0.17%
+   the full model leans on: rankNow 0.212, eqCalled 0.207, eqTop 0.166, fAgg 0.151, implied 0.085, drawEq 0.051, spr 0.032, rank 0.031, now 0.026, mainSize 0.020
+
+== facing-raise ip: continue (call or raise)   (79 decisions to fit, 32 to score; solver average 0.64)
+   rank within range + the frequencies                                                R2 0.828   cost 0.34%
+   + equity (absolute, and against his best quarter)                                  R2 0.884   cost 0.20%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.901   cost 0.16%
+   + spread and slope of its equity                                                   R2 0.897   cost 0.16%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.897   cost 0.16%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.910   cost 0.16%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.911   cost 0.13%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.884   cost 0.20%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.911   cost 0.18%
+      + spread and slope of its equity                                                R2 0.837   cost 0.33%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.834   cost 0.42%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.828   cost 0.33%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.848   cost 0.26%
+   the full model leans on: eq 0.958, eqCalled 0.090, rank 0.049, ehs2 0.035, swing 0.035, fCall 0.030, faced 0.028, implied 0.017, rankNow 0.013, foldsMain 0.005
+
+== facing-raise ip: bet or raise   (38 decisions to fit, 19 to score; solver average 0.18)
+   rank within range + the frequencies                                                R2 0.525   cost 0.15%
+   + equity (absolute, and against his best quarter)                                  R2 0.534   cost 0.13%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.619   cost 0.13%
+   + spread and slope of its equity                                                   R2 0.584   cost 0.14%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.597   cost 0.14%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.607   cost 0.14%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.613   cost 0.14%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.534   cost 0.13%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.626   cost 0.14%
+      + spread and slope of its equity                                                R2 0.535   cost 0.14%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.575   cost 0.16%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.567   cost 0.15%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.547   cost 0.17%
+   the full model leans on: fAgg 0.431, rank 0.201, eqCalled 0.085, fCall 0.085, rankNow 0.052, spread 0.029, now 0.027, implied 0.026, bBot 0.014, eq 0.009
+
+== facing-raise oop: continue (call or raise)   (70 decisions to fit, 20 to score; solver average 0.69)
+   rank within range + the frequencies                                                R2 0.826   cost 0.42%
+   + equity (absolute, and against his best quarter)                                  R2 0.912   cost 0.16%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.912   cost 0.12%
+   + spread and slope of its equity                                                   R2 0.902   cost 0.16%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.912   cost 0.15%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.913   cost 0.14%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.910   cost 0.12%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.912   cost 0.16%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.893   cost 0.22%
+      + spread and slope of its equity                                                R2 0.849   cost 0.48%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.827   cost 0.57%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.822   cost 0.40%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.868   cost 0.29%
+   the full model leans on: eq 0.318, ehs2 0.255, fPassive 0.066, rank 0.061, eqCalled 0.039, faced 0.032, fCall 0.028, implied 0.013, pairClass 0.012, best 0.004
+
+== facing-raise oop: bet or raise   (40 decisions to fit, 10 to score; solver average 0.24)
+   rank within range + the frequencies                                                R2 0.525   cost 0.22%
+   + equity (absolute, and against his best quarter)                                  R2 0.590   cost 0.21%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.657   cost 0.19%
+   + spread and slope of its equity                                                   R2 0.657   cost 0.17%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.666   cost 0.17%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.615   cost 0.20%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.628   cost 0.18%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.590   cost 0.21%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.623   cost 0.17%
+      + spread and slope of its equity                                                R2 0.525   cost 0.23%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.559   cost 0.21%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.516   cost 0.24%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.620   cost 0.18%
+   the full model leans on: eqCalled 0.204, fCall 0.160, rankNow 0.142, fAgg 0.065, implied 0.039, ehs2 0.038, eqTop 0.027, slope 0.023, down 0.022, bTop 0.020
+
+== open ip: bet or raise   (42 decisions to fit, 15 to score; solver average 0.52)
+   rank within range + the frequencies                                                R2 0.277   cost 0.23%
+   + equity (absolute, and against his best quarter)                                  R2 0.355   cost 0.19%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.417   cost 0.17%
+   + spread and slope of its equity                                                   R2 0.408   cost 0.18%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.485   cost 0.15%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.491   cost 0.15%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.488   cost 0.14%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.355   cost 0.19%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.416   cost 0.19%
+      + spread and slope of its equity                                                R2 0.341   cost 0.17%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.382   cost 0.18%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.354   cost 0.20%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.417   cost 0.15%
+   the full model leans on: eqCalled 0.266, spread 0.259, rank 0.055, rankNow 0.053, bAll 0.044, fAgg 0.043, spr 0.037, bFold 0.033, best 0.028, slope 0.024
+
+== open oop: bet or raise   (48 decisions to fit, 16 to score; solver average 0.29)
+   rank within range + the frequencies                                                R2 0.485   cost 0.07%
+   + equity (absolute, and against his best quarter)                                  R2 0.586   cost 0.06%
+   + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.647   cost 0.05%
+   + spread and slope of its equity                                                   R2 0.636   cost 0.05%
+   + blockers (his best quarter, his worst quarter, all)                              R2 0.655   cost 0.05%
+   + the spot (bet faced, stack, range and nut advantage, board)                      R2 0.672   cost 0.05%
+   + his solved answer (blocking his folds or continues, equity when called)          R2 0.664   cost 0.05%
+   on top of rank + frequencies alone:
+      + equity (absolute, and against his best quarter)                               R2 0.586   cost 0.06%
+      + what the hand becomes (strength now, draws, swing, E[HS2], best card, implied odds) R2 0.615   cost 0.06%
+      + spread and slope of its equity                                                R2 0.554   cost 0.07%
+      + blockers (his best quarter, his worst quarter, all)                           R2 0.515   cost 0.08%
+      + the spot (bet faced, stack, range and nut advantage, board)                   R2 0.566   cost 0.06%
+      + his solved answer (blocking his folds or continues, equity when called)       R2 0.530   cost 0.07%
+   the full model leans on: fAgg 0.522, spread 0.065, rankNow 0.064, bBot 0.050, drawEq 0.029, now 0.027, spr 0.026, hisAirShare 0.022, rangeEq 0.018, eqTop 0.016
+

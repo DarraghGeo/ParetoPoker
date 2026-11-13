@@ -1,0 +1,35 @@
+rivers-tune  one group (everything alike)                 oop  8.58 / 38.99 | ip 10.84 / 40.13 | both  9.71 / 39.56
+rivers-tune  status 0.5%                                  oop  1.10 /  9.80 | ip  1.36 / 10.22 | both  1.23 / 10.01
+rivers-tune  status 2%                                    oop  0.39 /  7.12 | ip  0.29 /  5.64 | both  0.34 /  6.38
+rivers-tune  made hand class alone                        oop  2.03 / 11.74 | ip  2.45 / 11.26 | both  2.24 / 11.50
+rivers-tune  equity x5                                    oop  0.94 /  8.08 | ip  0.94 /  6.98 | both  0.94 /  7.53
+rivers-tune  equity x10                                   oop  0.41 /  3.42 | ip  0.37 /  2.96 | both  0.39 /  3.19
+rivers-tune  equity x20                                   oop  0.21 /  1.64 | ip  0.19 /  1.53 | both  0.20 /  1.58
+rivers-tune  equity x50                                   oop  0.08 /  0.61 | ip  0.09 /  0.71 | both  0.08 /  0.66
+rivers-tune  equity x100                                  oop  0.04 /  0.33 | ip  0.03 /  0.41 | both  0.03 /  0.37
+rivers-tune  equity exact (every distinct equity its own group) oop  0.01 /  0.24 | ip  0.02 /  0.34 | both  0.01 /  0.29
+rivers-tune  equity x10, blockers x2                      oop  0.33 /  2.53 | ip  0.29 /  2.28 | both  0.31 /  2.40
+rivers-tune  equity x25, blockers x2                      oop  0.13 /  0.87 | ip  0.11 /  0.95 | both  0.12 /  0.91
+rivers-tune  equity x50, blockers x2                      oop  0.06 /  0.46 | ip  0.06 /  0.54 | both  0.06 /  0.50
+rivers-tune  equity x25, blockers x4                      oop  0.08 /  0.59 | ip  0.07 /  0.64 | both  0.07 /  0.61
+rivers-tune  equity x10, made hand class                  oop  0.31 /  2.56 | ip  0.28 /  1.94 | both  0.30 /  2.25
+rivers-tune  equity x20, made hand class                  oop  0.16 /  1.12 | ip  0.14 /  0.95 | both  0.15 /  1.04
+rivers-tune  equity x50, made hand class                  oop  0.07 /  0.46 | ip  0.06 /  0.48 | both  0.07 /  0.47
+rivers-tune  status 0.5%, equity x5                       oop  0.21 /  2.17 | ip  0.16 /  2.58 | both  0.19 /  2.38
+rivers-tune  status 0.5%, blockers x3                     oop  0.77 /  6.01 | ip  0.90 /  6.58 | both  0.83 /  6.29
+rivers-tune  equity exact (every distinct equity its own group), pure oop -0.07 /  8.77 | ip -0.05 /  8.13 | both -0.06 /  8.45
+rivers-tune  equity x100, pure                            oop -0.06 /  8.33 | ip -0.05 /  8.09 | both -0.05 /  8.21
+rivers-tune  equity x50, pure                             oop -0.03 /  8.91 | ip -0.03 /  8.32 | both -0.03 /  8.62
+rivers-tune  equity x20, pure                             oop  0.01 /  9.27 | ip  0.01 /  8.90 | both  0.01 /  9.08
+rivers-tune  equity x10, pure                             oop  0.11 /  9.94 | ip  0.08 /  9.30 | both  0.10 /  9.62
+rivers-held  status 0.5%                                  oop  1.06 /  8.75 | ip  1.24 / 10.19 | both  1.15 /  9.47
+rivers-held  equity x10                                   oop  0.38 /  3.17 | ip  0.39 /  3.23 | both  0.38 /  3.20
+rivers-held  equity x20                                   oop  0.20 /  1.45 | ip  0.19 /  1.80 | both  0.20 /  1.63
+rivers-held  equity x50                                   oop  0.08 /  0.56 | ip  0.08 /  0.88 | both  0.08 /  0.72
+rivers-held  equity x100                                  oop  0.04 /  0.33 | ip  0.03 /  0.48 | both  0.04 /  0.41
+rivers-held  equity exact (every distinct equity its own group) oop  0.01 /  0.27 | ip  0.02 /  0.36 | both  0.01 /  0.32
+rivers-held  equity exact (every distinct equity its own group), pure oop -0.07 /  8.58 | ip -0.04 /  7.81 | both -0.06 /  8.20
+rivers-held  equity x100, pure                            oop -0.06 /  7.76 | ip -0.04 /  7.92 | both -0.05 /  7.84
+rivers-held  equity x20, pure                             oop  0.03 /  8.09 | ip  0.02 /  9.04 | both  0.02 /  8.56
+rivers-held  equity x25, blockers x2                      oop  0.13 /  0.76 | ip  0.12 /  1.15 | both  0.12 /  0.95
+rivers-held  equity x50, blockers x2                      oop  0.06 /  0.43 | ip  0.05 /  0.66 | both  0.06 /  0.54

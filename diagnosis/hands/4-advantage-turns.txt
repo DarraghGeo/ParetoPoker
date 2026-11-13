@@ -1,0 +1,110 @@
+== turn facing-bet ip: what continuing is worth to a hand (109 decisions). mean +20.33% of pot, sd 40.05%
+   one feature at a time (rank correlation): edge +0.88, eq +0.77, rank +0.81, eqTop +0.66, now +0.64, drawEq -0.27, swing -0.23, variance -0.25, best +0.44, up -0.15, down -0.14, implied -0.20, spread +0.12, slope -0.27, blockEdge +0.44, bAll +0.23, eqCalled +0.85, foldEdge +0.47
+   together, hand features only: R2 0.96; weights (per SD, % of pot): edge +26.49, eq +25.73, now -20.36, spread +10.63, drawEq -7.87, down -6.23, up +4.52, variance +3.19
+   R2 adding: the spot's features 0.96; spot x hand interactions 0.98; his solved answer 0.97
+   strongest interactions: eq*spr +6.90, edge*spr -4.82, spread*spr +3.09, spread*hisNutShare +2.45, spread*rangeEq +2.38, spread*nutShare -1.82
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      edge       +0.88 (sd 0.07)  moves with: faced -0.28 spr -0.36 rangeEq -0.08 nutEdge +0.36
+      eq         +0.88 (sd 0.07)  moves with: faced -0.28 spr -0.36 rangeEq -0.08 nutEdge +0.36
+      now        +0.74 (sd 0.11)  moves with: faced -0.33 spr -0.29 rangeEq -0.08 nutEdge +0.06
+      spread     +0.04 (sd 0.23)  moves with: faced +0.01 spr -0.01 rangeEq +0.70 nutEdge +0.58
+
+== turn facing-bet ip: what raising is worth to a hand (103 decisions). mean -4.16% of pot, sd 7.03%
+   one feature at a time (rank correlation): edge +0.48, eq +0.29, rank +0.36, eqTop +0.33, now +0.23, drawEq +0.02, swing +0.04, variance +0.03, best +0.15, up +0.08, down +0.08, implied +0.02, spread +0.04, slope -0.17, blockEdge +0.26, bAll +0.07, eqCalled +0.50, foldEdge +0.25
+   together, hand features only: R2 0.47; weights (per SD, % of pot): edge +11.76, eq -11.19, variance -5.03, swing +4.71, up +3.24, down -1.95, rank +1.81, now +1.46
+   R2 adding: the spot's features 0.51; spot x hand interactions 0.66; his solved answer 0.52
+   strongest interactions: edge*rangeEq -3.70, edge*faced +2.90, swing*faced +2.40, eq*rangeEq +2.31, swing*hisNutShare +1.90, edge*hisNutShare -1.88
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      edge       +0.44 (sd 0.30)  moves with: faced +0.54 spr -0.21 rangeEq -0.17 nutEdge -0.20
+      eq         +0.44 (sd 0.30)  moves with: faced +0.54 spr -0.21 rangeEq -0.17 nutEdge -0.20
+      variance   +0.01 (sd 0.22)  moves with: faced +0.33 spr -0.10 rangeEq -0.36 nutEdge -0.43
+      swing      +0.03 (sd 0.23)  moves with: faced +0.33 spr -0.11 rangeEq -0.39 nutEdge -0.45
+
+== turn facing-bet oop: what continuing is worth to a hand (111 decisions). mean +14.69% of pot, sd 36.45%
+   one feature at a time (rank correlation): edge +0.90, eq +0.83, rank +0.84, eqTop +0.65, now +0.71, drawEq -0.35, swing -0.29, variance -0.31, best +0.51, up -0.21, down -0.20, implied -0.33, spread +0.06, slope -0.12, blockEdge +0.55, bAll +0.21, eqCalled +0.87, foldEdge +0.60
+   together, hand features only: R2 0.97; weights (per SD, % of pot): eq +27.00, now -24.22, edge +23.22, spread +8.51, drawEq -7.93, down -7.18, up +6.48, eqTop +5.92
+   R2 adding: the spot's features 0.97; spot x hand interactions 0.98; his solved answer 0.97
+   strongest interactions: eq*spr +8.00, edge*spr -6.41, edge*hisNutShare +3.19, eq*hisNutShare -3.05, spread*nutShare -2.35, now*spr -2.30
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      eq         +0.91 (sd 0.04)  moves with: faced -0.13 spr -0.31 rangeEq +0.08 nutEdge +0.17
+      now        +0.79 (sd 0.09)  moves with: faced -0.19 spr -0.06 rangeEq +0.29 nutEdge -0.07
+      edge       +0.91 (sd 0.04)  moves with: faced -0.13 spr -0.31 rangeEq +0.08 nutEdge +0.17
+      spread     +0.02 (sd 0.28)  moves with: faced -0.15 spr -0.08 rangeEq +0.49 nutEdge +0.55
+
+== turn facing-bet oop: what raising is worth to a hand (109 decisions). mean -4.95% of pot, sd 8.06%
+   one feature at a time (rank correlation): edge +0.54, eq +0.40, rank +0.44, eqTop +0.49, now +0.30, drawEq -0.02, swing +0.02, variance +0.00, best +0.34, up +0.07, down +0.08, implied -0.09, spread +0.16, slope -0.18, blockEdge +0.35, bAll +0.08, eqCalled +0.57, foldEdge +0.38
+   together, hand features only: R2 0.57; weights (per SD, % of pot): edge +12.97, swing +5.71, now -4.72, up +4.63, down -3.01, variance -2.71, eq -2.40, drawEq -2.22
+   R2 adding: the spot's features 0.62; spot x hand interactions 0.76; his solved answer 0.63
+   strongest interactions: now*faced +3.87, swing*faced +2.14, now*hisNutShare -1.74, edge*rangeEq -1.69, up*rangeEq -1.64, edge*nutShare +1.55
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      edge       +0.53 (sd 0.20)  moves with: faced +0.52 spr -0.35 rangeEq -0.29 nutEdge -0.13
+      swing      -0.02 (sd 0.28)  moves with: faced +0.39 spr +0.11 rangeEq -0.19 nutEdge -0.61
+      now        +0.45 (sd 0.20)  moves with: faced +0.55 spr -0.37 rangeEq -0.11 nutEdge -0.20
+      up         +0.01 (sd 0.26)  moves with: faced +0.34 spr +0.07 rangeEq -0.24 nutEdge -0.53
+
+== turn facing-raise ip: what continuing is worth to a hand (111 decisions). mean +21.21% of pot, sd 37.30%
+   one feature at a time (rank correlation): edge +0.93, eq +0.88, rank +0.83, eqTop +0.59, now +0.76, drawEq -0.28, swing -0.10, variance -0.13, best +0.53, up -0.00, down +0.01, implied +0.06, spread -0.35, slope +0.13, blockEdge +0.36, bAll +0.41, eqCalled +0.87, foldEdge +0.42
+   together, hand features only: R2 0.97; weights (per SD, % of pot): edge +33.25, eq +11.94, now -9.42, spread +8.98, drawEq -3.82, up +3.54, eqTop -2.78, down -2.68
+   R2 adding: the spot's features 0.97; spot x hand interactions 0.99; his solved answer 0.98
+   strongest interactions: eq*faced +4.61, eq*rangeEq +4.26, spread*spr +4.26, edge*rangeEq -3.94, eq*spr +2.51, now*faced -2.31
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      edge       +0.94 (sd 0.07)  moves with: faced -0.07 spr -0.87 rangeEq +0.30 nutEdge +0.18
+      eq         +0.94 (sd 0.07)  moves with: faced -0.07 spr -0.87 rangeEq +0.30 nutEdge +0.18
+      now        +0.77 (sd 0.14)  moves with: faced -0.47 spr -0.56 rangeEq +0.21 nutEdge -0.07
+      spread     -0.33 (sd 0.33)  moves with: faced +0.49 spr +0.45 rangeEq +0.21 nutEdge +0.56
+
+== turn facing-raise ip: what raising is worth to a hand (57 decisions). mean -3.99% of pot, sd 5.58%
+   one feature at a time (rank correlation): edge +0.50, eq +0.49, rank +0.53, eqTop +0.35, now +0.45, drawEq -0.08, swing +0.08, variance +0.07, best +0.38, up +0.08, down +0.08, implied -0.13, spread -0.31, slope +0.13, blockEdge +0.29, bAll +0.22, eqCalled +0.44, foldEdge +0.32
+   together, hand features only: R2 0.48; weights (per SD, % of pot): swing +4.90, edge +4.55, eq -3.66, now -3.29, rank +2.83, variance -2.60, down -1.88, spread -1.71
+   R2 adding: the spot's features 0.52; spot x hand interactions 0.63; his solved answer 0.53
+   strongest interactions: eq*nutShare -9.62, edge*rangeEq -9.33, edge*nutShare +8.91, eq*rangeEq +7.80, edge*hisNutShare -4.97, now*hisNutShare +4.57
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      swing      +0.05 (sd 0.32)  moves with: faced +0.14 spr -0.41 rangeEq -0.32 nutEdge -0.22
+      edge       +0.56 (sd 0.28)  moves with: faced +0.50 spr -0.56 rangeEq -0.25 nutEdge -0.24
+      eq         +0.56 (sd 0.28)  moves with: faced +0.50 spr -0.56 rangeEq -0.25 nutEdge -0.24
+      now        +0.51 (sd 0.20)  moves with: faced +0.26 spr -0.44 rangeEq -0.21 nutEdge -0.17
+
+== turn facing-raise oop: what continuing is worth to a hand (90 decisions). mean +26.48% of pot, sd 39.60%
+   one feature at a time (rank correlation): edge +0.94, eq +0.92, rank +0.86, eqTop +0.53, now +0.81, drawEq -0.49, swing -0.34, variance -0.38, best +0.31, up -0.24, down -0.21, implied -0.07, spread -0.16, slope +0.00, blockEdge +0.34, bAll +0.34, eqCalled +0.94, foldEdge +0.49
+   together, hand features only: R2 0.95; weights (per SD, % of pot): edge +27.77, eq +20.10, now -16.49, spread +5.18, down -4.01, eqTop +3.87, drawEq -3.71, variance +3.50
+   R2 adding: the spot's features 0.95; spot x hand interactions 0.99; his solved answer 0.98
+   strongest interactions: spread*spr +8.21, edge*spr +6.97, eq*spr -4.73, eq*hisNutShare -4.42, edge*hisNutShare +3.70, eq*rangeEq -1.98
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      edge       +0.95 (sd 0.06)  moves with: faced -0.05 spr -0.87 rangeEq +0.19 nutEdge +0.43
+      eq         +0.95 (sd 0.06)  moves with: faced -0.05 spr -0.87 rangeEq +0.19 nutEdge +0.43
+      now        +0.80 (sd 0.12)  moves with: faced -0.29 spr -0.37 rangeEq +0.10 nutEdge +0.16
+      spread     -0.20 (sd 0.31)  moves with: faced +0.15 spr -0.03 rangeEq +0.29 nutEdge +0.55
+
+== turn facing-raise oop: what raising is worth to a hand (50 decisions). mean -2.55% of pot, sd 4.22%
+   one feature at a time (rank correlation): edge +0.52, eq +0.52, rank +0.53, eqTop +0.49, now +0.40, drawEq -0.09, swing +0.01, variance -0.01, best +0.36, up +0.07, down +0.08, implied -0.22, spread -0.01, slope -0.09, blockEdge +0.33, bAll +0.24, eqCalled +0.61, foldEdge +0.39
+   together, hand features only: R2 0.39; weights (per SD, % of pot): eq -8.68, edge +7.68, swing +4.65, now +2.84, rank +1.74, spread -1.58, up -1.57, eqTop +1.30
+   R2 adding: the spot's features 0.43; spot x hand interactions 0.52; his solved answer 0.48
+   strongest interactions: eq*rangeEq -92.73, edge*rangeEq +91.91, eq*nutShare +84.70, edge*nutShare -82.06, edge*hisNutShare +24.73, eq*hisNutShare -24.14
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      eq         +0.55 (sd 0.26)  moves with: faced +0.32 spr -0.68 rangeEq -0.45 nutEdge +0.06
+      edge       +0.55 (sd 0.26)  moves with: faced +0.32 spr -0.68 rangeEq -0.45 nutEdge +0.06
+      swing      -0.07 (sd 0.23)  moves with: faced -0.04 spr +0.31 rangeEq -0.12 nutEdge -0.37
+      now        +0.46 (sd 0.24)  moves with: faced +0.18 spr -0.66 rangeEq -0.40 nutEdge +0.11
+
+== turn open ip: what betting is worth to a hand (57 decisions). mean +0.09% of pot, sd 2.29%
+   one feature at a time (rank correlation): eq +0.25, rank +0.24, eqTop +0.41, now +0.24, drawEq -0.17, swing -0.12, variance -0.15, best +0.26, up -0.06, down -0.04, implied -0.22, spread +0.42, slope -0.36, blockEdge +0.21, bAll -0.26, eqCalled +0.33, foldEdge +0.22
+   together, hand features only: R2 0.32; weights (per SD, % of pot): up +5.14, down -4.48, variance -1.77, now +1.47, swing +0.80, eq -0.79, eqTop +0.77, spread +0.74
+   R2 adding: the spot's features 0.35; spot x hand interactions 0.40; his solved answer 0.37
+   strongest interactions: variance*spr +1.86, down*hisNutShare +1.62, up*spr -1.57, up*hisNutShare -1.19, down*nutShare +1.14, variance*nutShare -0.82
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      up         -0.13 (sd 0.19)  moves with: faced +nan spr +0.18 rangeEq -0.38 nutEdge -0.10
+      down       -0.12 (sd 0.21)  moves with: faced +nan spr +0.16 rangeEq -0.42 nutEdge -0.15
+      variance   -0.18 (sd 0.17)  moves with: faced +nan spr +0.30 rangeEq -0.31 nutEdge +0.05
+      now        +0.21 (sd 0.13)  moves with: faced +nan spr -0.20 rangeEq +0.17 nutEdge -0.12
+
+== turn open oop: what betting is worth to a hand (64 decisions). mean -0.38% of pot, sd 1.10%
+   one feature at a time (rank correlation): eq +0.25, rank +0.17, eqTop +0.37, now +0.20, drawEq -0.10, swing -0.09, variance -0.09, best +0.24, up -0.03, down -0.03, implied -0.16, spread +0.24, slope -0.20, blockEdge +0.21, bAll +0.01, eqCalled +0.28, foldEdge +0.25
+   together, hand features only: R2 0.21; weights (per SD, % of pot): swing +1.35, now +0.91, rank -0.84, eq +0.83, down -0.44, spread +0.36, eqTop -0.32, implied -0.27
+   R2 adding: the spot's features 0.28; spot x hand interactions 0.34; his solved answer 0.28
+   strongest interactions: now*rangeEq -0.83, now*hisNutShare -0.68, swing*rangeEq -0.45, eq*spr +0.40, swing*hisNutShare -0.33, rank*hisNutShare +0.26
+   per decision, the correlation of each main feature with the advantage (mean, sd), and what that correlation moves with:
+      swing      -0.03 (sd 0.16)  moves with: faced +nan spr +0.12 rangeEq +0.27 nutEdge +0.29
+      now        +0.12 (sd 0.17)  moves with: faced +nan spr +0.10 rangeEq -0.36 nutEdge -0.35
+      rank       +0.17 (sd 0.20)  moves with: faced +nan spr +0.07 rangeEq -0.48 nutEdge -0.45
+      eq         +0.17 (sd 0.20)  moves with: faced +nan spr +0.07 rangeEq -0.48 nutEdge -0.45
+

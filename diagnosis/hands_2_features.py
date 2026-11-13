@@ -22,7 +22,7 @@ GROUPS += [
     ("+ his solved answer (blocking his folds or continues, equity when called)", ['bFold', 'bCont', 'eqCalled', 'foldsMain']),
 ]
 def fit(a, b, cols, target):
-    m = HistGradientBoostingRegressor(max_iter=200, learning_rate=0.08, max_leaf_nodes=31, min_samples_leaf=40, random_state=0)
+    m = HistGradientBoostingRegressor(max_iter=80, learning_rate=0.15, max_leaf_nodes=31, min_samples_leaf=40, random_state=0)
     m.fit(a[cols], a[target], sample_weight=a.w)
     return m, np.clip(m.predict(b[cols]), 0, 1)
 def r2(y, p, w):
@@ -54,7 +54,7 @@ for (kind, position), a in tr.groupby(['kind', 'position']):
             print(f"      {label:<79} R2 {r2(bb[target], p, bb.w):.3f}   cost {100*cost(bb, target, p):.2f}%")
         # which single features the full model leans on (drop in R2 when one is shuffled)
         m, p = fit(aa, bb, cols, target)
-        imp = permutation_importance(m, bb[cols], bb[target], sample_weight=bb.w, n_repeats=3, random_state=0, scoring='r2')
+        imp = permutation_importance(m, bb[cols], bb[target], sample_weight=bb.w, n_repeats=1, random_state=0, scoring='r2')
         top = sorted(zip(cols, imp.importances_mean), key=lambda x: -x[1])[:10]
         print("   the full model leans on: " + ', '.join(f"{c} {v:.3f}" for c, v in top))
         print()

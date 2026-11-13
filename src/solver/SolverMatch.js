@@ -56,15 +56,21 @@ export class SolverMatch {
    *   and deal them out. All three from the solver with 'solver-mixed' is the solver's strategy.
    *   'solver-by-order': the solver's frequencies and mixing laid along the selector's order, in
    *   `orderBands` slices of the range (default 20).
+   * @param {(decision: Object) => any[]} [options.groups] For `hands: 'solver-by-groups'`: a key
+   *   per combo id; hands with the same key play the average of the solver's strategy over them.
+   *   Gets the decision (`position, spot, board, actions, hero, villain`) with `solved` and `gaps`.
    * @param {boolean} [options.kinds] With given frequencies: let the mixer's kind tables (its
    *   `direct` answer) spread them over the hands, as they do in the engine's own play.
+   * @param {boolean} [options.pure] With `groups`: each group takes its most frequent action outright.
+   * @param {boolean} [options.firstStreet] The engine decides on the first street of the tree only
+   *   and keeps the solver's play after the next card. Much faster than `where` for the same thing.
    * @param {(decision: Object) => boolean} [options.where] Which of
    *   hero's decisions the engine makes; the solver's own strategy is kept at the others. Gets
    *   `{ street, position, facing, raises, depth, spot }`.
    * @returns {Promise<Object>} Expected values in chips, losses as a share of the pot, and the
    *   engine's and the solver's action frequencies along the first decisions of the hand.
    */
-  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', hands = 'engine', orderBands = 20, kinds = false, where = null } = {}) {
+  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', hands = 'engine', orderBands = 20, kinds = false, groups = null, pure = false, firstStreet = false, where = null } = {}) {
     const seat = POSITIONS.indexOf(hero);
     if (seat < 0) throw new Error(`hero must be 'oop' or 'ip', got ${hero}`);
     const bridge = (this.bridge ??= new SolverBridge());
@@ -86,8 +92,11 @@ export class SolverMatch {
     if (source === 'solver' || frequencies === 'solver' || hands !== 'engine' || where || this.opponent !== this.strategist) {
       // 2. The engine decides at every node with whatever it is given from the solver, then all of it is locked
       const decisions = [];
-      await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, orderBands, kinds, where, decisions, lines });
+      await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, orderBands, kinds, groups, pure, firstStreet, where, decisions, lines });
+      // With `firstStreet` the later streets were not visited: hero keeps the solver's play there
+      if (firstStreet) await bridge.snapshot(seat);
       await bridge.reset();
+      if (firstStreet) await bridge.restore(seat);
       for (const { history, flat } of decisions) await bridge.lock(history, flat);
       locked = decisions.length;
     } else {
@@ -197,10 +206,11 @@ export class SolverMatch {
    * while the equilibrium is still in the bridge.
    */
   async #walkSolverRanges(state, options) {
-    const { seat, source, frequencies, hands, orderBands, kinds, where, decisions, lines } = options;
+    const { seat, source, frequencies, hands, orderBands, kinds, groups, pure, firstStreet, where, decisions, lines } = options;
     const node = await this.bridge.node(state.history);
     if (node.terminal) return;
     if (node.chance) {
+      if (firstStreet) return;
       for (const { card } of node.actions) {
         const dead = (range) => range.map((w, i) => (COMBO_A[i] === card || COMBO_B[i] === card ? 0 : w));
         await this.#walkSolverRanges({
@@ -215,7 +225,7 @@ export class SolverMatch {
     const spot = this.#spot(node, state);
     let mine = null; // hero's strategy here, per combo id
     if (me === seat) {
-      const { strategy, weights } = await this.bridge.strategy(state.history);
+      const { strategy, weights, evs } = await this.bridge.strategy(state.history, { evs: hands === 'solver-by-groups' });
       const n = this.hands[me].length;
       const spread = (hands, values) => {
         const range = new Float64Array(NUM_COMBOS);
@@ -235,7 +245,25 @@ export class SolverMatch {
         const reached = weights[me].some((w) => w > 1e-9);
         let targets = frequencies === 'solver' && reached ? solver : null;
         let strategist = this.strategist;
-        if (hands === 'solver-by-order') {
+        if (hands === 'solver-by-groups') {
+          // The interchange test: hands that `groups` gives the same key all play the average of
+          // the solver's strategy over them. `gaps[a][combo]` is what action a gives up against
+          // the hand's best action, as a share of the pot.
+          const gaps = node.actions.map((_, a) => spread(this.hands[me], evs.slice(a * n, (a + 1) * n)));
+          for (let i = 0; i < NUM_COMBOS; i++) {
+            let best = -Infinity;
+            for (const g of gaps) if (g[i] > best) best = g[i];
+            for (const g of gaps) g[i] = (best - g[i]) / spot.pot;
+          }
+          // On a line he takes less than 1% of the time there is no range of his worth judging
+          // hands against (it is the solver's noise): the solver's play is kept there
+          let his = 0;
+          for (const w of weights[1 - me]) his += w;
+          let all = 0;
+          for (const w of state.priors[1 - me]) all += w;
+          mine = his > 0.01 * all ? byGroup(solved, state.own, groups({ ...base, node, solved, gaps }), pure) : solved;
+          decisions.push({ history: [...state.history], flat: this.#flatten(me, mine) });
+        } else if (hands === 'solver-by-order') {
           // The solver's frequencies and its mixing, laid along the selector's order: the range is
           // cut into bands by that order and every hand of a band plays the band's average of the
           // solver's strategy. What the order cannot tell apart is all that is lost.
@@ -360,6 +388,27 @@ function solverOrder(actions, solved, spot) {
     bluff: (context, wager) => sized(wager),
     call: () => solved[actions.findIndex((a) => a.type === 'call')],
   };
+}
+
+/** The solver's strategy averaged over the hands that share a key (`keys[combo]`, any value). */
+function byGroup(solved, range, keys, pure = false) {
+  const sums = new Map();
+  for (let i = 0; i < NUM_COMBOS; i++) {
+    if (!(range[i] > 1e-9)) continue;
+    let group = sums.get(keys[i]);
+    if (!group) sums.set(keys[i], group = { weight: 0, strategy: solved.map(() => 0) });
+    group.weight += range[i];
+    solved.forEach((probabilities, a) => { group.strategy[a] += range[i] * probabilities[i]; });
+  }
+  const out = solved.map((probabilities) => Float64Array.from(probabilities));
+  for (let i = 0; i < NUM_COMBOS; i++) {
+    if (!(range[i] > 1e-9)) continue;
+    const group = sums.get(keys[i]);
+    // `pure`: every hand of the group takes the group's most frequent action, never a mix
+    const most = group.strategy.indexOf(Math.max(...group.strategy));
+    solved.forEach((_, a) => { out[a][i] = pure ? (a === most ? 1 : 0) : group.strategy[a] / group.weight; });
+  }
+  return out;
 }
 
 /** The solver's strategy averaged within `bands` equal slices of `range` taken along `order`. */

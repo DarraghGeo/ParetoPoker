@@ -8,3 +8,5 @@ diagnosis/order-turns.txt
 diagnosis/isolate.txt
 diagnosis/hands/*.jsonl
 diagnosis/hands/extract.log
+diagnosis/hands/3-interchange-turns.log
+diagnosis/hands/*.log

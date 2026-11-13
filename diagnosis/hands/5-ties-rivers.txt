@@ -1,0 +1,12 @@
+facing-bet ip: 231 decisions; 284 hands in 161 distinct equities; biggest tied group 0.09 of the range; in tied groups of 3%+ of the range 0.16
+     share of the range the solver mixes, hand by hand 0.39; still mixed once tied hands are pooled 0.40; of which in the big tied groups 0.08
+facing-bet oop: 246 decisions; 246 hands in 135 distinct equities; biggest tied group 0.07 of the range; in tied groups of 3%+ of the range 0.25
+     share of the range the solver mixes, hand by hand 0.41; still mixed once tied hands are pooled 0.43; of which in the big tied groups 0.15
+facing-raise ip: 135 decisions; 155 hands in 61 distinct equities; biggest tied group 0.25 of the range; in tied groups of 3%+ of the range 0.61
+     share of the range the solver mixes, hand by hand 0.41; still mixed once tied hands are pooled 0.42; of which in the big tied groups 0.25
+facing-raise oop: 189 decisions; 158 hands in 80 distinct equities; biggest tied group 0.15 of the range; in tied groups of 3%+ of the range 0.52
+     share of the range the solver mixes, hand by hand 0.40; still mixed once tied hands are pooled 0.40; of which in the big tied groups 0.24
+open ip: 120 decisions; 282 hands in 148 distinct equities; biggest tied group 0.12 of the range; in tied groups of 3%+ of the range 0.19
+     share of the range the solver mixes, hand by hand 0.22; still mixed once tied hands are pooled 0.25; of which in the big tied groups 0.11
+open oop: 120 decisions; 282 hands in 103 distinct equities; biggest tied group 0.06 of the range; in tied groups of 3%+ of the range 0.25
+     share of the range the solver mixes, hand by hand 0.40; still mixed once tied hands are pooled 0.41; of which in the big tied groups 0.12

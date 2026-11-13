@@ -1,0 +1,95 @@
+== A. First to act, by strength now (rank in range) and draw: bet frequency | must / may / can't bet (share of the kind) | share of range
+ ip: range bets 0.46
+   no draw      0-20: 0.62 [0.11/0.84/0.05] 0.104 | 20-40: 0.29 [0.06/0.56/0.38] 0.139 | 40-60: 0.12 [0.01/0.43/0.56] 0.148 | 60-80: 0.41 [0.08/0.80/0.12] 0.159 | 80-90: 0.67 [0.28/0.67/0.04] 0.086 | 90-100: 0.85 [0.55/0.41/0.04] 0.095
+   gutshot      0-20: 0.53 [0.11/0.83/0.06] 0.047 | 20-40: 0.41 [0.06/0.84/0.10] 0.035 | 40-60: 0.24 [0.02/0.74/0.24] 0.033 | 60-80: 0.49 [0.16/0.80/0.04] 0.026 | 80-90: 0.86 [0.58/0.42/0.00] 0.011 | 90-100: 1.00 [1.00/0.00/0.00] 0.002
+   strong draw  0-20: 0.54 [0.06/0.87/0.07] 0.037 | 20-40: 0.51 [0.08/0.84/0.08] 0.017 | 40-60: 0.23 [0.04/0.68/0.29] 0.012 | 60-80: 0.69 [0.31/0.68/0.00] 0.013 | 80-90: 0.98 [0.74/0.26/0.00] 0.003 | 90-100: 0.95 [0.87/0.13/0.00] 0.003
+   nut draw     0-20: 0.62 [0.24/0.61/0.15] 0.012 | 20-40: 0.61 [0.29/0.59/0.13] 0.008 | 40-60: 0.49 [0.19/0.58/0.23] 0.007 | 60-80: 0.79 [0.49/0.47/0.04] 0.002 | 90-100: 0.82 [0.67/0.17/0.17] 0.000
+   share of bets at the biggest size, by strength now: 0-20: 0.06 20-40: 0.06 40-60: 0.03 60-80: 0.01 80-90: 0.06 90-100: 0.07
+ oop: range bets 0.29
+   no draw      0-20: 0.25 [0.02/0.73/0.24] 0.099 | 20-40: 0.12 [0.00/0.55/0.45] 0.133 | 40-60: 0.13 [0.01/0.59/0.40] 0.151 | 60-80: 0.33 [0.05/0.81/0.13] 0.161 | 80-90: 0.47 [0.08/0.86/0.06] 0.089 | 90-100: 0.35 [0.06/0.82/0.12] 0.095
+   gutshot      0-20: 0.45 [0.07/0.80/0.14] 0.051 | 20-40: 0.27 [0.02/0.88/0.10] 0.046 | 40-60: 0.13 [0.02/0.68/0.30] 0.028 | 60-80: 0.30 [0.07/0.79/0.13] 0.026 | 80-90: 0.55 [0.26/0.74/0.00] 0.010 | 90-100: 0.74 [0.35/0.65/0.00] 0.002
+   strong draw  0-20: 0.63 [0.08/0.90/0.02] 0.039 | 20-40: 0.32 [0.01/0.91/0.08] 0.014 | 40-60: 0.06 [0.00/0.50/0.50] 0.014 | 60-80: 0.35 [0.08/0.81/0.10] 0.012 | 80-90: 0.42 [0.00/1.00/0.00] 0.001 | 90-100: 0.49 [0.18/0.68/0.14] 0.003
+   nut draw     0-20: 0.56 [0.14/0.81/0.04] 0.011 | 20-40: 0.28 [0.02/0.73/0.25] 0.008 | 40-60: 0.09 [0.01/0.51/0.48] 0.006 | 60-80: 0.08 [0.00/0.55/0.45] 0.002 | 90-100: 0.06 [0.00/0.25/0.75] 0.000
+   share of bets at the biggest size, by strength now: 0-20: 0.19 20-40: 0.20 40-60: 0.07 60-80: 0.11 80-90: 0.21 90-100: 0.27
+
+== B. Facing a bet or raise, by equity minus pot odds: fold / call / raise | continue must / may / can't
+ facing-bet ip
+    edge   (-1.0, -0.2]: share 0.02  fold 1.00 call 0.00 raise 0.00 | 0.00/0.01/0.99
+    edge   (-0.2, -0.1]: share 0.06  fold 0.92 call 0.07 raise 0.01 | 0.05/0.09/0.86
+    edge  (-0.1, -0.05]: share 0.05  fold 0.85 call 0.13 raise 0.02 | 0.11/0.16/0.73
+    edge   (-0.05, 0.0]: share 0.07  fold 0.77 call 0.20 raise 0.03 | 0.17/0.23/0.60
+    edge    (0.0, 0.05]: share 0.10  fold 0.70 call 0.27 raise 0.04 | 0.23/0.26/0.52
+    edge    (0.05, 0.1]: share 0.14  fold 0.60 call 0.32 raise 0.08 | 0.23/0.41/0.36
+    edge     (0.1, 0.2]: share 0.25  fold 0.20 call 0.68 raise 0.11 | 0.66/0.26/0.07
+    edge     (0.2, 0.4]: share 0.14  fold 0.00 call 0.79 raise 0.21 | 1.00/0.00/0.00
+    edge     (0.4, 1.0]: share 0.16  fold 0.00 call 0.71 raise 0.29 | 1.00/0.00/0.00
+    the hands near the line (edge -10% to +5%): continue by ...
+       draw class: no draw 0.05 (0.62) | gutshot 0.44 (0.23) | strong draw 0.72 (0.13) | nut draw 0.84 (0.02)
+       implied odds                   by quarters, lowest first: 0.18 0.08 0.19 0.53
+       best card                      by quarters, lowest first: 0.03 0.14 0.41 0.40
+       draw equity                    by quarters, lowest first: 0.02 0.08 0.20 0.69
+       strength now                   by quarters, lowest first: 0.55 0.19 0.14 0.10
+       swing                          by quarters, lowest first: 0.01 0.08 0.31 0.59
+       blocks his best over his worst by quarters, lowest first: 0.27 0.25 0.21 0.25
+       spread                         by quarters, lowest first: 0.07 0.11 0.22 0.59
+    raising, by equity rank: 0.04 0.05 0.08 0.20 0.31 0.27   and by draw: no draw 0.12 | gutshot 0.16 | strong draw 0.18 | nut draw 0.20
+ facing-bet oop
+    edge   (-1.0, -0.2]: share 0.02  fold 1.00 call 0.00 raise 0.00 | 0.00/0.00/1.00
+    edge   (-0.2, -0.1]: share 0.06  fold 1.00 call 0.00 raise 0.00 | 0.00/0.02/0.97
+    edge  (-0.1, -0.05]: share 0.04  fold 0.95 call 0.02 raise 0.03 | 0.03/0.09/0.88
+    edge   (-0.05, 0.0]: share 0.06  fold 0.89 call 0.05 raise 0.05 | 0.06/0.13/0.81
+    edge    (0.0, 0.05]: share 0.07  fold 0.84 call 0.10 raise 0.06 | 0.15/0.10/0.75
+    edge    (0.05, 0.1]: share 0.12  fold 0.79 call 0.14 raise 0.08 | 0.17/0.28/0.55
+    edge     (0.1, 0.2]: share 0.33  fold 0.38 call 0.54 raise 0.08 | 0.45/0.38/0.17
+    edge     (0.2, 0.4]: share 0.16  fold 0.00 call 0.88 raise 0.12 | 1.00/0.00/0.00
+    edge     (0.4, 1.0]: share 0.14  fold 0.00 call 0.57 raise 0.43 | 1.00/0.00/0.00
+    the hands near the line (edge -10% to +5%): continue by ...
+       draw class: no draw 0.01 (0.72) | gutshot 0.22 (0.17) | strong draw 0.57 (0.10) | nut draw 0.95 (0.01)
+       implied odds                   by quarters, lowest first: 0.06 0.05 0.07 0.31
+       best card                      by quarters, lowest first: 0.00 0.00 0.14 0.38
+       draw equity                    by quarters, lowest first: 0.00 0.02 0.03 0.52
+       strength now                   by quarters, lowest first: 0.35 0.08 0.04 0.03
+       swing                          by quarters, lowest first: 0.00 0.00 0.06 0.51
+       blocks his best over his worst by quarters, lowest first: 0.06 0.10 0.14 0.15
+       spread                         by quarters, lowest first: 0.00 0.04 0.09 0.39
+    raising, by equity rank: 0.04 0.04 0.06 0.12 0.32 0.41   and by draw: no draw 0.11 | gutshot 0.12 | strong draw 0.26 | nut draw 0.37
+ facing-raise ip
+    edge   (-1.0, -0.2]: share 0.01  fold 1.00 call 0.00 raise 0.00 | 0.00/0.00/1.00
+    edge   (-0.2, -0.1]: share 0.11  fold 1.00 call 0.00 raise 0.00 | 0.00/0.04/0.96
+    edge  (-0.1, -0.05]: share 0.09  fold 0.97 call 0.03 raise 0.01 | 0.03/0.05/0.92
+    edge   (-0.05, 0.0]: share 0.09  fold 0.88 call 0.12 raise 0.00 | 0.07/0.12/0.81
+    edge    (0.0, 0.05]: share 0.08  fold 0.45 call 0.54 raise 0.01 | 0.48/0.21/0.32
+    edge    (0.05, 0.1]: share 0.06  fold 0.30 call 0.65 raise 0.05 | 0.63/0.21/0.15
+    edge     (0.1, 0.2]: share 0.21  fold 0.10 call 0.74 raise 0.16 | 0.78/0.19/0.03
+    edge     (0.2, 0.4]: share 0.16  fold 0.00 call 0.78 raise 0.22 | 1.00/0.00/0.00
+    edge     (0.4, 1.0]: share 0.19  fold 0.00 call 0.83 raise 0.17 | 1.00/0.00/0.00
+    the hands near the line (edge -10% to +5%): continue by ...
+       draw class: no draw 0.10 (0.57) | gutshot 0.27 (0.27) | strong draw 0.56 (0.14) | nut draw 0.78 (0.02)
+       implied odds                   by quarters, lowest first: 0.38 0.23 0.08 0.29
+       best card                      by quarters, lowest first: 0.01 0.08 0.30 0.47
+       draw equity                    by quarters, lowest first: 0.07 0.06 0.22 0.50
+       strength now                   by quarters, lowest first: 0.32 0.12 0.13 0.28
+       swing                          by quarters, lowest first: 0.01 0.10 0.26 0.49
+       blocks his best over his worst by quarters, lowest first: 0.30 0.16 0.16 0.28
+       spread                         by quarters, lowest first: 0.23 0.14 0.11 0.41
+    raising, by equity rank: 0.00 0.04 0.18 0.36 0.37 0.16   and by draw: no draw 0.18 | gutshot 0.13 | strong draw 0.15 | nut draw 0.16
+ facing-raise oop
+    edge   (-1.0, -0.2]: share 0.00  fold 1.00 call 0.00 raise 0.00 | 0.00/0.00/1.00
+    edge   (-0.2, -0.1]: share 0.04  fold 1.00 call 0.00 raise 0.00 | 0.00/0.00/1.00
+    edge  (-0.1, -0.05]: share 0.08  fold 0.99 call 0.00 raise 0.01 | 0.01/0.03/0.96
+    edge   (-0.05, 0.0]: share 0.11  fold 0.90 call 0.07 raise 0.03 | 0.04/0.19/0.77
+    edge    (0.0, 0.05]: share 0.08  fold 0.35 call 0.57 raise 0.07 | 0.60/0.24/0.16
+    edge    (0.05, 0.1]: share 0.07  fold 0.30 call 0.56 raise 0.14 | 0.62/0.23/0.14
+    edge     (0.1, 0.2]: share 0.17  fold 0.17 call 0.61 raise 0.23 | 0.71/0.25/0.04
+    edge     (0.2, 0.4]: share 0.15  fold 0.00 call 0.85 raise 0.15 | 1.00/0.00/0.00
+    edge     (0.4, 1.0]: share 0.29  fold 0.00 call 0.76 raise 0.24 | 1.00/0.00/0.00
+    the hands near the line (edge -10% to +5%): continue by ...
+       draw class: no draw 0.11 (0.43) | gutshot 0.20 (0.36) | strong draw 0.55 (0.19) | nut draw 0.60 (0.02)
+       implied odds                   by quarters, lowest first: 0.28 0.24 0.23 0.21
+       best card                      by quarters, lowest first: 0.04 0.19 0.29 0.35
+       draw equity                    by quarters, lowest first: 0.10 0.19 0.08 0.49
+       strength now                   by quarters, lowest first: 0.33 0.17 0.11 0.31
+       swing                          by quarters, lowest first: 0.07 0.22 0.10 0.47
+       blocks his best over his worst by quarters, lowest first: 0.31 0.23 0.25 0.19
+       spread                         by quarters, lowest first: 0.33 0.06 0.18 0.35
+    raising, by equity rank: 0.04 0.15 0.17 0.36 0.52 0.53   and by draw: no draw 0.28 | gutshot 0.18 | strong draw 0.19 | nut draw 0.25

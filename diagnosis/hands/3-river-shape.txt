@@ -1,0 +1,81 @@
+== A. First to act: how often the solver bets, by the hand's equity against his range
+ ip: 0.63 0.29 0.12 0.03 0.00 0.01 0.02 0.44 0.88 1.00   (equity 0-10% ... 90-100%)
+     of its bets, the share at the biggest size: 0.50 0.58 0.64 0.65 0.19 0.28 0.50 0.47 0.32 0.63
+ oop: 0.49 0.31 0.05 0.01 0.01 0.14 0.69 0.73 0.63 0.47   (equity 0-10% ... 90-100%)
+     of its bets, the share at the biggest size: 0.29 0.40 0.51 0.41 0.16 0.02 0.07 0.20 0.28 0.49
+
+== B. Facing a bet or raise: fold / call / raise by equity minus the pot odds (the equity a call needs)
+ facing-bet ip
+    edge   (-1.0, -0.2]: share of range 0.04  fold 0.99 call 0.00 raise 0.01   continue: must 0.01 optional 0.04 can't 0.95
+    edge   (-0.2, -0.1]: share of range 0.06  fold 0.94 call 0.00 raise 0.06   continue: must 0.05 optional 0.15 can't 0.80
+    edge  (-0.1, -0.05]: share of range 0.04  fold 0.95 call 0.00 raise 0.05   continue: must 0.05 optional 0.17 can't 0.78
+    edge (-0.05, -0.02]: share of range 0.05  fold 0.94 call 0.02 raise 0.04   continue: must 0.04 optional 0.14 can't 0.82
+    edge  (-0.02, 0.02]: share of range 0.44  fold 0.47 call 0.47 raise 0.07   continue: must 0.36 optional 0.40 can't 0.25
+    edge   (0.02, 0.05]: share of range 0.04  fold 0.02 call 0.92 raise 0.06   continue: must 1.00 optional 0.00 can't 0.00
+    edge    (0.05, 0.1]: share of range 0.02  fold 0.00 call 0.98 raise 0.02   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.1, 0.2]: share of range 0.03  fold 0.00 call 0.98 raise 0.02   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.2, 0.4]: share of range 0.04  fold 0.00 call 0.99 raise 0.01   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.4, 1.0]: share of range 0.23  fold 0.00 call 0.33 raise 0.67   continue: must 1.00 optional 0.00 can't 0.00
+    inside the +-2% band, by fifths of the edge (lowest first): continue 0.18 0.34 0.51 0.72 0.91   | blocks his best quarter more than his worst, by fifths: 0.37 0.46 0.56 0.61 0.66
+    'continue when equity beats the pot odds' agrees with the solver's majority action for 0.900 of the range; among hands that are not optional 0.956
+ facing-bet oop
+    edge   (-1.0, -0.2]: share of range 0.05  fold 1.00 call 0.00 raise 0.00   continue: must 0.00 optional 0.01 can't 0.99
+    edge   (-0.2, -0.1]: share of range 0.05  fold 1.00 call 0.00 raise 0.00   continue: must 0.01 optional 0.01 can't 0.98
+    edge  (-0.1, -0.05]: share of range 0.05  fold 1.00 call 0.00 raise 0.00   continue: must 0.00 optional 0.00 can't 0.99
+    edge (-0.05, -0.02]: share of range 0.11  fold 0.98 call 0.02 raise 0.00   continue: must 0.00 optional 0.01 can't 0.99
+    edge  (-0.02, 0.02]: share of range 0.52  fold 0.56 call 0.41 raise 0.03   continue: must 0.29 optional 0.39 can't 0.32
+    edge   (0.02, 0.05]: share of range 0.04  fold 0.04 call 0.88 raise 0.08   continue: must 1.00 optional 0.00 can't 0.00
+    edge    (0.05, 0.1]: share of range 0.01  fold 0.00 call 0.90 raise 0.09   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.1, 0.2]: share of range 0.02  fold 0.00 call 0.98 raise 0.02   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.2, 0.4]: share of range 0.03  fold 0.00 call 0.99 raise 0.01   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.4, 1.0]: share of range 0.12  fold 0.00 call 0.41 raise 0.59   continue: must 1.00 optional 0.00 can't 0.00
+    inside the +-2% band, by fifths of the edge (lowest first): continue 0.06 0.23 0.39 0.63 0.91   | blocks his best quarter more than his worst, by fifths: 0.20 0.27 0.42 0.60 0.70
+    'continue when equity beats the pot odds' agrees with the solver's majority action for 0.891 of the range; among hands that are not optional 0.952
+ facing-raise ip
+    edge   (-1.0, -0.2]: share of range 0.21  fold 0.99 call 0.00 raise 0.01   continue: must 0.01 optional 0.04 can't 0.95
+    edge   (-0.2, -0.1]: share of range 0.07  fold 1.00 call 0.00 raise 0.00   continue: must 0.00 optional 0.00 can't 0.99
+    edge  (-0.1, -0.05]: share of range 0.01  fold 0.92 call 0.00 raise 0.08   continue: must 0.05 optional 0.10 can't 0.85
+    edge (-0.05, -0.02]: share of range 0.02  fold 0.96 call 0.02 raise 0.02   continue: must 0.01 optional 0.05 can't 0.93
+    edge  (-0.02, 0.02]: share of range 0.44  fold 0.41 call 0.57 raise 0.01   continue: must 0.23 optional 0.57 can't 0.20
+    edge   (0.02, 0.05]: share of range 0.04  fold 0.01 call 0.99 raise 0.01   continue: must 1.00 optional 0.00 can't 0.00
+    edge    (0.05, 0.1]: share of range 0.03  fold 0.00 call 1.00 raise 0.00   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.1, 0.2]: share of range 0.03  fold 0.00 call 1.00 raise 0.00   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.2, 0.4]: share of range 0.06  fold 0.00 call 1.00 raise 0.00   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.4, 1.0]: share of range 0.09  fold 0.00 call 0.78 raise 0.22   continue: must 1.00 optional 0.00 can't 0.00
+    inside the +-2% band, by fifths of the edge (lowest first): continue 0.33 0.48 0.58 0.67 0.75   | blocks his best quarter more than his worst, by fifths: 0.65 0.59 0.48 0.59 0.60
+    'continue when equity beats the pot odds' agrees with the solver's majority action for 0.844 of the range; among hands that are not optional 0.932
+ facing-raise oop
+    edge   (-1.0, -0.2]: share of range 0.10  fold 1.00 call 0.00 raise 0.00   continue: must 0.00 optional 0.00 can't 1.00
+    edge   (-0.2, -0.1]: share of range 0.12  fold 1.00 call 0.00 raise 0.00   continue: must 0.00 optional 0.04 can't 0.96
+    edge  (-0.1, -0.05]: share of range 0.01  fold 0.99 call 0.01 raise 0.00   continue: must 0.00 optional 0.00 can't 1.00
+    edge (-0.05, -0.02]: share of range 0.02  fold 0.97 call 0.03 raise 0.00   continue: must 0.00 optional 0.00 can't 0.99
+    edge  (-0.02, 0.02]: share of range 0.46  fold 0.47 call 0.53 raise 0.00   continue: must 0.21 optional 0.58 can't 0.21
+    edge   (0.02, 0.05]: share of range 0.04  fold 0.01 call 0.98 raise 0.01   continue: must 1.00 optional 0.00 can't 0.00
+    edge    (0.05, 0.1]: share of range 0.03  fold 0.00 call 1.00 raise 0.00   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.1, 0.2]: share of range 0.05  fold 0.00 call 0.99 raise 0.01   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.2, 0.4]: share of range 0.08  fold 0.00 call 0.99 raise 0.01   continue: must 1.00 optional 0.00 can't 0.00
+    edge     (0.4, 1.0]: share of range 0.09  fold 0.00 call 0.79 raise 0.21   continue: must 1.00 optional 0.00 can't 0.00
+    inside the +-2% band, by fifths of the edge (lowest first): continue 0.25 0.43 0.49 0.62 0.77   | blocks his best quarter more than his worst, by fifths: 0.63 0.54 0.37 0.51 0.62
+    'continue when equity beats the pot odds' agrees with the solver's majority action for 0.845 of the range; among hands that are not optional 0.941
+
+== C. First to act: thresholds per decision, against the von Neumann thresholds from the equity curve
+ ip: 120 decisions. solver bets 0.49 (von Neumann from the curve 0.60; correlation across spots 0.13)
+     lowest value bet, equity: solver 0.79 (sd 0.04); von Neumann 0.76; correlation 0.84; mean gap +0.03
+     highest bluff, equity:    solver 0.09 (sd 0.10); von Neumann 0.13; correlation 0.93
+     the top tenth of the range checks 0.00 of the time
+     what moves them (Spearman correlation across spots):
+       value     size +0.37 spr +0.17 rangeEq +0.63 nutEdge +0.76 airShare -0.60 hisAirShare +0.60
+       bluff     size -0.03 spr -0.01 rangeEq +0.89 nutEdge +0.82 airShare -0.86 hisAirShare +0.85
+       fAgg      size -0.46 spr +0.01 rangeEq +0.62 nutEdge +0.46 airShare -0.57 hisAirShare +0.62
+       topChecks size -0.00 spr +0.10 rangeEq -0.07 nutEdge -0.02 airShare +0.06 hisAirShare -0.09
+     by pair of ranges: A: bets 0.49, value from 0.78, bluffs to 0.05, top checks 0.00 | B: bets 0.54, value from 0.82, bluffs to 0.20, top checks -0.00 | C: bets 0.43, value from 0.80, bluffs to 0.08, top checks 0.01 | D: bets 0.50, value from 0.78, bluffs to 0.03, top checks 0.00
+ oop: 120 decisions. solver bets 0.42 (von Neumann from the curve 0.46; correlation across spots 0.86)
+     lowest value bet, equity: solver 0.69 (sd 0.15); von Neumann 0.72; correlation -0.11; mean gap -0.02
+     highest bluff, equity:    solver 0.11 (sd 0.08); von Neumann 0.15; correlation 0.78
+     the top tenth of the range checks 0.49 of the time
+     what moves them (Spearman correlation across spots):
+       value     size -0.22 spr -0.18 rangeEq -0.12 nutEdge -0.25 airShare +0.09 hisAirShare -0.10
+       bluff     size +0.51 spr -0.06 rangeEq +0.79 nutEdge +0.84 airShare -0.63 hisAirShare +0.59
+       fAgg      size +0.50 spr +0.05 rangeEq +0.83 nutEdge +0.90 airShare -0.54 hisAirShare +0.52
+       topChecks size -0.57 spr +0.13 rangeEq -0.69 nutEdge -0.78 airShare +0.46 hisAirShare -0.40
+     by pair of ranges: A: bets 0.48, value from 0.62, bluffs to 0.13, top checks 0.41 | B: bets 0.22, value from 0.78, bluffs to 0.01, top checks 0.71 | C: bets 0.57, value from 0.74, bluffs to 0.15, top checks 0.32 | D: bets 0.41, value from 0.63, bluffs to 0.14, top checks 0.54
