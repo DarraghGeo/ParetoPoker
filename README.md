@@ -33,7 +33,7 @@ npm test
 
 ```js
 import * as solver from 'poker-flopsolve';
-import { treeOf, decisionAt, survey, explain } from 'pareto-poker';
+import { treeOf, decisionAt, survey, explain } from './src/index.js'; // not on npm: use it from this repository
 
 const spot = solver.defineSpot({ board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, oop: '66+,AJs+', ip: 'QQ-22,AQs-A2s', betSizes: [[0.33, 0.75]] });
 const run = solver.createRun(spot, {});
