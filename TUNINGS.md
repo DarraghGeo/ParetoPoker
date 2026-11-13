@@ -140,6 +140,35 @@ per spot in `diagnosis/level-sweep-best.csv`. Nothing in the engine was changed.
 - Depth is the larger effect on the loss: 6% at one pot behind, 10.5% at 2.5, 14.5% at 5,
   whatever the frequency.
 
+### Do raises and stacks explain the departures from the formulas? (rivers)
+
+`diagnosis/v56.mjs` and `v57.mjs`, results in `diagnosis/raises-and-stacks.txt`. 24 river spots
+(4 pairs, 6 boards), one bet size per tree, solved with no raise allowed and with raises of
+2.5x or all-in at 1, 2 and 5 pots behind. Bet 75% of the pot shown; 33% and 150% agree.
+
+| | formula | no raise | raise 2.5x, 2 pots | raise 2.5x, 5 pots | all-in, 5 pots |
+|---|---|---|---|---|---|
+| bluff share of bets, in position | 0.300 | 0.301 | 0.302 | 0.300 | 0.301 |
+| bluff share of bets, out of position | 0.300 | 0.333 | 0.305 | 0.297 | 0.304 |
+| in position folds to a bet | 0.429 | 0.473 | 0.469 | 0.466 | 0.466 |
+| out of position folds to a bet | 0.429 | 0.505 | 0.499 | 0.499 | 0.496 |
+| in position bets (von Neumann 0.544 with no raise) | | 0.525 | 0.430 | 0.444 | 0.408 |
+| out of position bets (von Neumann 0.418) | | 0.358 | 0.261 | 0.272 | 0.238 |
+| untuned engine, equity hands: loss out of position / in position | | 2.6 / 5.3 | 9.0 / 8.1 | 9.4 / 12.5 | 11.0 / 7.4 |
+
+- The bluff share of the bets is the formula in every tree. Raises do not touch it.
+- The defender folds more than s/(1+s) with no raise in the tree, by 4 to 8 points, and
+  allowing raises does not change that. The cause is the bettor's bluffs having showdown value:
+  the marginal bluff is indifferent between betting and checking, and checking is worth its
+  showdown equity v, so he folds (s + v)/(1 + s). Checked in position after a check, where
+  checking back ends the hand: mean distance from the solver 0.02 against 0.05 to 0.09 for
+  s/(1+s), correlation across spots 0.94 to 0.98, in all nine trees. v is about 0.08 to 0.10.
+- The bet frequency is where raises and stacks act: 5 to 20 points fewer bets once he can
+  raise, fewer again with a bigger raise or a deeper stack. With no raise, in position it is
+  within 0.04 of the von Neumann frequency from the equity curve.
+- The untuned engine with equity hands loses 1 to 7% with no raise against 4 to 15% with
+  raises. Not zero: the folding formula is still off by v, and the hands and mixing are ours.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,

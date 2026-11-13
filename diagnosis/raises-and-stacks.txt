@@ -1,0 +1,102 @@
+
+=== bet 33% of the pot: formulas fold 0.248, bluff share of bets 0.199; 24 river spots
+                                                      no raise   r 2.5x, 1p   r 2.5x, 2p   r 2.5x, 5p r all-in, 2p r all-in, 5p
+oop bets                                                 0.561        0.383        0.408        0.406        0.328        0.331
+oop bets: mean distance from von Neumann                 0.134        0.115        0.103        0.103        0.156        0.152
+oop bets, von Neumann                                    0.478        0.478        0.478        0.478        0.478        0.478
+oop bets, engine                                         0.524        0.524        0.524        0.524        0.524        0.524
+oop bluff share of bets                                  0.273        0.207        0.212        0.211        0.199        0.230
+oop bluff share of bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+oop air that bets                                        0.736        0.606        0.632        0.630        0.512        0.538
+oop air that bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+ip folds to the bet                                      0.311        0.296        0.298        0.299        0.287        0.287
+ip folds to the bet: mean distance from the formula         0.063        0.049        0.050        0.051        0.045        0.038
+ip raises the bet                                        0.000        0.185        0.160        0.163        0.147        0.108
+ip folds, engine                                         0.248        0.248        0.248        0.248        0.267        0.248
+ip bets                                                  0.680        0.521        0.543        0.535        0.476        0.496
+ip bets: mean distance from von Neumann                  0.059        0.112        0.115        0.108        0.087        0.064
+ip bets, von Neumann                                     0.731        0.626        0.650        0.635        0.556        0.550
+ip bets, engine                                          0.722        0.630        0.637        0.635        0.574        0.583
+ip bluff share of bets                                   0.205        0.206        0.204        0.205        0.205        0.204
+ip bluff share of bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+ip air that bets                                         0.669        0.574        0.589        0.584        0.539        0.552
+ip air that bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+oop folds to the bet                                     0.335        0.318        0.319        0.320        0.317        0.318
+oop folds to the bet: mean distance from the formula         0.088        0.071        0.071        0.072        0.070        0.070
+oop raises the bet                                       0.000        0.144        0.128        0.137        0.092        0.056
+oop folds, engine                                        0.254        0.250        0.251        0.251        0.250        0.249
+loss, equity preset, oop                                  1.03         4.27         4.14         5.07         4.59         7.49
+loss, equity preset, ip                                   3.36         5.44         7.79         9.99         5.74         5.45
+loss, napkin preset, oop                                  1.94         1.88         1.91         1.99         2.04         2.46
+loss, napkin preset, ip                                   2.48         2.30         2.56         2.61         3.04         4.69
+
+=== bet 75% of the pot: formulas fold 0.429, bluff share of bets 0.300; 24 river spots
+                                                      no raise   r 2.5x, 1p   r 2.5x, 2p   r 2.5x, 5p r all-in, 2p r all-in, 5p
+oop bets                                                 0.358        0.309        0.261        0.272        0.258        0.238
+oop bets: mean distance from von Neumann                 0.092        0.126        0.165        0.152        0.165        0.180
+oop bets, von Neumann                                    0.418        0.418        0.418        0.418        0.418        0.418
+oop bets, engine                                         0.462        0.462        0.462        0.462        0.462        0.462
+oop bluff share of bets                                  0.333        0.335        0.305        0.297        0.303        0.304
+oop bluff share of bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+oop air that bets                                        0.612        0.569        0.502        0.517        0.506        0.487
+oop air that bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+ip folds to the bet                                      0.473        0.472        0.469        0.466        0.466        0.466
+ip folds to the bet: mean distance from the formula         0.047        0.044        0.043        0.043        0.043        0.039
+ip raises the bet                                        0.000        0.171        0.133        0.115        0.135        0.103
+ip folds, engine                                         0.429        0.419        0.452        0.429        0.429        0.452
+ip bets                                                  0.525        0.487        0.430        0.444        0.427        0.408
+ip bets: mean distance from von Neumann                  0.040        0.062        0.088        0.083        0.087        0.086
+ip bets, von Neumann                                     0.544        0.540        0.518        0.526        0.514        0.490
+ip bets, engine                                          0.531        0.546        0.524        0.530        0.524        0.491
+ip bluff share of bets                                   0.301        0.301        0.302        0.300        0.302        0.301
+ip bluff share of bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+ip air that bets                                         0.674        0.657        0.617        0.631        0.618        0.599
+ip air that bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+oop folds to the bet                                     0.505        0.502        0.499        0.499        0.498        0.496
+oop folds to the bet: mean distance from the formula         0.077        0.074        0.070        0.071        0.070        0.068
+oop raises the bet                                      -0.000        0.130        0.091        0.074        0.092        0.055
+oop folds, engine                                        0.429        0.429        0.429        0.429        0.429        0.429
+loss, equity preset, oop                                  2.59         9.39         9.04         9.37         9.22        11.04
+loss, equity preset, ip                                   5.31         5.76         8.12        12.45         6.77         7.36
+loss, napkin preset, oop                                  1.97         2.18         2.47         2.63         2.52         2.94
+loss, napkin preset, ip                                   2.85         2.56         2.63         2.97         2.70         4.63
+
+=== bet 150% of the pot: formulas fold 0.600, bluff share of bets 0.375; 24 river spots
+                                                      no raise   r 2.5x, 1p   r 2.5x, 2p   r 2.5x, 5p r all-in, 2p r all-in, 5p
+oop bets                                                 0.203        0.292        0.176        0.155        0.176        0.144
+oop bets: mean distance from von Neumann                 0.160        0.097        0.180        0.199        0.180        0.203
+oop bets, von Neumann                                    0.348        0.348        0.348        0.348        0.348        0.348
+oop bets, engine                                         0.381        0.434        0.381        0.381        0.381        0.381
+oop bluff share of bets                                  0.371        0.338        0.373        0.360        0.373        0.391
+oop bluff share of bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+oop air that bets                                        0.466        0.554        0.425        0.370        0.425        0.360
+oop air that bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+ip folds to the bet                                      0.627        0.538        0.624        0.625        0.624        0.624
+ip folds to the bet: mean distance from the formula         0.032        0.067        0.027        0.026        0.027        0.024
+ip raises the bet                                        0.000       -0.000        0.126        0.085        0.126        0.084
+ip folds, engine                                         0.617        0.617        0.617        0.600        0.617        0.633
+ip bets                                                  0.368        0.459        0.346        0.310        0.346        0.299
+ip bets: mean distance from von Neumann                  0.065        0.054        0.064        0.088        0.064        0.094
+ip bets, von Neumann                                     0.430        0.444        0.408        0.397        0.408        0.392
+ip bets, engine                                          0.426        0.536        0.399        0.391        0.399        0.386
+ip bluff share of bets                                   0.360        0.329        0.359        0.359        0.359        0.359
+ip bluff share of bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+ip air that bets                                         0.620        0.648        0.602        0.572        0.602        0.558
+ip air that bets: mean distance from von Neumann           NaN          NaN          NaN          NaN          NaN          NaN
+oop folds to the bet                                     0.656        0.572        0.653        0.651        0.653        0.651
+oop folds to the bet: mean distance from the formula         0.056        0.051        0.053        0.051        0.053        0.051
+oop raises the bet                                       0.000       -0.000        0.062        0.049        0.062        0.049
+oop folds, engine                                        0.600        0.600        0.600        0.600        0.600        0.600
+loss, equity preset, oop                                  4.61         3.29        14.54        14.86        14.54        15.59
+loss, equity preset, ip                                   6.86         5.88         7.90        13.68         7.90         9.68
+loss, napkin preset, oop                                  2.40         2.23         2.71         3.38         2.71         3.48
+loss, napkin preset, ip                                   2.51         2.60         2.61         3.57         2.61         4.14
+no raise                     bet  33%: he folds 0.335; s/(1+s) = 0.248 (mean distance 0.088); (s+v)/(1+s) = 0.315 (mean distance 0.025, correlation 0.98); v = 0.088; 24 spots
+no raise                     bet  75%: he folds 0.505; s/(1+s) = 0.429 (mean distance 0.077); (s+v)/(1+s) = 0.483 (mean distance 0.024, correlation 0.95); v = 0.096; 24 spots
+no raise                     bet 150%: he folds 0.656; s/(1+s) = 0.600 (mean distance 0.056); (s+v)/(1+s) = 0.634 (mean distance 0.022, correlation 0.94); v = 0.086; 24 spots
+raise 2.5x, 5 pots behind    bet  33%: he folds 0.316; s/(1+s) = 0.248 (mean distance 0.068); (s+v)/(1+s) = 0.301 (mean distance 0.021, correlation 0.96); v = 0.071; 23 spots
+raise 2.5x, 5 pots behind    bet  75%: he folds 0.499; s/(1+s) = 0.429 (mean distance 0.071); (s+v)/(1+s) = 0.479 (mean distance 0.021, correlation 0.96); v = 0.089; 24 spots
+raise 2.5x, 5 pots behind    bet 150%: he folds 0.653; s/(1+s) = 0.600 (mean distance 0.053); (s+v)/(1+s) = 0.635 (mean distance 0.018, correlation 0.94); v = 0.089; 23 spots
+raise all-in, 5 pots behind  bet  33%: he folds 0.318; s/(1+s) = 0.248 (mean distance 0.070); (s+v)/(1+s) = 0.305 (mean distance 0.021, correlation 0.94); v = 0.075; 24 spots
+raise all-in, 5 pots behind  bet  75%: he folds 0.491; s/(1+s) = 0.429 (mean distance 0.063); (s+v)/(1+s) = 0.472 (mean distance 0.021, correlation 0.90); v = 0.076; 23 spots
+raise all-in, 5 pots behind  bet 150%: he folds 0.649; s/(1+s) = 0.600 (mean distance 0.049); (s+v)/(1+s) = 0.631 (mean distance 0.018, correlation 0.95); v = 0.078; 23 spots
