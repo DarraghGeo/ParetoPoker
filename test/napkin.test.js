@@ -61,7 +61,9 @@ test('thin value and some of the nuts check out of position on the river', () =>
     const c = context({ board, position, spot });
     return { position, spot, board: c.board, hero: c.hero, villain: c.villain, actions, strength: c.strength };
   };
-  const decide = (position, options) => new RangeStrategist({ selector: new NapkinSelector(options) }).decide(node(position));
+  // The guide's own rules, without the measured defaults
+  const guide = { valueThreshold: 0.5, oopValueChecks: 0 };
+  const decide = (position, options) => new RangeStrategist({ selector: new NapkinSelector({ ...guide, ...options }) }).decide(node(position));
 
   const oop = node('oop');
   const thin = [...oop.hero.keys()].filter((i) => oop.hero[i] > 0 && oop.strength[i] >= 0.5 && oop.strength[i] <= 0.7);
@@ -79,12 +81,24 @@ test('thin value and some of the nuts check out of position on the river', () =>
   assert.equal(decide('oop', { trapShare: 0 }).strategy[1][nuts], 1);
   // In position nothing is trapped
   assert.equal(decide('ip').strategy[1][best(node('ip'))], 1);
+  // By default every value hand keeps a fifth of its combos back out of position, the nuts included
+  const defaults = new RangeStrategist({ selector: new NapkinSelector() }).decide(node('oop')).strategy;
+  assert.ok(Math.abs(defaults[0][nuts] - 0.2) < 1e-9);
 });
 
-test('river bluffs start with air that blocks his calls', () => {
+test('river bluffs are the weakest hands, with blockers choosing among twins', () => {
   const c = context({ board: 'Td9d6hQc7s', position: 'ip', spot: { street: 'river', pot: 100, stack: 250 } });
   const wager = new ParetoEngine().wager('ip', c.spot, 75);
-  const scores = new NapkinSelector().bluff(c, wager);
+  const weakest = new NapkinSelector().bluff(c, wager);
+  // Less equity always comes first
+  assert.ok(weakest[id('Ks5s')] > weakest[id('As2s')] && weakest[id('As2s')] > weakest[id('AsKh')]);
+  assert.ok(weakest[id('AsKh')] > weakest[id('4s4h')]);
+  // Two ace-high hands with the same equity are twins: only their blockers tell them apart
+  const twins = [id('As2s'), id('Ah3h')];
+  assert.ok(Math.abs(c.strength[twins[0]] - c.strength[twins[1]]) < 0.02);
+
+  // The guide's order: air first, by what it blocks
+  const scores = new NapkinSelector({ riverBluffs: 'air' }).bluff(c, wager);
   // Both are air, but a king blocks the nut straight (KJ); a small pair has showdown value and waits
   assert.ok(scores[id('Ks5s')] > scores[id('As2s')]);
   assert.ok(scores[id('As2s')] > scores[id('4s4h')]);
@@ -110,7 +124,7 @@ test('on the turn, draws and top pair call before weak pairs and high cards', ()
 test('river raises need more equity the bigger they are', () => {
   const c = context({ board: 'Td9d6hQc7s', position: 'ip', spot: { street: 'river', pot: 150, toCall: 50, stack: 1000 } });
   const engine = new ParetoEngine();
-  const selector = new NapkinSelector();
+  const selector = new NapkinSelector({ valueThreshold: 0.5 }); // Newman's sizes alone
   const count = (to, least) => {
     const scores = selector.value(c, engine.wager('ip', c.spot, to));
     const hands = [...scores.keys()].filter((i) => !Number.isNaN(scores[i]));

@@ -164,8 +164,8 @@ new RangeStrategist({ engine, selector: new NapkinSelector() });
 
 | Role | Rule |
 |---|---|
-| Value bets | Hands that beat more than half of his continues. Flat value first (equity that holds against his strong hands), then value that does not block his calls. Out of position on the river, thin value (50-70% against his range) checks, and so do some of the nuts, taken from the very top, as a sixth of the value that checks. |
-| River bluffs | Air first (no pair, under 20% equity), the hands that block his calls ahead; then the weakest of the rest. |
+| Value bets | Hands that beat more than 70% of his continues. Flat value first (equity that holds against his strong hands), then value that does not block his calls. Out of position on the river every value hand checks a fifth of the time. |
+| River bluffs | The weakest hand first. Among twins (hands within 2 points of equity) the one that blocks his calls and not his folds. |
 | Turn bluffs | Six roles (air, overcards, made, gutshot, draw, nut draw), each ordered by its own mark. Draws go first when he is ahead in range or stacks are deep, pure bluffs when we are ahead or stacks are shallow. |
 | Flop bluffs | Draws first, then blockers to his strong hands, pairs last. When we are ahead in range or stacks are shallow, the blockers go ahead of the draws, as on the turn. |
 | River calls | Hands that beat half his value, then bluff-catchers (beat half his bluffs) by the marks below. Hands that beat neither fold. |
@@ -174,37 +174,61 @@ new RangeStrategist({ engine, selector: new NapkinSelector() });
 | River raises | Newman: 80% against his betting range for half a pot, 90% for a pot, 97% for three pots. Bluff raises are the weakest hands. |
 | Turn and flop raises | Value by equity against his value; bluff raises are draws first. |
 
-Three things in it are not in the guide, and are marked in the code:
+Where it departs from the guide, each marked in the code and each with an option to go back:
 
-- The weights that combine the marks. The bluff-catcher weights are each mark's gap between
-  must-calls and must-folds in the guide's table; the rest are in `NapkinSelector.WEIGHTS`.
-- `priorStrength`: one more bluff-catcher mark, equity against the range he started the hand
-  with. Without it the engine called a river raise with ace high and folded straights, because
-  both "only beat his bluffs" in its model of his range. `new NapkinSelector({ priorStrength: 0 })`
-  uses the guide's marks alone.
-- A draw only calls ahead of made hands when at least a pot is left behind after the call
-  (`drawBehind`): the guide's reason is that a hit collects his next bet.
-- Flop bluffs use the turn's rule for which roles go first. The guide says draws first on the
-  flop; with shallow stacks that cost up to 12% of the pot when exploited.
-- Bluff raises fall back to the weakest hands when the draws run out, so the raise keeps the
-  engine's frequency.
+- **Value needs 70% against his continues, not half** (`valueThreshold`). The largest single
+  gain: about a third less lost when exploited, on rivers and turns, and it held on ranges and
+  stack depths it was not tuned on.
+- **Out of position on the river, every value hand checks 20% of the time** (`oopValueChecks`),
+  in place of the guide's thin-value and trap rules (`thinValue`, `trapShare`), which never
+  applied at the engine's bet sizes. The solver checks 30-50% of its strong hands there.
+- **River bluffs are weakest first** (`riverBluffs`). The guide's order, air with blockers
+  first, matched the solver's bluffs less well (0.78 against 0.91, see the diagnosis below).
+- **`priorStrength`**: one more bluff-catcher mark, equity against the range he started the
+  hand with. Without it the engine called a river raise with ace high and folded straights.
+- **`drawBehind`**: a draw only calls ahead of made hands when a pot is left behind.
+- Flop bluffs use the turn's rule for which roles go first, and bluff raises fall back to the
+  weakest hands when the draws run out.
+- The weights that combine the marks, in `NapkinSelector.WEIGHTS`.
 
 Not implemented: "avoid hands that leave him raises" and implied odds as a mark (both need a
 model of his raising range), and the order inside the made role, which the guide lists as open.
 
-Loss when fully exploited, as a share of the pot, over 4 rivers and 4 turns, both seats
-(bets 33%, 75%, 150% pot, 2.5x raises, stack 2.5x pot, one pair of ranges):
+Loss when fully exploited, as a share of the pot, both seats averaged:
 
-| Selector | Rivers | Turns |
+| Trees | `EquitySelector` | `NapkinSelector` |
 |---|---|---|
-| `EquitySelector` | 10.7% | 26.1% |
-| `NapkinSelector` | 6.7% | 23.8% |
-| `NapkinSelector({ priorStrength: 0 })` | 15.2% | 25.2% |
+| 12 rivers, stack 2.5x pot (tuned on these) | 9.3% | 3.9% |
+| 8 rivers, other ranges, stack 4x pot | 9.9% | 4.4% |
+| 4 turns, stack 2.5x pot | 26.1% | 14.3% |
+| 1 flop `Td9d6h`, one bet size, stack 1.5x pot | 26.8% | 14.9% |
 
-Against the solver's equilibrium the two are level: 1.4% and 1.5% on rivers, 3.5% and 3.4% on
-turns. On one flop tree (`Td9d6h`, one bet size, stack 1.5x pot) equity loses 27.0% out of
-position and 26.6% in position when exploited, and Napkin 26.4% and 28.4%.
-`node bin/play.js --selector napkin` runs one spot.
+Against the solver's equilibrium Napkin loses 0.6% on those rivers (equity 1.2%), 2.3% on the
+turns (3.5%) and 6.0% on the flop (6.1%). `node bin/play.js --selector napkin` runs one spot.
+
+### Diagnosing hand selection
+
+`node bin/diagnose.js` compares a selector's order with the solver's equilibrium on river
+boards, hand by hand, giving the selector the solver's own ranges:
+
+1. Is the hand bluff or value? (Does it beat half of the range that continues.)
+2. Is it a must, a can't or optional? (The solver takes the action 85% or more, 15% or less, or mixes.)
+3. Is it interchangeable? (How much of each role the solver mixes.)
+4. What makes hands twins? (Characteristics measured on every hand.)
+5. How do the characteristics rank? (How well each separates musts from can'ts, over all hands
+   and among twins of the same equity.)
+
+Each selector gets the same score: the chance that it ranks a must above a can't from the same
+decision (1.00 is perfect, 0.50 is no better than chance). On 12 rivers:
+
+| Role | `EquitySelector` | `NapkinSelector` |
+|---|---|---|
+| Bluff bets | 0.90 | 0.91 |
+| Calls | 0.83 | 0.96 |
+| Value bets | 0.84 | 0.70 |
+
+The value row is the one place where agreeing with the solver and losing less to it pull apart:
+the solver bets thinner, with small sizes, than the engine can afford to with the sizes it picks.
 
 `EquitySelector` takes the two equity settings, which can also be passed straight to
 `RangeStrategist`: `valueThreshold` (default 0.5) and `callFloor` (default 0.5: a

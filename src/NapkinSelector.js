@@ -43,11 +43,22 @@ export class NapkinSelector {
 
   /**
    * @param {Object} [options]
-   * @param {number} [options.valueThreshold] §1: value beats more than this share of his continues. Default 0.5.
+   * @param {number} [options.valueThreshold] §1: value beats more than this share of his continues.
+   *   Default 0.7. The guide says half; measured against the solver's best response, 0.7 loses
+   *   about a third less on rivers and turns (the range that really continues is stronger than
+   *   the engine's model of it).
+   * @param {number} [options.oopValueChecks] The share of every value hand that checks out of
+   *   position on the river, so that the checking range is not all weak. Default 0.2. The solver
+   *   checks 30-50% of its strong hands there. 0 uses the guide's trap rule (`trapShare`) instead.
+   * @param {'weakest'|'air'} [options.riverBluffs] 'weakest' (default): the hand with the least
+   *   equity bluffs first, and blockers choose among twins. 'air': the guide's order, air with
+   *   blockers to his calls first. Measured on rivers, 'weakest' follows the solver's bluffs better.
+   * @param {number} [options.twinEquity] How close in equity two river hands must be to count as
+   *   twins. Default 0.02.
    * @param {[number, number]} [options.thinValue] §1: equity against his range that counts as thin
    *   value, which checks out of position on the river. Default [0.5, 0.7]. null bets it.
    * @param {number} [options.trapShare] §1: nut hands as a share of the value that checks out of
-   *   position on the river. Default 1/6. 0 never traps.
+   *   position on the river, when `oopValueChecks` is 0. Default 1/6. 0 never traps.
    * @param {number} [options.airEquity] §2: equity below which a hand with no pair and no draw is air. Default 0.2.
    * @param {number} [options.callFloor] A hand needs this share of the pot odds in equity to call,
    *   and his continues are assumed to as well (as in EquitySelector). Default 0.5.
@@ -56,8 +67,8 @@ export class NapkinSelector {
    * @param {number} [options.priorStrength] Weight, among the bluff-catcher marks, of equity
    *   against the range he started with. See WEIGHTS.priorStrength. 0 uses the guide's marks alone.
    */
-  constructor({ valueThreshold = 0.5, thinValue = [0.5, 0.7], trapShare = 1 / 6, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1 } = {}) {
-    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind });
+  constructor({ valueThreshold = 0.7, thinValue = [0.5, 0.7], trapShare = 1 / 6, airEquity = 0.2, callFloor = 0.5, priorStrength = NapkinSelector.WEIGHTS.priorStrength, drawBehind = 1, riverBluffs = 'weakest', twinEquity = 0.02, oopValueChecks = 0.2 } = {}) {
+    Object.assign(this, { valueThreshold, thinValue, trapShare, airEquity, callFloor, priorStrength, drawBehind, riverBluffs, twinEquity, oopValueChecks });
     this.cache = new WeakMap();
   }
 
@@ -86,6 +97,12 @@ export class NapkinSelector {
       // Flat value first (equity that holds against his strong hands), then value that does
       // not block the hands that call it
       scores[i] = sized.flatness[i] - 0.1 * sized.blocksContinues[i];
+    }
+    // Measured on the river: out of position the solver checks a good part of every value band,
+    // strong hands included, so that its checks are not all weak. The hands are interchangeable:
+    // each keeps `oopValueChecks` of its combos back.
+    if (context.position === 'oop' && context.street === 'river' && this.oopValueChecks > 0) {
+      return { hands: scores, limit: new Float64Array(NUM_COMBOS).fill(1 - this.oopValueChecks) };
     }
     if (!thinChecks || !(this.trapShare > 0) || !(checked > 0)) return scores;
 
@@ -145,8 +162,16 @@ export class NapkinSelector {
     if (context.street === 'river') {
       for (let i = 0; i < NUM_COMBOS; i++) {
         if (!(hero[i] > 0)) continue;
-        // Air first, the hands that block his calls ahead; then the weakest of the rest
-        scores[i] = isAir(i) ? 10 + sized.blocksContinues[i] : -strength[i];
+        if (this.riverBluffs === 'air') {
+          // The guide's order: air first, the hands that block his calls ahead; then the weakest
+          scores[i] = isAir(i) ? 10 + sized.blocksContinues[i] : -strength[i];
+        } else {
+          // Measured on the river: the weakest hand bluffs first, whatever it blocks. Blockers
+          // only choose among twins (hands within `twinEquity` of each other): block his calls,
+          // do not block his folds.
+          const twin = Math.round(strength[i] / this.twinEquity);
+          scores[i] = -twin + 0.4 * (sized.blocksContinues[i] - sized.blocksFolds[i]);
+        }
       }
       return scores;
     }
@@ -341,6 +366,7 @@ export class NapkinSelector {
       // 0 is flat (as good against the hands that continue as against those that fold); negative is steep
       flatness: versusContinues.map((e, i) => e - finite(versusFolds[i], e)),
       blocksContinues: blockedShare(continues),
+      blocksFolds: blockedShare(folds),
     };
     view.sized.set(wager.to, sized);
     return sized;
