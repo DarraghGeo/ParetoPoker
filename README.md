@@ -18,10 +18,17 @@ Spots can start on the flop, the turn or the river, and are solved and walked st
 `docs/` is the built page. To publish it: repository Settings, Pages, deploy from a branch,
 folder `/docs`.
 
-- **Spot**: a board, two ranges and a bet menu are solved in the browser. Walk the line, pick a
-  hand, read why. "Why" opens the full list of reasons.
-- **Warp**: no cards. Drag the out-of-position player's equity curve and the game is solved
-  again on the two curves, so you can see what a shape of range does.
+The page opens on a choice between the two:
+
+- **Study**: a board, two ranges and a bet menu are solved in the browser. Walk the line, pick a
+  hand, read why. Ranges are edited on a chart, and each edit is a version to go back and forth between.
+- **Train**: questions on boards dealt at random, with the ranges, pot and bet sizes set up in
+  Study. Who has the range advantage, who has the nut advantage (hands with 90% equity or more),
+  the biggest bet or raise the range takes, and what a given hand can do. The two ranges sit side
+  by side, hero in ink and villain faded, or as the two equity curves. Settings choose the kinds
+  of question and the streets; each shows its last five days played. The day's score opens the
+  last questions with the answer given, the right one and why. A question whose answer is too
+  close to call is not asked.
 
 ```bash
 npm install

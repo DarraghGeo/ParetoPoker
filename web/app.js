@@ -3,20 +3,8 @@ import { explain, survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
 import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
+import { $, COLORS, DEFAULTS, GLYPH, RANKS, bar, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
-const $ = (id) => document.getElementById(id);
-const COLORS = ['--act-fold', '--act-check', '--act-small', '--act-big', '--act-allin'];
-const RANKS = 'AKQJT98765432';
-const GLYPH = { s: '♠︎', h: '♥︎', d: '♦︎', c: '♣︎' };
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-const pct = (x) => `${Math.round(100 * x)}`;
-const cardsHtml = (text) => (text.match(/[2-9TJQKA][shdc]/g) ?? []).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join('');
-
-const DEFAULTS = {
-  board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, bets: [0.33, 0.75, 1.5], raises: [2.5], maxRaises: 1, allIn: false,
-  oop: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s',
-  ip: 'QQ-22,AQs-A2s,ATo+,K5s+,KJo+,Q8s+,J8s+,T7s+,96s+,86s+,75s+,64s+,53s+',
-};
 const state = {
   mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', split: false,
   spot: null, job: 0, status: '', stats: null,
@@ -127,13 +115,6 @@ function show(decision) {
 }
 
 // ---- drawing ----
-const strataOf = (actions) => { let sized = 0; return actions.map((a) => (a.kind === 'fold' ? 0 : a.kind === 'check' || a.kind === 'call' ? 1 : a.kind === 'allin' ? 4 : sized++ === 0 ? 2 : 3)); };
-const bar = (mix, strata) => { const s = [0, 0, 0, 0, 0]; mix.forEach((p, a) => { s[strata[a]] += p; }); return s.map((x, i) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[i]})"></i>` : '')).join(''); };
-function cellOf(name) {
-  const a = RANKS.indexOf(name[0]); const b = RANKS.indexOf(name[2]);
-  const hi = Math.min(a, b); const lo = Math.max(a, b);
-  return a === b ? `${hi},${hi}` : name[1] === name[3] ? `${hi},${lo}` : `${lo},${hi}`;
-}
 function render() {
   const grid = state.view === 'grid'; const dealing = state.pick != null;
   $('range').hidden = !grid || dealing; $('dist').hidden = grid || dealing; $('deal').hidden = !dealing;
@@ -346,7 +327,6 @@ $('range').addEventListener('click', (ev) => {
 $('combos').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (b) { state.hand = b.dataset.hand; state.cell = cellOf(state.hand); render(); } });
 // ---- setup: the ranges are painted on a chart or typed, whichever is at hand ----
 const draft = { side: 'oop', oop: '', ip: '' };
-const cellName = (i, j) => (i === j ? RANKS[i] + RANKS[i] : i < j ? `${RANKS[i]}${RANKS[j]}s` : `${RANKS[j]}${RANKS[i]}o`);
 /** How much of each chart cell a range holds, 0 to 1, or null when the notation cannot be read. */
 function cellsOf(notation) {
   const cells = new Map();
