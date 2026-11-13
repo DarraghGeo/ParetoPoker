@@ -40,6 +40,30 @@ The same caution applies to the tools. `bin/locate.js` and the "located" setting
 `diagnosis/try.mjs` put the engine inside the solver's own strategy; they found every lead and
 disagreed with the whole-engine result often enough that nothing was adopted on them alone.
 
+## The solver's frequencies and mixing along our order of hands (rivers)
+
+`diagnosis/v51.mjs`, `SolverMatch.play` with `hands: 'solver-by-order'`: at every decision the
+range is cut into equal bands along the selector's order, and every hand of a band plays the
+band's average of the solver's strategy. Frequencies and mixing are the solver's; the only
+thing of ours is which hand sits where. Loss to the best response (to the equilibrium in
+brackets), both seats averaged:
+
+| | rivers-tune | rivers-held |
+|---|---|---|
+| fitted (Napkin) order, 10 bands | 2.77 (0.46) | 2.58 (0.45) |
+| fitted (Napkin) order, 20 bands | 1.35 (0.25) | 1.34 (0.25) |
+| fitted (Napkin) order, 50 bands | 0.59 (0.11) | 0.63 (0.11) |
+| equity order, 10 bands | 4.24 (0.39) | 4.32 (0.37) |
+| equity order, 20 bands | 2.29 (0.20) | 2.43 (0.19) |
+| equity order, 50 bands | 1.03 (0.08) | 1.14 (0.08) |
+| the solver itself | 0.24 | 0.24 |
+| the whole engine, fitted | 3.53 (0.61) | 3.70 (0.67) |
+
+The number of bands is how finely the mixing is allowed to follow the order, and it drives the
+result: with a band per hand any order gives back the solver. At 20 bands (5% of the range
+each) the order costs about 1.1 points over the solver, so of the engine's 3.5-3.7 on rivers,
+roughly 2.3 is frequencies and mixing and about 1.1 is the order at that resolution.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,

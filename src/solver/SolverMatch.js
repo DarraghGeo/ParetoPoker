@@ -54,13 +54,15 @@ export class SolverMatch {
    *   solver's hands with its own mixing, scaled to the frequencies. With the other two options
    *   this separates what the engine does: estimate his range, set frequencies, choose hands,
    *   and deal them out. All three from the solver with 'solver-mixed' is the solver's strategy.
+   *   'solver-by-order': the solver's frequencies and mixing laid along the selector's order, in
+   *   `orderBands` slices of the range (default 20).
    * @param {(decision: Object) => boolean} [options.where] Which of
    *   hero's decisions the engine makes; the solver's own strategy is kept at the others. Gets
    *   `{ street, position, facing, raises, depth, spot }`.
    * @returns {Promise<Object>} Expected values in chips, losses as a share of the pot, and the
    *   engine's and the solver's action frequencies along the first decisions of the hand.
    */
-  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', hands = 'engine', where = null } = {}) {
+  async play(hero, { iterations = 1000, target = 0.003, ranges: source = 'engine', frequencies = 'engine', hands = 'engine', orderBands = 20, where = null } = {}) {
     const seat = POSITIONS.indexOf(hero);
     if (seat < 0) throw new Error(`hero must be 'oop' or 'ip', got ${hero}`);
     const bridge = (this.bridge ??= new SolverBridge());
@@ -82,7 +84,7 @@ export class SolverMatch {
     if (source === 'solver' || frequencies === 'solver' || hands !== 'engine' || where || this.opponent !== this.strategist) {
       // 2. The engine decides at every node with whatever it is given from the solver, then all of it is locked
       const decisions = [];
-      await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, where, decisions, lines });
+      await this.#walkSolverRanges({ ...start, own: ranges[seat], model: ranges[1 - seat] }, { seat, source, frequencies, hands, orderBands, where, decisions, lines });
       await bridge.reset();
       for (const { history, flat } of decisions) await bridge.lock(history, flat);
       locked = decisions.length;
@@ -193,7 +195,7 @@ export class SolverMatch {
    * while the equilibrium is still in the bridge.
    */
   async #walkSolverRanges(state, options) {
-    const { seat, source, frequencies, hands, where, decisions, lines } = options;
+    const { seat, source, frequencies, hands, orderBands, where, decisions, lines } = options;
     const node = await this.bridge.node(state.history);
     if (node.terminal) return;
     if (node.chance) {
@@ -231,6 +233,13 @@ export class SolverMatch {
         const reached = weights[me].some((w) => w > 1e-9);
         let targets = frequencies === 'solver' && reached ? solver : null;
         let strategist = this.strategist;
+        if (hands === 'solver-by-order') {
+          // The solver's frequencies and its mixing, laid along the selector's order: the range is
+          // cut into bands by that order and every hand of a band plays the band's average of the
+          // solver's strategy. What the order cannot tell apart is all that is lost.
+          mine = alongOrder(solved, state.own, strategist.order(base), orderBands);
+          decisions.push({ history: [...state.history], flat: this.#flatten(me, mine) });
+        } else {
         if (hands !== 'engine') {
           // The engine's frequencies are whatever it would play here with its own hands
           targets ??= strategist.decide(base).played;
@@ -240,6 +249,7 @@ export class SolverMatch {
           ? rescaled(solved, state.own, targets, node.actions.findIndex((a) => a.type === (spot.toCall > 0 ? 'fold' : 'check')))
           : strategist.decide({ ...base, targets }).strategy;
         decisions.push({ history: [...state.history], flat: this.#flatten(me, mine) });
+        }
       } else {
         mine = node.actions.map((_, a) => spread(this.hands[me], strategy.slice(a * n, (a + 1) * n)));
         decisions.push({ history: [...state.history], flat: strategy.map((x) => Math.max(x, 1e-9)) });
@@ -348,6 +358,31 @@ function solverOrder(actions, solved, spot) {
     bluff: (context, wager) => sized(wager),
     call: () => solved[actions.findIndex((a) => a.type === 'call')],
   };
+}
+
+/** The solver's strategy averaged within `bands` equal slices of `range` taken along `order`. */
+function alongOrder(solved, range, order, bands) {
+  const hands = [];
+  let total = 0;
+  for (let i = 0; i < NUM_COMBOS; i++) if (range[i] > 1e-9) { hands.push(i); total += range[i]; }
+  hands.sort((a, b) => order[a] - order[b]);
+  const sums = Array.from({ length: bands }, () => ({ weight: 0, strategy: solved.map(() => 0) }));
+  const bandOf = new Map();
+  let seen = 0;
+  for (const i of hands) {
+    const band = Math.min(bands - 1, Math.floor((bands * (seen + range[i] / 2)) / total));
+    seen += range[i];
+    bandOf.set(i, band);
+    sums[band].weight += range[i];
+    solved.forEach((probabilities, a) => { sums[band].strategy[a] += range[i] * probabilities[i]; });
+  }
+  // Hands outside hero's range keep the solver's own strategy
+  const out = solved.map((probabilities) => Float64Array.from(probabilities));
+  for (const i of hands) {
+    const band = sums[bandOf.get(i)];
+    solved.forEach((_, a) => { out[a][i] = band.strategy[a] / band.weight; });
+  }
+  return out;
 }
 
 /**

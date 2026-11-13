@@ -170,6 +170,36 @@ export class RangeStrategist {
   }
 
   /**
+   * The selector's order alone, as one score per combo: the higher, the sooner the hand bets for
+   * value or continues; the lowest are the first bluffs. Facing a bet it is the calling order.
+   * First to act it is the value order (for the size the engine prefers) on top and the bluff
+   * order, reversed, underneath. Used to test an order with someone else's frequencies and mixing.
+   */
+  order({ position, spot, board, hero, villain, villainPrior, actions }) {
+    if (villainPrior && !(sumOf(villain) > 1e-9)) villain = villainPrior;
+    const context = new SelectionContext({ equity: this.equity, position, spot, board, hero, villain, villainPrior, actions });
+    context.tuning = this.tuner.tune(context) ?? null;
+    const out = new Float64Array(NUM_COMBOS).fill(-Infinity);
+    if ((spot.toCall ?? 0) > 0) {
+      const { scores } = this.#candidates('call', context);
+      for (let i = 0; i < NUM_COMBOS; i++) if (hero[i] > 0) out[i] = Number.isNaN(scores[i]) ? -1e6 + context.strength[i] : scores[i];
+      return out;
+    }
+    const sized = actions.filter((a) => AGGRESSIVE.has(a.type)).map((a) => a.to);
+    const seen = new Map();
+    const frequencies = this.engine.respond(position, { ...spot, options: sized }, { valueShare: (wager) => { seen.set(wager.to, this.#candidates('value', context, wager)); return 0; }, tuning: context.tuning });
+    const wager = frequencies.sizes.reduce((best, w) => (w.weight > best.weight ? w : best), frequencies.sizes[0]);
+    if (!wager) return context.strength;
+    const value = seen.get(wager.to).scores;
+    const bluff = this.#candidates('bluff', context, wager).scores;
+    for (let i = 0; i < NUM_COMBOS; i++) {
+      if (!(hero[i] > 0)) continue;
+      out[i] = !Number.isNaN(value[i]) ? 1e6 + value[i] : -(Number.isNaN(bluff[i]) ? -1e6 : bluff[i]);
+    }
+    return out;
+  }
+
+  /**
    * The same decision for one holding: the probability of each action for `hand` ('AhKd' or a
    * combo id), and `sample()` to draw one.
    */
