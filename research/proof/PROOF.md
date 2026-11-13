@@ -116,11 +116,8 @@ Lines at least half of each range takes:
 | River | held-out (6 hand-built) | 0.01% vs 0.002% | 4,131 | **0** | 2,260 / 0 | 802 / 0 | 787 / 0 | 282 / 0 | — | 7,437 | 0 | 0.192 |
 | River | random (40) | 0.01% vs 0.002% | 20,109 | **0** | 4,393 / 0 | 9,068 / 0 | 4,915 / 0 | 1,733 / 0 | — | 33,527 | 152 | 0.249 |
 | River | fresh random (60) | 0.01% vs 0.002% | 28,250 | **0** | 16,064 / 0 | 5,299 / 0 | 4,821 / 0 | 2,066 / 0 | — | 48,496 | 19 | 0.504 |
-| Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
-| Flop | fresh random, first gates (13) | 0.3% vs 0.02% | 9,124 | **1** | 2,957 / 0 | 2,356 / 1 | 2,164 / 0 | 600 / 0 | 1,047 / 0 | 15,207 | 167 | 2.798 |
-| Flop | fresh random, final gates (4) | 0.3% vs 0.02% | 3,202 | **0** | 681 / 0 | 864 / 0 | 931 / 0 | 334 / 0 | 392 / 0 | 5,853 | 83 | 1.452 |
 
-All sets together on those lines: **115,189 conclusions, 1 false.**
+All sets together on those lines: **100,984 conclusions, 0 false.**
 "Largest reversed gap" is the largest difference in worth, at page accuracy, whose direction a reference
 reversed: the gate for calling an action worse is 2% of the pot on these lines, several times that figure.
 
@@ -176,10 +173,21 @@ least half of each range takes), on 30 of the fresh random turn spots, three riv
 
 A flop cannot be solved in a browser tab much finer than 0.3% of the pot, so that is the page accuracy
 tested, against references at 0.02%. Flop decisions, and turn decisions after a card has come, on lines at
-least half of each range takes. Gates were fixed beforehand from one flop spot measured in full. After the
-first seventeen spots, in which a finer solve reversed a difference of 2.798% of the pot, the gate for calling an action
-worse was raised from 3% to 5%; the last set was run after that and is the test of the gates as they stand.
-**14,205 conclusions on 19 spots, 1 false.** The numbers are another matter at this accuracy: 815 of 23,481
+least half of each range takes. Gates were fixed beforehand from one flop spot measured in full. Part-way
+through, after a finer solve had reversed a difference of 2.1% of the pot, the gate for calling an action
+worse was raised from 3% to 5%; the "final gates" set was run after that.
+
+| Street | Set of spots | Page vs reference accuracy | Conclusions | False | worse (made / false) | same | needs | builds | cards | Numbers | Outside tolerance | Largest reversed gap (% pot) |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
+| Flop | fresh random, first gates (14) | 0.3% vs 0.02% | 9,725 | **1** | 3,016 / 0 | 2,591 / 1 | 2,396 / 0 | 631 / 0 | 1,091 / 0 | 16,317 | 167 | 2.798 |
+| Flop | fresh random, final gates (8) | 0.3% vs 0.02% | 5,556 | **0** | 1,380 / 0 | 1,403 / 0 | 1,354 / 0 | 418 / 0 | 1,001 / 0 | 9,060 | 292 | 1.452 |
+
+**17,160 conclusions on 24 spots, 1 false.**
+
+**Not adopted.** same: 4,385 made, 1 false; needs: 4,196 made, 0 false; worse: 5,064 made, 0 false; builds: 1,117 made, 0 false; cards: 2,398 made, 0 false. The false one: a hand on a turn inside a flop spot that the 0.3% solve mixes between checking and betting ("worth the same to within 2.9% of the pot") where both finer solves have the bet 3.1% worse. One false conclusion is a failure, so the page draws no conclusions on flop spots: it gives the numbers and says they are only that. What would change this: flop solves finer than a browser tab manages, or gates widened and tested on spots not yet seen.
+
+The numbers are another matter at this accuracy: 1,024 of 27,798
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 
@@ -231,7 +239,7 @@ fresh sets and the accounting proofs were run again on it:
 4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
    the two references differed by four points about the equity of hands against that range. Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
-   takes, 452 of 85,481 equities fell outside the tolerance (1 to 2 points) of a reference.
+   takes, 661 of 88,287 equities fell outside the tolerance (1 to 2 points) of a reference.
 
 ## Not proven: said nowhere on the page, to be proved later or dropped
 
@@ -242,7 +250,7 @@ fresh sets and the accounting proofs were run again on it:
 | Why a hand bets 60% and not 40% | Finding 3 | `tolerance.mjs` |
 | Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
 | River decisions after a deal on lines under half of either range; anything two deals deep (a river inside a flop spot) | Not tried | — |
-| Conclusions about flop decisions | Tested at the accuracy a browser reaches (0.3%): see the table. False conclusions were found. | `accept.mjs "held flop" 0.3 0.02` |
+| Conclusions about flop decisions, and about turn decisions inside a flop spot | Tested at the accuracy a browser reaches (0.3%): a false conclusion was found, so none are drawn. Numbers only on flop spots | "Flop spots" above |
 | "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
 | Which of his hands fold, call or raise, by made hand | Not measured; the split by holding above suggests it will not be stable | — |

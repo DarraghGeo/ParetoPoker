@@ -24,8 +24,8 @@ const gather = (pattern, label) => {
 gather(/^part-(more|fresh)-flop-\d+\.json$/, 'fresh random, first gates');
 gather(/^part-extra-flop-\d+\.json$/, 'fresh random, final gates');
 const byLine = (r, from) => { const out = { conclusions: 0, failed: 0, numbers: 0, outside: 0, kinds: {} }; for (const [k, v] of Object.entries(r.byKind)) { if (!k.endsWith(`line ${from}+`)) continue; const kind = k.split(' ')[0]; if (v.number) { out.numbers += v.made; out.outside += v.failed; } else { out.conclusions += v.made; out.failed += v.failed; } out.kinds[kind] = [v.made, v.failed]; } return out; };
-const rows = (from) => accept.map(({ street, set, r }) => { const b = byLine(r, from); if (!b.conclusions && !b.numbers) return null; const k = (x) => (b.kinds[x] ? `${n(b.kinds[x][0])} / ${b.kinds[x][1]}` : '—'); return `| ${street} | ${set} | ${r.pageAccuracy}% vs ${r.referenceAccuracy}% | ${n(b.conclusions)} | **${b.failed}** | ${k('worse')} | ${k('same')} | ${k('needs')} | ${k('builds')} | ${k('cards')} | ${n(b.numbers)} | ${b.outside} | ${r.largestReversedGapByLine?.[from]?.gap ?? '—'} |`; }).filter(Boolean).join('\n');
-const total = (from, street) => accept.filter((x) => !street || x.street === street).reduce((t, { r }) => { const b = byLine(r, from); return { c: t.c + b.conclusions, f: t.f + b.failed }; }, { c: 0, f: 0 });
+const rows = (from, flops = false) => accept.filter((x) => (x.street === 'Flop') === flops).map(({ street, set, r }) => { const b = byLine(r, from); if (!b.conclusions && !b.numbers) return null; const k = (x) => (b.kinds[x] ? `${n(b.kinds[x][0])} / ${b.kinds[x][1]}` : '—'); return `| ${street} | ${set} | ${r.pageAccuracy}% vs ${r.referenceAccuracy}% | ${n(b.conclusions)} | **${b.failed}** | ${k('worse')} | ${k('same')} | ${k('needs')} | ${k('builds')} | ${k('cards')} | ${n(b.numbers)} | ${b.outside} | ${r.largestReversedGapByLine?.[from]?.gap ?? '—'} |`; }).filter(Boolean).join('\n');
+const total = (from, street) => accept.filter((x) => (street ? x.street === street : x.street !== 'Flop')).reduce((t, { r }) => { const b = byLine(r, from); return { c: t.c + b.conclusions, f: t.f + b.failed }; }, { c: 0, f: 0 });
 const head = '| Street | Set of spots | Page vs reference accuracy | Conclusions | False | worse (made / false) | same | needs | builds | cards | Numbers | Outside tolerance | Largest reversed gap (% pot) |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|';
 const md = `# What is proven about the explanations
 
@@ -148,7 +148,7 @@ under the final rules. Below a fifth of either range nothing is concluded.
 
 ### Both together
 
-${(() => { const a = total('0.5'), b = total('0.2'); const fresh = accept.filter((x) => x.set.startsWith('fresh')).reduce((t, { r }) => t + r.conclusions.made, 0); const turn = accept.filter((x) => x.street === 'Turn').reduce((t, { r }) => t + r.conclusions.made, 0); const river = accept.filter((x) => x.street === 'River').reduce((t, { r }) => t + r.conclusions.made, 0); const spots = accept.filter((x) => x.street !== 'Flop').reduce((t, { r }) => t + r.spots.length, 0); return `Turn and river, every set: **${n(turn + river)} conclusions on ${spots} spots (${n(turn)} turn, ${n(river)} river), ${a.f + b.f - accept.filter((x) => x.street === 'Flop').reduce((t, { r }) => t + r.conclusions.failed, 0)} false.** Of these, ${n(accept.filter((x) => x.set.startsWith('fresh') && x.street !== 'Flop').reduce((t, { r }) => t + r.conclusions.made, 0))} are on the 120 fresh random spots that the final rules had never seen.`; })()}
+${(() => { const a = total('0.5'), b = total('0.2'); const turn = accept.filter((x) => x.street === 'Turn').reduce((t, { r }) => t + r.conclusions.made, 0); const river = accept.filter((x) => x.street === 'River').reduce((t, { r }) => t + r.conclusions.made, 0); const spots = accept.filter((x) => x.street !== 'Flop').reduce((t, { r }) => t + r.spots.length, 0); return `Turn and river, every set: **${n(turn + river)} conclusions on ${spots} spots (${n(turn)} turn, ${n(river)} river), ${a.f + b.f} false.** Of these, ${n(accept.filter((x) => x.set.startsWith('fresh') && x.street !== 'Flop').reduce((t, { r }) => t + r.conclusions.made, 0))} are on the 120 fresh random spots that the final rules had never seen.`; })()}
 
 ${(() => { const c = json('./out/control-held-turn.json'); return c ? `**Control.** A test that never fails proves nothing unless it can fail. Run again on the held-out turn set with every conclusion turned into its opposite ("worse" with the two actions swapped, "needs" for "builds", the next-card directions reversed, "same" required to be false), the harness rejected **${n(c.conclusions.failed)} of ${n(c.conclusions.made)}**.` : ''; })()}
 
@@ -168,10 +168,18 @@ ${(() => { const fl = accept.filter((x) => x.street === 'Flop'); if (!fl.length)
 
 A flop cannot be solved in a browser tab much finer than 0.3% of the pot, so that is the page accuracy
 tested, against references at 0.02%. Flop decisions, and turn decisions after a card has come, on lines at
-least half of each range takes. Gates were fixed beforehand from one flop spot measured in full. After the
-first seventeen spots, in which a finer solve reversed a difference of ${fl.reduce((t, x) => Math.max(t, x.set.includes('final') ? 0 : x.r.largestReversedGapByLine?.['0.5']?.gap ?? 0), 0)}% of the pot, the gate for calling an action
-worse was raised from 3% to 5%; the last set was run after that and is the test of the gates as they stand.
-**${n(made)} conclusions on ${spots} spots, ${failed} false.** The numbers are another matter at this accuracy: ${n(out)} of ${n(nums)}
+least half of each range takes. Gates were fixed beforehand from one flop spot measured in full. Part-way
+through, after a finer solve had reversed a difference of 2.1% of the pot, the gate for calling an action
+worse was raised from 3% to 5%; the "final gates" set was run after that.
+
+${head}
+${rows('0.5', true)}
+
+**${n(made)} conclusions on ${spots} spots, ${failed} false.**
+
+${failed ? `**Not adopted.** ${(() => { const kinds = {}; for (const x of fl) for (const [k, v] of Object.entries(x.r.byKind)) if (!v.number) { const t = (kinds[k.split(' ')[0]] ??= [0, 0]); t[0] += v.made; t[1] += v.failed; } return Object.entries(kinds).map(([k, [m, f]]) => `${k}: ${n(m)} made, ${f} false`).join('; '); })()}. The false one: a hand on a turn inside a flop spot that the 0.3% solve mixes between checking and betting ("worth the same to within 2.9% of the pot") where both finer solves have the bet 3.1% worse. One false conclusion is a failure, so the page draws no conclusions on flop spots: it gives the numbers and says they are only that. What would change this: flop solves finer than a browser tab manages, or gates widened and tested on spots not yet seen.` : `No false conclusion, on ${spots} spots: far fewer than the turn and river were tried on.`}
+
+The numbers are another matter at this accuracy: ${n(out)} of ${n(nums)}
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 `; })()}
@@ -237,7 +245,7 @@ const tail = `
 | Why a hand bets 60% and not 40% | Finding 3 | \`tolerance.mjs\` |
 | Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
 | River decisions after a deal on lines under half of either range; anything two deals deep (a river inside a flop spot) | Not tried | — |
-| Conclusions about flop decisions | ${flop.length ? `Tested at the accuracy a browser reaches (0.3%): see the table. ${flop.reduce((t, x) => t + byLine(x.r, '0.5').failed, 0) === 0 ? 'No false conclusion so far, but on few spots: each flop takes the better part of an hour to test.' : 'False conclusions were found.'}` : 'The test was still running when this was written.'} | \`accept.mjs "held flop" 0.3 0.02\` |
+| Conclusions about flop decisions, and about turn decisions inside a flop spot | ${flop.length ? (flop.reduce((t, x) => t + x.r.conclusions.failed, 0) === 0 ? 'Tested at the accuracy a browser reaches (0.3%) with no false conclusion, but on far fewer spots than the turn and river' : 'Tested at the accuracy a browser reaches (0.3%): a false conclusion was found, so none are drawn. Numbers only on flop spots') : 'The test was still running when this was written.'} | "Flop spots" above |
 | "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
 | Which of his hands fold, call or raise, by made hand | Not measured; the split by holding above suggests it will not be stable | — |
