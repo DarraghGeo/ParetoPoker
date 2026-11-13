@@ -33,6 +33,7 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
 
 ## Log
 
+- (times in this log before the 05:10 entry are estimates and run fast; real elapsed time at 05:10 was 2h20m)
 - 03:05 **Step 1 done.** `src/Mixer.js`, `src/Tuner.js`, `src/presets.js`. The engine takes
   `tuning` (`sizing`, `value`, `bluff`, `defence`); selectors read `context.tuning.valueThreshold`;
   `context.profile` describes the spot. Value-checking moved from NapkinSelector to a mixer.
@@ -121,3 +122,18 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   (worse); turn defence factors facing a bet (no effect).
   Next: re-locate turns with the fitted parts (diagnosis/locate-turns-fitted.txt), flop check,
   then write-up (TUNINGS.md, README).
+- 05:35 (real time from here) **Re-located with the fitted parts** (oop / ip; floor = the
+  solver's frequencies and order dealt all-or-nothing):
+  rivers-tune: open 4.6 / 5.6 (floor 4.4 / 3.0); facing a bet 2.0 / 4.7 (0.5 / 0.8); raise 0.7 / 0.9.
+  turns-tune: turn open 11.1 / 8.4 (floor 8.0 / 6.8); turn facing a bet 4.3 / 9.4 (1.8 / 3.8);
+  turn facing a raise 3.6 / 3.4 (0.7 / 0.8); river open inside turn trees 6.9 / 18.1 (4.9 / 3.6);
+  river facing a bet 4.8 / 5.2; river facing a raise 0.8 / 0.9.
+  The in-position river open inside turn trees got worse located (10.0 -> 18.1) with the 0.6
+  value threshold; located it wants 0.8 (10.9), on river trees located 0.7. The whole engine
+  disagrees on both (turns-tune: 0.6 11.98, 0.7 12.09, 0.8 12.43; rivers-tune 0.6 3.72, 0.7
+  3.99), so 0.6 stays. Recorded as another located / whole-engine disagreement.
+  The largest remaining piece is turn opens, and most of it is below the all-or-nothing floor:
+  it needs mixing by kind of hand, not a better order.
+  Running: diagnosis/final-table.txt (equity, napkin, fitted on every set, plus the flop tree).
+  Next: write-up of results so far; then a mixing table for turn opens (the solver's bet
+  frequency by strength now and draw), tested located and on the whole engine.

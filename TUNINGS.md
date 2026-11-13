@@ -8,6 +8,114 @@ capping). Add a row when a number changes; do not delete the old result.
 All losses are the share of the pot lost to the solver's best response ("exploited"), both
 seats averaged, unless a row says otherwise. Lower is better.
 
+## The diagnosis run of 2026-11-13: `presets.fitted()`
+
+An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,
+mixer), built a diagnosis for each, and followed the largest loss on each street downward.
+The log, with every intermediate number, is `diagnosis/PROGRESS.md`; the variant files tried
+are `diagnosis/v*.mjs`. This section is the record of what was adopted and what was not.
+
+Spot sets (`src/solver/spots.js`): four pairs of ranges (A the earlier pair, B a single-raised
+pot, C a 3-bet pot, D blind against blind); rivers at 0.75, 2 and 5 pots behind (`rivers-tune`
+72 trees, `rivers-held` 48); turns at 1.5 and 4 pots (`turns-tune` 16, `turns-held` 8); bets of
+33%, 75%, 150% pot and 2.5x raises. R12, R8-B, T4 and T4-B are the earlier sets, kept as checks.
+
+RESULTS_TABLE
+
+### Where the loss was, street by street
+
+`bin/locate.js`: the engine decides at one kind of decision only, inside the solver's strategy
+and on the solver's range. Loss to the best response, out of position / in position, with
+`presets.napkin()` at the start of the run:
+
+| Decision | engine | given the solver's frequencies | and its order of hands | reading |
+|---|---|---|---|---|
+| river, first to act | 6.4 / 6.9 | 8.6 / 1.6 | 4.4 / 3.0 | in position: frequency (size); out of position: mixing |
+| river, facing a bet | 2.4 / 9.3 | 0.6 / 3.7 | 0.5 / 0.8 | frequency, then hand order in position |
+| river, facing a raise | 2.1 / 2.4 | 0.6 / 0.7 | 0.4 / 0.4 | frequency |
+| turn, first to act | 12.5 / 9.3 | 12.3 / 11.3 | 8.0 / 6.8 | mixing |
+| turn, facing a bet | 6.2 / 17.5 | 4.7 / 14.0 | 1.8 / 3.8 | hand order in position |
+| turn, facing a raise | 7.1 / 7.4 | 2.5 / 2.2 | 0.7 / 0.8 | frequency |
+| river inside a turn tree, first to act | 8.0 / 10.0 | 8.8 / 2.4 | 4.9 / 3.6 | as on river trees |
+| river inside a turn tree, facing a bet | 11.8 / 12.6 | 1.3 / 3.5 | 0.9 / 1.2 | frequency |
+
+The same decisions with `presets.fitted()` are in `diagnosis/locate-turns-fitted.txt` and
+`diagnosis/locate-rivers-fitted.txt`.
+
+### What the solver does, against the fundamentals
+
+`bin/diagnose-tuning.js` (rows in `diagnosis/tuning-*.json`, fits by `diagnosis/fit.mjs`).
+RA = range advantage, hero's average equity minus the opponent's.
+
+| | Rivers | Turns |
+|---|---|---|
+| continues facing a bet, as a share of MDF | 0.84 oop, 0.89 ip; = 1.14 + 1.09 RA (oop, r2 0.67), 1.12 + 0.93 RA (ip, r2 0.45) | 0.89 oop, 1.00 ip |
+| continues facing a raise, as a share of MDF | 0.99 oop, 1.01 ip | 1.21 oop, 1.24 ip |
+| raises, as a share of continuing (facing a bet) | 0.15 oop; 0.29 ip = -0.25 + 1.47 x polarization (r2 0.66) | 0.23 oop, 0.15 ip |
+| bets, out of position | 41% = 0.34 + 1.44 RA - 0.50 nutAdv + 1.07 polAdv (r2 0.91) | 38% = 0.26 + 1.97 RA - 0.64 nutAdv + 2.72 polAdv (r2 0.93) |
+| bets, in position | 50% = 0.48 + 0.28 RA (r2 0.41) | 47% |
+| size, out of position | 0.53 pots on average, 67% of bets on the smallest size | 0.76 pots |
+| size, in position | 0.87 pots; the smallest size only when deep | 0.56 pots |
+| bluffs per value bet against balanced, in position | 1.06 | 1.11 |
+
+Mixing curves (`diagnosis/curves.mjs`, the range cut into 20 slices by equity):
+
+- River, out of position, first to act: the weakest 10% bet 60-75%; the next third checks
+  about 90%; from the median to 70% equity the bet frequency climbs from 25% to 75%, mostly
+  the small size; the strongest 10% bet only about half the time.
+- River, in position after a check: polar. Value from about 0.78 equity, the top 30% bet nearly
+  always, the bottom 15% bluff about 85%, no traps.
+- Turn, out of position: flat. Every slice bets 25-55%, and the level changes a lot from spot
+  to spot (sd 0.35).
+- Turn, in position: the strongest 15% bet 85-93%, thinner value about half the time.
+- Facing a turn bet in position: the strongest hands call 80% and raise 20%.
+
+### Adopted
+
+| # | Part | Setting | Evidence (loss to the best response, whole engine unless said) |
+|---|---|---|---|
+| 18 | engine | Bluff raises are capped at the defence frequency. | One spot raised 100% of its range (63% of the pot lost). rivers-tune 4.95 -> 4.64. |
+| 19 | strategist | With a tuner, frequencies are always filled; the selector's floors (`callFloor`, "weak" hands) no longer veto calls. | In the 3-bet pot the engine folded 83-88% to a river bet. River facing a bet inside turn trees, located: 12.1 -> 6.1. |
+| 20 | tuner | `defence` 0.95 facing a river bet. | Located: 0.95 3.36, 0.9 3.37, 0.85 3.65, 1.0 3.75. Whole engine with 0.95: 4.22 against 4.54 at 1.0. |
+| 21 | tuner | River raise share of continuing: oop -0.02 + 0.21 polarization + 0.08 SPR; ip -0.25 + 1.47 polarization. | Located, in position facing a bet: 6.89 -> 5.08. |
+| 22 | tuner | River, first to act: aim at 0.75 pot, value threshold 0.6. In position always; out of position only when RA >= 0.03. | In position 4.73 -> 3.94 (tune). Out of position the rule gains 1.27 where RA >= 0.1 and loses 0.45 where RA < -0.03 (`diagnosis/delta.mjs`); unconditional it made R8-B worse (4.41 -> 5.54), conditional 3.34. |
+| 23 | mixer | River, out of position, first to act: value with 90%+ equity bets 50% of the time, other value 75%. | Out-of-position seat on rivers-tune: no mixing 5.93, flat 80% 4.12, this curve 3.54. The surrounding grid is flat (3.4-3.7). |
+| 24 | tuner | `defenceVsRaise` 1.25 on the turn. | Located: 1.0 6.90, 1.1 4.67, 1.2 3.76, 1.35 3.36. Whole engine turns-tune 15.67 -> 14.31. |
+| 25 | mixer | Facing a turn bet, a value hand raises 25% of the time. | Located, in position: uncapped 17.85, 50% 14.11, 25% 13.19, 10% 12.86, never 12.68. Whole engine 14.31 -> 13.88. |
+| 26 | mixer | Turn, first to act: out of position value bets 45%; in position value with 85%+ equity always, thinner value 55%. | Whole engine turns-tune 13.40 -> 13.20 and -> 12.98. |
+| 27 | selector | In position facing a turn bet: calls by E[HS^2] + equity against his value when 2 or more pots are behind, by class otherwise (`turnCalls: 'ehs2-ip'`, `ehs2Depth: 2`). | Located (tune): by class 13.19, E[HS^2] 9.45. Whole engine without the depth condition it helped T4-B (19.4 -> 14.4) and wrecked T4 (9.4 -> 18.0). By depth: class 9.9 against 11.7 at 1.5 pots; 18.7 against 16.9 at 4 pots. By board: E[HS^2] wins on the draw-heavy `JsTs4h8d` (16.2 against 21.2), loses on the two dry boards. |
+
+Entries 1, 2 and 16 (the 0.7 value threshold inside NapkinSelector and the flat
+`oopValueChecks`) are superseded where a rule above covers the decision: the threshold is 0.6
+for river opens under the tuner, and the mixer's curves replace the flat value-checking shares.
+
+### Tried and not adopted
+
+| Idea | Why not |
+|---|---|
+| River bet frequency from the fitted formula (r2 0.91) | Whole engine 4.22 -> 6.23; located 6.63 -> 20.99 with the geometric size. It matches the solver and loses far more. |
+| River size from the fitted formula (nut advantage) | Located 6.63 -> 4.90, whole engine 4.22 -> 5.70. |
+| Defence falling with range advantage, as the solver's does | Located 3.75 -> 4.94 and whole engine worse than a flat factor. |
+| `hisDefence` below 1 (assume he under-defends as the solver does) | Located opens improve (6.63 -> 5.40 at 0.85), whole engine worsens (4.22 -> 4.70 at 0.8). |
+| Turn bet frequency out of position from the fitted formula (r2 0.93) | Loss to the equilibrium falls 2.16 -> 1.90, to the best response rises 13.40 -> 13.60. |
+| Turn sizes 0.75 / 0.5 pots | 13.40 -> 14.11. |
+| Never raising a turn bet | Located it is the best (12.68), but the 25% cap is within half a point and keeps a raising range. |
+
+### What the run says about method
+
+- **Located and whole-engine tests disagree often.** A rule that improves one decision inside
+  the solver's strategy can make the whole engine worse, because the engine's other decisions
+  are fitted to its own. Located tests found every lead; none was adopted on a located result
+  alone.
+- **Matching the solver's frequency is not the same as losing less.** Three formulas with r2 of
+  0.9 failed. What transferred were small departures from the fundamentals (0.95, 1.25, a size)
+  and mixing.
+- **Spot definitions matter, and the record now has three cases**: the out-of-position river
+  open rule by range advantage (22), the calling order by stack depth and board texture (27),
+  and the turn bet frequency by range, nut and polarization advantage (found, not yet usable).
+- **Two fixes were not tunings but faults**: unbounded bluff raises (18) and the selector
+  vetoing frequency (19). Both were found by listing the worst spots (`diagnosis/worst.mjs`).
+
 ## Where the engine loses
 
 `node bin/decompose.js --set <name> --selector <name>` hands each of the engine's jobs to the

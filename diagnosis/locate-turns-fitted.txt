@@ -1,0 +1,8 @@
+turns-tune, fitted: loss to the best response as a share of the pot when the engine decides at one kind of decision only
+  decision                                            engine  order given     (out of position / in position)
+  turn: first to act or checked to               11.1 /  8.4   8.0 /  6.8
+  turn: facing a bet                              4.3 /  9.4   1.8 /  3.8
+  turn: facing a raise                            3.6 /  3.4   0.7 /  0.8
+  river: first to act or checked to               6.9 / 18.1   4.9 /  3.6
+  river: facing a bet                             4.8 /  5.2   0.9 /  1.2
+  river: facing a raise                           0.8 /  0.9   0.5 /  0.5

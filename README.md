@@ -74,6 +74,65 @@ hero may use, as street totals.
 new ParetoEngine({ maxRaises: 2, raiseSizes: [3, 'allin'], inPosition: { sizing: 'largest' } });
 ```
 
+## The four parts
+
+A decision is made by four objects, each with one job. `RangeStrategist` puts them together.
+
+| Part | Job | Default |
+|---|---|---|
+| `ParetoEngine` | The fundamentals: how often to bet, call, raise, and how many bluffs a bet carries. They do not change. | |
+| Tuner (`src/Tuner.js`) | Adjusts the fundamentals for the spot: which size, how much value, how many bluffs, how often to defend. | `NoTuner`: the fundamentals untouched |
+| Hand selector (`src/HandSelector.js`) | Which hands come first for each role. | `EquitySelector` |
+| Mixer (`src/Mixer.js`) | How often a hand takes a role it is dealt (1 = always, pure). | `PureMixer` |
+
+```js
+import { RangeStrategist, presets } from './src/index.js';
+
+new RangeStrategist(presets.fitted());   // the current best: selector, mixer and tuner fitted to the solver
+new RangeStrategist(presets.napkin());   // the guide's hand selection, with a flat value-checking mixer
+new RangeStrategist(presets.equity());   // hands on equity alone, pure, fundamentals untouched
+```
+
+### Tuning
+
+A tuner's `tune(context)` returns any of `{ sizing, value, bluff, defence, frequency,
+valueThreshold, hisDefence }` (see `src/Tuner.js`). `context.profile` describes the spot, range
+against range: `rangeAdvantage`, `nutAdvantage`, `polarization`, `polarizationAdvantage`, `spr`,
+with `street`, `position` and `facing`.
+
+```js
+import { Tuner, sizeNear } from './src/index.js';
+
+new Tuner([
+  // In position on the river, aim at a three-quarter-pot bet
+  { when: (c) => c.street === 'river' && c.position === 'ip' && !c.facing, set: { sizing: sizeNear(0.75) } },
+  // Facing a bet, continue a little less than the minimum defence frequency
+  { when: (c) => c.facing, set: { defence: 0.95 } },
+]);
+```
+
+With a tuner the engine's frequencies are always filled: a selector only orders hands, and
+whether to defend less than the fundamental is the tuner's to say. `fittedTuner()` holds the
+rules fitted during the diagnosis run.
+
+### Mixing
+
+A mixer's `mix(context, role, wager)` returns the most each hand may take a role (`'value'`,
+`'call'` or `'bluff'`): one number for every hand, one per combo, or nothing for pure. The rest
+of the time the hand does something else, and the frequency is made up from further down the
+selector's order.
+
+```js
+import { Mixer } from './src/index.js';
+
+// Out of position on the river the strongest value bets half the time, the rest three quarters
+new Mixer([{
+  role: 'value',
+  when: (c) => c.position === 'oop' && c.street === 'river' && !c.facing,
+  share: (c) => c.strength.map((equity) => (equity >= 0.9 ? 0.5 : 0.75)),
+}]);
+```
+
 ## Choosing hands
 
 `RangeStrategist` turns the frequencies into a strategy for every combo, given both ranges
@@ -226,6 +285,22 @@ the solver mixes. Napkin's order is within half a point of the solver's own on r
 Against the solver's equilibrium Napkin loses 0.6% on those rivers (equity 1.2%), 1.8% and 1.9%
 on the two sets of turns (3.5% and 4.8%) and 5.6% on the flop (6.1%).
 `node bin/play.js --selector napkin` runs one spot.
+
+### Diagnosing the three parts
+
+Each part has its own diagnosis, and all of them start from where the loss is:
+
+| Tool | Question |
+|---|---|
+| `bin/locate.js` | Which decisions lose? The engine decides at one kind of decision only (a street, and first to act / facing a bet / facing a raise) inside the solver's strategy; then the solver's frequencies, order of hands and mixing are handed back one at a time. |
+| `bin/diagnose-tuning.js` | Tuning: how do the solver's frequencies depart from the fundamentals (defence against MDF, bet frequency, sizes, bluffs against balanced), and what in the spot do the departures follow? `diagnosis/fit.mjs` fits them; `diagnosis/curves.mjs` prints the solver's mixing curve over hand strength. |
+| `bin/diagnose.js` | Hand selection: musts, can'ts, twins and which characteristics separate them (below). Its step 3 is the mixing test: what it costs to treat a group of hands as interchangeable. |
+| `bin/decompose.js`, `bin/interchange.js` | The split of a whole tree's loss between range estimate, frequencies, hands and mixing; interchangeability of one group. |
+| `diagnosis/try.mjs` | Tries variants of the parts against the best response, on the whole engine or at one kind of decision. |
+
+A change is adopted only if the whole engine loses less to the best response on the tuning
+spots and still does on the held-out ones. `diagnosis/PROGRESS.md` is the log of the run that
+fitted `presets.fitted()`.
 
 ### Diagnosing hand selection
 
