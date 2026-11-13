@@ -46,7 +46,7 @@ const pairs = (d) => context(d).kinds.pair;
  * Hands clustered by their equity on every next card (k-means, started from equity bands): two
  * hands are alike when they are worth the same on the same cards, not merely on average.
  */
-export function byRunouts(k, weightNow = 0) {
+export function byRunouts(k, sorted = false) {
   return (d) => {
     if (!cardsToCome(d)) return bands(context(d).strength, d.hero, k);
     const ids = []; for (let i = 0; i < NUM_COMBOS; i++) if (d.hero[i] > 1e-9) ids.push(i);
@@ -54,6 +54,8 @@ export function byRunouts(k, weightNow = 0) {
     const columns = [];
     for (let card = 0; card < 52; card++) if (!d.board.includes(card)) columns.push({ card, e: equity.against([...d.board, card], d.villain, d.hero) });
     const vectors = new Map(ids.map((i) => [i, columns.map(({ card, e }) => (COMBO_A[i] === card || COMBO_B[i] === card || Number.isNaN(e[i]) ? strength[i] : e[i]))]));
+    // `sorted`: only the distribution of the hand's river equities counts, not which cards bring them
+    if (sorted) for (const v of vectors.values()) v.sort((a, b) => a - b);
     const dims = columns.length;
     const start = bands(strength, d.hero, k);
     let assign = new Map(ids.map((i) => [i, start[i]]));
@@ -78,6 +80,8 @@ export const GROUPINGS = {
   'runout profile x20': byRunouts(20),
   'runout profile x50': byRunouts(50),
   'runout profile x100': byRunouts(100),
+  'runout distribution x50': byRunouts(50, true),
+  'runout distribution x100': byRunouts(100, true),
   'one group (everything alike)': () => new Int32Array(NUM_COMBOS),
   'status 0.5%': status(0.005),
   'status 0.2%': status(0.002),
@@ -127,10 +131,11 @@ export const GROUPINGS = {
   'strength now x5, draw class, blockers x2': cross(feature('strengthNow', 5), draws, byBlock(2)),
 };
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [set, which, street] = process.argv.slice(2);
+  const [set, which, street, kind] = process.argv.slice(2);
   const names = which === 'all' ? Object.keys(GROUPINGS) : which.split(';');
-  const where = street ? (d) => d.street === street : () => true;
+  const kinds = { open: (d) => !d.facing, bet: (d) => d.facing && d.raises === 0, raise: (d) => d.facing && d.raises > 0 };
+  const where = (d) => (!street || d.street === street) && (!kind || kinds[kind](d));
   for (const name of names) {
-    console.log(`${set.padEnd(12)} ${(street ? `[${street} only] ` : '') + name.padEnd(44)} ${format(await measure(SETS[set], presets.fitted, { ranges: 'solver', hands: 'solver-by-groups', groups: GROUPINGS[name.replace(/, pure$/, '')], pure: name.endsWith(', pure'), where, firstStreet: !!street }))}`);
+    console.log(`${set.padEnd(12)} ${(street ? `[${street} only${kind ? `, ${kind}` : ''}] ` : '') + name.padEnd(44)} ${format(await measure(SETS[set], presets.fitted, { ranges: 'solver', hands: 'solver-by-groups', groups: GROUPINGS[name.replace(/, pure$/, '')], pure: name.endsWith(', pure'), where, firstStreet: !!street }))}`);
   }
 }

@@ -1,0 +1,35 @@
+== Facing a bet or raise: the edge over the pot odds a hand needs to continue
+ facing-bet ip (109 decisions): no-draw hands need +10 points (sd 5); strong and nut draws -2 (sd 7); all hands +8
+     made   moves with: faced -0.07 spr +0.32 rangeEq +0.23 nutEdge -0.30 airShare -0.10 hisAirShare +0.20 fAgg -0.19 fCall +0.20
+     draws  moves with: faced -0.68 spr +0.09 rangeEq +0.13 nutEdge +0.46 airShare +0.02 hisAirShare -0.12 fAgg +0.34 fCall +0.48
+     by pair of ranges, no-draw hands: A: +10 | B: +12 | C: +10 | D: +10
+ facing-bet oop (111 decisions): no-draw hands need +15 points (sd 6); strong and nut draws +0 (sd 6); all hands +13
+     made   moves with: faced -0.28 spr +0.24 rangeEq +0.14 nutEdge +0.06 airShare -0.14 hisAirShare +0.05 fAgg -0.06 fCall +0.34
+     draws  moves with: faced -0.65 spr +0.10 rangeEq -0.05 nutEdge +0.37 airShare +0.04 hisAirShare -0.17 fAgg +0.38 fCall +0.39
+     by pair of ranges, no-draw hands: A: +16 | B: +14 | C: +20 | D: +14
+ facing-raise ip (111 decisions): no-draw hands need +12 points (sd 10); strong and nut draws +2 (sd 4); all hands +3
+     made   moves with: faced -0.17 spr +0.05 rangeEq +0.02 nutEdge -0.16 airShare -0.05 hisAirShare -0.02 fAgg +0.05 fCall +0.04
+     draws  moves with: faced -0.47 spr -0.20 rangeEq +0.21 nutEdge -0.04 airShare -0.20 hisAirShare +0.05 fAgg -0.11 fCall +0.24
+     by pair of ranges, no-draw hands: A: +14 | B: +10 | C: +10 | D: +11
+ facing-raise oop (90 decisions): no-draw hands need +15 points (sd 13); strong and nut draws +4 (sd 11); all hands +5
+     made   moves with: faced -0.35 spr +0.17 rangeEq +0.37 nutEdge +0.02 airShare -0.09 hisAirShare +0.10 fAgg +0.01 fCall +0.20
+     draws  moves with: faced -0.25 spr +0.17 rangeEq +0.27 nutEdge +0.05 airShare -0.23 hisAirShare +0.19 fAgg +0.15 fCall -0.02
+     by pair of ranges, no-draw hands: A: +18 | B: +10 | C: +16 | D: +13
+
+== First to act: how often each kind bets, relative to the range, and what moves it
+ ip (57 decisions): range bets 0.47 (sd 0.10); share of the range that is optional 0.66 (sd 0.10)
+     weak     bets 0.61 (sd 0.25); moves with: fAgg +0.82 spr -0.38 rangeEq +0.59 nutEdge +0.17 airShare -0.57 hisAirShare +0.18
+     middle   bets 0.23 (sd 0.11); moves with: fAgg +0.74 spr -0.16 rangeEq +0.33 nutEdge +0.13 airShare -0.43 hisAirShare +0.04
+     good     bets 0.39 (sd 0.19); moves with: fAgg +0.52 spr -0.52 rangeEq +0.25 nutEdge +0.01 airShare -0.18 hisAirShare +0.06
+     top      bets 0.77 (sd 0.13); moves with: fAgg +0.79 spr -0.04 rangeEq +0.51 nutEdge +0.22 airShare -0.63 hisAirShare +0.16
+     draws    bets 0.57 (sd 0.19); moves with: fAgg -0.02 spr +0.72 rangeEq -0.04 nutEdge +0.20 airShare +0.04 hisAirShare +0.02
+     optional bets 0.66 (sd 0.10); moves with: fAgg +0.22 spr +0.16 rangeEq +0.03 nutEdge +0.10 airShare +0.02 hisAirShare +0.02
+     by pair of ranges: A: bets 0.41, top 0.73, draws 0.56, weak 0.47 | B: bets 0.51, top 0.84, draws 0.58, weak 0.75 | C: bets 0.52, top 0.76, draws 0.60, weak 0.50 | D: bets 0.45, top 0.74, draws 0.57, weak 0.68
+ oop (64 decisions): range bets 0.39 (sd 0.30); share of the range that is optional 0.74 (sd 0.16)
+     weak     bets 0.31 (sd 0.34); moves with: fAgg +0.80 spr -0.17 rangeEq +0.86 nutEdge +0.77 airShare -0.42 hisAirShare +0.74
+     middle   bets 0.22 (sd 0.33); moves with: fAgg +0.87 spr -0.11 rangeEq +0.87 nutEdge +0.82 airShare -0.43 hisAirShare +0.70
+     good     bets 0.44 (sd 0.35); moves with: fAgg +0.95 spr -0.27 rangeEq +0.80 nutEdge +0.75 airShare -0.59 hisAirShare +0.49
+     top      bets 0.49 (sd 0.30); moves with: fAgg +0.97 spr -0.04 rangeEq +0.89 nutEdge +0.87 airShare -0.59 hisAirShare +0.54
+     draws    bets 0.54 (sd 0.30); moves with: fAgg +0.75 spr +0.01 rangeEq +0.79 nutEdge +0.76 airShare -0.31 hisAirShare +0.70
+     optional bets 0.74 (sd 0.16); moves with: fAgg +0.35 spr +0.17 rangeEq +0.36 nutEdge +0.30 airShare -0.33 hisAirShare +0.25
+     by pair of ranges: A: bets 0.42, top 0.58, draws 0.71, weak 0.37 | B: bets 0.09, top 0.17, draws 0.29, weak 0.01 | C: bets 0.72, top 0.74, draws 0.58, weak 0.62 | D: bets 0.33, top 0.47, draws 0.62, weak 0.23

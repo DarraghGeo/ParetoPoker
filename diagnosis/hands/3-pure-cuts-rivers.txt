@@ -1,0 +1,14 @@
+rivers-tune  pure cuts on equity, every decision         oop  0.26 / 11.14 | ip  0.07 /  3.09 | both  0.17 /  7.11
+rivers-tune  pure cuts on equity, first to act only      oop  0.26 /  9.11 | ip  0.06 /  1.65 | both  0.16 /  5.38
+rivers-tune  pure cuts on equity, facing a bet only      oop  0.01 /  1.03 | ip  0.01 /  1.79 | both  0.01 /  1.41
+rivers-tune  pure cuts on equity, facing a raise only    oop -0.01 /  0.58 | ip -0.00 /  0.46 | both -0.01 /  0.52
+rivers-tune  first to act: value hands bet 0.9 of the time, sizes big first   oop  0.24 /  7.86 | ip  0.18 /  2.07 | both  0.21 /  4.96
+rivers-tune  first to act: value hands bet 0.9 of the time, sizes same mix    oop  0.35 /  9.08 | ip  0.54 /  6.67 | both  0.45 /  7.87
+rivers-tune  first to act: value hands bet 0.8 of the time, sizes big first   oop  0.23 /  6.93 | ip  0.35 /  3.13 | both  0.29 /  5.03
+rivers-tune  first to act: value hands bet 0.8 of the time, sizes same mix    oop  0.36 /  7.78 | ip  0.96 /  9.14 | both  0.66 /  8.46
+rivers-tune  first to act: value hands bet 0.7 of the time, sizes big first   oop  0.22 /  6.48 | ip  0.56 /  4.42 | both  0.39 /  5.45
+rivers-tune  first to act: value hands bet 0.7 of the time, sizes same mix    oop  0.38 /  7.76 | ip  1.44 / 12.33 | both  0.91 / 10.05
+rivers-tune  first to act: value hands bet 0.6 of the time, sizes big first   oop  0.23 /  6.45 | ip  0.80 /  5.88 | both  0.52 /  6.16
+rivers-tune  first to act: value hands bet 0.6 of the time, sizes same mix    oop  0.43 /  8.93 | ip  1.98 / 16.05 | both  1.20 / 12.49
+rivers-tune  first to act: value hands bet 0.5 of the time, sizes big first   oop  0.26 /  6.75 | ip  1.02 /  7.56 | both  0.64 /  7.16
+rivers-tune  first to act: value hands bet 0.5 of the time, sizes same mix    oop  0.50 / 10.77 | ip  2.47 / 20.15 | both  1.49 / 15.46
