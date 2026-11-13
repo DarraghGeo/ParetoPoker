@@ -240,8 +240,8 @@ function renderAsk() {
     if (game.failed >= 3) { el.innerHTML = `<p class="lead">This setup cannot be solved.</p><p>${esc(game.error)}</p><p>The ranges, pot and bet sizes are the ones set up in <a href="study.html">Study</a>.</p>`; return; }
     // nothing ready: say what is being solved and how far along
     const p = game.progress; const street = game.busy?.street ?? '';
-    const near = p && p.exploit < Infinity ? Math.min(1, Math.max(0.04, Math.log(100 / p.exploit) / Math.log(100 / p.target))) : 0.04;
-    el.innerHTML = `<div class="kind">Next spot</div><p class="lead">Solving a ${esc(street)}</p><div class="track"><i style="width:${(100 * near).toFixed(1)}%"></i></div>${street === 'flop' ? '<p>A flop takes about half a minute.</p>' : ''}`;
+    const near = Math.max(0.04, p?.done ?? 0);
+    el.innerHTML = `<div class="kind">Next spot</div><p class="lead">Solving a ${esc(street)}</p><div class="track"><i style="width:${(100 * near).toFixed(1)}%"></i></div>${street === 'flop' ? '<p>A flop takes up to a minute, solved lite: its own bets and raises, one bet size on the turn and river.</p>' : ''}`;
     return;
   }
   const strata = strataOf(game.spot.decision.actions);
@@ -299,7 +299,7 @@ function choice(group, key, name) {
 function renderSettings() {
   $('settings').innerHTML = '<h3>Questions</h3>' + Object.entries(TYPES).map(([k, name]) => choice('types', k, name)).join('')
     + '<h3>Streets</h3>' + Object.entries(STREETS).map(([k, name]) => choice('streets', k, name)).join('')
-    + '<p class="note">Spots are dealt at random with the ranges, pot and bet sizes set up in <a href="study.html">Study</a>. A turn takes a few seconds to solve, a flop about half a minute.</p>';
+    + '<p class="note">Spots are dealt at random with the ranges, pot and bet sizes set up in <a href="study.html">Study</a>. A turn takes a few seconds to solve, a flop up to a minute.</p>';
 }
 $('open-settings').onclick = () => { renderSettings(); open('settings'); };
 $('settings').addEventListener('click', (ev) => {

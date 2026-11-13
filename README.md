@@ -29,6 +29,8 @@ The page opens on a choice between the two:
   of question and the streets; each shows its last five days played. The day's score opens the
   last questions with the answer given, the right one and why. A question whose answer is too
   close to call is not asked.
+  A flop is solved with poker-flopsolve's lite preset (`litePreset`): the flop's betting as set up,
+  one bet size on the turn and river, stopped when the first decisions stop moving.
 
 ```bash
 npm install
