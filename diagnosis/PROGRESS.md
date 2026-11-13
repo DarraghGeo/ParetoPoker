@@ -267,3 +267,14 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   for the range-bet rule; in position 9.98 both times). The coupling was the cause. The rule's
   own gain does not carry to held-out boards (held2 9.51 -> 9.52, held 8.43 -> 8.37, alt 9.04
   -> 9.01), so it is not adopted. The option stays.
+
+## Turn bet-frequency sweep (started 2026-11-13, after the run)
+
+Reference points for tuning the turn opening bet frequency from exploitability, not from the
+solver. `diagnosis/level-sweep.mjs`: 10 range pairs (A-D plus E cutoff open, F 3-bet pot with
+the 3-bettor in position, G limped pot, H 4-bet pot, I polar 3-bettor out of position, J early
+open) x 8 turn boards x 3 depths (1, 2.5, 5 pots) x 2 seats = 480 spots, each measured at the
+engine's own frequency and at 10%, 30%, 50%, 70%, 90%: 2,880 measurements of the loss to the
+best response. The opponent is modelled as the fitted engine unchanged. Results append to
+`diagnosis/level-sweep.jsonl` (one line each); the run resumes if restarted with the same command:
+`nohup node diagnosis/level-sweep.mjs diagnosis/level-sweep.jsonl > diagnosis/level-sweep.log 2>&1 &`
