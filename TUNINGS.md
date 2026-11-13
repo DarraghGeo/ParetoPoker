@@ -64,6 +64,27 @@ result: with a band per hand any order gives back the solver. At 20 bands (5% of
 each) the order costs about 1.1 points over the solver, so of the engine's 3.5-3.7 on rivers,
 roughly 2.3 is frequencies and mixing and about 1.1 is the order at that resolution.
 
+### The same on turn trees
+
+`diagnosis/v52.mjs`, results in `diagnosis/order-turns-result.txt`. The order is applied at every
+decision of the turn tree, turn and river.
+
+| | turns-tune (16) | turns-held2 (16) |
+|---|---|---|
+| fitted order, 20 bands | 5.07 (0.59) | 5.44 (0.60) |
+| equity order, 20 bands | 5.73 (0.62) | 6.54 (0.62) |
+| fitted order, 10 bands | 7.28 (0.97) | |
+| fitted order, 50 bands | 2.77 (0.31) | |
+| fitted order, 20 bands, at turn decisions only | 4.50 (0.32) | |
+| fitted order, 20 bands, at river decisions only | 1.53 (0.25) | |
+| the solver itself | 0.28 | |
+| the whole engine, fitted | 9.91 (2.17) | 9.51 (2.06) |
+
+On the turn the order costs about 5 points at 20 bands against 1.1 on the river, nearly all of
+it at the turn decisions themselves. So of the engine's 9.5-9.9 on turns, about half is the
+order at this resolution and about half is frequencies and mixing. The fitted order is ahead
+of the equity order by 0.7 to 1.1 points.
+
 ## The diagnosis run of 2026-11-13: `presets.fitted()`
 
 An 8-hour run that split the engine into four parts (fundamentals, tuner, hand selector,
