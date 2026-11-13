@@ -87,3 +87,21 @@ a tuning set and a held-out set. Measured by loss to the solver's best response.
   Next: turns. diagnose-tuning on turns-tune, curves, then tuner/mixer rules for the turn, then
   the calling order in position facing a turn bet (located: 14.0 with the solver's frequencies,
   3.8 with its order too).
+- 06:20 **Turns, located (turns-tune, Napkin, before today's fixes; oop / ip):**
+  turn open 12.5 / 9.3 (solver freq 12.3 / 11.3; its order too 8.0 / 6.8: mixing);
+  turn facing a bet 6.2 / 17.5 (solver freq 4.7 / 14.0; its order too 1.8 / 3.8: hand order in position);
+  turn facing a raise 7.1 / 7.4 (solver freq 2.5 / 2.2: frequency);
+  river open inside turn trees 8.0 / 10.0 (solver freq 8.8 / 2.4);
+  river facing a bet inside turn trees 11.8 / 12.6 (solver freq 1.3 / 3.5).
+  With the current code: river facing a bet 12.1 -> 6.1 (frequencies always filled) -> 5.0
+  (fitted); turn facing a raise 7.2 -> 6.9; turn facing a bet 5.75 / 17.85, unchanged.
+  Turn tuning diagnosis (diagnosis/tuning-turns-tune.json): facing a turn bet the solver
+  continues 0.89 (oop) / 1.00 (ip) of MDF; facing a turn raise 1.21 / 1.24 of MDF; raises 23% /
+  15% of continuing; oop bets 38% = 0.26 + 1.97 RA - 0.64 nutAdv + 2.72 polAdv (r2 0.93).
+  Turn curves: out of position the solver bets 25-55% of every slice of the range (flat, and it
+  varies a lot by spot); in position the strongest 15% bet 85-93%. Facing a turn bet in position
+  the strongest hands mostly call (80% call, 20% raise): the engine raises them all.
+  Whole engine on turns-tune: napkin 14.88, fitted 15.67. The river rules do not carry into turn
+  trees as they stand; no single rule is the cause.
+  Running: diagnosis/turn-rules.txt (turn defence vs raise, turn defence, turn raise share).
+  Next: a mixer cap on raising in position facing a turn bet; then turn opens.

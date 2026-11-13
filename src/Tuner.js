@@ -106,6 +106,14 @@ export function fittedTuner(params = {}) {
       },
     });
   }
+  // Facing a raise with cards to come the solver continues more than the fundamental: the
+  // raiser's bluffs have equity and hero's calls keep theirs
+  if (p.defenceVsRaise) {
+    rules.push({
+      when: (c) => c.facing && (c.spot.raises ?? 0) > 0 && p.defenceVsRaise[c.street]?.[c.position] != null,
+      set: (c) => ({ defence: p.defenceVsRaise[c.street][c.position] }),
+    });
+  }
   // When hero bets or raises, the opponent is assumed to defend by the same formula, from his side
   if (p.hisDefence) {
     rules.push({
@@ -166,6 +174,8 @@ export function fittedTuner(params = {}) {
 export const FITTED = {
   /** continue = MDF x (base + slope x range advantage), kept within [low, high]. */
   defence: { river: { oop: [0.95, 0, 0, 1.1], ip: [0.95, 0, 0, 1.1] } },
+  /** continue = MDF x this, facing a raise. */
+  defenceVsRaise: null,
   /** The same for the opponent's answer to hero's bet, by the opponent's seat. */
   hisDefence: { river: { oop: [1, 0, 0, 1.1], ip: [1, 0, 0, 1.1] } },
   /** raises = continue x (base + a x hero's polarization + b x stack-to-pot), within [low, high]. */
