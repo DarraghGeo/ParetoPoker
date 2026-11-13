@@ -430,9 +430,11 @@ averaged (loss to its equilibrium play in brackets):
 |---|---|---|---|
 | 72 rivers used for tuning (four range pairs, three depths) | 9.0% (1.1%) | 4.6% (0.7%) | 3.7% (0.7%) |
 | 48 rivers held out | 9.2% (1.2%) | 4.5% (0.7%) | 3.8% (0.7%) |
+| 48 rivers, a different menu of bet sizes | 9.8% (1.1%) | 5.1% (0.8%) | 4.2% (0.7%) |
 | 16 turns used for tuning | 29.2% (3.6%) | 14.9% (2.7%) | 10.0% (2.2%) |
-| 16 turns held out, boards never used | 29.4% (3.3%) | 13.7% (2.2%) | 9.9% (2.1%) |
-| 3 small flop trees, checked but not fitted | 23.1% (3.6%) | 16.1% (4.0%) | 10.6% (3.2%) |
+| 16 turns held out, boards never used | 29.4% (3.3%) | 13.7% (2.2%) | 9.6% (2.1%) |
+| 8 turns, a different menu of bet sizes | 24.2% (4.4%) | 12.1% (2.1%) | 9.0% (2.1%) |
+| 3 small flop trees, checked but not fitted | 23.1% (3.6%) | 16.1% (4.0%) | 10.9% (3.3%) |
 
 The loss grows with stack depth and is largest in 3-bet pots. `TUNINGS.md` has every set, what
 was adopted and what was tried and dropped.

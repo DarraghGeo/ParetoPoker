@@ -29,17 +29,21 @@ before the run, apart from fix 18 below, which applies to every preset.
 | rivers-tune (72 trees) | 9.01 (1.11) | 4.64 (0.70) | 3.72 (0.66) |
 | rivers-held (48) | 9.24 (1.19) | 4.51 (0.73) | 3.79 (0.70) |
 | R12 | 9.33 (1.19) | 3.87 (0.61) | 3.31 (0.77) |
-| R8-B | 9.89 (1.13) | 4.41 (0.44) | 3.34 (0.45) |
-| turns-tune (16) | 29.20 (3.58) | 14.88 (2.65) | 10.01 (2.18) |
-| turns-held (8, one board) | 26.14 (4.41) | 12.70 (2.06) | 8.87 (1.94) |
-| turns-held2 (16, two boards never used before) | 29.35 (3.33) | 13.74 (2.20) | 9.87 (2.12) |
-| T4 | 26.09 (3.52) | 11.70 (1.77) | 8.63 (2.04) |
-| T4-B | 34.70 (4.69) | 19.37 (1.93) | 10.98 (2.23) |
-| F1 (one flop tree) | 26.81 (6.07) | 14.88 (5.60) | 10.36 (4.26) |
-| flops-check (3 flop trees) | 23.13 (3.64) | 16.13 (3.96) | 10.59 (3.23) |
+| R8-B (bets 50/100%, 3x raises) | 9.89 (1.13) | 4.41 (0.44) | 3.68 (0.56) |
+| rivers-alt (48, bets 25/50/100/200%, 3x raises) | 9.83 (1.12) | 5.08 (0.75) | 4.17 (0.71) |
+| turns-tune (16) | 29.20 (3.58) | 14.88 (2.65) | 9.97 (2.18) |
+| turns-held (8, one board) | 26.14 (4.41) | 12.70 (2.06) | 8.40 (1.92) |
+| turns-held2 (16, two boards never used before) | 29.35 (3.33) | 13.74 (2.20) | 9.59 (2.09) |
+| T4 | 26.09 (3.52) | 11.70 (1.77) | 8.68 (2.01) |
+| T4-B (bets 50/100%, 3x raises) | 34.70 (4.69) | 19.37 (1.93) | 10.74 (2.28) |
+| turns-alt (8, bets 25/50/100/200%, 3x raises) | 24.16 (4.40) | 12.09 (2.06) | 8.99 (2.14) |
+| F1 (one flop tree) | 26.81 (6.07) | 14.88 (5.60) | 10.41 (4.25) |
+| flops-check (3 flop trees) | 23.13 (3.64) | 16.13 (3.96) | 10.85 (3.31) |
 
-Nothing was fitted on the held-out sets, R8-B, T4-B or the flop trees; the kind table was first
-checked on the flop trees and then kept there (entry 29), so those two rows are not blind.
+Fitted on: rivers-tune, turns-tune, and for the kind table also `turns-more` (32 further turn
+trees). Not fitted on, but used to choose between alternatives: R8-B and rivers-alt (the size
+rule, entries 22 and 32), T4 and T4-B (the depth condition of entry 27), the flop trees (entry
+29). Blind: rivers-held, R12, turns-held, turns-held2, turns-alt.
 
 `diagnosis/final-table.txt` has the seats apart.
 
@@ -143,6 +147,9 @@ Out of position the solver's turn bet level runs from 4% to 100% across the 16 d
 | 29 | mixer | The same table at flop decisions. Checked on four small flop trees, not fitted to them. | F1 12.08 -> 10.36; `flops-check` (3 trees) 12.00 -> 10.59. |
 | 30 | mixer | The turn value caps of 26 stay under the kind table: they set how much value is counted, hence the bet level the table spreads. | Without them T4 is 10.63 instead of 8.63. Scaling the level by 0.8 or 1.25 changes nothing (10.0-10.4). |
 
+| 31 | mixer | `TURN_KINDS` refitted on 48 turn decisions (`turns-tune` and `turns-more`). | The table keeps its shape with three times the data. On the four sets it was not fitted on it is level or slightly better: held 8.87 -> 8.78, held2 9.87 -> 9.69, T4 8.63 -> 8.70, T4-B 10.98 -> 10.96. |
+| 32 | tuner | `sizeNear` puts all the weight on the one nearest size (the smaller on a tie); it used to split between the two sizes either side of the target. | A configuration dependence, not a spot one. On a 25/50/100/200 menu the split lost the whole river gain (napkin 5.08, split 5.07, one size 4.17); on 50/100 the split was better (3.34 against 3.68); on 33/75/150 they are the same. |
+
 Entries 1, 2 and 16 (the 0.7 value threshold inside NapkinSelector and the flat
 `oopValueChecks`) are superseded where a rule above covers the decision: the threshold is 0.6
 for river opens under the tuner, and the mixer's curves replace the flat value-checking shares.
@@ -164,6 +171,9 @@ for river opens under the tuner, and the mixer's curves replace the flat value-c
 | Finer kind tables in which each kind's frequency is a line in the bet level (5, 10, 20 bands) | They explain more of the solver (0.58-0.64 against 0.52) and lose more: turns-tune 10.46, 10.86, 10.85 against 10.01. |
 | Range-betting the turn out of position where the spot formula says the solver bets 70%+ | In the 3-bet pot the solver bets 73-100% and the engine 10-38%. Located it helps there (20.2 -> 14.8). Whole engine the seat itself gains (9.56 -> 9.11) but the other seat, which models its opponent as the engine, loses more: turns-tune 10.01 -> 10.11, turns-held 8.87 -> 9.36, turns-held2 9.87 -> 10.44. |
 | River: smaller or split raise sizes, a cap on value raises, other defence factors when deep, deeper value thresholds | All within 0.1 of 3.72 or worse: rivers are on a plateau for this design. |
+| Facing a turn bet from a table over the kinds that are interchangeable there (20 bands of E[HS^2] x draw) | Mixing evenly within those kinds costs only 0.37% inside the solver's strategy, but one average table is far worse located than the order (in position 20.4 against 9.4): the solver's continue curve is sharp at a threshold that moves with the bet size, and an average smears it. For calls an order is the right tool; for opens a table is. |
+| Other calling orders in position facing a turn bet (eight, from the forms of equity) | All 9.3-9.5 located except draw bonuses, which are worse. Never raising: 8.7. The solver's own order: 3.8. An order from these measures is on a plateau. |
+| River calls by equity against his betting range alone, or with blockers | 7.72 against 3.72. Equity against the range he started with does as well as the fitted order: on the river, absolute hand strength is what carries. |
 | In position river value threshold of 0.7 or 0.8 inside turn trees | Located they are far better (18.1 at 0.6, 14.0 at 0.7, 10.9 at 0.8); whole engine 0.6 is best (11.98, 12.09, 12.43). |
 
 ### Where the fitted engine still loses
@@ -191,9 +201,18 @@ for river opens under the tuner, and the mixer's curves replace the flat value-c
 - **Matching the solver's frequency is not the same as losing less.** Three formulas with r2 of
   0.9 failed. What transferred were small departures from the fundamentals (0.95, 1.25, a size)
   and mixing.
-- **Spot definitions matter, and the record now has three cases**: the out-of-position river
+- **Spot definitions matter, and the record now has four cases**: the out-of-position river
   open rule by range advantage (22), the calling order by stack depth and board texture (27),
-  and the turn bet frequency by range, nut and polarization advantage (found, not yet usable).
+  the turn bet frequency by range, nut and polarization advantage (found, not yet usable), and
+  the 3-bet pot, where the solver range-bets the turn and the engine does not. One tuning
+  depends on the configuration instead: the size rule on the menu of sizes (32).
+- **Mixing needs kinds, and the kinds differ by decision.** At turn opens hands are
+  interchangeable within bands of strength now crossed with the draw; facing a turn bet, within
+  bands of E[HS^2] (or equity) crossed with the draw. Equity alone is not enough at opens.
+  A table over kinds works where the solver's play is a level across the range (opens) and
+  fails where it is a threshold (calls).
+- **Three plateaus were reached**: river tuning (nothing tried moves 3.72), river and turn
+  calling orders, and in-position river opens. What moved the turn at the end was mixing.
 - **Two fixes were not tunings but faults**: unbounded bluff raises (18) and the selector
   vetoing frequency (19). Both were found by listing the worst spots (`diagnosis/worst.mjs`).
 
