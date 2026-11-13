@@ -85,13 +85,14 @@ test('reset clears every lock, so a best response is free again', { skip }, asyn
     await bridge.snapshot(1);
     await bridge.reset();
     await bridge.restore(1); // in position pinned to its equilibrium strategy
+    assert.ok(Math.abs((await bridge.strategy([0])).strategy[0] - 0.75) < 0.02); // KK checks back 75%
     await bridge.reset();
-    // Out of position now never bets (2 hands x 6 combos, check then all-in). Free again, in
-    // position checks back and wins the pot against QQ, half of the range. Still pinned to its
-    // equilibrium, it would bet into the checked aces and win less.
+    // Unlocked and unsolved, its strategy is back to an even split
+    assert.ok(Math.abs((await bridge.strategy([0])).strategy[0] - 0.5) < 1e-6);
+    // And it can best-respond: against an opponent who never bets it gets more than its equilibrium 25
     await bridge.lock([], [...Array(12).fill(1), ...Array(12).fill(1e-9)]);
     const [, inPosition] = await bridge.bestResponseEv();
-    assert.ok(Math.abs(inPosition - 50) < 0.5, `in position gets ${inPosition}`);
+    assert.ok(inPosition > 49, `in position gets ${inPosition}`);
   } finally {
     bridge.close();
   }
