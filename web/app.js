@@ -282,11 +282,74 @@ $('range').addEventListener('click', (ev) => {
 });
 $('combos').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (b) { state.hand = b.dataset.hand; state.cell = cellOf(state.hand); render(); } });
 $('why').addEventListener('click', (ev) => { if (ev.target.id === 'more') { state.detail = !state.detail; remember(); renderWhy(); $('more')?.focus(); } });
+// ---- setup: the ranges are painted on a chart or typed, whichever is at hand ----
+const draft = { side: 'oop', oop: '', ip: '' };
+const cellName = (i, j) => (i === j ? RANKS[i] + RANKS[i] : i < j ? `${RANKS[i]}${RANKS[j]}s` : `${RANKS[j]}${RANKS[i]}o`);
+/** How much of each chart cell a range holds, 0 to 1, or null when the notation cannot be read. */
+function cellsOf(notation) {
+  const cells = new Map();
+  if (!notation.trim()) return cells;
+  try {
+    for (const hand of new RangeManager(notation).getHands()) { const key = cellOf(hand); cells.set(key, (cells.get(key) ?? 0) + 1); }
+  } catch { return null; }
+  for (const [key, n] of cells) { const [i, j] = key.split(',').map(Number); cells.set(key, n / (i === j ? 6 : i < j ? 4 : 12)); }
+  return cells;
+}
+/** The notation for a set of whole cells, as compact as rangeman writes it. */
+function notationOf(keys) {
+  const names = [...keys].map((key) => { const [i, j] = key.split(',').map(Number); return cellName(i, j); });
+  if (!names.length) return '';
+  try { return new RangeManager(names.join(',')).toNotation(); } catch { return names.join(','); }
+}
+let painted = new Map();
+function renderPaint() {
+  const cells = cellsOf(draft[draft.side]);
+  if (cells) painted = cells;
+  let html = ''; let combos = 0;
+  for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) {
+    const key = `${i},${j}`; const share = painted.get(key) ?? 0;
+    combos += share * (i === j ? 6 : i < j ? 4 : 12);
+    html += `<b data-key="${key}" class="${share > 0.5 ? 'on' : ''}" style="grid-column:${j + 1 + (j > 4) + (j > 8)};grid-row:${i + 1 + (i > 4) + (i > 8)}"><i style="height:${Math.round(100 * share)}%"></i><span>${cellName(i, j)}</span></b>`;
+  }
+  $('paint').innerHTML = html;
+  $('p-count').textContent = `${Math.round(combos)}`;
+  $('p-oop').setAttribute('aria-pressed', String(draft.side === 'oop')); $('p-ip').setAttribute('aria-pressed', String(draft.side === 'ip'));
+  $('f-error').textContent = cells ? '' : 'That range cannot be read.';
+}
+function showSide(side) { draft.side = side; $('f-range').value = draft[side]; renderPaint(); }
+// Painting: the first cell touched decides whether the stroke adds or erases
+let stroke = null;
+const paintAt = (ev) => {
+  const cell = document.elementFromPoint(ev.clientX, ev.clientY)?.closest?.('#paint b'); if (!cell || !stroke) return;
+  const key = cell.dataset.key; if (stroke.seen.has(key)) return;
+  stroke.seen.add(key);
+  if (stroke.add) painted.set(key, 1); else painted.delete(key);
+  cell.className = stroke.add ? 'on' : ''; cell.firstElementChild.style.height = stroke.add ? '100%' : '0%';
+};
+$('paint').addEventListener('pointerdown', (ev) => {
+  const cell = ev.target.closest('b'); if (!cell) return;
+  ev.preventDefault();
+  stroke = { add: (painted.get(cell.dataset.key) ?? 0) <= 0.5, seen: new Set() };
+  paintAt(ev);
+});
+window.addEventListener('pointermove', (ev) => { if (stroke) paintAt(ev); });
+const endStroke = () => {
+  if (!stroke) return; stroke = null;
+  draft[draft.side] = notationOf([...painted.entries()].filter(([, share]) => share > 0).map(([key]) => key));
+  $('f-range').value = draft[draft.side]; renderPaint();
+};
+window.addEventListener('pointerup', endStroke); window.addEventListener('pointercancel', endStroke);
+$('f-range').addEventListener('input', () => { draft[draft.side] = $('f-range').value; renderPaint(); });
+$('p-oop').onclick = () => showSide('oop'); $('p-ip').onclick = () => showSide('ip');
+$('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); };
 function openSetup() {
   const c = state.config;
-  $('f-board').value = c.board; $('f-oop').value = c.oop; $('f-ip').value = c.ip; $('f-pot').value = c.pot; $('f-stack').value = c.stack;
+  $('f-board').value = c.board; $('f-pot').value = c.pot; $('f-stack').value = c.stack;
   $('f-bets').value = c.bets.map((b) => Math.round(100 * b)).join(' '); $('f-raise').value = c.raise;
-  $('drawer').hidden = false; $('scrim').hidden = false; (state.mode === 'spot' ? $('f-board') : $('f-pot')).focus();
+  draft.oop = c.oop; draft.ip = c.ip; showSide(draft.side);
+  $('drawer').hidden = false; $('scrim').hidden = false;
+  // Focus the drawer itself, never a field: on a phone a focused field brings up the keyboard and zooms the page
+  $('drawer').focus({ preventScroll: true });
 }
 const closeSetup = () => { $('drawer').hidden = true; $('scrim').hidden = true; $('f-error').textContent = ''; };
 $('open-setup').onclick = openSetup; $('board').onclick = openSetup; $('scrim').onclick = closeSetup;
@@ -298,7 +361,8 @@ $('drawer').addEventListener('submit', (ev) => {
   const board = ($('f-board').value.match(/[2-9TJQKAtjqka][shdcSHDC]/g) ?? []).map((c) => c[0].toUpperCase() + c[1].toLowerCase());
   if (!(pot > 0) || !(stack >= 0) || !bets.length) { $('f-error').textContent = 'Pot, stack and at least one bet size are needed.'; return; }
   if (state.mode === 'spot' && board.length !== 5) { $('f-error').textContent = 'Five board cards are needed.'; return; }
-  Object.assign(state.config, { pot, stack, bets, raise }, state.mode === 'spot' ? { board: board.join(' '), oop: $('f-oop').value.trim(), ip: $('f-ip').value.trim() } : {});
+  if (state.mode === 'spot' && (!cellsOf(draft.oop)?.size || !cellsOf(draft.ip)?.size)) { $('f-error').textContent = 'Both ranges need hands.'; return; }
+  Object.assign(state.config, { pot, stack, bets, raise }, state.mode === 'spot' ? { board: board.join(' '), oop: draft.oop.trim(), ip: draft.ip.trim() } : {});
   remember(); closeSetup(); state.node = 0; state.hand = null;
   if (state.mode === 'spot') solve(); else solveWarp();
 });

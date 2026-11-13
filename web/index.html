@@ -39,11 +39,21 @@
   </section>
 </main>
 <div class="scrim" id="scrim" hidden></div>
-<form class="drawer" id="drawer" hidden aria-label="Setup">
+<form class="drawer" id="drawer" hidden aria-label="Setup" tabindex="-1">
   <div class="spot-only">
     <label>Board<input id="f-board" autocomplete="off" spellcheck="false"></label>
-    <label>Out of position<textarea id="f-oop" rows="3" spellcheck="false"></textarea></label>
-    <label>In position<textarea id="f-ip" rows="3" spellcheck="false"></textarea></label>
+    <div class="painter">
+      <div class="head">
+        <div class="seg" role="group" aria-label="Range">
+          <button type="button" id="p-oop" aria-pressed="true">OOP</button>
+          <button type="button" id="p-ip" aria-pressed="false">IP</button>
+        </div>
+        <span class="count" id="p-count"></span>
+        <button type="button" class="clear" id="p-clear">Clear</button>
+      </div>
+      <div class="paint" id="paint" role="group" aria-label="Range chart"></div>
+      <textarea id="f-range" rows="2" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="Range notation"></textarea>
+    </div>
   </div>
   <div class="row">
     <label>Pot<input id="f-pot" inputmode="decimal"></label>

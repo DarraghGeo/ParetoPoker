@@ -104,6 +104,19 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 .drawer .spot-only{display:flex;flex-direction:column;gap:16px}
 .drawer input,.drawer textarea{font:500 13px/18px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:3px;padding:7px 8px;width:100%;resize:vertical;letter-spacing:0;text-transform:none}
 .drawer .row{display:flex;gap:12px}
+.drawer:focus{outline:none}
+/* Typing into a field must not make a phone zoom the page: its text is 16px there */
+@media (max-width:600px){.drawer input,.drawer textarea{font-size:16px}}
+.painter{display:flex;flex-direction:column;gap:10px}
+.painter .head{display:flex;align-items:center;gap:12px}
+.painter .seg button{padding:3px 9px;font:400 11px/14px var(--mono);letter-spacing:.08em}
+.painter .count{font:400 12px/16px var(--mono);color:var(--ink-3);flex:1}
+.painter .clear{border-color:transparent;padding:3px 0;color:var(--ink-3);font:400 12px/16px var(--sans)}
+.paint{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 5px repeat(4,auto) 5px repeat(4,auto);gap:2px;touch-action:none;user-select:none;-webkit-user-select:none}
+.paint b{position:relative;aspect-ratio:1;background:var(--surface);font:400 8px/10px var(--mono);color:var(--ink-3);padding:2px;overflow:hidden;cursor:crosshair}
+.paint b i{position:absolute;left:0;right:0;bottom:0;background:var(--ink)}
+.paint b span{position:relative;pointer-events:none}
+.paint b.on span{color:var(--bg)}
 .primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:8px 12px}
 .error{margin:0;color:var(--danger);font:400 12px/16px var(--mono);min-height:16px}
 @media (prefers-reduced-motion:no-preference){.drawer{animation:in .16s ease-out}@keyframes in{from{transform:translateX(16px);opacity:0}}}
