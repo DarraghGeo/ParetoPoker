@@ -11,3 +11,5 @@ diagnosis/hands/extract.log
 diagnosis/hands/3-interchange-turns.log
 diagnosis/hands/*.log
 diagnosis/worth-engine.log
+diagnosis/dist-engine.log
+diagnosis/derived-defence-turns.log
