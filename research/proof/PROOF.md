@@ -181,13 +181,13 @@ worse was raised from 3% to 5%; the "final gates" set was run after that.
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
 | Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
 | Flop | fresh random, first gates (15) | 0.3% vs 0.02% | 10,293 | **1** | 3,112 / 0 | 2,729 / 1 | 2,597 / 0 | 669 / 0 | 1,186 / 0 | 17,281 | 167 | 2.798 |
-| Flop | fresh random, final gates (9) | 0.3% vs 0.02% | 6,152 | **0** | 1,548 / 0 | 1,517 / 0 | 1,471 / 0 | 434 / 0 | 1,182 / 0 | 9,949 | 292 | 1.452 |
+| Flop | fresh random, final gates (23) | 0.3% vs 0.02% | 14,488 | **0** | 3,653 / 0 | 3,621 / 0 | 3,450 / 0 | 806 / 0 | 2,958 / 0 | 24,497 | 471 | 2.74 |
 
-**18,324 conclusions on 26 spots, 1 false.**
+**26,660 conclusions on 40 spots, 1 false.**
 
-**Not adopted.** same: 4,637 made, 1 false; needs: 4,514 made, 0 false; worse: 5,328 made, 0 false; builds: 1,171 made, 0 false; cards: 2,674 made, 0 false. The false one: a hand on a turn inside a flop spot that the 0.3% solve mixes between checking and betting ("worth the same to within 2.9% of the pot") where both finer solves have the bet 3.1% worse. One false conclusion is a failure, so the page draws no conclusions on flop spots: it gives the numbers and says they are only that. What would change this: flop solves finer than a browser tab manages, or gates widened and tested on spots not yet seen.
+**Not adopted.** same: 6,741 made, 1 false; needs: 6,493 made, 0 false; worse: 7,433 made, 0 false; builds: 1,543 made, 0 false; cards: 4,450 made, 0 false. The false one: a hand on a turn inside a flop spot that the 0.3% solve mixes between checking and betting ("worth the same to within 2.9% of the pot") where both finer solves have the bet 3.1% worse. One false conclusion is a failure, so the page draws no conclusions on flop spots: it gives the numbers and says they are only that. What would change this: flop solves finer than a browser tab manages, or gates widened and tested on spots not yet seen.
 
-The numbers are another matter at this accuracy: 1,024 of 29,651
+The numbers are another matter at this accuracy: 1,203 of 44,199
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 
@@ -238,7 +238,7 @@ fresh sets and the accounting proofs were run again on it:
    it takes an action at all (10% of the time or more).
 4. **Which hands he holds after his own action is not fixed.** On one river line (60% and 24% of the two ranges take it), the two references put the same hand's equity against the range he arrives with at 5.2% and 9.1%. Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
-   takes, 661 of 89,435 equities fell outside the tolerance (1 to 2 points) of a reference.
+   takes, 815 of 98,243 equities fell outside the tolerance (1 to 2 points) of a reference.
 
 ## Not proven: said nowhere on the page, to be proved later or dropped
 
