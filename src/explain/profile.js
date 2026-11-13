@@ -22,7 +22,9 @@ export async function profile(RangeManager, { oop, ip, board }) {
     if (shapes.length) parts.push(`${shapes.join('; ')}.`);
     const capped = (side, name) => ((side.capped?.relative ?? 0) >= 0.4 ? `${name} is capped: it is missing much of the top of what it could hold.` : null);
     for (const text of [capped(hero, 'Out of position'), capped(villain, 'In position')]) if (text) parts.push(text);
-    return { text: parts.join(' '), advantage: { range: advantage.range, nut: advantage.nut, polarization: advantage.polarization }, shapes: { oop: hero.shape?.dominant ?? null, ip: villain.shape?.dominant ?? null }, capped: { oop: hero.capped?.relative ?? 0, ip: villain.capped?.relative ?? 0 } };
+    // Only the equity sentence is put on the page: it is checked against an exact count (research/proof/profile.mjs).
+    // The rest are poker-rangeman's own measures and labels, kept here as `detail` until their definitions are checked too.
+    return { text: parts[0], detail: parts.join(' '), advantage: { range: advantage.range, nut: advantage.nut, polarization: advantage.polarization }, shapes: { oop: hero.shape?.dominant ?? null, ip: villain.shape?.dominant ?? null }, capped: { oop: hero.capped?.relative ?? 0, ip: villain.capped?.relative ?? 0 } };
   } catch {
     return null;
   }

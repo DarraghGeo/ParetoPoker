@@ -131,8 +131,9 @@ What the conclusions are:
 
 ### Thinner lines: a fifth to a half of each range
 
-The same conclusions with wider gates (an unused action must be 4% of the pot worse on a turn, 5% on a
-river, before it is called worse). These gates were fixed before the fresh random sets were drawn:
+The same conclusions with wider gates (an unused action must be 4% of the pot worse before it is called
+worse). These gates were fixed before the fresh random sets were drawn. The page uses 5% on rivers, for
+margin: that makes fewer claims, every one of them among those tested here.
 
 | Street | Set of spots | Page vs reference accuracy | Conclusions | False | worse (made / false) | same | needs | builds | cards | Numbers | Outside tolerance | Largest reversed gap (% pot) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
@@ -172,6 +173,7 @@ hold: a strategy that is a best reply to one equilibrium is a best reply to all 
 | "B75 is worse with this hand: against his strategy in this solution it gives up 4% of the pot" | conclusion (worse) + number | proof 4 for "worse"; the amount is this solution's (proof 3) |
 | "on the 9 cards that improve the hand it gains 12% of the pot, on the other 37 it loses 6%. The call is for those cards." | conclusion (cards) + numbers | proof 4 for the directions; proofs 1 and 3 for the amounts |
 | "In this solution B33 comes out 1.6% of the pot behind X: too close to call it worse" | number | proof 3; no conclusion is drawn |
+| "Out of position has more equity, by 6 points" (the spot sentence) | exact | poker-rangeman's figure, equal to an exact count on 28 spots (largest difference 0 points; `profile.mjs`) |
 
 ## What was found on the way
 
@@ -202,6 +204,7 @@ hold: a strategy that is a best reply to one equilibrium is a best reply to all 
 | Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
 | River and turn decisions reached inside a spot that started on an earlier street | The spot is solved to its own street's accuracy, and what follows a deal is less settled than that. Numbers only there | not yet run |
 | Conclusions about flop decisions | Tested at the accuracy a browser reaches (0.3%): see the table. No false conclusion so far, but on few spots: each flop takes the better part of an hour to test. | `accept.mjs "held flop" 0.3 0.02` |
+| "In position holds more of the strongest hands", "its range is condensed", "it is capped" | poker-rangeman's own measures and labels; their definitions were not checked here, so they are off the page for now | — |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
 | Which of his hands fold, call or raise, by made hand | Not measured; the split by holding above suggests it will not be stable | — |
 | Why one bet size and not another when the range uses both | The "same" and "worse" conclusions cover the hand's own actions; no claim about sizes as such has a test | — |

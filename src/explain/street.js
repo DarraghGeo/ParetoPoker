@@ -258,6 +258,15 @@ export function explainStreet(s, m, T) {
     if (m.actions[i].aheadWhenCalled != null) text += ` When he calls you are ahead ${pts(m.actions[i].aheadWhenCalled)} of the time.`;
     reasons.push({ id: needs ? 'needs' : builds ? 'builds' : 'folds', text });
   }
+  // a hand that does not bet: what the range's main bet would have met, as this solution's numbers
+  if (!taken.some((i) => m.actions[i].folds != null && m.actions[i].kind !== 'check' && m.actions[i].kind !== 'call')) {
+    const bets = m.actions.map((x, i) => i).filter((i) => m.actions[i].on && m.actions[i].worth != null && m.actions[i].folds != null && m.actions[i].kind !== 'check' && m.actions[i].kind !== 'call' && m.actions[i].kind !== 'fold');
+    const main = bets.sort((x, y) => m.actions[y].freq - m.actions[x].freq)[0];
+    if (main != null && passiveIdx != null && m.actions[main].whenContinued != null && m.actions[main].continues >= 0.05) {
+      const d = m.actions[main].whenContinued - m.actions[passiveIdx].worth;
+      reasons.push({ id: 'unbet', text: `In this solution, had it made the bet the range makes most, ${label(main)}, he would fold ${pts(m.actions[main].folds)} of the time, and the times he did not would be worth ${pot(d)} of the pot ${d >= 0 ? 'more' : 'less'} to you than ${passiveName} is overall.` });
+    }
+  }
   // a call: which cards it is for
   for (const c of made.filter((x) => x.kind === 'cards')) {
     // said per time such a card comes: the part of the gain that arrives on those cards, over how often they come

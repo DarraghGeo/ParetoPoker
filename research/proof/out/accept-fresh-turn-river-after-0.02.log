@@ -1,0 +1,28 @@
+  solved fresh turn 01: 840 iterations, 0.020%, 25.4s
+  fresh turn 01: page 0.020%, refs 0.0098 0.0098; running tally {}
+  solved fresh turn 02: 220 iterations, 0.017%, 1.3s
+  fresh turn 02: page 0.017%, refs 0.0092 0.0100; running tally {}
+  solved fresh turn 03: 700 iterations, 0.019%, 4.1s
+  fresh turn 03: page 0.019%, refs 0.0096 0.0098; running tally {}
+  solved fresh turn 04: 360 iterations, 0.019%, 6.0s
+  fresh turn 04: page 0.019%, refs 0.0099 0.0099; running tally {"equity line 0.5+":{"made":1169,"failed":0,"number":true},"worse line 0.5+":{"made":466,"failed":0,"number":false},"folds line 0.5+":{"made":1736,"failed":0,"number":true},"same line 0.5+":{"made":355,"failed":0,"number":false},"builds line 0.5+":{"made":188,"failed":0,"number":false},"needs line 0.5+":{"made":408,"failed":0,"number":false}}
+  solved fresh turn 05: 700 iterations, 0.020%, 10.0s
+  fresh turn 05: page 0.020%, refs 0.0098 0.0099; running tally {"equity line 0.5+":{"made":1530,"failed":0,"number":true},"worse line 0.5+":{"made":505,"failed":0,"number":false},"folds line 0.5+":{"made":2097,"failed":0,"number":true},"same line 0.5+":{"made":461,"failed":0,"number":false},"builds line 0.5+":{"made":208,"failed":0,"number":false},"needs line 0.5+":{"made":501,"failed":0,"number":false}}
+  solved fresh turn 06: 480 iterations, 0.019%, 2.8s
+  fresh turn 06: page 0.019%, refs 0.0097 0.0099; running tally {"equity line 0.5+":{"made":1530,"failed":0,"number":true},"worse line 0.5+":{"made":505,"failed":0,"number":false},"folds line 0.5+":{"made":2097,"failed":0,"number":true},"same line 0.5+":{"made":461,"failed":0,"number":false},"builds line 0.5+":{"made":208,"failed":0,"number":false},"needs line 0.5+":{"made":501,"failed":0,"number":false}}
+  solved fresh turn 07: 300 iterations, 0.019%, 3.8s
+  fresh turn 07: page 0.019%, refs 0.0097 0.0099; running tally {"equity line 0.5+":{"made":1530,"failed":0,"number":true},"worse line 0.5+":{"made":505,"failed":0,"number":false},"folds line 0.5+":{"made":2097,"failed":0,"number":true},"same line 0.5+":{"made":461,"failed":0,"number":false},"builds line 0.5+":{"made":208,"failed":0,"number":false},"needs line 0.5+":{"made":501,"failed":0,"number":false}}
+  solved fresh turn 08: 320 iterations, 0.020%, 5.8s
+  fresh turn 08: page 0.020%, refs 0.0097 0.0098; running tally {"equity line 0.5+":{"made":1825,"failed":0,"number":true},"worse line 0.5+":{"made":557,"failed":0,"number":false},"folds line 0.5+":{"made":2687,"failed":0,"number":true},"same line 0.5+":{"made":586,"failed":0,"number":false},"builds line 0.5+":{"made":231,"failed":0,"number":false},"needs line 0.5+":{"made":568,"failed":0,"number":false}}
+  solved fresh turn 09: 600 iterations, 0.020%, 19.6s
+  fresh turn 09: page 0.020%, refs 0.0099 0.0098; running tally {"equity line 0.5+":{"made":2440,"failed":0,"number":true},"worse line 0.5+":{"made":1030,"failed":0,"number":false},"folds line 0.5+":{"made":4328,"failed":0,"number":true},"same line 0.5+":{"made":872,"failed":0,"number":false},"builds line 0.5+":{"made":411,"failed":0,"number":false},"needs line 0.5+":{"made":747,"failed":0,"number":false}}
+  solved fresh turn 10: 480 iterations, 0.020%, 33.6s
+  fresh turn 10: page 0.020%, refs 0.0099 0.0099; running tally {"equity line 0.5+":{"made":2440,"failed":0,"number":true},"worse line 0.5+":{"made":1030,"failed":0,"number":false},"folds line 0.5+":{"made":4328,"failed":0,"number":true},"same line 0.5+":{"made":872,"failed":0,"number":false},"builds line 0.5+":{"made":411,"failed":0,"number":false},"needs line 0.5+":{"made":747,"failed":0,"number":false}}
+  solved fresh turn 11: 540 iterations, 0.019%, 12.7s
+  fresh turn 11: page 0.019%, refs 0.0098 0.0098; running tally {"equity line 0.5+":{"made":2440,"failed":0,"number":true},"worse line 0.5+":{"made":1030,"failed":0,"number":false},"folds line 0.5+":{"made":4328,"failed":0,"number":true},"same line 0.5+":{"made":872,"failed":0,"number":false},"builds line 0.5+":{"made":411,"failed":0,"number":false},"needs line 0.5+":{"made":747,"failed":0,"number":false}}
+  solved fresh turn 12: 260 iterations, 0.017%, 1.5s
+  fresh turn 12: page 0.017%, refs 0.0094 0.0100; running tally {"equity line 0.5+":{"made":3058,"failed":0,"number":true},"worse line 0.5+":{"made":1208,"failed":0,"number":false},"folds line 0.5+":{"made":5564,"failed":0,"number":true},"same line 0.5+":{"made":1103,"failed":0,"number":false},"builds line 0.5+":{"made":474,"failed":0,"number":false},"needs line 0.5+":{"made":994,"failed":0,"number":false}}
+  solved fresh turn 13: 380 iterations, 0.019%, 4.8s
+  fresh turn 13: page 0.019%, refs 0.0099 0.0097; running tally {"equity line 0.5+":{"made":3232,"failed":0,"number":true},"worse line 0.5+":{"made":1262,"failed":0,"number":false},"folds line 0.5+":{"made":5912,"failed":0,"number":true},"same line 0.5+":{"made":1154,"failed":0,"number":false},"builds line 0.5+":{"made":532,"failed":0,"number":false},"needs line 0.5+":{"made":1042,"failed":0,"number":false}}
+  solved fresh turn 14: 200 iterations, 0.019%, 0.7s
+  fresh turn 14: page 0.019%, refs 0.0092 0.0096; running tally {"equity line 0.5+":{"made":4136,"failed":0,"number":true},"worse line 0.5+":{"made":1616,"failed":0,"number":false},"folds line 0.5+":{"made":6816,"failed":0,"number":true},"same line 0.5+":{"made":1319,"failed":0,"number":false},"builds line 0.5+":{"made":671,"failed":0,"number":false},"needs line 0.5+":{"made":1233,"failed":0,"number":false}}
