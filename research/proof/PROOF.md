@@ -105,17 +105,19 @@ Lines at least half of each range takes:
 
 | Street | Set of spots | Page vs reference accuracy | Conclusions | False | worse (made / false) | same | needs | builds | cards | Numbers | Outside tolerance | Largest reversed gap (% pot) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| Turn | calibration (6 hand-built) | 0.02% vs 0.01% | 3,950 | **0** | 963 / 0 | 1,262 / 0 | 1,184 / 0 | 365 / 0 | 176 / 0 | 6,697 | 0 | — |
-| Turn | held-out 1 (6 hand-built) | 0.02% vs 0.01% | 4,235 | **0** | 1,263 / 0 | 1,191 / 0 | 1,179 / 0 | 313 / 0 | 289 / 0 | 7,091 | 0 | — |
-| Turn | held-out 2 (6 hand-built) | 0.02% vs 0.01% | 4,433 | **0** | 997 / 0 | 1,550 / 0 | 1,268 / 0 | 292 / 0 | 326 / 0 | 7,573 | 0 | — |
-| River | calibration (6 hand-built) | 0.01% vs 0.002% | 3,957 | **0** | 1,757 / 0 | 910 / 0 | 891 / 0 | 399 / 0 | — | 8,148 | 0 | — |
-| River | held-out (6 hand-built) | 0.01% vs 0.002% | 3,125 | **0** | 1,254 / 0 | 802 / 0 | 787 / 0 | 282 / 0 | — | 7,437 | 0 | — |
-| River | random (40) | 0.01% vs 0.002% | 19,164 | **0** | 3,448 / 0 | 9,068 / 0 | 4,915 / 0 | 1,733 / 0 | — | 33,527 | 152 | — |
+| Turn | calibration (6 hand-built) | 0.02% vs 0.01% | 4,212 | **0** | 1,225 / 0 | 1,262 / 0 | 1,184 / 0 | 365 / 0 | 176 / 0 | 6,697 | 0 | 0.08 |
+| Turn | held-out 1 (6 hand-built) | 0.02% vs 0.01% | 4,531 | **0** | 1,559 / 0 | 1,191 / 0 | 1,179 / 0 | 313 / 0 | 289 / 0 | 7,091 | 0 | 0.073 |
+| Turn | held-out 2 (6 hand-built) | 0.02% vs 0.01% | 4,618 | **0** | 1,198 / 0 | 1,550 / 0 | 1,268 / 0 | 292 / 0 | 310 / 0 | 7,573 | 0 | 0.131 |
+| Turn | fresh random (60) | 0.02% vs 0.01% | 30,220 | **0** | 9,133 / 0 | 8,781 / 0 | 7,788 / 0 | 2,005 / 0 | 2,513 / 0 | 46,750 | 0 | — |
+| River | calibration (6 hand-built) | 0.01% vs 0.002% | 4,913 | **0** | 2,713 / 0 | 910 / 0 | 891 / 0 | 399 / 0 | — | 8,148 | 0 | 0.171 |
+| River | held-out (6 hand-built) | 0.01% vs 0.002% | 4,131 | **0** | 2,260 / 0 | 802 / 0 | 787 / 0 | 282 / 0 | — | 7,437 | 0 | 0.192 |
+| River | random (40) | 0.01% vs 0.002% | 20,109 | **0** | 4,393 / 0 | 9,068 / 0 | 4,915 / 0 | 1,733 / 0 | — | 33,527 | 152 | 0.249 |
 | River | fresh random (60) | 0.01% vs 0.002% | 28,250 | **0** | 16,064 / 0 | 5,299 / 0 | 4,821 / 0 | 2,066 / 0 | — | 48,496 | 19 | 0.504 |
+| Flop | held-out (2 hand-built) | 0.3% vs 0.02% | 1,879 | **0** | 668 / 0 | 391 / 0 | 446 / 0 | 68 / 0 | 306 / 0 | 2,421 | 565 | 0.785 |
 
-All sets together on those lines: **67,114 conclusions, 0 false.**
+All sets together on those lines: **102,863 conclusions, 0 false.**
 "Largest reversed gap" is the largest difference in worth, at page accuracy, whose direction a reference
-reversed: the gate for calling an action worse is 2% of the pot on turns and rivers, several times that figure.
+reversed: the gate for calling an action worse is 2% of the pot on these lines, several times that figure.
 
 What the conclusions are:
 
@@ -127,15 +129,33 @@ What the conclusions are:
 | builds | they are worth more, by at least twice the tolerance | they are worth more there too |
 | cards | a call the hand makes gains or loses, against folding, at least twice the tolerance on the cards that lift the hand (or on the others) | it has the same direction there |
 
-### On trial: thinner lines
+### Thinner lines: a fifth to a half of each range
 
-The same conclusions on lines a fifth to a half of each range takes, with wider gates. Not in use on the page.
+The same conclusions with wider gates (an unused action must be 4% of the pot worse on a turn, 5% on a
+river, before it is called worse). These gates were fixed before the fresh random sets were drawn:
 
 | Street | Set of spots | Page vs reference accuracy | Conclusions | False | worse (made / false) | same | needs | builds | cards | Numbers | Outside tolerance | Largest reversed gap (% pot) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Turn | calibration (6 hand-built) | 0.02% vs 0.01% | 3,489 | **0** | 1,939 / 0 | 347 / 0 | 339 / 0 | 42 / 0 | 822 / 0 | 3,316 | 0 | 0.072 |
+| Turn | held-out 1 (6 hand-built) | 0.02% vs 0.01% | 3,215 | **0** | 1,542 / 0 | 356 / 0 | 385 / 0 | 78 / 0 | 854 / 0 | 3,266 | 0 | 0.19 |
+| Turn | held-out 2 (6 hand-built) | 0.02% vs 0.01% | 4,467 | **0** | 2,052 / 0 | 606 / 0 | 697 / 0 | 106 / 0 | 1,006 / 0 | 4,563 | 0 | 0.195 |
+| Turn | fresh random (60) | 0.02% vs 0.01% | 31,076 | **0** | 14,344 / 0 | 4,296 / 0 | 3,623 / 0 | 616 / 0 | 8,197 / 0 | 33,679 | 2 | — |
+| River | calibration (6 hand-built) | 0.01% vs 0.002% | 4,803 | **0** | 3,251 / 0 | 846 / 0 | 431 / 0 | 275 / 0 | — | 6,811 | 0 | 1.134 |
+| River | held-out (6 hand-built) | 0.01% vs 0.002% | 3,634 | **0** | 2,550 / 0 | 635 / 0 | 257 / 0 | 192 / 0 | — | 4,906 | 45 | 0.733 |
+| River | random (40) | 0.01% vs 0.002% | 16,346 | **0** | 5,353 / 0 | 7,402 / 0 | 2,601 / 0 | 990 / 0 | — | 25,443 | 14 | 0.4 |
 | River | fresh random (60) | 0.01% vs 0.002% | 25,373 | **0** | 17,271 / 0 | 4,600 / 0 | 2,396 / 0 | 1,106 / 0 | — | 35,431 | 16 | 2.291 |
 
-All sets: 25,373 conclusions, 0 false. See "Not proven" for why these are not yet adopted.
+All sets on those lines: **92,403 conclusions, 0 false.** The decision that broke the earlier wording (step 2 above) is in "held-out 2" and passes
+under the final rules. Below a fifth of either range nothing is concluded.
+
+### Both together
+
+Turn and river, every set: **193,387 conclusions on 190 spots (85,828 turn, 107,559 river), 0 false.** Of these, 114,919 are on the 120 fresh random spots that the final rules had never seen.
+
+What "none false" can and cannot mean: conclusions about the same decision stand or fall together, so the
+evidence is closer to "no false conclusion at any of the decisions explained on 190 spots" than to that many
+independent trials. It is strong evidence, not a theorem. For "worse" there is also a reason it should
+hold: a strategy that is a best reply to one equilibrium is a best reply to all of them.
 
 ## What the page says, and what each sentence rests on
 
@@ -170,7 +190,7 @@ All sets: 25,373 conclusions, 0 false. See "Not proven" for why these are not ye
 4. **Which hands he holds after his own action is not fixed.** On a river line that 73% of his range takes,
    the two references differed by four points about the equity of hands against that range. Equity after
    his action is therefore a number of this solution: across every set, on lines at least half of each range
-   takes, 171 of 50,071 equities fell outside the tolerance (1 to 2 points) of a reference.
+   takes, 371 of 73,736 equities fell outside the tolerance (1 to 2 points) of a reference.
 
 ## Not proven: said nowhere on the page, to be proved later or dropped
 
@@ -179,8 +199,9 @@ All sets: 25,373 conclusions, 0 false. See "Not proven" for why these are not ye
 | "Betting gains against his draws and loses to his strong hands": an action's gain split by what he holds | Not fixed by the equilibrium: which of his hands call is arbitrary among those indifferent | Two references (0.01%), main lines of six turn spots, 19,688 comparisons: the parts differ by up to **27.86% of the pot** (99th percentile 5.95%). `holding.mjs` |
 | What an unused action costs, as a truth of the spot | Finding 2 | `accept.mjs`, random river set |
 | Why a hand bets 60% and not 40% | Finding 3 | `tolerance.mjs` |
-| Conclusions on lines a fifth to a half of each range takes | On trial. 25,373 conclusions, 0 false so far, but at one such decision (he had just shoved) the two references disagreed about how often he shoves at all (12.5% against 20%) and three kinds of claim then failed under an earlier wording. Left out until a rule for which thin lines are settled has been found and tested | table above; `out/failures-final-turn-0.02.json` as first run |
-| Flop decisions, and turn decisions inside a flop spot | The test was still running when this was written. | `accept.mjs "held flop" 0.3 0.02` |
+| Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
+| River and turn decisions reached inside a spot that started on an earlier street | The spot is solved to its own street's accuracy, and what follows a deal is less settled than that. Numbers only there | not yet run |
+| Conclusions about flop decisions | Tested at the accuracy a browser reaches (0.3%): see the table. No false conclusion so far, but on few spots: each flop takes the better part of an hour to test. | `accept.mjs "held flop" 0.3 0.02` |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
 | Which of his hands fold, call or raise, by made hand | Not measured; the split by holding above suggests it will not be stable | — |
 | Why one bet size and not another when the range uses both | The "same" and "worse" conclusions cover the hand's own actions; no claim about sizes as such has a test | — |

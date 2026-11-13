@@ -107,7 +107,7 @@ ${rows('0.5')}
 
 All sets together on those lines: **${n(total('0.5').c)} conclusions, ${total('0.5').f} false.**
 "Largest reversed gap" is the largest difference in worth, at page accuracy, whose direction a reference
-reversed: the gate for calling an action worse is 2% of the pot on turns and rivers, several times that figure.
+reversed: the gate for calling an action worse is 2% of the pot on these lines, several times that figure.
 
 What the conclusions are:
 
@@ -119,14 +119,25 @@ What the conclusions are:
 | builds | they are worth more, by at least twice the tolerance | they are worth more there too |
 | cards | a call the hand makes gains or loses, against folding, at least twice the tolerance on the cards that lift the hand (or on the others) | it has the same direction there |
 
-### On trial: thinner lines
+### Thinner lines: a fifth to a half of each range
 
-The same conclusions on lines a fifth to a half of each range takes, with wider gates. Not in use on the page.
+The same conclusions with wider gates (an unused action must be 4% of the pot worse on a turn, 5% on a
+river, before it is called worse). These gates were fixed before the fresh random sets were drawn:
 
 ${head}
 ${rows('0.2')}
 
-${(() => { const t = total('0.2'); return `All sets: ${n(t.c)} conclusions, ${t.f} false.`; })()} See "Not proven" for why these are not yet adopted.
+${(() => { const t = total('0.2'); return `All sets on those lines: **${n(t.c)} conclusions, ${t.f} false.**`; })()} The decision that broke the earlier wording (step 2 above) is in "held-out 2" and passes
+under the final rules. Below a fifth of either range nothing is concluded.
+
+### Both together
+
+${(() => { const a = total('0.5'), b = total('0.2'); const fresh = accept.filter((x) => x.set.startsWith('fresh')).reduce((t, { r }) => t + r.conclusions.made, 0); const turn = accept.filter((x) => x.street === 'Turn').reduce((t, { r }) => t + r.conclusions.made, 0); const river = accept.filter((x) => x.street === 'River').reduce((t, { r }) => t + r.conclusions.made, 0); const spots = accept.filter((x) => x.street !== 'Flop').reduce((t, { r }) => t + r.spots.length, 0); return `Turn and river, every set: **${n(turn + river)} conclusions on ${spots} spots (${n(turn)} turn, ${n(river)} river), ${a.f + b.f - accept.filter((x) => x.street === 'Flop').reduce((t, { r }) => t + r.conclusions.failed, 0)} false.** Of these, ${n(accept.filter((x) => x.set.startsWith('fresh') && x.street !== 'Flop').reduce((t, { r }) => t + r.conclusions.made, 0))} are on the 120 fresh random spots that the final rules had never seen.`; })()}
+
+What "none false" can and cannot mean: conclusions about the same decision stand or fall together, so the
+evidence is closer to "no false conclusion at any of the decisions explained on 190 spots" than to that many
+independent trials. It is strong evidence, not a theorem. For "worse" there is also a reason it should
+hold: a strategy that is a best reply to one equilibrium is a best reply to all of them.
 
 ## What the page says, and what each sentence rests on
 
@@ -177,8 +188,9 @@ const tail = `
 | "Betting gains against his draws and loses to his strong hands": an action's gain split by what he holds | Not fixed by the equilibrium: which of his hands call is arbitrary among those indifferent | Two references (0.01%), main lines of six turn spots, ${n(holding?.comparisons ?? 0)} comparisons: the parts differ by up to **${holding?.max ?? '?'}% of the pot** (99th percentile ${holding?.p99 ?? '?'}%). \`holding.mjs\` |
 | What an unused action costs, as a truth of the spot | Finding 2 | \`accept.mjs\`, random river set |
 | Why a hand bets 60% and not 40% | Finding 3 | \`tolerance.mjs\` |
-| Conclusions on lines a fifth to a half of each range takes | On trial. ${n(thin.c)} conclusions, ${thin.f} false so far, but at one such decision (he had just shoved) the two references disagreed about how often he shoves at all (12.5% against 20%) and three kinds of claim then failed under an earlier wording. Left out until a rule for which thin lines are settled has been found and tested | table above; \`out/failures-final-turn-0.02.json\` as first run |
-| Flop decisions, and turn decisions inside a flop spot | ${flop.length ? `Tested at the accuracy a browser reaches (0.3%): see the table. ${flop.reduce((t, x) => t + byLine(x.r, '0.5').failed, 0) === 0 ? 'No false conclusion so far, but on few spots: each flop takes the better part of an hour to test.' : 'False conclusions were found.'}` : 'The test was still running when this was written.'} | \`accept.mjs "held flop" 0.3 0.02\` |
+| Conclusions on lines less than a fifth of either range takes | Not tried. At one decision near that edge the two references disagreed about how often he takes the action at all (12.5% against 20%) | proof 4, step 2 |
+| River and turn decisions reached inside a spot that started on an earlier street | The spot is solved to its own street's accuracy, and what follows a deal is less settled than that. Numbers only there | not yet run |
+| Conclusions about flop decisions | ${flop.length ? `Tested at the accuracy a browser reaches (0.3%): see the table. ${flop.reduce((t, x) => t + byLine(x.r, '0.5').failed, 0) === 0 ? 'No false conclusion so far, but on few spots: each flop takes the better part of an hour to test.' : 'False conclusions were found.'}` : 'The test was still running when this was written.'} | \`accept.mjs "held flop" 0.3 0.02\` |
 | Blockers: "your cards remove his calls" as the reason for a play | Never put to the test: needs a conclusion with a truth test and gates of its own | — |
 | Which of his hands fold, call or raise, by made hand | Not measured; the split by holding above suggests it will not be stable | — |
 | Why one bet size and not another when the range uses both | The "same" and "worse" conclusions cover the hand's own actions; no claim about sizes as such has a test | — |

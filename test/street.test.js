@@ -56,7 +56,8 @@ test('features: the words for a hand', () => {
 test('claims: made only where the proof covers, and each one true of the hand it was made about', () => {
   const s = study(fs, solution, nodes, 0);
   assert.equal(tolerance('turn', 0.3, s.lineReach), null);           // too coarse a solve: nothing is claimed
-  assert.equal(tolerance('turn', exploit, [1, 0.3]), null);          // too thin a line
+  assert.equal(tolerance('turn', exploit, [1, 0.1]), null);          // too thin a line
+  assert.ok(tolerance('turn', exploit, [1, 0.3]).sign > tolerance('turn', exploit, [1, 0.6]).sign); // thinner lines, wider gates
   const T = tolerance('turn', exploit, s.lineReach); assert.ok(T);
   let made = 0;
   for (let c = 0; c < fs.COMBOS; c++) {

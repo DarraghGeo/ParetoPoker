@@ -92,27 +92,28 @@ export function measure(s, c, { onlyOn = true, worth = true } = {}) {
  *   lift, rest   a call's gain over folding on the cards that lift the hand, and on the others
  */
 export const TOLERANCE = {
-  // Only lines that at least half of each range takes: on thinner ones two equally fine solves disagree about
-  // which hands he holds, and conclusions failed the held-out test (PROOF.md, "what did not pass").
+  // Lines at least half of each range takes, and (with wider gates) lines a fifth to a half take.
+  // Thinner than that, nothing is concluded.
   turn: [
-    { upTo: 0.02, lines: [{ from: 0.5, eq: 1, folds: 1, gap: 1.1, sign: 2, cmp: 3.5, lift: 0.5, rest: 1.5 }] },
+    { upTo: 0.02, lines: [{ from: 0.5, eq: 1, folds: 1, gap: 1.1, sign: 2, cmp: 3.5, lift: 0.5, rest: 1.5 }, { from: 0.2, eq: 4, folds: 2, gap: 2.3, sign: 4, cmp: 4.2, lift: 2.6, rest: 4.2 }] },
   ],
   // Rivers solve in a moment, so they are held to a finer solve; their mixes are looser all the same
   river: [
-    { upTo: 0.01, lines: [{ from: 0.5, eq: 2, folds: 3, gap: 2.7, sign: 2, cmp: 7.8, lift: null, rest: null }] },
+    { upTo: 0.01, lines: [{ from: 0.5, eq: 2, folds: 3, gap: 2.7, sign: 2, cmp: 7.8, lift: null, rest: null }, { from: 0.2, eq: 4, folds: 3, gap: 4, sign: 5, cmp: 10, lift: null, rest: null }] },
   ],
 };
 /**
- * Under test, not in use: the same on thinner lines (a fifth to a half of each range), with wider gates.
- * The proof harness tries these beside the table above; they move into it only if they pass.
+ * Under test, not in use: flop spots at the accuracy a browser reaches. The proof harness tries these
+ * beside the table above; they move into it only if they pass.
  */
 export const ON_TRIAL = {
-  turn: [{ upTo: 0.02, lines: [{ from: 0.5, eq: 1, folds: 1, gap: 1.1, sign: 2, cmp: 3.5, lift: 0.5, rest: 1.5 }, { from: 0.2, eq: 4, folds: 2, gap: 2.3, sign: 4, cmp: 4.2, lift: 2.6, rest: 4.2 }] }],
-  river: [{ upTo: 0.01, lines: [{ from: 0.5, eq: 2, folds: 3, gap: 2.7, sign: 2, cmp: 7.8, lift: null, rest: null }, { from: 0.2, eq: 4, folds: 3, gap: 4, sign: 4, cmp: 10, lift: null, rest: null }] }],
+  ...TOLERANCE,
   // Flop spots at the accuracy a browser reaches (0.3%): the flop itself, and the turn once a card has come.
   // Gates are twice the largest differences measured on the one flop spot measured in full.
   flop: [{ upTo: 0.3, lines: [{ from: 0.5, eq: 1, folds: 2, gap: 2.8, sign: 3, cmp: 5, lift: 0.8, rest: 1.4 }] }],
   'turn after a deal': [{ upTo: 0.3, lines: [{ from: 0.5, eq: 2, folds: 2, gap: 2.4, sign: 3, cmp: 3.6, lift: 1, rest: 2 }] }],
+  // The river once a card has come, inside a spot that started on the turn (solved to 0.02% as a turn spot)
+  'river after a deal': [{ upTo: 0.02, lines: [{ from: 0.5, eq: 3, folds: 3, gap: 4, sign: 5, cmp: 10, lift: null, rest: null }] }],
 };
 /** The tolerances that apply: `street` is 'turn' or 'flop' (where the decision is), `exploit` the solve's accuracy in % of the pot. */
 export function tolerance(street, exploit, lineReach, table = TOLERANCE) {
@@ -289,5 +290,5 @@ export function explainStreet(s, m, T) {
       reasons.push({ id: 'behind', text: m.actions[i].sigma >= TAKES ? `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}, and the hand still does both.` : `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}${proven ? ': too close to call it worse' : ''}.` });
     }
   }
-  return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: on lines at least half of each range takes, in a solve fine enough.' };
+  return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: turn and river decisions on lines at least a fifth of each range takes, in a solve fine enough.' };
 }

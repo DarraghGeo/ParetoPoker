@@ -9,7 +9,7 @@ import { TURNS, FLOPS, HELD_TURNS, HELD_FLOPS, HELD2_TURNS, RIVERS, HELD_RIVERS,
 import { study, measure, claims, holds, tolerance, ON_TRIAL } from '../../src/explain/street.js';
 
 const [only = 'held turn', levelText = '0.02', fineTarget = '0.01'] = process.argv.slice(2);
-const level = +levelText;
+const level = +levelText; const DEEPER = +(process.env.DEEPER ?? 0); const ONLY_DEEPER = process.env.ONLY_DEEPER === '1'; // also (or only) the decisions after one more deal
 const spots = [...TURNS, ...FLOPS, ...HELD_TURNS, ...HELD_FLOPS, ...HELD2_TURNS, ...RIVERS, ...HELD_RIVERS, ...randomTurns(+(process.env.RANDOM_SPOTS ?? 40)), ...randomRivers(+(process.env.RANDOM_SPOTS ?? 40)), ...freshSpots(+(process.env.FRESH ?? 60), 4, 4401), ...freshSpots(+(process.env.FRESH ?? 60), 5, 5501), ...freshFlops(+(process.env.FRESH_FLOPS ?? 6), 3301, (x) => { try { fs.defineSpot(config(x)); return true; } catch { return false; } })].filter((s) => s.name.startsWith(only));
 const other = (s, algorithm, target) => { const spot = fs.defineSpot(config(s)); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 3), algorithm }); let e = Infinity; while (e > target && run.completed < 40000) { run.step(spot.board.length === 3 ? 5 : 20); e = run.exploitabilityPercent(); } return { spot, run, solution: run.snapshot(), exploit: e }; };
 const tally = {}; const failures = []; let hands = 0, decisionsSeen = 0, silent = 0;
@@ -19,8 +19,8 @@ for (const s of spots) {
   const page = solveSpot(s, level, { cap: 40000, workers: +(process.env.WORKERS ?? 3) });
   const refs = ['dcfr', 'cfr+'].map((algorithm) => ({ ...other(s, algorithm, +fineTarget), nodes: page.nodes }));
   const flop = page.spot.board.length === 3;
-  for (const { id, dealt } of decisions(page, { perRound: flop ? [99, 2, 0] : [99, 3, 0] })) {
-    const node = page.nodes[id]; if (node.round > (flop ? 1 : 0)) continue;
+  for (const { id, dealt } of decisions(page, { perRound: flop ? [99, 2, DEEPER ? 1 : 0] : [99, 3, 0] })) {
+    const node = page.nodes[id]; if (node.round > (flop ? 1 : 0) + DEEPER) continue; if (ONLY_DEEPER && node.round === 0) continue;
     const st = study(fs, page.solution, page.nodes, id, dealt); if (!st) continue;
     const street = ['flop', 'turn', 'river'][st.f.board.length - 3];
     const T = tolerance(st.f.round === 0 ? street : `${street} after a deal`, page.exploit, st.lineReach, process.env.TRIAL === '0' ? undefined : ON_TRIAL);
