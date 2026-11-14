@@ -377,7 +377,11 @@ function renderStrip(strata) {
   const hands = handsInOrder(s);
   const column = (row) => {
     const parts = [0, 0, 0, 0, 0]; row.hand.strategy.forEach((p, a) => { parts[strata[a]] += p; });
-    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:100%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</b></button>`;
+    // one painted box a column, the actions as bands of its background from the bottom up: a band too thin for a
+    // pixel then stays inside the column, where a box of its own was drawn as a loose pixel under it
+    const total = parts.reduce((t, x) => t + x, 0) || 1; let at = 0;
+    const bands = parts.map((x, k) => { if (!(x > 0)) return ''; const from = at; at += (100 * x) / total; return `var(${COLORS[k]}) ${from.toFixed(2)}% ${at.toFixed(2)}%`; }).filter(Boolean);
+    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:100%;background:linear-gradient(to top,${bands.join(',')})"></b></button>`;
   };
   const names = state.decision.categories;
   if (state.chart === 'ladder') { el.className = 'rows ladder'; el.innerHTML = ladder(s, column); return; }
