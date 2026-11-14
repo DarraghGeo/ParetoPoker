@@ -441,3 +441,47 @@ the equity it takes from the hands that fold, less what it pays the hands that c
 - The suggestion is that the cut should move with the stack-to-pot ratio and the stack size: what counts as a nut hand depends on how much money can still go in.
 - Heuristically, the advantage is said to do two things: set the largest bet or raise size a range can use, and tighten or loosen how often it bets.
 - Worth assessing whether this can be brought into the formulas. Two places it might fit: the choice among bet sizes (which sizes a range may use at all), and the 3-bet and squeeze pots, where stacks are three to four pots deep and the derived strategy still gives up the most.
+
+## The tails: diagnosis of the deep pots, and two refinements tried
+
+`play-full.mjs` with `DIAG`, `diag_report.py`. Eight 3-bet and squeeze flops (three to four pots behind), the fully derived strategy with the denial amount. It gives up 11.5% of the pot there: flop 2.1, turn 3.8, river 5.6. At every decision the formulas' amounts are set beside the solver's strategy applied to the same range, weighted by how often the decision is reached and the pot there.
+
+**Is it the flush card?** No. The gaps are the same size on rainbow-to-two-tone turns, on turns where the third card of a suit arrives, and on boards where the flush was already possible. Two-tone flops are over-represented among the worst spots, but nothing in the amounts singles out the card that completes the draw.
+
+**What the amounts get wrong** (ours less the solver's, in points of frequency; seven to eight spots):
+
+| | Flop | Turn | River |
+|---|---|---|---|
+| First to act: bets | **10 to 24 too few** (solver bets 72 to 77%) | 13 to 24 too many (solver 32 to 34%) | 16 to 21 too many |
+| After a check: bets | 16 to 34 too many | 16 to 36 too many | 11 to 15 too many |
+| Uses the biggest size | **11 to 35 too often** | 15 to 37 too often | 13 to 19 too often |
+| Facing a bet: folds | 5 to 10 too many | about right | 4 to 8 too few |
+| Facing a bet: raises | 9 too many | right | right |
+
+Three things, all about depth:
+1. **The flop aggressor's range bet.** With stacks behind, the solver bets nearly everything small on the flop. The formulas bet half as often.
+2. **Too much betting later**, on the turn and river, by both players.
+3. **The big size, far too often, on every street.**
+
+**Own error or inherited?** Four of the spots, with the solver playing the earlier streets:
+
+| | After the formulas' own earlier play | After the solver's | For comparison, 4-bet pots after the solver's |
+|---|---|---|---|
+| Turn and river | 8.6 | 6.0 | 2.9 |
+| River alone | 5.1 | 2.6 | 0.85 |
+
+In deep pots the later-street formulas are themselves three times as costly as in shallow ones. On the river the amounts are right on average from sound ranges (within 3 points on every line) but 17 to 25 points off decision by decision: unbiased and noisy.
+
+**Two refinements tried, on four of the spots** (10.5% before):
+
+| Refinement | Gives up | Flop / turn / river |
+|---|---|---|
+| Before | 10.5 | 1.9 / 3.5 / 5.1 |
+| Size by the stacks: when the bet that gets the money in by the river is nearer the small size, nothing uses the big one | 10.7 | **0.6** / 3.5 / 6.5 |
+| He folds enough to make our weakest hand indifferent, in place of his weakest call | 12.3 | 2.0 / 5.1 / 5.3 |
+| Both | 11.2 | 0.6 / 3.7 / 7.0 |
+
+- **Sizing by the stacks repairs the flop** (1.9 to 0.6), which supports the note about the largest size depending on depth. The river then loses as much again, so nothing is gained overall: the ranges it hands on are different, and the later streets are not right for them.
+- **The other closure is worse.** It does make the flop aggressor bet more, but it overbets the turn.
+
+**Where this leaves the tails.** Fixing one street's amounts in deep pots moves the loss to the next, because the turn and river formulas are only good on ranges shaped the way a sound player shapes them, and only when stacks are short. The deep-stack turn and river need their own derivation: what is known so far is that they bet too much and too big.

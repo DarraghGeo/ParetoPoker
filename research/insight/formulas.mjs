@@ -196,7 +196,7 @@ export function facing(board, mine, his, ids, foldShare, raise, river) {
  * His range is cut into `K` parts by strength, and our equity against each part is worked out once.
  * Returns the share of the range that bets, and c.
  */
-export function denial(board, mine, his, ids, s, K = 8) {
+export function denial(board, mine, his, ids, s, K = 8, closure = 'caller') {
   const live = ids.filter((c) => mine[c] > 0); const W = live.reduce((t, c) => t + mine[c], 0); if (!W) return null;
   const hisEq = equityVs(fs, board, his, mine); const ranked = ids.filter((c) => his[c] > 0 && !Number.isNaN(hisEq[c])).sort((x, y) => hisEq[x] - hisEq[y]); const all = ranked.reduce((t, c) => t + his[c], 0); if (!all) return null;
   // his range in K parts of equal weight, weakest first, and our equity against each
@@ -214,6 +214,12 @@ export function denial(board, mine, his, ids, s, K = 8) {
     }
     return { share: mass / W, callerEquity: mass > 0 ? 1 - caller / mass : 0, bets };
   };
-  let lo = 0, hi = 1; for (let i = 0; i < 24; i++) { const c = (lo + hi) / 2; if (at(c).callerEquity > price) hi = c; else lo = c; }
-  const c = (lo + hi) / 2; const t = at(c); return { share: t.share, fold: c, bets: t.bets };
+  let c;
+  if (closure === 'bettor') {
+    // the other way to close it, as the base does: he folds enough that our weakest hand is indifferent between betting and
+    // checking. Checked, that hand keeps its equity u, so c = (s + u)/(1 + s). (His weakest call then has more than the price
+    // on paper, which it does not get to keep: it faces the later bets.)
+    const e = equityVs(fs, board, mine, his); const order = hands.filter((h) => !Number.isNaN(e[h])).sort((x, y) => e[x] - e[y]); let seen2 = 0; let u = 0; for (const h of order) { seen2 += mine[h]; if (seen2 >= 0.05 * W) { u = e[h]; break; } }
+    c = Math.min(0.95, (s + u) / (1 + s));
+  } else { let lo = 0, hi = 1; for (let i = 0; i < 24; i++) { const m = (lo + hi) / 2; if (at(m).callerEquity > price) hi = m; else lo = m; } c = (lo + hi) / 2; } const t = at(c); return { share: t.share, fold: c, bets: t.bets };
 }

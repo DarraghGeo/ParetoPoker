@@ -32,7 +32,7 @@ const TUNE = new Set((process.env.TUNE ?? '').split(',').filter(Boolean));   // 
 const START = +(process.env.START ?? 0);   // the first street the formulas play; the solver's own play before it (1: from the turn, 2: the river only)
 const SOFT = +(process.env.SOFT ?? 0);     // blur: each hand plays the average of the hands within this share of the range around it (0: as the formulas have it)
 function formulaStrategy(spot, nodes, live, solved = null) {
-  const R = spot.runouts; const ids = Array.from({ length: N }, (_, c) => c); const out = []; let count = 0; const stack = spot.source?.stack ?? spot.stackUnits / spot.chipScale;
+  const R = spot.runouts; const ids = Array.from({ length: N }, (_, c) => c); const out = []; let count = 0; const diag = new Map(); const mass0 = [0, 1].map((p) => { let t = 0; const pl = spot.players[p]; for (const c of Array.from(pl.combos)) t += pl.weights.length === N ? pl.weights[c] : 0; return t || 1; }); const pot0 = nodes[0].pot; const stack = spot.source?.stack ?? spot.stackUnits / spot.chipScale;
   const start = [0, 1].map((p) => { const w = new Float64Array(N); const pl = spot.players[p]; Array.from(pl.combos).forEach((c, i) => { w[c] = pl.weights.length === N ? pl.weights[c] : pl.weights[i]; }); return w; });
   const walk = (id, board, bIndex, reach, expectFold) => {
     const n = nodes[id];
@@ -72,16 +72,23 @@ function formulaStrategy(spot, nodes, live, solved = null) {
         let sized = bets.map((a) => ({ a, s: addOf(a) / n.pot })).sort((y, z) => y.s - z.s); if (VARIANT === 'onesize' || VARIANT === 'plain') sized = [sized.reduce((b, y) => (Math.abs(y.s - 0.75) < Math.abs(b.s - 0.75) ? y : b))]; const first = n.parent < 0 || nodes[n.parent].kind === 'chance';
         const t = acting(board, mine, his, ids, sized.map((y) => y.s), first, river);
         hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
-        if (TUNE.has('bet') || TUNE.has('fold') || TUNE.has('raise') || TUNE.has('deny') || TUNE.has('denyhands')) {
+        if (TUNE.size) {
           const e1 = equityVs(fs, board, mine, his); const e2 = equityVs(fs, board, his, mine); const F = facts(board, mine, his, e1, e2, ids, { lspr: Math.log(Math.min(30, Math.max(0.05, (stack - Math.max(...n.invested)) / n.pot))) });
           if (TUNE.has('denyhands') && board.length < 5) {
             // the denial rule choosing the hands as well: every hand that gains by betting bets (the size the thresholds gave it, else the smallest), the rest check
             const dn = denial(board, mine, his, ids, sized[0].s); if (dn) { const inSet = new Uint8Array(N); for (const c of dn.bets) inSet[c] = 1; for (const c of hands) { const had = t.bets.reduce((u, b) => u + b[c], 0); if (!inSet[c]) for (const b of t.bets) b[c] = 0; else if (had < 1) t.bets[0][c] += 1 - had; }
               hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); }); }
           }
+          if (TUNE.has('geo') && sized.length > 1) {
+            // sizes by the stacks: the bet that gets the money in by the river if it is made on every street left. When that is nearer
+            // the smaller size on offer, nothing needs the bigger one, and its bets are made at the smaller size instead
+            const left = (stack - Math.max(...n.invested)) / n.pot; const streets = 6 - board.length; const g = (Math.pow(1 + 2 * left, 1 / streets) - 1) / 2;
+            for (let j = sized.length - 1; j >= 1; j--) if (Math.abs(g - sized[j - 1].s) < Math.abs(g - sized[j].s)) { for (const c of hands) { t.bets[j - 1][c] = Math.min(1, t.bets[j - 1][c] + t.bets[j][c]); t.bets[j][c] = 0; } }
+            hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
+          }
           if ((TUNE.has('bet') || TUNE.has('deny')) && board.length < 5) {
             // the fitted bet frequency: the derived bets thinned alike, or topped up alike with the smallest size
-            const want = TUNE.has('deny') ? denial(board, mine, his, ids, sized[0].s)?.share : tunedBet(board.length, first, e1, mine, ids, sized[0].s, F); const W = hands.reduce((u, c) => u + mine[c], 0); const total = (c) => t.bets.reduce((u, b) => u + b[c], 0); const have = hands.reduce((u, c) => u + mine[c] * Math.min(1, total(c)), 0) / W;
+            const want = TUNE.has('deny') ? denial(board, mine, his, ids, sized[0].s, 8, TUNE.has('bettor') ? 'bettor' : 'caller')?.share : tunedBet(board.length, first, e1, mine, ids, sized[0].s, F); const W = hands.reduce((u, c) => u + mine[c], 0); const total = (c) => t.bets.reduce((u, b) => u + b[c], 0); const have = hands.reduce((u, c) => u + mine[c] * Math.min(1, total(c)), 0) / W;
             if (want != null && have > 0) { if (have > want) for (const b of t.bets) for (const c of hands) b[c] *= want / have; else { const lam = Math.min(1, (want - have) / Math.max(1e-9, 1 - have)); for (const c of hands) t.bets[0][c] += lam * Math.max(0, 1 - total(c)); } }
             hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
           }
@@ -116,12 +123,27 @@ function formulaStrategy(spot, nodes, live, solved = null) {
       for (const a of order) { const key = new Float64Array(N); hands.forEach((c, i) => { const e1 = Number.isNaN(eq[c]) ? 0.5 : eq[c]; key[c] = -Math.round(probs[i * k + a] * 1e3) - (kinds[a] === 'fold' ? 1 - e1 : e1) * 0.999; }); const list = [...hands].sort((x, y) => key[x] - key[y]); const share = fill(list, mine, mass[a], taken, key); hands.forEach((c, i) => { next[i * k + a] = share[c]; taken[c] = Math.min(1, taken[c] + share[c]); }); }
       hands.forEach((c, i) => { next[i * k + passive] = Math.max(0, 1 - taken[c]); }); probs.set(next);
     }
+    if (process.env.DIAG && solved && hands.length && n.round >= START) {
+      // where the amounts part from the solver's: the solver's strategy on the range that is here, added up, beside the formulas'
+      const view = solved.strategyAt(id, bIndex); const row = new Map(Array.from(view.combos).map((c, i) => [c, i])); const W = hands.reduce((t, c) => t + mine[c], 0); const hisW = ids.reduce((t, c) => t + his[c], 0);
+      const cls = kinds.map((x, a) => (x === 'fold' ? 'fold' : x === 'call' || x === 'check' ? 'passive' : toCall > 0 ? 'raise' : 'bet')); const big = kinds.map((_, a) => a).filter((a) => cls[a] === 'bet').sort((x, y) => addOf(y) - addOf(x))[0];
+      const sum = (pick, from) => hands.reduce((t, c, i) => { const j = row.get(c); let v = 0; for (let a = 0; a < k; a++) if (pick(a)) v += from === 'f' ? probs[i * k + a] : (j == null ? 0 : view.probs[j * k + a]); return t + mine[c] * v; }, 0) / W;
+      const suits = [0, 1, 2, 3].map((x) => board.filter((c) => fs.suitOf(c) === x).length); const most = Math.max(...suits); const last = board[board.length - 1]; const came = board.length > 3 && suits[fs.suitOf(last)] === 3 && most === 3;
+      const type = toCall > 0 ? (nodes[n.parent].invested[p] < n.invested[1 - p] && nodes[n.parent].invested[1 - p] > nodes[n.parent].invested[p] ? 'face a raise' : 'face a bet') : (n.parent < 0 || nodes[n.parent].kind === 'chance' ? 'first to act' : 'after a check');
+      const key = `${['flop', 'turn', 'river'][n.round]}|${type}|${most >= 3 ? (came ? 'flush card just came' : 'flush possible') : most === 2 ? 'two of a suit' : 'rainbow'}`;
+      const weight = (W / mass0[p]) * (hisW / mass0[1 - p]) * (n.pot / pot0) * (R.childStart ? 1 : 1) * (n.round === 0 ? 1 : n.round === 1 ? 1 / (R.childStart[1][1] - R.childStart[1][0]) : 1 / R.counts[2]);
+      const g = diag.get(key) ?? { w: 0, n: 0 }; g.w += weight; g.n++;
+      const add = (name, f, sv) => { g[name] = (g[name] ?? 0) + weight * (f - sv); g[`${name}_abs`] = (g[`${name}_abs`] ?? 0) + weight * Math.abs(f - sv); g[`${name}_solver`] = (g[`${name}_solver`] ?? 0) + weight * sv; };
+      if (toCall > 0) { add('fold', sum((a) => cls[a] === 'fold', 'f'), sum((a) => cls[a] === 'fold', 's')); add('raise', sum((a) => cls[a] === 'raise', 'f'), sum((a) => cls[a] === 'raise', 's')); }
+      else { add('bet', sum((a) => cls[a] === 'bet', 'f'), sum((a) => cls[a] === 'bet', 's')); if (big != null) add('big', sum((a) => a === big, 'f'), sum((a) => a === big, 's')); }
+      diag.set(key, g);
+    }
     const rec = { node: id, board: bIndex, seat: p, round: n.round, ids: Int16Array.from(hands), probs, k };
     if (n.round < 2) out.push(rec); else for (const run of live) writeOne(run.write, rec, run.players);
     n.edges.forEach((edge, a) => { let any = false; const mineNext = new Float64Array(N); hands.forEach((c, i) => { const v = mine[c] * probs[i * k + a]; mineNext[c] = v; if (v > 0) any = true; }); if (!any && nodes[edge.child].kind !== 'decision') return; const next = [reach[0], reach[1]]; next[p] = mineNext; walk(edge.child, board, bIndex, next, passDown[a]); });
   };
   walk(0, Array.from(spot.board), 0, start, null);
-  return { early: out, count };
+  return { early: out, count, diag: Object.fromEntries(diag) };
 }
 const at = new Int32Array(N);
 function writeOne(write, s, players) {
@@ -132,7 +154,7 @@ function writeFormulas(run, strategy, players, rounds = [0, 1, 2]) { const write
 
 const [count = '12', seed = '31'] = process.argv.slice(2);
 let a = (+seed * 2654435761) >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
-const pool = PRESETS.filter((p) => p.action !== 'Limped' && (!process.env.ONLY || p.action === process.env.ONLY)); const TREE = { betSizes: [[0.33, 1], [0.5, 1], [0.5, 1]], raiseSizes: [{ times: 3 }], maxRaises: 2, allInThreshold: 0.67 };
+const pool = PRESETS.filter((p) => p.action !== 'Limped' && (!process.env.ONLY || process.env.ONLY.split(',').includes(p.action))); const TREE = { betSizes: [[0.33, 1], [0.5, 1], [0.5, 1]], raiseSizes: [{ times: 3 }], maxRaises: 2, allInThreshold: 0.67 };
 const out = new URL(`./out/play-full${process.env.TAG ? `-${process.env.TAG}` : ''}.jsonl`, import.meta.url); writeFileSync(out, ''); let done = 0;
 while (done < +count) {
   const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const board = []; while (board.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!board.includes(c)) board.push(c); }
@@ -146,7 +168,7 @@ while (done < +count) {
   // one walk writes the river into three runs: both seats on the formulas, and each seat alone against the solver
   const both = fresh(); const alone = [0, 1].map((seat) => { const run = fresh(); copySolved(solved, run, nodes, counts, 1 - seat); return run; });
   const strategy = formulaStrategy(spot, nodes, [{ write: writer(both), players: [0, 1] }, { write: writer(alone[0]), players: [0] }, { write: writer(alone[1]), players: [1] }], solved);
-  writeFormulas(both, strategy.early, [0, 1]); row.derived = +lossOf(both).toFixed(2); row.decisions = strategy.count;
+  writeFormulas(both, strategy.early, [0, 1]); row.derived = +lossOf(both).toFixed(2); row.decisions = strategy.count; if (process.env.DIAG) row.diag = strategy.diag;
   for (const seat of [0, 1]) {
     const tag = `derived_${seat ? 'ip' : 'oop'}`; writeFormulas(alone[seat], strategy.early, [seat]); row[tag] = +(2 * lossOf(alone[seat])).toFixed(2); row[`${tag}_eq`] = +(100 * (solved.ev(seat) - alone[seat].snapshot().ev(seat)) / pot).toFixed(2);
     let before = 0; for (const [name, rounds] of [['flop', [0]], ['turn', [0, 1]]]) { const part = fresh(); copySolved(solved, part, nodes, counts, 0); copySolved(solved, part, nodes, counts, 1); writeFormulas(part, strategy.early, [seat], rounds); const upTo = 100 * (solved.ev(seat) - part.snapshot().ev(seat)) / pot; row[`${tag}_eq_${name}`] = +(upTo - before).toFixed(2); before = upTo; }
