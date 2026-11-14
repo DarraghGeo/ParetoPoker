@@ -788,7 +788,9 @@ document.addEventListener('keydown', (ev) => {
 });
 let swipe = null;
 const stage = document.querySelector('.stage');
-stage.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; swipe = ev.touches.length === 1 ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+// inside Train's Study pane the left edge belongs to the swipe back to Train
+const EDGE = window.top !== window ? 28 : 0;
+stage.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; swipe = ev.touches.length === 1 && t.clientX >= EDGE ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
 stage.addEventListener('touchend', (ev) => {
   if (!swipe) return; const t = ev.changedTouches[0]; const dx = t.clientX - swipe.x; const dy = t.clientY - swipe.y; swipe = null;
   if (Math.abs(dx) > 70 && Math.abs(dy) < 40) turnTo(state.at + (dx < 0 ? 1 : -1));
