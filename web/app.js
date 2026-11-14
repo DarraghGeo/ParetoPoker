@@ -257,11 +257,19 @@ function renderLine(strata) {
 function renderDeal() {
   const chance = state.nodes[state.pick]; const gone = new Set([...boardCards(conf().board), ...state.dealt.slice(0, chance.round)]);
   const now = state.dealt[chance.round];
-  $('deal').innerHTML = cardGrid(gone, now);
+  $('deal').innerHTML = cardGrid(gone, now) + randomButton(boardCards(conf().board).length + chance.round);
 }
 /** Every card, a row a suit; the ones in use cannot be taken. */
 function cardGrid(gone, now) {
   return ['s', 'h', 'd', 'c'].map((suit) => `<div>${[...RANKS].map((rank) => { const card = rank + suit; return `<button type="button" class="s-${suit}" data-card="${card}" ${gone.has(card) && card !== now ? 'disabled' : ''} aria-pressed="${card === now}" aria-label="${card}">${rank}${GLYPH[suit]}</button>`; }).join('')}</div>`).join('');
+}
+/** Under the cards: one button that deals at random the street the card belongs to. `index`: the card's place on the board. */
+const randomButton = (index) => `<button type="button" class="random" data-random="${index}">Random ${index < 3 ? 'flop' : index === 3 ? 'turn' : 'river'}</button>`;
+/** Cards dealt at random from what is left of the deck. */
+function randomCards(n, gone) {
+  const deck = []; for (const suit of 'shdc') for (const rank of RANKS) if (!gone.has(rank + suit)) deck.push(rank + suit);
+  const out = []; while (out.length < n && deck.length) out.push(deck.splice(Math.floor(Math.random() * deck.length), 1)[0]);
+  return out;
 }
 // ---- the other player's range at this decision: which hands, and how much of each ----
 function showVillain(anchor) {
@@ -297,11 +305,21 @@ $('board').addEventListener('click', (ev) => {
   if (swapping === i && adding === !!b.dataset.add) { closeCards(); return; }
   adding = !!b.dataset.add; const round = state.nodes?.[state.node]?.round ?? 0; const all = [...own, ...state.dealt.slice(0, round)];
   swapping = i;
-  const pick = $('cardpick'); pick.innerHTML = cardGrid(new Set(all), all[i]); pick.hidden = false;
+  const pick = $('cardpick'); pick.innerHTML = cardGrid(new Set(all), all[i]) + randomButton(i); pick.hidden = false;
   const box = b.getBoundingClientRect(); const width = pick.offsetWidth;
   pick.style.top = `${box.bottom + 10}px`; pick.style.left = `${Math.max(12, Math.min(box.left, innerWidth - width - 12))}px`;
 });
 $('cardpick').addEventListener('click', (ev) => {
+  if (ev.target.closest('[data-random]') && swapping != null) {
+    // the street the card belongs to, dealt at random: all three cards of a flop, or the one turn or river card
+    const own = boardCards(conf().board); const i = swapping; const add = adding; closeCards();
+    const round = state.nodes?.[state.node]?.round ?? 0; const all = [...own, ...state.dealt.slice(0, round)];
+    if (i < 3) { setBoard([...randomCards(3, new Set(all.slice(3))), ...own.slice(3)]); return; }
+    const [card] = randomCards(1, new Set(all)); if (!card) return;
+    if (add) { setBoard([...own, card]); return; }
+    if (i >= own.length) { state.dealt[i - own.length] = card; state.hand = null; state.cell = null; go(state.node); return; }
+    own[i] = card; setBoard(own); return;
+  }
   const b = ev.target.closest('[data-card]'); if (!b || swapping == null) return;
   const own = boardCards(conf().board); const i = swapping; const add = adding; closeCards();
   // an empty box: the next card of the spot's own board
@@ -312,8 +330,12 @@ $('cardpick').addEventListener('click', (ev) => {
 document.addEventListener('pointerdown', (ev) => { if (swapping != null && !ev.target.closest('#cardpick') && !ev.target.closest('#board')) closeCards(); });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeCards(); });
 $('deal').addEventListener('click', (ev) => {
-  const b = ev.target.closest('[data-card]'); if (!b || state.pick == null) return;
+  if (state.pick == null) return;
   const chance = state.nodes[state.pick];
+  const b = ev.target.closest('[data-random]')
+    ? { dataset: { card: randomCards(1, new Set([...boardCards(conf().board), ...state.dealt.slice(0, chance.round)]))[0] } }
+    : ev.target.closest('[data-card]');
+  if (!b?.dataset.card) return;
   state.dealt = [...state.dealt.slice(0, chance.round), b.dataset.card];
   state.hand = null; state.cell = null; go(chance.edges[0].child);
 });
