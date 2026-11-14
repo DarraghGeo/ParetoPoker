@@ -316,6 +316,39 @@ const pts = (x) => `${Math.round(100 * x)}%`;
 const pot = (x) => (Math.abs(x) >= 3 ? `${Math.round(Math.abs(x))}%` : `${(Math.round(Math.abs(x) * 10) / 10).toFixed(1)}%`);
 const floorHalf = (x) => Math.floor(x * 2) / 2;
 
+/**
+ * One move ahead, against what he actually does (research/insight/FREQUENCIES.md: this rule, with the next street read the
+ * same way, gives up about a twentieth of a percent of the pot on turns and rivers against the solver's own play).
+ * For one hand at a decision, every action it has: how his range splits in answer, the hand's equity against each part,
+ * and what that comes to in % of the pot, counted from now.
+ *   fold 0;  call or check behind: equity of the pot as it will be, less the call;
+ *   bet, raise or check in front: he folds (the pot is won), he continues (equity against those hands, less what went in),
+ *   he bets or raises (the better of folding and calling).
+ */
+export function oneMove(s, c) {
+  const { fs, f } = s; if (!s.solution || !(f.mine[c] > 0)) return null;
+  const N = fs.COMBOS; const A = fs.COMBO_CARDS[2 * c]; const B = fs.COMBO_CARDS[2 * c + 1]; const mask = new Float64Array(N); mask[c] = 1; const node = f.node; const me = node.invested[f.me]; const him = node.invested[1 - f.me]; const pot = node.pot;
+  const live = (r) => { let t = 0; for (let v = 0; v < N; v++) if (r[v] > 0) { const x = fs.COMBO_CARDS[2 * v], y = fs.COMBO_CARDS[2 * v + 1]; if (x !== A && x !== B && y !== A && y !== B) t += r[v]; } return t; };
+  const eqVs = (r) => { const e = equityVs(fs, f.board, mask, r)[c]; return Number.isNaN(e) ? null : e; }; const all = live(f.his); if (!(all > 0)) return null;
+  const actions = node.edges.map((edge, a) => {
+    const child = f.nodes[edge.child]; const to = child.invested ? child.invested[f.me] : me; const paid = to - me; const out = { kind: edge.kind, label: edge.label, sigma: s.sigma(c, a), paid, parts: [], value: 0 };
+    if (edge.kind === 'fold') return out;
+    if (child.kind !== 'decision') { const e = eqVs(f.his); const total = pot + (Math.max(to, him) - me) + (Math.max(to, him) - him); out.equity = e; out.value = e == null ? 0 : e * total - paid; out.price = paid > 0 ? paid / total : 0; return out; }
+    const s2 = study(fs, s.solution, f.nodes, edge.child, s.dealt ?? []); if (!s2) return out;
+    child.edges.forEach((reply, b) => {
+      const r = new Float64Array(N); for (let v = 0; v < N; v++) if (f.his[v] > 0) r[v] = f.his[v] * s2.sigma(v, b); const share = live(r) / all; if (share <= 0.0005) return;
+      const after = f.nodes[reply.child]; const hisTo = after.invested ? after.invested[1 - f.me] : him; const e = reply.kind === 'fold' ? eqVs(r) : eqVs(r); const part = { kind: reply.kind, label: reply.label, share, equity: e };
+      if (reply.kind === 'fold') part.value = pot;
+      else if (reply.kind === 'check' || reply.kind === 'call') { const I = Math.max(to, hisTo); part.value = (e ?? 0) * (pot + (I - me) + (I - him)) - paid; }
+      else { const callValue = (e ?? 0) * (pot + (hisTo - me) + (hisTo - him)) - (hisTo - me); part.calls = callValue > -paid; part.value = Math.max(-paid, callValue); }
+      out.parts.push(part); out.value += share * part.value;
+    });
+    return out;
+  });
+  for (const x of actions) x.value = (100 * x.value) / pot;
+  return { actions, pot };
+}
+
 /** How often, in a word. */
 const often = (x, verb) => (x >= 0.97 ? `always ${verb}` : x >= 0.85 ? `almost always ${verb}` : x >= 0.6 ? `mostly ${verb}` : x >= 0.4 ? `${verb} about half the time` : x >= 0.15 ? `sometimes ${verb}` : x >= 0.03 ? `rarely ${verb}` : `never ${verb}`);
 const listOf = (names) => (names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
@@ -419,6 +452,34 @@ export function explainStreet(s, m, T) {
             : (names.length ? `It blocks hands that would fold: his ${listOf(names)}. So he folds less often to this hand.` : 'Its cards work against it: he folds less often to this hand than to your other weak hands.');
           reasons.push({ id: 'cards-held', text, detail: `He folds ${pts(mine)} to ${label(main)} against this hand, and ${pts(avg)} against your weak hands on average.` });
         }
+      }
+    }
+  }
+  // ---- one move ahead: why the action it takes comes out best, against what he actually does ----
+  {
+    const mv = oneMove(s, m.combo); const top = taken[0];
+    if (mv && top != null) {
+      const x = mv.actions[top]; const sum = (pick) => x.parts.filter(pick).reduce((t, p) => t + p.share, 0); const avg = (pick) => { const ps = x.parts.filter((p) => pick(p) && p.equity != null); const w = ps.reduce((t, p) => t + p.share, 0); return w > 0 ? ps.reduce((t, p) => t + p.share * p.equity, 0) / w : null; };
+      const had = (e) => (e < 0.2 ? 'almost nothing' : e < 0.35 ? 'some equity' : e < 0.5 ? 'a good deal of equity' : 'the better of it');
+      const stand = (e) => (e >= 0.6 ? 'well ahead' : e >= 0.5 ? 'ahead' : e >= 0.4 ? 'a little behind' : e >= 0.25 ? 'behind' : 'far behind'); const against = (e) => (e >= 0.5 ? `${stand(e)} of` : stand(e));
+      const sort = (y) => (['check', 'call', 'fold'].includes(y.kind) ? y.kind : 'wager');
+      const other = mv.actions.map((y, i) => i).filter((i) => i !== top && sort(mv.actions[i]) !== sort(x) && mv.actions[i].kind !== 'fold').sort((i, j) => mv.actions[j].value - mv.actions[i].value)[0]; const worthOf = (v) => (v < 0 ? `${pot(v)} of the pot less than nothing` : `${pot(v)} of the pot`); const versus = other != null ? ` Counted one move ahead, ${label(top)} is worth ${worthOf(x.value)} and ${label(other)} ${worthOf(mv.actions[other].value)}.` : ''; const best = other == null || x.value >= mv.actions[other].value;
+      if (x.kind === 'fold') { const call = mv.actions.find((y) => y.kind === 'call'); if (call && call.equity != null) reasons.push({ id: 'move', text: call.equity < call.price ? `It does not have the price to call: it is ${against(call.equity)} the hands that bet.` : river ? `It has the price on paper, and folds all the same: the cards it holds make his bets stronger than they look.` : `It has the raw equity to call, but not once the bets still to come are counted: equity that has to face another bet is worth less than its number.`, detail: `A call needs ${pts(call.price)} and the hand has ${pts(call.equity)} against the range that bet.` }); }
+      else if (x.kind === 'call' && x.equity != null) reasons.push({ id: 'move', text: x.equity >= x.price ? (x.equity >= 0.5 ? `It calls: it is ${against(x.equity)} the hands that bet.` : `It has the price to call: it is ${against(x.equity)} the hands that bet, and the price asks for less.`) : `On equity alone it is short of the price, and calls for what the cards to come can still bring.`, detail: `A call needs ${pts(x.price)} and the hand has ${pts(x.equity)} against the range that bet.${versus}` });
+      else if (x.kind === 'check' && !x.parts.length && x.equity != null) reasons.push({ id: 'move', text: `Checking keeps what the hand has: it sees the next card or the showdown with its equity intact.`, detail: `${pts(x.equity)} equity against his range here.${versus}` });
+      else if (x.parts.length) {
+        const folds = sum((p) => p.kind === 'fold'); const eFold = avg((p) => p.kind === 'fold'); const eCall = avg((p) => p.kind === 'call' || p.kind === 'check'); const pushes = sum((p) => !['fold', 'call', 'check'].includes(p.kind)); const ePush = avg((p) => !['fold', 'call', 'check'].includes(p.kind));
+        let text; const numbers = [];
+        if (x.kind === 'check') {
+          text = pushes >= 0.5 ? `It checks expecting a bet: he ${often(pushes, 'bets')} when checked to, and against those hands it is ${stand(ePush ?? 0)}.` : `It checks, and he ${often(1 - pushes, 'checks')} behind: against those hands it is ${stand(eCall ?? 0)}.`;
+          numbers.push(`After a check he bets ${pts(pushes)} of the time${ePush != null ? ` (this hand has ${pts(ePush)} against those hands)` : ''}${eCall != null ? ` and checks the rest (${pts(eCall)} against those)` : ''}.`);
+        } else {
+          const denial = !river && eFold != null && eFold < 0.8;
+          text = `${best ? `${label(top)} comes out best. ` : ''}He ${often(folds, 'folds')}${best ? '' : ` to ${label(top)}`}${folds >= 0.05 && eFold != null ? (river ? '' : `, and the hands he folds had ${had(1 - eFold)} against this one`) : ''}. When he calls it is ${stand(eCall ?? 0)}.`;
+          if (denial && (eCall ?? 0) < 0.5 && folds >= 0.2) text += ' The bet earns from the folds, not from the calls.'; else if ((eCall ?? 0) >= 0.5 && folds < 0.5) text += ' The bet earns from the calls.';
+          numbers.push(`He folds ${pts(folds)}${eFold != null ? ` (those hands had ${pts(1 - eFold)} equity against this one)` : ''}, calls ${pts(sum((p) => p.kind === 'call'))}${eCall != null ? ` (this hand has ${pts(eCall)} against those)` : ''}${pushes >= 0.005 ? `, raises ${pts(pushes)}` : ''}.`);
+        }
+        reasons.push({ id: 'move', text, detail: numbers.join(' ') + versus });
       }
     }
   }
