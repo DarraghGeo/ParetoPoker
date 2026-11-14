@@ -46,7 +46,7 @@ while (done < +count) {
   const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const board = []; while (board.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!board.includes(c)) board.push(c); }
   const key = `${p.action}-${p.oop}-${p.ip}`; const name = `${key} ${board.join('')}`; if (used.has(name)) continue; used.add(name);
   let spot; try { spot = fs.defineSpot({ board: board.join(''), pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; }
-  if (spot.estimate.bytes > 3200 * 2 ** 20) continue;
+  if (spot.estimate.bytes > +(process.env.MAXMB ?? 3200) * 2 ** 20) continue;
   const t0 = Date.now(); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 4) }); let e = 99;
   while (e > 0.3 && run.completed < 600 && Date.now() - t0 < 420000) { run.step(10); e = run.exploitabilityPercent(); }
   const g = { spot, solution: run.snapshot(), nodes: treeOf(fs, spot) }; const meta = { spot: name, pre: key, action: p.action, oop: p.oop, ip: p.ip, exploit: r4(e), stack: p.stack }; const out = [];

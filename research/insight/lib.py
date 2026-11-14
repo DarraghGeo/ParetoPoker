@@ -79,6 +79,7 @@ def load(pattern='research/insight/out/hands-*.jsonl', street=None):
             tx = texture(cards(d['board'])); acts = d['actions']; kinds = [a['kind'] for a in acts]
             agg = aggressor(d['action'], d['oop'], d['ip']); key = d['spot'] + '|' + d['line'] + '|' + d['board']
             bets = [i for i, k in enumerate(kinds) if k in ('bet', 'allin', 'raise')]; W = sum(h['w'] for h in d['hands'])
+            if W < 1: continue
             req = sum(h['w'] * h['e'] for h in d['hands']) / W
             for h in d['hands']:
                 p = h['p']; x = dict(key=key, spot=d['spot'], pre=d['pre'], action=d['action'], line=d['line'], seat=d['seat'], ip=d['seat'] == 1, pfa=agg == d['seat'], cards=n, board=d['board'].replace(' ', ''),
@@ -131,4 +132,28 @@ def verdict(r, cols, label='', show=True):
         agree = (np.sign(v) == np.sign(v.mean())).mean() if len(v) else np.nan
         out[c] = dict(mean=v.mean(), t=t, agree=agree, n=len(v)); text += f'   {c} {v.mean():+.3f} (t {t:+.1f}, {agree:.0%})'
     if show: print(text)
+    return out
+def context(d):
+    """One row a decision: the things about the spot that could turn an idea on or off."""
+    def one(x):
+        r = dict(ip=float(x.ip.iloc[0]), raiser=float(x.pfa.iloc[0]), spr=x.spr.iloc[0], range_eq=x.range_eq.iloc[0], two_tone=float(x.board_suited.iloc[0] == 2), monotone=float(x.board_suited.iloc[0] == 3), connected=float(x.board_conn.iloc[0] >= 3),
+                 paired=float(x.board_paired.iloc[0]), high_board=float(x.board_top.iloc[0] >= 11), low_board=float(x.board_top.iloc[0] <= 8), srp=float(x.action.iloc[0] == 'SRP'), fourbet=float(x.action.iloc[0] == '4BP'))
+        if 'heraises' in x and x.heraises.notna().any(): r['he_raises'] = wmean(x, 'heraises'); r['he_folds'] = wmean(x, 'hefolds'); r['range_bets'] = x.betfreq_range.iloc[0]
+        if x.facing.iloc[0]: r['price'] = x.price.iloc[0]; r['range_raises'] = wmean(x, 'raise'); r['range_folds'] = wmean(x, 'fold')
+        return r
+    return pd.DataFrame({k: one(x) for k, x in d.groupby('key')}).T.astype(float)
+def moderators(r, ctx, col, top=4, show=True, floor=12):
+    """Where an effect is larger or smaller: each feature of the spot against the effect, decision by decision."""
+    x = r.set_index('key').join(ctx, how='left'); out = []
+    for c in ctx.columns:
+        v = x[[col, c]].dropna()
+        if len(v) < floor or v[c].std() == 0: continue
+        rho = np.corrcoef(v[col], v[c])[0, 1]
+        if set(v[c].unique()) <= {0.0, 1.0}: lo, hi = v[v[c] == 0][col], v[v[c] == 1][col]
+        else: m = v[c].median(); lo, hi = v[v[c] <= m][col], v[v[c] > m][col]
+        if len(lo) < 4 or len(hi) < 4: continue
+        out.append((abs(rho), c, rho, lo.mean(), hi.mean(), len(lo), len(hi)))
+    out.sort(reverse=True)
+    if show:
+        for _, c, rho, lo, hi, nl, nh in out[:top]: print(f'        {col} by {c:<12} r {rho:+.2f}   low/no {lo:+.3f} ({nl})   high/yes {hi:+.3f} ({nh})')
     return out
