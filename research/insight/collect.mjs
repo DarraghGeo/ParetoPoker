@@ -54,7 +54,9 @@ while (done < +count) {
   const root = g.nodes[0]; const check = root.edges.find((x) => x.kind === 'check'); const afterCheck = check.child;
   push(record(g, meta, 0, [], 'first', true)); push(record(g, meta, afterCheck, [], 'x', true));
   // facing each bet that is made often enough
-  const faced = (id, line) => { const st = study(fs, g.solution, g.nodes, id, []); g.nodes[id].edges.forEach((ed, i) => { if ((ed.kind === 'bet' || ed.kind === 'allin') && st.actions[i].freq >= 0.08 && g.nodes[ed.child].kind === 'decision') push(record(g, meta, ed.child, [], `${line}b${i}`, false)); }); };
+  const faced = (id, line) => { const st = study(fs, g.solution, g.nodes, id, []); g.nodes[id].edges.forEach((ed, i) => { if ((ed.kind === 'bet' || ed.kind === 'allin') && st.actions[i].freq >= 0.08 && g.nodes[ed.child].kind === 'decision') { push(record(g, meta, ed.child, [], `${line}b${i}`, false));
+      // and the bettor facing a raise of that bet, where the raise is made often enough
+      const s2 = study(fs, g.solution, g.nodes, ed.child, []); g.nodes[ed.child].edges.forEach((r, j) => { if ((r.kind === 'raise' || r.kind === 'allin') && s2 && s2.actions[j].freq >= 0.05 && g.nodes[r.child].kind === 'decision') push(record(g, meta, r.child, [], `${line}b${i}r${j}`, false)); }); } }); };
   faced(0, ''); faced(afterCheck, 'x');
   // the turn, on three cards, after check-check and after the commonest bet is called
   const turnOf = (id) => { const n = g.nodes[id]; return n.kind === 'chance' ? n.edges[0].child : null; };

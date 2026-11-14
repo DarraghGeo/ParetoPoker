@@ -68,7 +68,7 @@ def klass(r):
     if r['pair'] == 'underpair': return 'underpair'
     if r.own == 0 or r.made == 0: return 'no pair'
     return 'other'
-def load(pattern='research/insight/out/hands-*.jsonl', street=None):
+def load(pattern='research/insight/out/hands-*.jsonl', street=None, raised=False):
     rows = []
     for f in sorted(glob.glob(pattern)):
         for line in open(f):
@@ -76,6 +76,7 @@ def load(pattern='research/insight/out/hands-*.jsonl', street=None):
             except Exception: continue
             n = len(d['board'].replace(' ', '')) // 2
             if street and n != street: continue
+            if bool(__import__('re').search(r'b\d+r\d+', d['line'].split('|')[0])) != raised: continue   # the bettor facing a raise is its own question
             tx = texture(cards(d['board'])); acts = d['actions']; kinds = [a['kind'] for a in acts]
             agg = aggressor(d['action'], d['oop'], d['ip']); key = d['spot'] + '|' + d['line'] + '|' + d['board']
             bets = [i for i, k in enumerate(kinds) if k in ('bet', 'allin', 'raise')]; W = sum(h['w'] for h in d['hands'])

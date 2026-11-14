@@ -1,0 +1,143 @@
+== Strong hands (two pair or better) ==
+  bet (151 decisions, mean 0.58)
+      ip           no 0.46 (74)   yes 0.69 (77)   t +4.3
+      raiser       no 0.45 (72)   yes 0.69 (79)   t +4.4
+      two_tone     no 0.55 (40)   yes 0.62 (41)   t +1.5
+      monotone     no 0.58 (74)   yes 0.63 (7)   t +0.9
+      connected    no 0.59 (64)   yes 0.56 (17)   t -0.4
+      paired       no 0.59 (69)   yes 0.55 (12)   t -0.7
+      high_board   no 0.55 (47)   yes 0.63 (34)   t +2.0
+      low_board    no 0.61 (56)   yes 0.51 (25)   t -1.8
+      spr          low 0.54 (43)   high 0.63 (38)   t +1.8
+      range_eq     low 0.46 (70)   high 0.70 (72)   t +4.2
+      he_raises    low 0.69 (57)   high 0.59 (56)   t -1.7
+      he_folds     low 0.53 (53)   high 0.73 (60)   t +3.6
+  raise facing a bet (155 decisions, mean 0.43)
+      ip           no 0.55 (62)   yes 0.29 (51)   t -4.6
+      raiser       no 0.43 (68)   yes 0.44 (45)   t +0.2
+      two_tone     no 0.35 (36)   yes 0.52 (39)   t +2.6
+      monotone     no 0.45 (70)   yes 0.21 (5)   t -4.2
+      connected    no 0.46 (60)   yes 0.35 (15)   t -1.3
+      paired       no 0.45 (63)   yes 0.35 (12)   t -0.9
+      high_board   no 0.46 (45)   yes 0.40 (30)   t -1.0
+      low_board    no 0.42 (50)   yes 0.46 (25)   t +0.5
+      spr          low 0.28 (43)   high 0.64 (38)   t +6.6
+      range_eq     low 0.51 (59)   high 0.32 (53)   t -3.1
+      price        low 0.52 (64)   high 0.34 (53)   t -3.1
+== Sets only ==
+  bet (122 decisions, mean 0.57)
+      ip           no 0.41 (61)   yes 0.73 (61)   t +5.2
+      raiser       no 0.47 (57)   yes 0.66 (65)   t +2.9
+      two_tone     no 0.54 (36)   yes 0.62 (32)   t +1.3
+      monotone     no 0.57 (61)   yes 0.68 (7)   t +1.1
+      connected    no 0.58 (52)   yes 0.58 (16)   t +0.0
+      high_board   no 0.54 (38)   yes 0.63 (30)   t +1.7
+      low_board    no 0.61 (50)   yes 0.50 (18)   t -1.3
+      spr          low 0.54 (36)   high 0.62 (32)   t +1.4
+      range_eq     low 0.45 (56)   high 0.69 (60)   t +3.7
+      he_raises    low 0.71 (44)   high 0.53 (45)   t -2.5
+      he_folds     low 0.51 (44)   high 0.73 (48)   t +3.2
+  raise facing a bet (127 decisions, mean 0.50)
+      ip           no 0.60 (52)   yes 0.32 (39)   t -4.0
+      raiser       no 0.50 (54)   yes 0.44 (37)   t -0.8
+      two_tone     no 0.40 (31)   yes 0.59 (30)   t +2.6
+      monotone     no 0.51 (56)   yes 0.29 (5)   t -2.3
+      connected    no 0.52 (48)   yes 0.39 (13)   t -1.3
+      high_board   no 0.51 (36)   yes 0.47 (25)   t -0.5
+      low_board    no 0.51 (43)   yes 0.46 (18)   t -0.5
+      spr          low 0.29 (34)   high 0.72 (33)   t +7.5
+      range_eq     low 0.55 (46)   high 0.40 (43)   t -2.1
+      price        low 0.55 (52)   high 0.43 (43)   t -1.6
+== Overpairs ==
+  bet (102 decisions, mean 0.63)
+      ip           no 0.56 (47)   yes 0.70 (55)   t +2.4
+      raiser       no 0.47 (35)   yes 0.72 (67)   t +4.8
+      two_tone     no 0.69 (30)   yes 0.67 (37)   t -0.4
+      monotone     no 0.69 (61)   yes 0.58 (6)   t -1.2
+      connected    no 0.69 (52)   yes 0.64 (15)   t -0.8
+      paired       no 0.69 (56)   yes 0.59 (11)   t -1.3
+      high_board   no 0.64 (52)   yes 0.79 (15)   t +2.2
+      low_board    no 0.79 (37)   yes 0.53 (30)   t -5.9
+      spr          low 0.71 (33)   high 0.64 (34)   t -1.3
+      range_eq     low 0.55 (46)   high 0.73 (49)   t +3.6
+      he_raises    low 0.70 (46)   high 0.63 (42)   t -1.4
+      he_folds     low 0.62 (42)   high 0.72 (45)   t +1.9
+  raise facing a bet (95 decisions, mean 0.47)
+      ip           no 0.51 (39)   yes 0.48 (34)   t -0.4
+      raiser       no 0.37 (32)   yes 0.59 (41)   t +3.5
+      two_tone     no 0.54 (23)   yes 0.42 (28)   t -1.7
+      monotone     no 0.49 (48)   yes 0.27 (3)   t -3.0
+      connected    no 0.46 (39)   yes 0.52 (12)   t +0.7
+      paired       no 0.49 (41)   yes 0.41 (10)   t -1.1
+      high_board   no 0.47 (44)   yes 0.51 (7)   t +0.3
+      low_board    no 0.54 (21)   yes 0.43 (30)   t -1.3
+      spr          low 0.53 (28)   high 0.40 (27)   t -1.8
+      range_eq     low 0.55 (37)   high 0.40 (35)   t -2.4
+      price        low 0.60 (32)   high 0.36 (33)   t -3.9
+== Top pair ==
+  bet (141 decisions, mean 0.42)
+      ip           no 0.40 (70)   yes 0.43 (71)   t +0.7
+      raiser       no 0.29 (62)   yes 0.52 (79)   t +5.1
+      two_tone     no 0.44 (38)   yes 0.41 (41)   t -0.5
+      monotone     no 0.43 (72)   yes 0.39 (7)   t -0.5
+      connected    no 0.41 (61)   yes 0.48 (18)   t +1.1
+      paired       no 0.41 (72)   yes 0.53 (7)   t +1.1
+      high_board   no 0.43 (49)   yes 0.42 (30)   t -0.1
+      low_board    no 0.40 (52)   yes 0.47 (27)   t +1.3
+      spr          low 0.55 (42)   high 0.29 (37)   t -6.1
+      range_eq     low 0.31 (68)   high 0.52 (66)   t +4.5
+      he_raises    low 0.40 (54)   high 0.49 (52)   t +1.6
+      he_folds     low 0.42 (51)   high 0.45 (55)   t +0.5
+  raise facing a bet (146 decisions, mean 0.28)
+      ip           no 0.33 (58)   yes 0.26 (49)   t -1.6
+      raiser       no 0.27 (58)   yes 0.33 (49)   t +1.1
+      two_tone     no 0.30 (35)   yes 0.27 (39)   t -0.5
+      monotone     no 0.29 (68)   yes 0.19 (6)   t -0.8
+      connected    no 0.29 (57)   yes 0.28 (17)   t -0.2
+      paired       no 0.27 (68)   yes 0.46 (6)   t +1.3
+      high_board   no 0.32 (46)   yes 0.24 (28)   t -1.6
+      low_board    no 0.23 (50)   yes 0.41 (24)   t +3.1
+      spr          low 0.34 (39)   high 0.22 (35)   t -2.3
+      range_eq     low 0.36 (53)   high 0.24 (50)   t -2.7
+      price        low 0.35 (64)   high 0.20 (45)   t -3.6
+== Unpaired, no draw ==
+  bet (155 decisions, mean 0.37)
+      ip           no 0.32 (75)   yes 0.43 (80)   t +2.4
+      raiser       no 0.25 (73)   yes 0.49 (82)   t +5.9
+      two_tone     no 0.42 (40)   yes 0.35 (45)   t -1.8
+      monotone     no 0.38 (78)   yes 0.41 (7)   t +0.3
+      connected    no 0.37 (66)   yes 0.43 (19)   t +1.0
+      paired       no 0.38 (72)   yes 0.40 (13)   t +0.3
+      high_board   no 0.36 (52)   yes 0.41 (33)   t +1.1
+      low_board    no 0.40 (55)   yes 0.35 (30)   t -1.6
+      spr          low 0.46 (45)   high 0.29 (40)   t -4.7
+      range_eq     low 0.21 (71)   high 0.54 (73)   t +8.6
+      he_raises    low 0.39 (57)   high 0.42 (58)   t +0.7
+      he_folds     low 0.33 (55)   high 0.46 (61)   t +2.8
+  raise facing a bet (167 decisions, mean 0.05)
+      ip           no 0.05 (67)   yes 0.05 (55)   t -0.0
+      raiser       no 0.03 (70)   yes 0.08 (52)   t +4.0
+      two_tone     no 0.05 (37)   yes 0.04 (42)   t -0.7
+      monotone     no 0.05 (74)   yes 0.00 (5)   t -7.0
+      connected    no 0.04 (63)   yes 0.05 (16)   t +0.3
+      paired       no 0.04 (66)   yes 0.07 (13)   t +1.9
+      high_board   no 0.06 (51)   yes 0.01 (28)   t -6.2
+      low_board    no 0.02 (49)   yes 0.09 (30)   t +6.8
+      spr          low 0.05 (40)   high 0.04 (39)   t -0.9
+      range_eq     low 0.04 (63)   high 0.05 (57)   t +0.7
+      price        low 0.06 (67)   high 0.02 (53)   t -4.3
+== What a flop raise is made of ==
+                             share_of_range  share_of_raises  raises
+kind                                                                
+top pair or overpair                  0.194            0.331   0.261
+flush draw or open-ender              0.084            0.169   0.308
+two pair or better                    0.054            0.143   0.405
+weaker pair                           0.241            0.129   0.082
+nothing but a backdoor draw           0.253            0.112   0.068
+gutshot                               0.073            0.099   0.207
+nothing                               0.101            0.016   0.024
+== What a flop bet is made of, by seat and role ==
+  OOP caller (33 decisions): two pair or better 0.19, gutshot 0.15, top pair or overpair 0.13, flush draw or open-ender 0.10, weaker pair 0.07, ace high 0.06, nothing but a backdoor draw 0.04, nothing 0.00
+  OOP raiser (49 decisions): two pair or better 0.58, gutshot 0.51, top pair or overpair 0.48, flush draw or open-ender 0.44, weaker pair 0.34, ace high 0.33, nothing but a backdoor draw 0.22, nothing 0.17
+  IP  caller (49 decisions): two pair or better 0.58, flush draw or open-ender 0.48, top pair or overpair 0.46, nothing 0.39, nothing but a backdoor draw 0.38, gutshot 0.37, ace high 0.34, weaker pair 0.26
+  IP  raiser (37 decisions): two pair or better 0.87, flush draw or open-ender 0.67, top pair or overpair 0.55, nothing 0.53, nothing but a backdoor draw 0.53, gutshot 0.49, ace high 0.45, weaker pair 0.35

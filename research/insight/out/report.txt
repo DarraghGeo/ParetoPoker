@@ -1,0 +1,91 @@
+86 flops: 3BP 20, 4BP 32, SRP 29, Squeeze 5
+leans     bet     Top pair with a backdoor flush draw bets smaller                                         size_pos  -0.020 t  -3.4 63% n  62 | halves -0.02 -0.02
+no        bet     Top pair with a backdoor flush draw checks more                                          bet       -0.016 t  -1.1 58% n  62 | halves -0.04 +0.00 | spr -0.07/+0.04 | srp -0.06/+0.06
+holds     bet     Top pair with a backdoor flush draw makes more than its equity says                      over_real +0.041 t  +5.4 74% n  62 | halves +0.05 +0.03 | two_tone -0.00/+0.07 | fourbet +0.05/+0.00
+no        bet     Overpair with a backdoor flush draw bets smaller                                         size_pos  -0.025 t  -1.7 68% n  37 | halves -0.02 -0.03
+no        bet     Overpair with a backdoor flush draw checks more                                          bet       -0.008 t  -0.4 54% n  37 | halves -0.02 +0.00 | paired +0.02/-0.11
+holds     bet     Overpair with a backdoor flush draw makes more than its equity says                      over_real +0.061 t  +8.8 97% n  37 | halves +0.07 +0.06 | raiser +0.02/+0.07 | paired +0.06/+0.02
+no        bet     Unpaired hands with a backdoor flush draw bet more than those without (same equity)      bet       +0.039 t  +1.9 62% n  74 | halves +0.05 +0.03 | fourbet +0.12/-0.09 | spr -0.00/+0.14
+no        bet     Unpaired hands with a backdoor straight draw bet more than those without (same equity)   bet       -0.036 t  -0.7 50% n  22 | halves -0.03 -0.04 | range_eq +0.04/-0.13
+leans     bet     Middle and bottom pairs with a backdoor flush draw bet more                              bet       +0.048 t  +2.8 63% n  65 | halves +0.05 +0.05 | fourbet +0.08/-0.02
+holds     bet     Ace high checks more than lower unpaired hands                                           bet       -0.079 t  -4.1 73% n  59 | halves -0.06 -0.09 | ip +0.01/-0.14
+no        bet     The weakest unpaired hands bet more than the better ones                                 bet       +0.025 t  +1.4 56% n  41 | halves +0.04 +0.01 | he_raises -0.04/+0.10 | ip -0.03/+0.09
+holds     bet     Unpaired hands bet more when their cards make him fold more (same equity)                bet       +0.205 t  +7.8 87% n  62 | halves +0.24 +0.17 | fourbet +0.25/+0.07 | two_tone +0.08/+0.25
+holds     bet     A gutshot bets more than a no-draw hand of the same equity                               bet       +0.155 t  +4.4 85% n  52 | halves +0.12 +0.18 | he_raises +0.25/+0.06 | fourbet +0.18/-0.01
+holds     bet     The nut flush draw bets more than lower flush draws                                      bet       +0.174 t  +6.5 85% n  46 | halves +0.19 +0.16 | ip +0.04/+0.27 | two_tone +0.35/+0.13
+no        bet     Flush draws bet more than open-enders                                                    bet       -0.003 t  -0.1 45% n  29 | halves -0.03 +0.03 | fourbet -0.03/+0.20 | range_eq -0.05/+0.04
+holds     bet     A pair with a draw bets more than the pair alone                                         bet       +0.180 t  +3.9 75% n  36 | halves +0.13 +0.24 | ip -0.01/+0.34 | raiser -0.04/+0.26
+holds     bet     Top pair with a top kicker bets more than top pair with a weak one                       bet       +0.136 t  +5.5 78% n  63 | halves +0.17 +0.10
+leans     bet     Top pair with a top kicker bets bigger                                                   size_pos  +0.035 t  +2.5 58% n  62 | halves +0.04 +0.03
+no        bet     Low overpairs bet more than high ones                                                    bet       +0.053 t  +1.4 57% n  35 | halves +0.04 +0.06 | connected -0.05/+0.13
+leans     bet     Aces check more than other overpairs                                                     bet       -0.056 t  -2.0 62% n  52 | halves -0.08 -0.04
+leans     bet     Top pair that loses more on bad turns bets more (same equity)                            bet       +0.053 t  +2.6 63% n  67 | halves +0.07 +0.04 | ip -0.00/+0.12
+holds     bet     A weak pair that loses more on bad turns bets more (same equity)                         bet       +0.051 t  +3.9 67% n  73 | halves +0.06 +0.04
+holds     bet     A pocket pair below the board bets less than a pair made with the board (same equity)    bet       -0.121 t  -4.6 67% n  61 | halves -0.12 -0.12 | fourbet -0.17/+0.03
+leans     bet     Top set checks more than lower sets                                                      bet       -0.093 t  -3.3 71% n  58 | halves -0.14 -0.04 | low_board -0.14/+0.02
+holds     face    Middle pair with a backdoor flush draw folds less than without (same equity)             fold      -0.235 t  -4.5 94% n  32 | halves -0.22 -0.27 | price -0.03/-0.39 | range_raises -0.36/-0.06
+holds     face    A pocket pair below top pair with a backdoor flush draw folds less than without (same eq fold      -0.335 t  -8.4 93% n  30 | halves -0.34 -0.34 | paired -0.39/-0.00 | range_eq -0.22/-0.47
+leans     face    An underpair with a backdoor flush draw folds less than without (same equity)            fold      -0.211 t  -3.3 100% n  18 | halves -0.25 -0.10 | range_folds -0.39/-0.03 | price -0.34/-0.02
+holds     face    An unpaired hand with a backdoor flush draw folds less than without (same equity)        fold      -0.182 t  -6.1 90% n  67 | halves -0.17 -0.19 | low_board -0.13/-0.30 | high_board -0.26/-0.08
+no        face    Top pair with a backdoor flush draw raises less                                          raise     -0.024 t  -1.2 53% n  57 | halves -0.05 +0.00 | spr -0.08/+0.03 | srp -0.07/+0.04
+no        face    An overpair with a backdoor flush draw raises less                                       raise     -0.048 t  -1.3 54% n  26 | halves -0.05 -0.05 | fourbet +0.04/-0.16 | ip +0.05/-0.08
+no        face    An unpaired hand with a backdoor straight draw folds less (same equity)                  fold      +0.055 t  +0.8 25% n  20 | halves +0.11 +0.01 | connected -0.04/+0.31 | range_folds +0.01/+0.06
+holds     face    Ace high folds less than lower unpaired hands                                            fold      -0.157 t  -7.9 84% n  58 | halves -0.16 -0.16 | low_board -0.08/-0.22 | paired -0.12/-0.30
+holds     face    A pocket pair below the board folds more than a pair made with the board (same equity)   fold      +0.267 t  +7.7 81% n  52 | halves +0.25 +0.28 | connected +0.31/+0.05
+holds     face    A gutshot folds less than a no-draw hand of the same equity                              fold      -0.624 t -16.0 98% n  46 | halves -0.66 -0.59
+holds     face    A gutshot raises more than a no-draw hand of the same equity                             raise     +0.282 t  +8.2 93% n  46 | halves +0.32 +0.24 | range_raises +0.13/+0.42 | price +0.33/+0.20
+reversed  face    Gutshots raise more than open-enders                                                     raise     -0.186 t  -5.1 82% n  34 | halves -0.16 -0.22 | spr -0.10/-0.28 | srp -0.10/-0.25
+holds     face    Flush draws raise more than gutshots                                                     raise     +0.149 t  +3.2 71% n  35 | halves +0.08 +0.25 | fourbet +0.07/+0.48
+no        face    The nut flush draw raises less than lower flush draws                                    raise     +0.030 t  +0.7 59% n  41 | halves +0.05 +0.01
+no        face    A draw with a pair raises less than a draw without                                       raise     -0.068 t  -0.9 72% n  25 | halves -0.10 -0.03 | low_board -0.12/+0.19
+leans     face    Top pair with a top kicker raises more than with a weak one                              raise     +0.099 t  +3.4 65% n  55 | halves +0.14 +0.04
+no        face    Top pair with a kicker over the board raises less than with a kicker under it            raise     -0.089 t  -1.7 64% n  28 | halves -0.03 -0.15 | low_board -0.03/-0.26 | connected -0.04/-0.31
+no        face    Low overpairs raise more than high ones                                                  raise     -0.015 t  -0.3 56% n  27 | halves -0.01 -0.02
+no        face    Top set raises less than lower sets                                                      raise     -0.086 t  -1.5 60% n  42 | halves -0.14 -0.02 | srp -0.14/+0.19 | spr -0.16/+0.14
+no        face    Top pair and overpairs that lose more on bad turns raise more (same equity)              raise     -0.004 t  -0.2 43% n  72 | halves -0.03 +0.02
+holds     barrel  Flush draws bet, no-draw hands give up (betting the turn after the flop bet was called)  bet       +0.542 t +19.9 100% n  75 | halves +0.55 +0.53 | ip +0.72/+0.43 | fourbet +0.60/+0.40
+holds     barrel  A gutshot bets more than a no-draw hand of the same equity (betting the turn after the f bet       +0.199 t  +6.0 80% n  50 | halves +0.25 +0.16
+holds     barrel  Among no-draw hands, the ones whose cards make him fold more bet more (betting the turn  bet       +0.247 t +10.3 88% n  60 | halves +0.26 +0.24
+no        barrel  Among no-draw hands, holding the ace or king of the flush suit bets more (betting the tu bet       +0.065 t  +1.8 64% n  47 | halves +0.14 +0.01 | low_board +0.17/-0.02
+no        barrel  Ace high bets less than lower no-draw hands (betting the turn after the flop bet was cal bet       -0.012 t  -0.4 43% n  49 | halves -0.01 -0.01 | connected +0.07/-0.11
+holds     barrel  A weak pair with a draw bets more than the pair alone (betting the turn after the flop b bet       +0.281 t  +9.3 91% n  65 | halves +0.28 +0.29
+no        barrel  Top pair with a draw bets more than top pair alone (betting the turn after the flop bet  bet       +0.005 t  +0.1 53% n  58 | halves +0.02 -0.01 | ip -0.14/+0.21
+holds     barrel  Top pair with a top kicker bets more (betting the turn after the flop bet was called)    bet       +0.218 t  +6.1 82% n  66 | halves +0.23 +0.20
+no        barrel  The nut flush draw bets less than lower flush draws (betting the turn after the flop bet bet       +0.098 t  +3.0 67% n  54 | halves +0.11 +0.09 | two_tone +0.26/+0.01 | monotone +0.01/+0.26
+no        barrel  Low overpairs bet more than high ones (betting the turn after the flop bet was called)   bet       +0.030 t  +0.6 54% n  35 | halves +0.08 +0.00
+holds     delayed Flush draws bet, no-draw hands give up (in position after the flop checked through)      bet       +0.536 t +21.0 97% n  67 | halves +0.54 +0.53
+holds     delayed A gutshot bets more than a no-draw hand of the same equity (in position after the flop c bet       +0.262 t  +5.7 79% n  38 | halves +0.21 +0.31 | srp +0.13/+0.47 | spr +0.13/+0.47
+holds     delayed Among no-draw hands, the ones whose cards make him fold more bet more (in position after bet       +0.232 t  +7.3 95% n  38 | halves +0.21 +0.25
+holds     delayed Among no-draw hands, holding the ace or king of the flush suit bets more (in position af bet       +0.215 t  +7.5 94% n  33 | halves +0.30 +0.16 | low_board +0.31/+0.18 | fourbet +0.28/+0.15
+holds     delayed Ace high bets less than lower no-draw hands (in position after the flop checked through) bet       -0.285 t  -9.4 89% n  45 | halves -0.26 -0.30 | connected -0.21/-0.39 | low_board -0.23/-0.38
+holds     delayed A weak pair with a draw bets more than the pair alone (in position after the flop checke bet       +0.295 t  +9.2 87% n  63 | halves +0.24 +0.35
+holds     delayed Top pair with a draw bets more than top pair alone (in position after the flop checked t bet       +0.183 t  +5.1 76% n  50 | halves +0.23 +0.14 | raiser +0.09/+0.30
+holds     delayed Top pair with a top kicker bets more (in position after the flop checked through)        bet       +0.307 t +10.0 93% n  58 | halves +0.29 +0.32 | low_board +0.35/+0.05
+no        delayed The nut flush draw bets less than lower flush draws (in position after the flop checked  bet       -0.012 t  -0.4 41% n  44 | halves -0.02 -0.00 | two_tone +0.13/-0.09 | monotone -0.09/+0.13
+no        delayed Low overpairs bet more than high ones (in position after the flop checked through)       bet       -0.030 t  -0.6 43% n  21 | halves -0.00 -0.04 | paired +0.10/-0.17 | connected -0.18/+0.04
+holds     probe   Flush draws bet, no-draw hands give up (out of position after the flop checked through)  bet       +0.739 t +26.8 100% n  60 | halves +0.79 +0.69 | low_board +0.82/+0.56 | fourbet +0.79/+0.54
+holds     probe   A gutshot bets more than a no-draw hand of the same equity (out of position after the fl bet       +0.426 t +10.3 98% n  47 | halves +0.48 +0.37 | he_folds +0.38/+0.50
+holds     probe   Among no-draw hands, the ones whose cards make him fold more bet more (out of position a bet       +0.176 t  +4.9 80% n  44 | halves +0.21 +0.14 | he_folds +0.10/+0.26
+holds     probe   Among no-draw hands, holding the ace or king of the flush suit bets more (out of positio bet       +0.238 t  +5.9 87% n  38 | halves +0.28 +0.20 | he_folds +0.13/+0.35 | range_eq +0.15/+0.30
+leans     probe   Ace high bets less than lower no-draw hands (out of position after the flop checked thro bet       -0.047 t  -2.1 58% n  45 | halves -0.04 -0.06 | range_bets -0.00/-0.08 | range_eq -0.00/-0.08
+holds     probe   A weak pair with a draw bets more than the pair alone (out of position after the flop ch bet       +0.157 t  +5.7 78% n  59 | halves +0.11 +0.22 | range_bets +0.11/+0.22
+no        probe   Top pair with a draw bets more than top pair alone (out of position after the flop check bet       -0.061 t  -2.1 60% n  47 | halves -0.03 -0.09
+holds     probe   Top pair with a top kicker bets more (out of position after the flop checked through)    bet       +0.219 t  +6.9 87% n  60 | halves +0.19 +0.25
+holds     probe   The nut flush draw bets less than lower flush draws (out of position after the flop chec bet       -0.149 t  -5.0 80% n  50 | halves -0.14 -0.16 | paired -0.09/-0.25 | two_tone -0.02/-0.19
+no        probe   Low overpairs bet more than high ones (out of position after the flop checked through)   bet       -0.022 t  -0.3 55% n  20 | halves +0.05 -0.07 | paired +0.06/-0.17
+holds     bet     Top pair with more to gain on the turn bets more (same equity)                           bet       +0.066 t  +3.3 66% n  65 | halves +0.08 +0.06 | high_board +0.12/+0.01 | connected +0.05/+0.19
+leans     bet     Top pair with more to gain on the turn bets bigger (same equity)                         size_pos  +0.020 t  +2.2 64% n  64 | halves +0.02 +0.01 | ip -0.00/+0.04
+reversed  bet     A middle or bottom pair with a kicker over the board bets more than with a low kicker    bet       -0.074 t  -3.1 70% n  33 | halves -0.04 -0.11 | spr -0.06/-0.12 | he_folds -0.04/-0.12
+no        face    A middle or bottom pair with a kicker over the board folds less than with a low kicker   fold      +0.011 t  +0.3 56% n  27 | halves -0.01 +0.04
+no        face    A middle or bottom pair with an ace kicker folds less than with another kicker (same equ fold      +0.029 t  +1.3 65% n  31 | halves +0.02 +0.04
+holds     face    Two overcards fold less than one or none (no pair, no draw)                              fold      -0.416 t -15.2 100% n  33 | halves -0.39 -0.44 | range_folds -0.51/-0.31 | ip -0.34/-0.50
+reversed  bet     Two overcards bet more than one or none (no pair, no draw)                               bet       -0.101 t  -4.1 81% n  36 | halves -0.05 -0.14 | he_folds -0.01/-0.21 | ip +0.03/-0.22
+reversed  face    An unpaired hand whose backdoor flush uses both its cards folds less than one using a si fold      +0.145 t  +4.7 93% n  28 | halves +0.16 +0.13
+no        face    An unpaired hand with a nut backdoor flush draw folds less than with a low one (same equ fold      +0.034 t  +0.8 47% n  30 | halves +0.09 -0.02 | range_raises -0.07/+0.07
+holds     face    An unpaired hand with a backdoor flush draw raises more than without (same equity)       raise     +0.058 t  +3.5 88% n  67 | halves +0.06 +0.06
+holds     face    Among unpaired hands, holding the ace or king of the flush suit raises more (same equity raise     +0.217 t  +5.7 89% n  27 | halves +0.18 +0.25 | range_raises +0.04/+0.32 | price +0.26/+0.06
+leans     face    Top pair with a backdoor flush draw folds less                                           fold      -0.045 t  -3.4 53% n  57 | halves -0.03 -0.06 | price -0.00/-0.09 | range_folds -0.01/-0.07
+holds     bet     An unpaired hand with a backdoor flush draw makes more than its equity says (against one over_real +0.039 t +10.3 86% n  74 | halves +0.04 +0.04 | fourbet +0.05/+0.03 | ip +0.03/+0.05
+holds     bet     A pocket pair below the board makes less of its equity than a pair made with the board ( over_real -0.079 t  -7.5 85% n  61 | halves -0.08 -0.08 | paired -0.09/+0.04
+holds     bet     Ace high makes less of its equity than a draw of the same equity                         over_real -0.219 t -14.5 98% n  58 | halves -0.19 -0.24 | low_board -0.18/-0.27 | fourbet -0.24/-0.16
+leans     bet     Top pair with a top kicker makes more than its equity says against weaker kickers (same  over_real +0.023 t  +2.8 63% n  57 | halves +0.01 +0.03

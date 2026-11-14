@@ -1,0 +1,36 @@
+
+Middle pair facing a bet: folds less with the backdoor
+  SRP-HJ-CO    QsAs4c  OOP xb3    KsQd fold 0% (equity 65%)   v   KcQd fold 78% (equity 61%)
+  SRP-HJ-CO    9h8sAd  OOP xb3    Jd9d fold 1% (equity 52%)   v   Jc9c fold 79% (equity 50%)
+  SRP-HJ-CO    QsAs4c  OOP xb2    Qc8c fold 0% (equity 56%)   v   Qd8d fold 77% (equity 55%)
+  SRP-BB-BU    Kh5sTh  OOP xb3    Ts9h fold 24% (equity 57%)   v   Tc9d fold 100% (equity 54%)
+
+Pocket pair below top pair facing a bet
+  SRP-SB-UTG   6cJc5s  OOP xb2    9c9s fold 10% (equity 55%)   v   9d9h fold 97% (equity 53%)
+  SRP-BB-UTG   7dKd6s  OOP xb1    8c8d fold 1% (equity 46%)   v   8c8h fold 88% (equity 44%)
+  SRP-HJ-CO    QsAs4c  IP b1     9c9s fold 15% (equity 38%)   v   9c9d fold 99% (equity 35%)
+  4BP-HJ-BU    7cKc4d  IP b1     6c6d fold 0% (equity 33%)   v   6d6h fold 84% (equity 30%)
+
+Unpaired facing a bet
+  3BP-UTG-CO   7h5cTh  IP b1     KcJc fold 0% (equity 22%)   v   KdJd fold 68% (equity 19%)
+  SRP-BB-CO    8h8c3h  OOP xb1    Kc9c fold 34% (equity 35%)   v   Kd9d fold 100% (equity 31%)
+  SRP-UTG-HJ   2d4d2c  OOP xb1    AcQd fold 0% (equity 46%)   v   AsQc fold 66% (equity 42%)
+  SRP-HJ-CO    8d7c2s  OOP xb2    AdTd fold 34% (equity 46%)   v   AhTh fold 100% (equity 42%)
+
+Top pair facing a bet: calls more
+  3BP-HJ-CO    5s9hAs  IP b2     AhKh call 100% (equity 61%)   v   AcKc call 68% (equity 59%)
+  3BP-UTG-CO   Jd4hAs  IP b2     AdTd call 100% (equity 58%)   v   AcTc call 70% (equity 56%)
+  3BP-UTG-CO   Jd4hAs  IP b2     AdKd call 99% (equity 61%)   v   AcKc call 69% (equity 59%)
+  SRP-BB-CO    Ks6d8s  OOP xb3    Kd4d call 100% (equity 62%)   v   Kc4c call 71% (equity 60%)
+
+Set or two pair facing a bet: raises less
+  Squeeze-SB-CO Jc8cQd  OOP xb1    QcQh raise 16% (equity 92%)   v   QhQs raise 30% (equity 86%)
+  4BP-SB-BU    7sTc8c  OOP xb1    7c7d raise 27% (equity 88%)   v   7d7h raise 39% (equity 87%)
+  3BP-BB-HJ    4cTh8h  IP b1     4d4h raise 64% (equity 87%)   v   4d4s raise 74% (equity 86%)
+  3BP-HJ-BU    7c6d2d  OOP xb2    7d7h raise 59% (equity 92%)   v   7h7s raise 69% (equity 91%)
+
+Top pair betting: worth more
+  SRP-HJ-CO    8d7c2s  OOP first  Kc8c bet 6% (equity 59%, worth 0.53 pots)   v   Kh8h bet 11% (equity 57%, worth 0.40 pots)
+  4BP-CO-BU    Ah5s2h  OOP first  AcKh bet 95% (equity 85%, worth 1.16 pots)   v   AcKd bet 100% (equity 81%, worth 1.10 pots)
+  SRP-HJ-CO    QsAs4c  OOP first  AcKs bet 78% (equity 83%, worth 1.24 pots)   v   AcKd bet 83% (equity 80%, worth 1.03 pots)
+  4BP-UTG-HJ   8sQcAh  IP x      AcTc bet 15% (equity 61%, worth 0.54 pots)   v   AdTd bet 19% (equity 58%, worth 0.48 pots)

@@ -1,0 +1,4 @@
+86 flops, 168 betting decisions, 182 facing a bet
+
+1. Which bet sizes does he raise? (per decision: raise frequency against the smallest and the largest bet the range uses)
+   63 decisions: small bet raised 17.2%, big bet raised 12.7%; small bet folds 32.8%, big bet folds 52.6%; big raised less in 75%

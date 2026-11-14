@@ -1,0 +1,22 @@
+18 flops, 35 decisions facing a raise
+                  share    eq  fold  call  reraise
+klass                                             
+no pair            0.50  0.30  0.57  0.43      0.0
+underpair          0.03  0.31  0.46  0.54      0.0
+pocket below top   0.10  0.40  0.39  0.61      0.0
+bottom pair        0.02  0.41  0.18  0.82      0.0
+middle pair        0.02  0.41  0.09  0.91      0.0
+top pair           0.15  0.57  0.03  0.97      0.0
+two pair           0.02  0.64  0.00  1.00      0.0
+overpair           0.08  0.66  0.00  1.00      0.0
+trips              0.06  0.78  0.00  1.00      0.0
+set                0.03  0.84  0.00  1.00      0.0
+straight+          0.01  0.95  0.00  1.00      0.0
+  top pair: backdoor flush v its twin                        flops  13   fold -0.035 (t -2.1, 54%)   call +0.035 (t +2.1, 54%)   raise +0.000 (t +nan, 100%)   e +0.019 (t +13.9, 100%)
+  overpair: backdoor flush v its twin                        flops   9   fold +0.001 (t +0.9, 11%)   call -0.001 (t -0.9, 11%)   raise +0.000 (t +nan, 100%)   e +0.025 (t +5.2, 100%)
+  middle pair/bottom pair/pocket below top: backdoor flush v its twin flops  15   fold -0.216 (t -3.6, 100%)   call +0.216 (t +3.6, 100%)   raise +0.000 (t +nan, 100%)   e +0.022 (t +12.4, 100%)
+  no pair: backdoor flush v its twin                         flops  18   fold -0.177 (t -3.8, 89%)   call +0.177 (t +3.8, 89%)   raise +0.000 (t +nan, 100%)   e +0.030 (t +27.3, 100%)
+  set/two pair: backdoor flush v its twin                    flops   9   fold +0.000 (t +nan, 100%)   call +0.000 (t +nan, 100%)   raise +0.000 (t +nan, 100%)   e +0.012 (t +9.9, 100%)
+  top pair: best two kickers v the rest                      flops  12   fold -0.037 (t -2.0, 42%)   call +0.037 (t +2.0, 42%)   raise +0.000 (t +nan, 100%)   e +0.086 (t +5.2, 92%)
+  overpair: low v high                                       flops   4   fold +0.000 (t +nan, 100%)   call +0.000 (t +nan, 100%)   raise +0.000 (t +nan, 100%)   e -0.068 (t -2.2, 100%)
+  flush draw v gutshot                                       flops   8   fold -0.252 (t -2.8, 100%)   call +0.252 (t +2.8, 100%)   raise +0.000 (t +nan, 100%)   e +0.169 (t +9.4, 100%)
