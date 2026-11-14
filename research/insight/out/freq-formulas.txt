@@ -1,0 +1,70 @@
+
+######## From the ranges alone ########
+-- How often the range bets (base: von Neumann thresholds on its own equity curve) --
+Flop, out of position, first to act            n  111  base misses by 0.218  formula 0.116  | unseen flops (15): base 0.284  formula 0.159  within 5 pts 13%, within 10 47%
+      logit(base) +5.43  +4.50 x strong_adv  -1.26 x lspr  -16.27 x his_sd  +3.68 x my_nut
+      weight of each (one standard deviation): strong_adv +0.95  lspr -1.20  his_sd -0.57  my_nut +0.31
+Flop, in position, after a check               n  103  base misses by 0.198  formula 0.088
+      logit(base) +5.82  -23.64 x my_sd  +7.85 x sd_adv  +1.25 x monotone  -3.28 x draws
+      weight of each (one standard deviation): my_sd -0.86  sd_adv +0.37  monotone +0.33  draws -0.24
+Turn, out of position, first to act            n  799  base misses by 0.186  formula 0.118  | unseen flops (105): base 0.180  formula 0.125  within 5 pts 35%, within 10 51%
+      logit(base) +8.16  -106.44 x his_sd_sq  -16.82 x sd_adv  +3.26 x strong_adv  -4.43 x nut_adv  -22.22 x drawn  -0.28 x lspr
+      weight of each (one standard deviation): his_sd_sq -2.58  sd_adv -1.45  strong_adv +0.70  nut_adv -0.71  drawn -0.42  lspr -0.30
+Turn, in position, after a check               n  777  base misses by 0.191  formula 0.113  | unseen flops (104): base 0.199  formula 0.127  within 5 pts 30%, within 10 51%
+      logit(base) -3.53  +36.27 x swing  +3.19 x strong_adv_sq  +0.33 x lspr  -26.49 x drawn  +1.11 x his_mid
+      weight of each (one standard deviation): swing +1.01  strong_adv_sq +0.29  lspr +0.34  drawn -0.52  his_mid +0.23
+River, out of position, first to act           n 1043  base misses by 0.154  formula 0.100  | unseen flops (493): base 0.157  formula 0.118  within 5 pts 39%, within 10 64%
+      logit(base) +1.45  -21.68 x his_sd_sq  +2.45 x strong_adv  -3.45 x nut_adv
+      weight of each (one standard deviation): his_sd_sq -1.02  strong_adv +0.79  nut_adv -0.95
+River, in position, after a check              n 1000  base misses by 0.072  formula 0.066  | unseen flops (463): base 0.072  formula 0.075  within 5 pts 45%, within 10 77%
+      logit(base) -0.45  +0.48 x his_mid
+      weight of each (one standard deviation): his_mid +0.13
+-- How often the range folds to a bet (base: the thresholds on the bettor's range before the bet) --
+Flop, facing a bet                             n  242  base misses by 0.106  formula 0.041  | unseen flops (39): base 0.122  formula 0.054  within 5 pts 56%, within 10 82%
+      logit(base) -0.65  -0.36 x ip  +4.90 x prior_adv  +1.72 x his_air  +0.26 x s
+      weight of each (one standard deviation): ip -0.18  prior_adv +0.27  his_air +0.14  s +0.08
+Turn, facing a bet                             n  363  base misses by 0.106  formula 0.055  | unseen flops (182): base 0.093  formula 0.053  within 5 pts 56%, within 10 84%
+      logit(base) -0.40  -0.45 x ip  -0.65 x strong_adv
+      weight of each (one standard deviation): ip -0.22  strong_adv -0.12
+River, facing a bet                            n 1630  base misses by 0.039  formula 0.037  | unseen flops (768): base 0.039  formula 0.040  within 5 pts 76%, within 10 93%
+      logit(base) +0.05  -0.22 x ip
+      weight of each (one standard deviation): ip -0.11
+-- How often the range raises a bet, where it can (no derived base: starts from one half) --
+Flop, raising a bet                            n  240  base misses by 0.320  formula 0.068  | unseen flops (38): base 0.322  formula 0.096  within 5 pts 37%, within 10 61%
+      logit(base) -0.47  -2.12 x s  -1.40 x monotone  -0.42 x high
+      weight of each (one standard deviation): s -0.63  monotone -0.34  high -0.20
+
+######## With what he does in the solution ########
+-- How often the range bets (base: von Neumann thresholds on its own equity curve) --
+Flop, out of position, first to act            n  111  base misses by 0.218  formula 0.109  | unseen flops (15): base 0.284  formula 0.118  within 5 pts 40%, within 10 53%
+      logit(base) +9.90  +3.18 x strong_adv  -1.14 x lspr  -21.60 x his_sd  -4.30 x he_stabs  -2.46 x his_mid  -0.46 x high
+      weight of each (one standard deviation): strong_adv +0.67  lspr -1.08  his_sd -0.75  he_stabs -0.71  his_mid -0.42  high -0.22
+Flop, in position, after a check               n  103  base misses by 0.198  formula 0.088
+      logit(base) +5.82  -23.64 x my_sd  +7.85 x sd_adv  +1.25 x monotone  -3.28 x draws
+      weight of each (one standard deviation): my_sd -0.86  sd_adv +0.37  monotone +0.33  draws -0.24
+Turn, out of position, first to act            n  799  base misses by 0.186  formula 0.121  | unseen flops (105): base 0.180  formula 0.103  within 5 pts 30%, within 10 60%
+      logit(base) +8.05  -105.85 x his_sd_sq  -20.61 x sd_adv  +2.39 x strong_adv  -4.11 x nut_adv  -3.38 x he_stabs
+      weight of each (one standard deviation): his_sd_sq -2.57  sd_adv -1.78  strong_adv +0.52  nut_adv -0.66  he_stabs -0.62
+Turn, in position, after a check               n  777  base misses by 0.191  formula 0.113  | unseen flops (104): base 0.199  formula 0.127  within 5 pts 30%, within 10 51%
+      logit(base) -3.53  +36.27 x swing  +3.19 x strong_adv_sq  +0.33 x lspr  -26.49 x drawn  +1.11 x his_mid
+      weight of each (one standard deviation): swing +1.01  strong_adv_sq +0.29  lspr +0.34  drawn -0.52  his_mid +0.23
+River, out of position, first to act           n 1043  base misses by 0.154  formula 0.100  | unseen flops (493): base 0.157  formula 0.118  within 5 pts 39%, within 10 64%
+      logit(base) +1.45  -21.68 x his_sd_sq  +2.45 x strong_adv  -3.45 x nut_adv
+      weight of each (one standard deviation): his_sd_sq -1.02  strong_adv +0.79  nut_adv -0.95
+River, in position, after a check              n 1000  base misses by 0.072  formula 0.066  | unseen flops (463): base 0.072  formula 0.075  within 5 pts 45%, within 10 77%
+      logit(base) -0.45  +0.48 x his_mid
+      weight of each (one standard deviation): his_mid +0.13
+-- How often the range folds to a bet (base: the thresholds on the bettor's range before the bet) --
+Flop, facing a bet                             n  242  base misses by 0.106  formula 0.041  | unseen flops (39): base 0.122  formula 0.054  within 5 pts 56%, within 10 82%
+      logit(base) -0.65  -0.36 x ip  +4.90 x prior_adv  +1.72 x his_air  +0.26 x s
+      weight of each (one standard deviation): ip -0.18  prior_adv +0.27  his_air +0.14  s +0.08
+Turn, facing a bet                             n  363  base misses by 0.106  formula 0.055  | unseen flops (182): base 0.093  formula 0.053  within 5 pts 56%, within 10 84%
+      logit(base) -0.40  -0.45 x ip  -0.65 x strong_adv
+      weight of each (one standard deviation): ip -0.22  strong_adv -0.12
+River, facing a bet                            n 1630  base misses by 0.039  formula 0.037  | unseen flops (768): base 0.039  formula 0.040  within 5 pts 76%, within 10 93%
+      logit(base) +0.05  -0.22 x ip
+      weight of each (one standard deviation): ip -0.11
+-- How often the range raises a bet, where it can (no derived base: starts from one half) --
+Flop, raising a bet                            n  240  base misses by 0.320  formula 0.068  | unseen flops (38): base 0.322  formula 0.096  within 5 pts 37%, within 10 61%
+      logit(base) -0.47  -2.12 x s  -1.40 x monotone  -0.42 x high
+      weight of each (one standard deviation): s -0.63  monotone -0.34  high -0.20

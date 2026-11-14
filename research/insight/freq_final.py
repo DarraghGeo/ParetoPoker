@@ -6,6 +6,8 @@ import sys; sys.path.insert(0, 'research/insight')
 from freq_lib import *
 import warnings; warnings.filterwarnings('ignore')
 d = pd.read_pickle('research/insight/out/decisions.pkl'); d['lspr'] = np.log(d.spr.clip(0.05, 30)); d['base_raise'] = 0.5
+for c in ['adv', 'strong_adv', 'nut_adv', 'my_sd', 'his_sd']: d[c + '_sq'] = d[c] ** 2
+d['adv_x_ip'] = d.adv * d.ip; d['strong_x_ip'] = d.strong_adv * d.ip
 TEST = d.seed >= 9; NAMES = {3: 'Flop', 4: 'Turn', 5: 'River'}
 def cv(x, y, off, feats, l2=1.0, folds=6):
     X = x[feats].to_numpy(float) if feats else np.zeros((len(x), 0)); mu = np.nanmean(X, 0) if feats else 0; sd = (np.nanstd(X, 0) + 1e-9) if feats else 1; Z = np.nan_to_num((X - mu) / sd); r = logit(y) - logit(off); g = pd.factorize(x.spot)[0] % folds; pred = np.zeros(len(y))
@@ -17,7 +19,7 @@ def fit(x, y, off, feats, l2=1.0):
     beta = np.linalg.solve(A.T @ A + P, A.T @ (logit(y) - logit(off))); slope = beta[1:] / sd; return float(beta[0] - (slope * mu).sum()), dict(zip(feats, map(float, slope))), dict(zip(feats, map(float, beta[1:]))), dict(zip(feats, map(float, mu)))
 def apply(x, off, const, slopes, means):
     z = const + sum(s * x[c].fillna(means[c]).to_numpy(float) for c, s in slopes.items()); return expit(logit(off) + z)
-def formula(title, x, ycol, offcol, cands, limit=5, gain=0.003):
+def formula(title, x, ycol, offcol, cands, limit=7, gain=0.002):
     x = x[x[offcol].notna() & x[ycol].notna()]; tr = x[~TEST.reindex(x.index)].reset_index(drop=True); te = x[TEST.reindex(x.index)].reset_index(drop=True)
     if len(tr) < 60: return None
     y = tr[ycol].to_numpy(float); off = tr[offcol].to_numpy(float); cands = [c for c in cands if tr[c].notna().mean() > 0.9 and tr[c].std() > 0]
@@ -33,14 +35,14 @@ def formula(title, x, ycol, offcol, cands, limit=5, gain=0.003):
         line += f'  | unseen flops ({len(te)}): base {out["test_base"]:.3f}  formula {out["test"]:.3f}  within 5 pts {out["within5"]:.0%}, within 10 {out["within10"]:.0%}'
     print(line); print(f'      logit(base) {const:+.2f}' + ''.join(f'  {s:+.2f} x {c}' for c, s in slopes.items())); print('      weight of each (one standard deviation): ' + ('  '.join(f'{c} {v:+.2f}' for c, v in per_sd.items()) or 'none'))
     return out
-RANGE = ['adv', 'nut_adv', 'strong_adv', 'air_adv', 'sd_adv', 'my_sd', 'his_sd', 'my_nut', 'his_nut', 'my_air', 'his_air', 'my_mid', 'his_mid']; SPOT = ['raiser', 'lspr', 'two_tone', 'monotone', 'paired', 'connected', 'high']; NEXT = ['swing', 'drawn', 'draws']
+RANGE = ['adv', 'nut_adv', 'strong_adv', 'air_adv', 'sd_adv', 'my_sd', 'his_sd', 'my_nut', 'his_nut', 'my_air', 'his_air', 'my_mid', 'his_mid', 'my_q90', 'his_q90', 'my_q10', 'his_q10', 'adv_sq', 'strong_adv_sq', 'my_sd_sq', 'his_sd_sq']; SPOT = ['raiser', 'lspr', 'two_tone', 'monotone', 'paired', 'connected', 'high']; NEXT = ['swing', 'drawn', 'draws']
 results = []
 for tier, extra_bet, extra_fold in [('From the ranges alone', [], []), ('With what he does in the solution', ['he_folds', 'he_raises', 'he_stabs'], ['bettor_freq', 'bettor_all'])]:
     print(f'\n######## {tier} ########\n-- How often the range bets (base: von Neumann thresholds on its own equity curve) --')
     b = d[d.kind == 'bet']; f = d[d.kind == 'face']
     for st in [3, 4, 5]:
         for first, seat in [(1.0, 'out of position, first to act'), (0.0, 'in position, after a check')]:
-            r = formula(f'{NAMES[st]}, {seat}', b[(b.street == st) & (b['first'] == first)], 'y', 'vn_min', RANGE + SPOT + (NEXT if st < 5 else []) + ['smin'] + [c for c in extra_bet if not (c == 'he_stabs' and first == 0)])
+            r = formula(f'{NAMES[st]}, {seat}', b[(b.street == st) & (b['first'] == first)], 'y', 'vn_min', RANGE + SPOT + (NEXT if st < 5 else []) + ['smin', 'vn_b', 'vn_a'] + [c for c in extra_bet if not (c == 'he_stabs' and first == 0)])
             if r: r.update(tier=tier, kind='bet', street=st, first=first); results.append(r)
     print('-- How often the range folds to a bet (base: the thresholds on the bettor\'s range before the bet) --')
     for st in [3, 4, 5]:
