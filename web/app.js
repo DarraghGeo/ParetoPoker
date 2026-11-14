@@ -80,7 +80,7 @@ worker.onmessage = ({ data }) => {
     state.dealt = ok ? [...pos.dealt] : []; state.pick = null; go(ok ? pos.node : 0);
   }
   if (data.type === 'decision') show(data.decision);
-  if (data.type === 'looked') { state.looked.set(`${data.id}|${state.dealt.join(' ')}|${data.combo}`, data.look ?? { types: [], spread: null }); renderWhy(); }
+  if (data.type === 'looked') { state.looked.set(`${data.id}|${state.dealt.join(' ')}|${data.combo ?? null}`, data.look ?? { types: [], spread: null }); renderWhy(); }
   if (data.type === 'told') { state.told.set(`${data.id}|${state.dealt.join(' ')}|${data.combo}`, data.told ?? { line: '', reasons: [], silent: data.error ?? '' }); renderWhy(); }
 };
 // ---- a solve that takes a while says so: what is being solved, how far along, and a way to stop ----
@@ -147,13 +147,8 @@ function go(id) {
 function show(decision) {
   state.decision = decision;
   state.survey = !decision ? null : decision.street === 'river' ? survey(decision) : outline(decision);
-  if (state.survey && !state.survey.byName.has(state.hand)) {
-    // open on the hand whose choice is least obvious
-    let best = null; let score = -1;
-    for (const row of state.survey.rows) { const s = (1 - Math.max(...row.hand.strategy)) * row.hand.weight + 1e-6 * row.hand.weight; if (s > score) { score = s; best = row; } }
-    state.hand = best?.hand.name ?? null;
-    state.cell = best && !decision.abstract ? cellOf(best.hand.name) : null;
-  }
+  // no hand is picked for you: the range comes first. A hand picked earlier stays while it is still in the range
+  if (!state.survey || !state.survey.byName.has(state.hand)) { state.hand = null; state.cell = null; }
   render();
   if (state.slide) {
     // the other version comes in from the side it lives on
@@ -384,7 +379,7 @@ function renderWhy() {
     if (got) told = { ...told, line: got.line, reasons: got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : got.reasons };
     else { told = { ...told, reasons: [{ text: 'Working out the reasons\u2026', quiet: true }] }; if (!state.asked.has(key)) { state.asked.add(key); worker.postMessage({ type: 'explain', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); } }
   }
-  if (!told) { $('why').innerHTML = ''; return; }
+  if (!told) { rangeWhy(); return; }
   const d = state.decision; const strata = strataOf(d.actions);
   const title = d.abstract ? `${pct(told.equity)}%` : cardsHtml(told.name);
   const reasons = [...told.reasons];
@@ -395,28 +390,48 @@ function renderWhy() {
     + `<div class="seg tabs" role="tablist"><button type="button" role="tab" data-tab="why" aria-selected="${state.tab === 'why'}" aria-pressed="${state.tab === 'why'}">Why</button><button type="button" role="tab" data-tab="look" aria-selected="${state.tab === 'look'}" aria-pressed="${state.tab === 'look'}">Analysis</button></div>`
     + (state.tab === 'look' ? lookHtml(row, strata) : (told.line ? `<p class="lead">${esc(told.line)}</p>` : '') + reasons.map((r) => `<p${r.quiet ? ' class="quiet"' : ''}>${esc(r.text)}</p>`).join(''));
 }
-/** The analytical look: how the hand's equity is spread over the next card, and every hand type in the range with what it does. */
+/** No hand picked: the range to act, what it does, and the two ranges set side by side. */
+function rangeWhy() {
+  const s = state.survey; const d = state.decision;
+  if (!s || !d) { $('why').innerHTML = ''; return; }
+  const strata = strataOf(d.actions); const p = state.spot;
+  const first = !(state.nodes?.[state.node]?.round > 0) && state.nodes?.[state.node]?.parent < 0;
+  let body = '';
+  if (state.tab === 'look') body = lookHtml(null, strata);
+  else if (p?.facts) {
+    body = (p.sentences ?? []).map((t, i) => `<p${i ? '' : ' class="lead"'}>${esc(t)}</p>`).join('')
+      + `<table class="facts"><thead><tr><th></th><th>OOP</th><th>IP</th></tr></thead><tbody>${p.facts.map(([k, a, b]) => `<tr><th>${esc(k)}</th><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</tbody></table>`
+      + (first ? '' : '<p class="quiet">The two ranges as the spot starts.</p>');
+  }
+  $('why').innerHTML = `<h2>${d.seat === 'oop' ? 'OOP' : 'IP'} range</h2>`
+    + `<div class="mix"><span class="bar">${bar(s.mix, strata)}</span><div class="nums">${d.actions.map((a, k) => (s.mix[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(s.mix[k])}</span>` : '')).join('')}</div></div>`
+    + `<div class="seg tabs" role="tablist"><button type="button" role="tab" data-tab="why" aria-pressed="${state.tab === 'why'}">Range</button><button type="button" role="tab" data-tab="look" aria-pressed="${state.tab === 'look'}">Analysis</button></div>`
+    + body;
+}
+/** The analytical look: how equity is spread over the next card, and the hand names in the range with what each does. With a hand picked, only the names it carries. */
 function lookHtml(row, strata) {
-  const key = `${state.node}|${state.dealt.join(' ')}|${row.hand.id}`; const look = state.looked.get(key);
+  const combo = row ? row.hand.id : null;
+  const key = `${state.node}|${state.dealt.join(' ')}|${combo}`; const look = state.looked.get(key);
   if (!look) {
-    if (!state.asked.has(`look|${key}`)) { state.asked.add(`look|${key}`); worker.postMessage({ type: 'analysis', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); }
+    if (!state.asked.has(`look|${key}`)) { state.asked.add(`look|${key}`); worker.postMessage({ type: 'analysis', job: state.job, id: state.node, dealt: state.dealt, combo }); }
     return '<p class="quiet">Working it out\u2026</p>';
   }
   let html = '';
-  if (look.spread && look.spread.hand.length) {
+  if (look.spread && (look.spread.hand.length || look.spread.range.length)) {
     // each card that can come, weakest for this hand first, against the equity the hand has then; the range the same way, faded
-    const H = look.spread.hand; const R = look.spread.range; const SW = 560, SH = 220, P = 10;
+    const R = look.spread.range; const H = look.spread.hand.length ? look.spread.hand : R; const alone = !look.spread.hand.length; const SW = 560, SH = 220, P = 10;
     const Y = (e) => SH - P - e * (SH - 2 * P);
     const steps = (list, get) => list.map((v, i) => `${((i / list.length) * SW).toFixed(1)},${Y(get(v)).toFixed(1)} ${(((i + 1) / list.length) * SW).toFixed(1)},${Y(get(v)).toFixed(1)}`).join(' ');
     const up = H.filter((x) => x.eq > look.spread.now + 0.1).length; const down = H.filter((x) => x.eq < look.spread.now - 0.1).length;
     html += `<div class="spread"><svg viewBox="0 0 ${SW} ${SH}" role="img" aria-label="Equity on each ${look.spread.street} card">`
       + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="0" x2="${SW}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')
       + `<line class="axis" x1="0" x2="${SW}" y1="${Y(0)}" y2="${Y(0)}"/><line class="now" x1="0" x2="${SW}" y1="${Y(look.spread.now)}" y2="${Y(look.spread.now)}"/>`
-      + `<polyline class="wait" points="${steps(R, (v) => v)}"/><polyline class="act" points="${steps(H, (v) => v.eq)}"/></svg>`
-      + `<div class="cap"><span>${H.length} ${look.spread.street} cards</span><span>now ${pct(look.spread.now)}%</span><span>${up} lift it</span><span>${down} sink it</span></div>`
+      + `${alone ? '' : `<polyline class="wait" points="${steps(R, (v) => v.eq)}"/>`}<polyline class="act" points="${steps(H, (v) => v.eq)}"/></svg>`
+      + `<div class="cap"><span>${H.length} ${look.spread.street} cards</span><span>now ${pct(look.spread.now)}%</span>${alone ? '' : `<span>${up} lift it</span><span>${down} sink it</span>`}</div>`
       + `<div class="ends"><span>${cardsHtml(H.slice(0, 4).map((x) => x.card).join(' '))}</span><span>${cardsHtml(H.slice(-4).map((x) => x.card).join(' '))}</span></div></div>`;
   }
-  html += `<ul class="types">${look.types.map((t) => `<li class="${t.has ? 'has' : ''}"><span class="mark" aria-label="${t.has ? 'This hand is one' : 'Not this hand'}">${t.has ? '\u2713' : '\u00d7'}</span><span class="tname">${esc(t.name.charAt(0).toUpperCase() + t.name.slice(1))}</span><span class="share">${pct(t.share)}%</span><span class="bar">${bar(t.mix, strata)}</span></li>`).join('')}</ul>`;
+  // a hand picked: the names it carries; none: every name in the range
+  html += `<ul class="types${row ? '' : ' all'}">${look.types.filter((t) => !row || t.has).map((t) => `<li class="${t.has ? 'has' : ''}">${row ? '<span class="mark">\u2713</span>' : '<span class="mark"></span>'}<span class="tname">${esc(t.name)}</span><span class="share">${pct(t.share)}%</span><span class="bar">${bar(t.mix, strata)}</span></li>`).join('')}</ul>`;
   return html;
 }
 $('why').addEventListener('click', (ev) => { const b = ev.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; renderWhy(); });
@@ -433,14 +448,17 @@ $('line').addEventListener('click', (ev) => {
 });
 $('strip').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-hand]'); if (!b) return;
+  // the hand already picked, picked again: back to the range
+  if (state.hand === b.dataset.hand) { state.hand = null; state.cell = null; render(); return; }
   state.hand = b.dataset.hand; state.cell = cellOf(state.hand); render();
 });
 $('range').addEventListener('click', (ev) => {
   const cell = ev.target.closest('[data-cell]'); const hand = ev.target.closest('[data-hand]');
+  if (cell && state.cell === cell.dataset.cell) { state.hand = null; state.cell = null; render(); return; }
   if (cell) { state.cell = cell.dataset.cell; const rows = state.survey.rows.filter((r) => cellOf(r.hand.name) === state.cell).sort((a, b) => b.hand.weight - a.hand.weight); state.hand = rows[0]?.hand.name ?? null; render(); }
   if (hand) { state.hand = hand.dataset.hand; render(); }
 });
-$('combos').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (b) { state.hand = b.dataset.hand; state.cell = cellOf(state.hand); render(); } });
+$('combos').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (!b) return; if (state.hand === b.dataset.hand) { state.hand = null; state.cell = null; } else { state.hand = b.dataset.hand; state.cell = cellOf(state.hand); } render(); });
 // ---- setup: the ranges are painted on a chart or typed, whichever is at hand ----
 const draft = { side: 'oop', oop: '', ip: '' };
 /** How much of each chart cell a range holds, 0 to 1, or null when the notation cannot be read. */

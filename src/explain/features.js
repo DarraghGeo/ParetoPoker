@@ -82,3 +82,24 @@ export function typeOf(fs, board, combo, f) {
 }
 /** The same names for a group of hands. */
 export const TYPES = { 'two pair or better': 'two pair and better', 'top pair or overpair': 'top pairs and overpairs', 'lower pair': 'the lower pairs', 'top pair or overpair + draw': 'top pairs with a draw', 'lower pair + draw': 'lower pairs with a draw', 'combo draw': 'combo draws', 'flush draw': 'flush draws', 'open-ended': 'open-ended straight draws', gutshot: 'gutshots', 'ace high': 'ace-high hands', 'king or queen high': 'king- and queen-high hands', 'lower high card': 'the lowest unpaired hands', 'two overcards': 'two overcards', 'one overcard': 'hands with one overcard', 'no overcard': 'hands with no pair, no draw and no overcard', 'two overcards + backdoor flush': 'two overcards with a backdoor flush draw', 'one overcard + backdoor flush': 'one overcard with a backdoor flush draw', 'no overcard + backdoor flush': 'backdoor flush draws with no overcard' };
+
+/**
+ * Every name that fits a hand, uncompressed: its made hand, each draw it has, and its overcards.
+ * A hand can carry several (top pair and a flush draw). `TAG_ORDER` is strongest first.
+ */
+export const TAG_ORDER = ['Straight flush', 'Four of a kind', 'Full house', 'Flush', 'Straight', 'Set', 'Trips', 'Two pair', 'Overpair', 'Top pair', 'Middle pair', 'Bottom pair', 'Underpair', 'Pair', 'Flush draw', 'Open-ended straight draw', 'Gutshot', 'Backdoor flush draw', 'Two overcards', 'One overcard', 'Ace high', 'King high', 'Queen high', 'Lower high card', 'No pair'];
+export function tagsOf(fs, board, combo, f) {
+  const a = fs.COMBO_CARDS[2 * combo]; const b = fs.COMBO_CARDS[2 * combo + 1]; const out = [];
+  const river = board.length === 5;
+  if (f.own >= 2 || f.made >= 4) out.push(['', '', 'Two pair', f.pocket ? 'Set' : 'Trips', 'Straight', 'Flush', 'Full house', 'Four of a kind', 'Straight flush'][f.made] || 'Two pair');
+  else if (f.own === 1) out.push({ overpair: 'Overpair', 'top pair': 'Top pair', 'middle pair': 'Middle pair', 'bottom pair': 'Bottom pair', underpair: 'Underpair' }[f.pair] ?? 'Pair');
+  else if (river) { const high = Math.max(fs.rankOf(a), fs.rankOf(b)); out.push(high === 12 ? 'Ace high' : high === 11 ? 'King high' : high === 10 ? 'Queen high' : 'Lower high card'); }
+  else out.push('No pair');
+  if (!river && f.made < 4) {
+    if (f.flushOuts >= 8) out.push('Flush draw');
+    if (f.straightOuts >= 8) out.push('Open-ended straight draw'); else if (f.straightOuts >= 4) out.push('Gutshot');
+    if (board.length === 3 && f.flushOuts < 8) for (let s = 0; s < 4; s++) { const n = [...board, a, b].filter((c) => fs.suitOf(c) === s).length; const mine = [a, b].filter((c) => fs.suitOf(c) === s).length; if (n === 3 && mine >= 1) { out.push('Backdoor flush draw'); break; } }
+    if (f.own === 0 && f.made < 2) { const top = Math.max(...board.map((c) => fs.rankOf(c))); const over = (fs.rankOf(a) > top) + (fs.rankOf(b) > top); if (over === 2) out.push('Two overcards'); else if (over === 1) out.push('One overcard'); }
+  }
+  return out;
+}

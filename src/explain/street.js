@@ -10,7 +10,7 @@
  */
 import { frameAt } from './account.js';
 import { evaluator } from './best.js';
-import { features, groupOf, typeOf, TYPES } from './features.js';
+import { features, groupOf, typeOf, tagsOf, TAG_ORDER, TYPES } from './features.js';
 import { equityVs } from '../solver/flopsolve.js';
 
 /** An action the range takes at least this often is on the path; a rarer one leads where the solution is not pinned down. */
@@ -79,7 +79,12 @@ export function study(fs, solution, nodes, id, dealt = []) {
     const kinds = new Map();
     for (const c of hands) { let k = kinds.get(nameOf[c]); if (!k) kinds.set(nameOf[c], k = { name: nameOf[c], weight: 0, eq: 0, mix: f.node.edges.map(() => 0) }); k.weight += f.mine[c]; k.eq += f.mine[c] * eq[c]; for (let a = 0; a < n; a++) k.mix[a] += f.mine[c] * sigma(c, a); }
     for (const k of kinds.values()) { k.eq /= k.weight; k.mix = k.mix.map((x) => x / k.weight); k.share = k.weight / all; }
-    return (fifths = { of, list, near, nameOf, kinds: [...kinds.values()].sort((x, y) => y.eq - x.eq) });
+    // every name that fits each hand (a hand can carry several): how much of the range has it, and what those hands do
+    const tagsFor = new Array(N); const tags = new Map();
+    for (const c of hands) { tagsFor[c] = tagsOf(fs, f.board, c, featuresOf(c)); for (const name of tagsFor[c]) { let k = tags.get(name); if (!k) tags.set(name, k = { name, weight: 0, eq: 0, mix: f.node.edges.map(() => 0) }); k.weight += f.mine[c]; k.eq += f.mine[c] * eq[c]; for (let a = 0; a < n; a++) k.mix[a] += f.mine[c] * sigma(c, a); } }
+    for (const k of tags.values()) { k.eq /= k.weight; k.mix = k.mix.map((x) => x / k.weight); k.share = k.weight / all; }
+    const tagList = [...tags.values()].sort((x, y) => TAG_ORDER.indexOf(x.name) - TAG_ORDER.indexOf(y.name));
+    return (fifths = { of, list, near, nameOf, kinds: [...kinds.values()].sort((x, y) => y.eq - x.eq), tagsFor, tagList, hands, all });
   };
   // Every card that can come next, and each hand's equity once it has: how a hand's strength is spread over the next street
   let nextCards = null;
@@ -447,20 +452,23 @@ export function explainStreet(s, m, T) {
  */
 export function analysis(s, c) {
   const { fs, f } = s;
-  if (!(f.mine[c] > 0)) return null;
-  const b = s.bands(); const mine = b.nameOf[c];
-  const types = b.kinds.map((k) => ({ name: k.name, label: TYPES[k.name] ?? k.name, share: k.share, equity: k.eq, mix: k.mix, has: k.name === mine }));
+  const one = c != null && f.mine[c] > 0;
+  const b = s.bands(); const mine = one ? new Set(b.tagsFor[c] ?? []) : new Set();
+  // every name some hand in the range carries; with a hand given, `has` marks the ones it carries
+  const types = b.tagList.map((k) => ({ name: k.name, share: k.share, equity: k.eq, mix: k.mix, has: mine.has(k.name) }));
   let spread = null;
   const cards = s.spread();
   if (cards) {
     const hand = []; const range = [];
     for (const k of cards) {
-      if (!Number.isNaN(k.eq[c])) hand.push({ card: fs.formatCards([k.card]), eq: k.eq[c] });
+      if (one && !Number.isNaN(k.eq[c])) hand.push({ card: fs.formatCards([k.card]), eq: k.eq[c] });
       let w = 0, t = 0; for (let h = 0; h < fs.COMBOS; h++) if (f.mine[h] > 0 && !Number.isNaN(k.eq[h])) { w += f.mine[h]; t += f.mine[h] * k.eq[h]; }
-      if (w > 0) range.push(t / w);
+      if (w > 0) range.push({ card: fs.formatCards([k.card]), eq: t / w });
     }
-    hand.sort((x, y) => x.eq - y.eq); range.sort((x, y) => x - y);
-    spread = { hand, range, now: s.equity()[c], street: f.board.length === 3 ? 'turn' : 'river' };
+    hand.sort((x, y) => x.eq - y.eq); range.sort((x, y) => x.eq - y.eq);
+    // the range's own equity now: its hands' equities by weight
+    let w = 0, t = 0; const eq = s.equity(); for (const h of b.hands) { w += f.mine[h]; t += f.mine[h] * eq[h]; }
+    spread = { hand, range, now: one ? eq[c] : t / w, street: f.board.length === 3 ? 'turn' : 'river' };
   }
-  return { name: fs.formatCombo(c), type: mine, types, spread };
+  return { name: one ? fs.formatCombo(c) : null, types, spread };
 }

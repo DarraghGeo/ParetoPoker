@@ -151,7 +151,7 @@ self.onmessage = async ({ data }) => {
       const dealt = fs.parseCards((data.dealt ?? []).join(' '));
       const key = `${data.id}|${dealt.join(',')}`;
       let st = studies.get(key); if (!st) studies.set(key, st = study(fs, solution, nodes, data.id, dealt));
-      self.postMessage({ type: 'looked', job: data.job, id: data.id, combo: data.combo, look: analysis(st, data.combo) });
+      self.postMessage({ type: 'looked', job: data.job, id: data.id, combo: data.combo ?? null, look: analysis(st, data.combo ?? null) });
     } catch (error) {
       self.postMessage({ type: 'looked', job: data.job, id: data.id, combo: data.combo, look: null, error: String(error?.message ?? error) });
     }

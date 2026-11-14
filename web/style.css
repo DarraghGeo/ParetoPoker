@@ -324,3 +324,12 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .types li.has .mark{color:var(--ok)}
 .types .share{font:400 12px/18px var(--mono);text-align:right}
 .types .bar{height:10px;display:flex}
+
+.types.all li{color:var(--ink-2);grid-template-columns:0 minmax(0,1.4fr) 40px minmax(0,2fr);gap:10px 10px}
+.types.all .mark{display:none}
+.types.all li{grid-template-columns:minmax(0,1.4fr) 40px minmax(0,2fr)}
+.facts{border-collapse:collapse;width:100%;font:400 13px/20px var(--sans)}
+.facts th,.facts td{text-align:left;padding:3px 0;border-bottom:1px solid var(--line)}
+.facts thead th{font:400 11px/16px var(--mono);letter-spacing:.08em;color:var(--ink-3)}
+.facts tbody th{font-weight:400;color:var(--ink-2)}
+.facts td{font-family:var(--mono);font-size:12px;width:22%}

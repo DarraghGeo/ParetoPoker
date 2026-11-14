@@ -24,7 +24,20 @@ export async function profile(RangeManager, { oop, ip, board }) {
     for (const text of [capped(hero, 'Out of position'), capped(villain, 'In position')]) if (text) parts.push(text);
     // Only the equity sentence is put on the page: it is checked against an exact count (research/proof/profile.mjs).
     // The rest are poker-rangeman's own measures and labels, kept here as `detail` until their definitions are checked too.
-    return { text: parts[0], detail: parts.join(' '), advantage: { range: advantage.range, nut: advantage.nut, polarization: advantage.polarization }, shapes: { oop: hero.shape?.dominant ?? null, ip: villain.shape?.dominant ?? null }, capped: { oop: hero.capped?.relative ?? 0, ip: villain.capped?.relative ?? 0 } };
+    // the same comparison as rows, for the page's range view: [label, out of position, in position]
+    const share = (x) => `${Math.round(100 * (x ?? 0))}%`;
+    const facts = [
+      ['Hands', `${Math.round(hero.weight)}`, `${Math.round(villain.weight)}`],
+      ['Equity', share(hero.equity), share(villain.equity)],
+      ['Strong (75%+)', share(hero.buckets?.strong?.share), share(villain.buckets?.strong?.share)],
+      ['Good (50-75%)', share(hero.buckets?.good?.share), share(villain.buckets?.good?.share)],
+      ['Weak (33-50%)', share(hero.buckets?.weak?.share), share(villain.buckets?.weak?.share)],
+      ['Trash (under 33%)', share(hero.buckets?.trash?.share), share(villain.buckets?.trash?.share)],
+      ['Nut hands', share(hero.nuts?.share), share(villain.nuts?.share)],
+      ['Shape', hero.shape?.dominant ?? 'mixed', villain.shape?.dominant ?? 'mixed'],
+      ['Capped', share(hero.capped?.relative), share(villain.capped?.relative)],
+    ];
+    return { text: parts[0], detail: parts.join(' '), sentences: parts, facts, advantage: { range: advantage.range, nut: advantage.nut, polarization: advantage.polarization }, shapes: { oop: hero.shape?.dominant ?? null, ip: villain.shape?.dominant ?? null }, capped: { oop: hero.capped?.relative ?? 0, ip: villain.capped?.relative ?? 0 } };
   } catch {
     return null;
   }
