@@ -881,4 +881,6 @@ $('e-curve').addEventListener('pointerdown', (ev) => { const k = ev.target.datas
 $('e-curve').addEventListener('keydown', (ev) => { const k = ev.target.dataset?.grab; const step = ev.key === 'ArrowUp' ? 0.02 : ev.key === 'ArrowDown' ? -0.02 : 0; if (k == null || !step) return; ev.preventDefault(); const c = edit.dials[edit.who].curve; c[+k] = Math.round(100 * (c[+k] + step)) / 100; preview(); });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('editor').hidden) closeEditor(); });
 
-begin();
+// The page opens on setup: nothing is solved until Solve is pressed. A spot handed over in the address is the
+// exception: it was asked for, so it is solved as it arrives.
+if (state.open) begin(); else { render(); openSetup(); }
