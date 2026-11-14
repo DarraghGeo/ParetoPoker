@@ -1,7 +1,7 @@
 // Do value hands pick their bet size by what they can still draw to? For every hand at the first decision of each
 // player, on spots with two or more bet sizes: what it is, its equity now and its draw equity, and how it spreads
 // its bets over the sizes.   node valuesize.mjs <flop|turn> <spots>   -> out/valuesize-<street>.jsonl
-import { writeFileSync } from 'node:fs';
+import { writeFileSync, appendFileSync } from 'node:fs';
 import { fs, solveSpot } from './lib.mjs';
 import { freshSpots, WIDE_OOP, WIDE_IP, config } from './spots.mjs';
 import { tagsOf } from '../../src/explain/features.js';
@@ -14,13 +14,21 @@ function flops(n, seed) {
   const FIRST = [[0.33, 0.75, 1.5], [0.33, 1], [0.5, 1.25], [0.33, 0.75]]; const cards = 'AKQJT98765432', suits = 'shdc'; const out = []; let guard = 0;
   while (out.length < n && guard++ < 400) {
     const board = []; while (board.length < 3) { const c = cards[rand(13)] + suits[rand(4)]; if (!board.includes(c)) board.push(c); }
-    const s = { name: `size flop ${String(out.length + 1).padStart(2, '0')}`, board: board.join(''), oop: OOP[rand(OOP.length)], ip: IP[rand(IP.length)], stack: [200, 300][rand(2)], betSizes: [FIRST[rand(FIRST.length)], [0.66], [0.66]], raiseSizes: [{ times: 3 }], maxRaises: 2 };
-    try { if (fs.defineSpot(config(s)).estimate.bytes < 900 * 2 ** 20) out.push(s); } catch { /* too big */ }
+    const s = { name: `size flop ${seed}-${String(out.length + 1).padStart(2, '0')}`, board: board.join(''), oop: OOP[rand(OOP.length)], ip: IP[rand(IP.length)], stack: [200, 300][rand(2)], betSizes: [FIRST[rand(FIRST.length)], [0.66], [0.66]], raiseSizes: [{ times: 3 }], maxRaises: 2 };
+    try { if (fs.defineSpot(config(s)).estimate.bytes < +(process.env.MAXMB ?? 900) * 2 ** 20) out.push(s); } catch { /* too big */ }
   }
   return out;
 }
-const spots = street === 'flop' ? flops(+count, 7301) : freshSpots(+count * 2, 4, 7304).filter((s) => s.betSizes[0].length >= 2).slice(0, +count);
-const target = street === 'flop' ? 0.3 : 0.02; const lines = [];
+const SEED = +(process.env.SEED ?? 7301);
+const spots = street === 'flop' ? flops(+count, SEED) : freshSpots(+count * 2, 4, 7304).filter((s) => s.betSizes[0].length >= 2).slice(0, +count);
+const target = street === 'flop' ? 0.3 : 0.02; let lines = []; let total = 0;
+const file = new URL(`./out/valuesize-${street}${process.env.SEED ? `-${SEED}` : ''}.jsonl`, import.meta.url); writeFileSync(file, '');
+/** On a flop: how many pairs of ranks (turn and river) would make the hand a straight it does not share with the board. Three in a row in the middle of the deck has three; a gapped three has two or one. */
+function runnerStraights(board, a, b) {
+  const all = new Set([...board, a, b].map((c) => fs.rankOf(c))); const onBoard = new Set(board.map((c) => fs.rankOf(c))); let ways = 0;
+  for (let lo = -1; lo <= 8; lo++) { let have = 0, shared = 0; for (let k = 0; k < 5; k++) { const r = lo + k === -1 ? 12 : lo + k; if (all.has(r)) have++; if (onBoard.has(r)) shared++; } if (have === 3 && shared < 3) ways++; }
+  return ways;
+}
 for (const s of spots) {
   let g; const t0 = Date.now(); try { g = solveSpot(s, target, { cap: 40000, workers: +(process.env.WORKERS ?? 3), quiet: true }); } catch (e) { console.error('skip', s.name, String(e.message).slice(0, 60)); continue; }
   for (const id of [0, g.nodes[0].edges[0].child]) {
@@ -32,10 +40,11 @@ for (const s of spots) {
     for (let c = 0; c < fs.COMBOS; c++) {
       if (!(st.f.mine[c] > 0) || Number.isNaN(eq[c])) continue;
       const f = st.featuresOf(c); const p = bets.map((i) => st.sigma(c, i)); const bet = p.reduce((t, x) => t + x, 0);
-      lines.push(JSON.stringify({ spot: s.name, seat: st.f.me, w: +st.f.mine[c].toFixed(4), e: +eq[c].toFixed(4), now: +parts.now[c].toFixed(4), draw: +parts.draw[c].toFixed(4), tags: tagsOf(fs, st.f.board, c, f), bet: +bet.toFixed(4), size: bet > 0.02 ? +(p.reduce((t, x, k) => t + x * sizes[k], 0) / bet).toFixed(4) : null, big: bet > 0.02 ? +(p[p.length - 1] / bet).toFixed(4) : null, small: bet > 0.02 ? +(p[0] / bet).toFixed(4) : null, top: +Math.max(...sizes).toFixed(2), low: +Math.min(...sizes).toFixed(2) }));
+      lines.push(JSON.stringify({ spot: s.name, seat: st.f.me, w: +st.f.mine[c].toFixed(4), e: +eq[c].toFixed(4), now: +parts.now[c].toFixed(4), draw: +parts.draw[c].toFixed(4), tags: tagsOf(fs, st.f.board, c, f), ways: st.f.board.length === 3 && f.straightOuts < 4 && f.made < 4 ? runnerStraights(st.f.board, fs.COMBO_CARDS[2 * c], fs.COMBO_CARDS[2 * c + 1]) : 0, bet: +bet.toFixed(4), size: bet > 0.02 ? +(p.reduce((t, x, k) => t + x * sizes[k], 0) / bet).toFixed(4) : null, big: bet > 0.02 ? +(p[p.length - 1] / bet).toFixed(4) : null, small: bet > 0.02 ? +(p[0] / bet).toFixed(4) : null, top: +Math.max(...sizes).toFixed(2), low: +Math.min(...sizes).toFixed(2) }));
     }
   }
+  // saved spot by spot, so that a run cut short keeps what it has
+  if (lines.length) appendFileSync(file, lines.join('\n') + '\n'); total += lines.length; lines = [];
   console.error(`  ${s.name} ${s.board} done (${g.exploit.toFixed(3)}%, ${Math.round((Date.now() - t0) / 1000)}s)`);
 }
-writeFileSync(new URL(`./out/valuesize-${street}.jsonl`, import.meta.url), lines.join('\n') + '\n');
-console.log(`${street}: ${lines.length} hands on ${spots.length} spots`);
+console.log(`${street}: ${total} hands on ${spots.length} spots`);
