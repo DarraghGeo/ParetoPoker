@@ -6,7 +6,7 @@
 <title>Pareto</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=0a5c08f7dc">
+<link rel="stylesheet" href="style.css?v=574f9e7da9">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -18,7 +18,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = '0a5c08f7dc'; const opening = !/(study|train)\.html/.test(location.pathname);
+  const here = '574f9e7da9'; const opening = !/(study|train)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }

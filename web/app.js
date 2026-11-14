@@ -5,8 +5,10 @@ import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
 import { $, COLORS, COPY_ICON, DEFAULTS, copied, copyText, studyUrl, GLYPH, RANKS, bar, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
+/** The action chart's forms: one bar; a row for each made hand; a ladder of both ranges on one scale. */
+const CHARTS = ['single', 'split', 'ladder'];
 const state = {
-  mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', split: false,
+  mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', chart: 'single',
   spot: null, job: 0, status: '', stats: null,
   // Every saved edit of the ranges is a version; `at` is the one on screen
   versions: [], at: 0, slide: null,
@@ -20,7 +22,7 @@ const state = {
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config);
   // an earlier visit saved one raise size as `raise`
   if (!Array.isArray(state.config.raises)) state.config.raises = state.config.raise > 0 ? [state.config.raise] : [];
-  delete state.config.raise; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.split = !!saved?.split; } catch { /* first visit */ }
+  delete state.config.raise; state.detail = !!saved?.detail; if (saved?.view === 'curve') state.view = 'curve'; state.chart = CHARTS.includes(saved?.chart) ? saved.chart : saved?.split ? 'split' : 'single'; } catch { /* first visit */ }
 // A spot handed over in the address (Train's "open in Study"): it becomes the setup, and the page opens at its decision and hand
 try {
   const q = new URLSearchParams(location.search);
@@ -40,7 +42,7 @@ try {
     state.open = { line: (q.get('line') ?? '').split(',').filter(Boolean), dealt: (q.get('dealt') ?? '').match(/[2-9TJQKA][shdc]/g) ?? [], hand: /^([2-9TJQKA][shdc]){2}$/.test(q.get('hand') ?? '') ? q.get('hand') : null, resolve: q.get('resolve') === '1' };
   }
 } catch { /* an address that cannot be read opens the saved spot */ }
-const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, detail: state.detail, view: state.view, split: state.split })); } catch { /* private window */ } };
+const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, detail: state.detail, view: state.view, chart: state.chart })); } catch { /* private window */ } };
 
 // ---- the solver, in a worker ----
 const worker = new Worker(new URL('./worker.js', import.meta.url));
@@ -243,7 +245,8 @@ function renderLine(strata) {
     + `<div class="acts">${here.edges.map((e, k) => `<button type="button" class="act" ${onward(e)}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)}</button>`).join('')}</div>`
     + '<div class="tools">'
     + icon('villain', here.seat === 'oop' ? 'In position\'s range' : 'Out of position\'s range', `<circle cx="8" cy="5.2" r="2.6" ${stroke}/><path d="M2.8 13.6c.6-2.6 2.6-4 5.2-4s4.6 1.4 5.2 4" ${stroke}/>`)
-    + icon('split', state.split ? 'One bar' : 'By made hand', state.split ? `<path d="M2 6.5h12v3H2z" ${stroke}/>` : `<path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" ${stroke}/>`, `aria-pressed="${state.split}"`)
+    // the button shows the form the chart turns to next
+    + icon('split', ...{ single: ['Action chart, split by made hand', `<path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" ${stroke}/>`], split: ['Action chart, ladder: both ranges on one scale', `<path d="M2 5.5h6M10.5 5.5H14M2 10.5h2.5M7 10.5h7" ${stroke}/>`], ladder: ['Action chart, one bar', `<path d="M2 6.5h12v3H2z" ${stroke}/>`] }[state.chart])
     + icon('view', state.view === 'grid' ? 'Equity distribution' : 'Grid', state.view === 'grid' ? `<path d="M2 13c3 0 3-4 6-5s3-5 6-5" ${stroke}/>` : `<path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" ${stroke}/>`)
     + '</div>';
   $('f-sub').hidden = !opensStreet(here);
@@ -377,7 +380,8 @@ function renderStrip(strata) {
     return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:100%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</b></button>`;
   };
   const names = state.decision.categories;
-  if (!state.split || !names) { el.className = 'strip'; el.innerHTML = hands.map(column).join(''); return; }
+  if (state.chart === 'ladder') { el.className = 'rows ladder'; el.innerHTML = ladder(s, column); return; }
+  if (state.chart !== 'split' || !names) { el.className = 'strip'; el.innerHTML = hands.map(column).join(''); return; }
   // Every row keeps the whole range's scale: a made hand sits where it sits in the single bar, with gaps either side
   const span = new Map();
   hands.forEach((row, k) => { const c = row.hand.category; if (!span.has(c)) span.set(c, [k, k]); span.get(c)[1] = k + 1; });
@@ -388,6 +392,36 @@ function renderStrip(strata) {
     const place = (from + to) / 2 < n / 2 ? `left:calc(${(100 * to / n).toFixed(2)}% + 8px)` : `right:calc(${(100 * (1 - from / n)).toFixed(2)}% + 8px)`;
     return `<div class="row"><div class="strip">${hands.map((row) => (row.hand.category === c ? column(row) : '<span></span>')).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct((to - from) / n)}</span></div>`;
   }).join('');
+}
+/**
+ * The ladder: every hand of both ranges on one scale, weakest to strongest, out of position's on the
+ * top row and in position's below. A hand takes a column, and the other row is empty there, so the
+ * two rows read as one chart cut in two: where each range sits, where they overlap, which one
+ * reaches further at either end. Hands that are worth the same share their columns, one above the
+ * other. Only the player to act has a strategy to show; the other range is drawn plain.
+ */
+function ladder(s, column) {
+  const d = state.decision; const river = d.street === 'river';
+  // one scale for both: the made hand on the river, before it each hand's equity against the other range
+  const key = (strength, equity) => (river ? strength : Math.round(1e4 * (Number.isNaN(equity) ? 0 : equity ?? 0)));
+  const levels = new Map();
+  const at = (k) => { let level = levels.get(k); if (!level) levels.set(k, level = { mine: [], his: [] }); return level; };
+  for (const row of s.rows) at(key(row.hand.strength, row.equity)).mine.push(row);
+  for (const v of d.villain) at(key(v.strength, v.equity)).his.push(v);
+  const top = []; const bottom = []; let mine = 0; let his = 0;
+  for (const k of [...levels.keys()].sort((a, b) => a - b)) {
+    const level = levels.get(k);
+    level.mine.sort((a, b) => (a.hand.name < b.hand.name ? -1 : 1));
+    mine += level.mine.length; his += level.his.length;
+    for (let i = 0; i < Math.max(level.mine.length, level.his.length); i++) {
+      const acting = level.mine[i] ? column(level.mine[i]) : '<span></span>';
+      const waiting = level.his[i] ? `<span class="other" title="${esc(level.his[i].name)}"></span>` : '<span></span>';
+      (d.seat === 'oop' ? top : bottom).push(acting); (d.seat === 'oop' ? bottom : top).push(waiting);
+    }
+  }
+  // each row is named outside its bars, above the top one and below the bottom one, so that no hand is covered
+  const name = (seat, count) => `<span class="name">${seat} ${count}</span>`; const bars = (cells) => `<div class="strip">${cells.join('')}</div>`;
+  return `<div class="row">${name('OOP', d.seat === 'oop' ? mine : his)}${bars(top)}</div><div class="row">${bars(bottom)}${name('IP', d.seat === 'oop' ? his : mine)}</div>`;
 }
 /** The hands of the range to act, weakest first: the order of the strategy chart and of the equity curve above it. */
 const handsInOrder = (s) => [...s.rows].sort((a, b) => (a.hand.strength ?? 0) - (b.hand.strength ?? 0) || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
@@ -486,7 +520,7 @@ const W = 560, PAD = 8;
 $('line').addEventListener('click', (ev) => {
   if (ev.target.closest('#villain')) { showVillain(ev.target.closest('#villain')); return; }
   const deal = ev.target.closest('[data-deal]'); if (deal) { state.pick = +deal.dataset.deal; render(); return; }
-  if (ev.target.closest('#split')) { state.split = !state.split; remember(); render(); $('split')?.focus(); return; }
+  if (ev.target.closest('#split')) { state.chart = CHARTS[(CHARTS.indexOf(state.chart) + 1) % CHARTS.length]; remember(); render(); $('split')?.focus(); return; }
   if (ev.target.closest('#view')) { state.view = state.view === 'grid' ? 'curve' : 'grid'; remember(); render(); $('view')?.focus(); return; }
   const b = ev.target.closest('[data-go]'); if (b) go(+b.dataset.go);
 });

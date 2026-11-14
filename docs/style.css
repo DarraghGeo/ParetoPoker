@@ -382,3 +382,10 @@ header .board{min-width:0;flex:0 1 auto}
 .past div{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
 .past .street{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);min-width:38px}
 .past i{font-style:normal;color:var(--ink-3)}
+/* the ladder: both ranges on one scale, out of position above, in position below; the range not to act is drawn plain */
+.ladder{gap:4px}
+.ladder .row{display:flex;flex-direction:column;gap:3px}
+.ladder .strip{height:30px}
+.ladder .strip .other{background:var(--ink);opacity:.28}
+.ladder .name{position:static;transform:none;color:var(--ink-2)}
+@media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}.ladder .name{transform:none}}
