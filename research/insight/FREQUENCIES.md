@@ -7,6 +7,7 @@ How often a range bets, folds to a bet and raises a bet, from a formula rather t
 - **Folding to a bet: accurate.** 4 to 5 points off on every street on unseen flops, which is close to the solver's own noise (about 3).
 - **Betting on the river in position: close with the base alone.** 7 points off. No correction improves it.
 - **Betting elsewhere: not accurate.** 12 to 16 points off on unseen flops, down from 16 to 28 for the base alone. A flexible model on the same facts reaches 7 to 10, so the limit is the facts, not the fitting.
+- **Betting on the river out of position: derived, 9.5 points off.** The six-indifference game below, with nothing fitted, beats the fitted corrections (11.8).
 - **Raising a bet on the flop: rough.** 10 points off. It has no derived base.
 
 ## Data
@@ -77,3 +78,46 @@ Each is `frequency = expit(logit(base) + constant + Σ slope × factor)`. The sl
 ## Files
 
 `collect.mjs` (solves and records), `rebuild.mjs` (his range at each decision of the first collection), `freq_lib.py` (the base and the factors), `freq_final.py` (choosing, fitting, the test), `freq_two.py` (value and bluffs fitted apart), `freq_hand.py` (hands added up), `noise.mjs` (how settled the target is).
+
+## Two corrections derived instead of fitted
+
+`derive.py`. Each follows from indifference alone and was tried against the solver with no number fitted.
+
+### A. Out of position on the river: a check is not a showdown
+
+The base gives the bettor's best bluff its showdown equity when it checks. Out of position the other player may bet after the check, so the game has six indifferences instead of three. With one bet size `s`, no raise, his range uniform on the scale "share of his range beaten" (which is what river equity is) and ours any curve:
+
+- we bluff `s/(1+s)` of our value bets, with our weakest hands;
+- he folds `(s + what our best bluff is worth checked) / (1 + s)`;
+- after our check he bets for value from `b2` and bluffs `s/(1+s)` of that;
+- our checking range folds `(s + what his best bluff wins checked back) / (1 + s)`;
+- `b2` beats half of what we check and call with;
+- our thinnest value bet is worth the same bet and checked (checked, it calls his bet or wins the showdown he allows).
+
+Everything follows from one unknown, how much of our range bets for value, found by a search.
+
+| River, out of position, first to act | Misses by | Tracks the solver (r) | Within 5 points | Within 10 |
+|---|---|---|---|---|
+| Base | 15.7 | 0.61 | | |
+| Base with fitted corrections | 11.8 | | 39% | 64% |
+| **Derived, nothing fitted** | **9.5** | **0.82** | **53%** | **72%** |
+
+On the 493 unseen decisions. On all 1,536 it is 9.4. The same solution also gives, untuned, how often he folds to our bet (4.8 points off) and how often he bets after our check (9.3 off).
+
+It still bets about 4 points too often on average. What it leaves out: his bet after our check may be a different size, hands that block, and the lead by the turn caller (the solver leads 13% there; the base says 26%).
+
+### B. Bluffs with streets to come: right on average, not spot by spot
+
+On the river a bluff-catcher is indifferent when bluffs are `r = s/(1+s)` of the value bets. A street earlier, calling wins only against the hands that then give up, because the ones that bet again leave it indifferent again. So what gives up is `r` of what bets again, and with n bets to come the hands that are not value are `(1 + r1)(1 + r2)…(1 + rn) − 1` of the value bets, each `r` from that street's size as the stacks allow.
+
+| | Solver: bets from hands behind for every bet from hands ahead | One street says | Streets to come say |
+|---|---|---|---|
+| Flop | 0.75 | 0.25 | 1.29 |
+| Turn | 0.69 | 0.43 | 0.87 |
+| River | 0.36 | 0.40 | 0.40 |
+
+Put into the base it moves the average bet frequency to about the right place (flop out of position 35% against the solver's 37%, base 25%; turn in position 43% against 48%, base 36%). It does not improve the miss decision by decision (17 to 24 points, as before).
+
+Why it overshoots: the derivation assumes value hands that stay value and a caller holding only bluff-catchers. It requires the bettor to fire again about 72% of the time after a call; the solver fires again 48% out of position and 59% in position. The caller's range holds hands that beat value bets, and equities move with the card.
+
+So the direction and the size of the flop and turn bluff surplus are explained. Which spots bet more than others on those streets is not.
