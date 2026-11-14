@@ -9,6 +9,27 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <link rel="stylesheet" href="style.css?v=__V__">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#FAFAF7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pareto">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<script>
+// Installed or not, the page keeps itself current: a worker that always asks the network first, a check for a newer
+// build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
+// a study in progress is never thrown away).
+if ('serviceWorker' in navigator) {
+  const here = '__V__'; const opening = !/(study|train)\.html/.test(location.pathname);
+  navigator.serviceWorker.register('sw.js').then((reg) => {
+    const check = async () => {
+      try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
+    };
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
+    addEventListener('pageshow', (ev) => { if (ev.persisted) check(); });
+  }).catch(() => {});
+}
+</script>
 </head>
 <body class="train">
 <div class="rule" id="rule"></div>
