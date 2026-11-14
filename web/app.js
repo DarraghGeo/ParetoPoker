@@ -679,7 +679,10 @@ $('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); ren
 function presetsHtml(sel) {
   const action = sel?.action ?? ACTIONS[0][0]; const same = PRESETS.filter((p) => p.action === action);
   const seats = (side) => SEATS.filter((seat) => same.some((p) => p[side] === seat));
-  const row = (name, part, list) => `<div class="line"><span>${name}</span><div class="seg" role="group" aria-label="${name}">${list.map(([value, label]) => `<button type="button" data-part="${part}" data-value="${value}" aria-pressed="${sel?.[part] === value}">${label}</button>`).join('')}</div></div>`;
+  // a seat that does not sit with the other seat chosen is fainter: taking it moves the other one too
+  const other = { oop: 'ip', ip: 'oop' };
+  const far = (part, value) => part !== 'action' && sel && !same.some((p) => p[part] === value && p[other[part]] === sel[other[part]]);
+  const row = (name, part, list) => `<div class="line"><span>${name}</span><div class="seg" role="group" aria-label="${name}">${list.map(([value, label]) => `<button type="button" data-part="${part}" data-value="${value}" aria-pressed="${sel?.[part] === value}"${far(part, value) ? ' class="far"' : ''}>${label}</button>`).join('')}</div></div>`;
   const p = presetFor(sel);
   return row('Action', 'action', ACTIONS) + row('OOP', 'oop', seats('oop').map((x) => [x, x])) + row('IP', 'ip', seats('ip').map((x) => [x, x]))
     + `<p class="said">${p ? `${esc(p.line)}. Pot ${p.pot}, ${p.stack} behind, in big blinds.` : 'Ranges of your own. Pick an action and seats to take theirs.'}</p>`;

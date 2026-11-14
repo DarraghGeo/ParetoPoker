@@ -29,7 +29,7 @@ The page opens on a choice between the two:
   solved in the browser. Walk the line, pick a hand, read what it does and why. The pen edits the
   ranges; each save is a version you can slide back to.
   Ranges can be taken by position and preflop action (single-raised, 3-bet, 4-bet, squeeze and limped
-  pots, 6-max at 100 big blinds: `web/presets.js`), from setup or from the menu off the top bar; the
+  pots, 6-max at 100 big blinds, 49 spots: `web/presets.js`), from setup or from the menu off the top bar; the
   choice sets both ranges, the pot and the stack.
   A spot too big to solve whole in a browser (most flops with several sizes, raises and all-in) is
   offered as Solve (Lite): the first street's betting as given, one bet size on the later ones.

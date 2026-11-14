@@ -409,3 +409,4 @@ header .board{min-width:0;flex:0 1 auto}
 .presets .seg button{padding:4px 7px;font:400 11px/14px var(--mono);letter-spacing:.02em}
 .presets .said{margin:2px 0 0;font:400 12px/17px var(--sans);color:var(--ink-3);text-wrap:pretty}
 .seatpick{width:min(340px,calc(100vw - 24px));padding:14px}
+.presets .seg button.far{color:var(--ink-3);opacity:.55}
