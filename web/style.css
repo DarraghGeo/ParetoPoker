@@ -354,3 +354,14 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .g-list button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
 .g-list button[aria-pressed="true"]{border-color:var(--ink)}
 .g-list button span:first-child{display:flex;gap:3px}
+
+/* phones: the top bar must fit the screen, so the board gives way before anything else is pushed off the edge */
+header{min-width:0}
+header .board{min-width:0;flex:0 1 auto}
+@media (max-width:600px){
+  header{gap:6px}
+  .board{gap:2px}
+  .board button{font-size:clamp(17px,5.6vw,24px);line-height:28px;padding:2px 1px}
+  header .icon{padding:6px 5px}
+  .logo .mark{width:24px;height:24px}
+}
