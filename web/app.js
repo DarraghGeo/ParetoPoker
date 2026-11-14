@@ -3,6 +3,7 @@ import { survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
 import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
+import { ACTIONS, SEATS, PRESETS, choose, presetFor, presetOf } from './presets.js';
 import { $, COLORS, COPY_ICON, DEFAULTS, copied, copyText, studyUrl, GLYPH, RANKS, bar, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
 /** The action chart's forms: one bar; a row for each made hand; a ladder of both ranges on one scale. */
@@ -620,7 +621,8 @@ function cellsOf(notation) {
   const cells = new Map();
   if (!notation.trim()) return cells;
   try {
-    for (const hand of new RangeManager(notation).getHands()) { const key = cellOf(hand); cells.set(key, (cells.get(key) ?? 0) + 1); }
+    // a hand held in part counts for its part
+    const range = new RangeManager(notation); for (const hand of range.getHands()) { const key = cellOf(hand); cells.set(key, (cells.get(key) ?? 0) + (range.weightOf?.(hand) ?? 1)); }
   } catch { return null; }
   for (const [key, n] of cells) { const [i, j] = key.split(',').map(Number); cells.set(key, n / (i === j ? 6 : i < j ? 4 : 12)); }
   return cells;
@@ -666,19 +668,56 @@ window.addEventListener('pointermove', (ev) => { if (stroke) paintAt(ev); });
 const endStroke = () => {
   if (!stroke) return; stroke = null;
   draft[draft.side] = notationOf([...painted.entries()].filter(([, share]) => share > 0).map(([key]) => key));
-  $('f-range').value = draft[draft.side]; renderPaint(); checkFit();
+  $('f-range').value = draft[draft.side]; renderPaint(); renderPresets(); checkFit();
 };
 window.addEventListener('pointerup', endStroke); window.addEventListener('pointercancel', endStroke);
-$('f-range').addEventListener('input', () => { draft[draft.side] = $('f-range').value; renderPaint(); });
+$('f-range').addEventListener('input', () => { draft[draft.side] = $('f-range').value; renderPaint(); renderPresets(); });
 $('p-oop').onclick = () => showSide('oop'); $('p-ip').onclick = () => showSide('ip');
-$('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); checkFit(); };
+$('p-clear').onclick = () => { draft[draft.side] = ''; showSide(draft.side); renderPresets(); checkFit(); };
+// ---- ranges by position and preflop action: three choices, in setup and in a menu off the top bar ----
+/** The three rows of choices, with what the choice is in words. `sel`: the choice on show, or null when the ranges are nobody's preset. */
+function presetsHtml(sel) {
+  const action = sel?.action ?? ACTIONS[0][0]; const same = PRESETS.filter((p) => p.action === action);
+  const seats = (side) => SEATS.filter((seat) => same.some((p) => p[side] === seat));
+  const row = (name, part, list) => `<div class="line"><span>${name}</span><div class="seg" role="group" aria-label="${name}">${list.map(([value, label]) => `<button type="button" data-part="${part}" data-value="${value}" aria-pressed="${sel?.[part] === value}">${label}</button>`).join('')}</div></div>`;
+  const p = presetFor(sel);
+  return row('Action', 'action', ACTIONS) + row('OOP', 'oop', seats('oop').map((x) => [x, x])) + row('IP', 'ip', seats('ip').map((x) => [x, x]))
+    + `<p class="said">${p ? `${esc(p.line)}. Pot ${p.pot}, ${p.stack} behind, in big blinds.` : 'Ranges of your own. Pick an action and seats to take theirs.'}</p>`;
+}
+/** In setup: the choice fills the two ranges, the pot and the stack; nothing is solved until Solve. */
+function renderPresets() { $('f-presets').innerHTML = presetsHtml(presetOf(draft.oop.trim(), draft.ip.trim())); }
+$('f-presets').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-part]'); if (!b) return;
+  const p = presetFor(choose(presetOf(draft.oop.trim(), draft.ip.trim()), b.dataset.part, b.dataset.value));
+  draft.oop = p.ranges.oop; draft.ip = p.ranges.ip; $('f-pot').value = p.pot; $('f-stack').value = p.stack;
+  showSide(draft.side); renderPresets(); checkFit();
+  $('f-presets').querySelector(`[data-part="${b.dataset.part}"][data-value="${b.dataset.value}"]`)?.focus({ preventScroll: true });
+});
+/** Off the top bar: the same three choices in a menu. A choice is taken at once and the spot solved again, a moment after the last tap. */
+const seatMenu = { timer: null };
+function showSeats() {
+  const pop = $('seatpick'); pop.innerHTML = `<div class="presets">${presetsHtml(presetOf(state.config.oop, state.config.ip))}</div>`; pop.hidden = false;
+  const box = $('seats').getBoundingClientRect(); const width = pop.offsetWidth;
+  pop.style.top = `${box.bottom + 10}px`; pop.style.left = `${Math.max(12, Math.min(box.right - width, innerWidth - width - 12))}px`;
+}
+const closeSeats = () => { $('seatpick').hidden = true; };
+$('seats').onclick = () => { if ($('seatpick').hidden) showSeats(); else closeSeats(); };
+$('seatpick').addEventListener('click', (ev) => {
+  const b = ev.target.closest('[data-part]'); if (!b) return;
+  const p = presetFor(choose(presetOf(state.config.oop, state.config.ip), b.dataset.part, b.dataset.value));
+  Object.assign(state.config, { oop: p.ranges.oop, ip: p.ranges.ip, pot: p.pot, stack: p.stack }); remember(); showSeats();
+  $('seatpick').querySelector(`[data-part="${b.dataset.part}"][data-value="${b.dataset.value}"]`)?.focus({ preventScroll: true });
+  clearTimeout(seatMenu.timer); seatMenu.timer = setTimeout(() => { state.node = 0; state.hand = null; state.cell = null; begin(); }, 700);
+});
+document.addEventListener('pointerdown', (ev) => { if (!$('seatpick').hidden && !ev.target.closest('#seatpick') && !ev.target.closest('#seats')) closeSeats(); });
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeSeats(); });
 function openSetup(how) {
   // from a street's first decision: only the betting is asked, the board and the ranges are what arrived there
   const sub = !!how?.sub; $('drawer').classList.toggle('sub', sub); $('drawer').dataset.sub = sub ? '1' : '';
   const c = sub ? conf() : state.config;
   $('f-board').value = c.board; $('f-pot').value = c.pot; $('f-stack').value = c.stack;
   $('f-bets').value = (Array.isArray(c.bets[0]) ? c.bets : [c.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(' ')).join(' / '); $('f-raise').value = c.raises.join(' '); $('f-max').value = c.maxRaises; $('f-allin').checked = !!c.allIn;
-  draft.oop = c.oop; draft.ip = c.ip; showSide(draft.side);
+  draft.oop = c.oop; draft.ip = c.ip; showSide(draft.side); renderPresets();
   $('drawer').hidden = false; $('scrim').hidden = false;
   showFit(false); checkFit();
   // Focus the drawer itself, never a field: on a phone a focused field brings up the keyboard and zooms the page
@@ -842,4 +881,6 @@ $('e-curve').addEventListener('pointerdown', (ev) => { const k = ev.target.datas
 $('e-curve').addEventListener('keydown', (ev) => { const k = ev.target.dataset?.grab; const step = ev.key === 'ArrowUp' ? 0.02 : ev.key === 'ArrowDown' ? -0.02 : 0; if (k == null || !step) return; ev.preventDefault(); const c = edit.dials[edit.who].curve; c[+k] = Math.round(100 * (c[+k] + step)) / 100; preview(); });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('editor').hidden) closeEditor(); });
 
-begin();
+// The page opens on setup: nothing is solved until Solve is pressed. A spot handed over in the address is the
+// exception: it was asked for, so it is solved as it arrives.
+if (state.open) begin(); else { render(); openSetup(); }
