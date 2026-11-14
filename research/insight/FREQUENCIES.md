@@ -204,3 +204,38 @@ Nothing made from the runouts beats the turn standing itself. The spread of a ha
 The bluff side now comes out of the derivation at the right size, and the frequency tracks the solver a little better (0.42 to 0.47 in position, 0.58 to 0.60 out of position). The miss does not fall (15 to 17 points), because the error has moved to the other side: the formula bets a quarter more hands for value than the solver does, on the turn and far more on the flop (40% against 26%).
 
 **What that leaves.** Every remaining point of error on the turn is on the value side: which of the hands that are ahead now check. Section C says why in the average (under half of the turn value bets are still value bets against the range that called), and the runout standings are the data needed to say it hand by hand: a turn value bet is a hand that is still ahead of his calling range on most rivers. That is the next derivation, and it uses only equities.
+
+## The test that matters: playing the formulas
+
+`play.mjs`. A whole strategy for both players is built from the derived formulas and nothing else: at every decision of a turn spot and all 48 of its rivers, how often to bet and with which hands, how often to fold and with which hands. It is written into the solver's own strategy store and the solver computes what it loses. The method is checked on every spot: the solver's own strategy, copied through the same path, scores exactly as the solve does.
+
+**The strategy**
+- **River, in position:** the base thresholds; value from the top, bluffs from the bottom.
+- **River, out of position:** the check game of section A.
+- **Turn:** value by what each hand beats now; bluffs counted by their equity when called (section E), the hands that gain most by betting first.
+- **Facing a bet:** fold the share the bettor's own thresholds expect, the hands with the least equity.
+
+**The spots.** 22 turn spots on 15 unseen flops, with the two ranges as the solver brought them to the turn (after the flop checked through, or after a flop bet and call). One bet size (75% of the pot) on each street and no raises.
+
+**What it loses**, in % of the pot, one seat on the formulas and the other on the solver's equilibrium:
+
+| Strategy | Gives up to the equilibrium player (mean / median / worst tenth) | A perfect best response wins |
+|---|---|---|
+| **Derived formulas** | **2.3 / 2.0 / 3.7** | 16.8 |
+| Derived bets, folding by the price alone | 2.8 / 2.7 / 4.7 | 17.2 |
+| The base as it stood before (one-street thresholds on equity everywhere) | 3.5 / 3.0 / 6.2 | 20.9 |
+
+The derived strategy gives up less than the old base on 73% of the spots.
+
+| By how the turn was reached | Out of position | In position | Stack to pot |
+|---|---|---|---|
+| Flop checked through | 2.4 | 3.2 | 6.5 |
+| Flop bet out of position, called | 2.1 | 2.0 | 2.0 |
+| Flop bet in position, called | 1.2 | 0.1 | 0.7 |
+
+**Reading it**
+- **Against a sound opponent it gives up about 2% of the pot a turn spot.** The work of sections A, D and E took a third off what the old base gave up (3.5 to 2.3).
+- **Against a perfect exploiter it loses about 17%.** Any strategy of fixed thresholds does: the exploiter knows exactly which hands bet and which fold. This is the measure the frequency tables cannot give, and it says the formulas are a way to play well against good players, not an unexploitable strategy.
+- **Depth is where it costs.** With little behind it is nearly free (0.1 to 1.2); with six and a half pots behind it gives up 2.4 to 3.2.
+
+**What this does not cover.** Flops, raises, more than one bet size, and the hand-selection findings beyond what the formulas already order by (no blockers, no backdoor draws). 22 spots is few.
