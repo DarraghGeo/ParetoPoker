@@ -396,3 +396,5 @@ header .board{min-width:0;flex:0 1 auto}
 .ladder .strip .mark{background:var(--accent);position:relative;z-index:1;box-shadow:0 0 0 1px var(--accent)}
 .ladder .strip .mark::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);border:5px solid transparent;border-top:7px solid var(--accent);border-bottom:0}
 @media (min-width:900px) and (min-height:520px){.train .ladder{height:160px}}
+/* a thumb slid along the action chart picks hands: sideways is the chart's, up and down still scrolls the page */
+#strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}

@@ -446,7 +446,7 @@ function renderWhy() {
     // the reasons come from the worker: asked for once a hand, shown when they arrive
     const key = `${state.node}|${state.dealt.join(' ')}|${row.hand.id}`; const got = state.told.get(key);
     if (got) told = { ...told, line: got.line, reasons: got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : got.reasons };
-    else { told = { ...told, reasons: [{ text: 'Working out the reasons\u2026', quiet: true }] }; if (!state.asked.has(key)) { state.asked.add(key); worker.postMessage({ type: 'explain', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); } }
+    else { told = { ...told, reasons: [{ text: 'Working out the reasons\u2026', quiet: true }] }; if (!state.asked.has(key) && !state.scrub) { state.asked.add(key); worker.postMessage({ type: 'explain', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); } }
   }
   if (!told) { rangeWhy(); return; }
   const d = state.decision; const strata = strataOf(d.actions);
@@ -536,7 +536,49 @@ $('line').addEventListener('click', (ev) => {
   if (ev.target.closest('#view')) { state.view = state.view === 'grid' ? 'curve' : 'grid'; remember(); render(); $('view')?.focus(); return; }
   const b = ev.target.closest('[data-go]'); if (b) go(+b.dataset.go);
 });
+// ---- the action chart under a thumb: slide along it and the hand under the thumb is the one picked ----
+const scrub = { on: false, moved: false, x: 0, frame: 0 };
+/** The hand whose column is at a place across the chart. With several rows, the row nearest up and down that has a hand there. */
+function handAt(x, y) {
+  const el = $('strip'); const inner = el.querySelectorAll('.strip'); const rows = inner.length ? [...inner] : [el];
+  let best = null; let gap = Infinity;
+  for (const row of rows) {
+    const r = row.getBoundingClientRect(); const mid = r.top + r.height / 2;
+    const b = document.elementFromPoint(Math.min(r.right - 1, Math.max(r.left, x)), mid)?.closest?.('#strip [data-hand]');
+    if (b && Math.abs(y - mid) < gap) { gap = Math.abs(y - mid); best = b.dataset.hand; }
+  }
+  return best;
+}
+const pickHand = (name) => {
+  // the hand already picked, picked again: back to the range
+  if (state.hand === name) { state.hand = null; state.cell = null; } else { state.hand = name; state.cell = cellOf(name); }
+  render();
+};
+$('strip').addEventListener('pointerdown', (ev) => {
+  if (ev.button > 0 || !state.survey) return;
+  Object.assign(scrub, { on: true, moved: false, x: ev.clientX });
+  // the chart is drawn again as hands are passed over: the touch stays with the chart itself, not with a column that is gone
+  try { $('strip').setPointerCapture(ev.pointerId); } catch { /* a pointer that cannot be held */ }
+});
+$('strip').addEventListener('pointermove', (ev) => {
+  if (!scrub.on) return;
+  if (Math.abs(ev.clientX - scrub.x) > 4) scrub.moved = true;
+  if (!scrub.moved) return;
+  const name = handAt(ev.clientX, ev.clientY); if (!name || name === state.hand) return;
+  state.hand = name; state.cell = cellOf(name); state.scrub = true;
+  // once a frame at most; the reasons are asked for when the thumb lifts, not for every hand it passes
+  if (!scrub.frame) scrub.frame = requestAnimationFrame(() => { scrub.frame = 0; render(); });
+});
+const scrubEnd = (ev) => {
+  if (!scrub.on) return; scrub.on = false;
+  if (state.scrub) { state.scrub = false; render(); return; }
+  // a tap: the column under it, as before
+  if (ev.type === 'pointerup' && !scrub.moved) { const b = document.elementFromPoint(ev.clientX, ev.clientY)?.closest?.('#strip [data-hand]'); if (b) pickHand(b.dataset.hand); }
+};
+$('strip').addEventListener('pointerup', scrubEnd); $('strip').addEventListener('pointercancel', scrubEnd);
+// the keyboard still picks a column with Enter or the space bar: a click that no pointer made
 $('strip').addEventListener('click', (ev) => {
+  if (ev.detail !== 0) return;
   const b = ev.target.closest('[data-hand]'); if (!b) return;
   // the hand already picked, picked again: back to the range
   if (state.hand === b.dataset.hand) { state.hand = null; state.cell = null; render(); return; }
