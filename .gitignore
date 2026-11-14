@@ -21,3 +21,5 @@ research/proof/out/buckets-*.jsonl
 research/proof/out/valuesize-*.jsonl
 research/insight/out/*.jsonl
 research/insight/out/*.log
+research/insight/out/full-*.jsonl
+research/insight/out/*.pkl

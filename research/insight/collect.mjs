@@ -16,16 +16,18 @@ const clash = (h, v) => A(h) === A(v) || A(h) === B(v) || B(h) === A(v) || B(h) 
 const r4 = (x) => (x == null || Number.isNaN(x) ? null : +x.toFixed(4));
 const file = new URL(`./out/hands-${seed}.jsonl`, import.meta.url); writeFileSync(file, '');
 /** One decision: the spot it is in, and every hand that reaches it. */
-function record(g, meta, id, dealt, line, withValue) {
+function record(g, meta, id, dealt, line, withValue, lite = false) {
   const st = study(fs, g.solution, g.nodes, id, dealt); if (!st) return null;
-  const f = st.f; const eq = st.equity(); const parts = st.drawParts(); const cards = st.spread();
+  const f = st.f; const eq = st.equity(); const parts = lite ? null : st.drawParts(); const cards = lite ? [] : (st.spread() ?? []);
   const his = equityVs(fs, f.board, f.his, f.mine);
   // his strong hands: the top third of his range by equity against ours
   const order = []; let all = 0; for (let v = 0; v < N; v++) if (f.his[v] > 0 && !Number.isNaN(his[v])) { order.push(v); all += f.his[v]; }
   order.sort((x, y) => his[y] - his[x]); const top = new Float64Array(N); let seen = 0; for (const v of order) { if (seen >= all / 3) break; top[v] = f.his[v]; seen += f.his[v]; }
-  const eqTop = equityVs(fs, f.board, f.mine, top);
+  const eqTop = lite ? new Float64Array(N).fill(NaN) : equityVs(fs, f.board, f.mine, top);
+  // his range here, each hand with its equity against ours: what the range formulas are built on
+  const vr = []; for (const v of order) if (f.his[v] > 0.002) vr.push([fs.formatCombo(v), r4(f.his[v]), r4(his[v])]);
   // what he does to each bet, seen through each of our hands' cards
-  const replies = f.node.edges.map((e) => { const child = g.nodes[e.child]; if (child.kind !== 'decision' || e.kind === 'check' || e.kind === 'call' || e.kind === 'fold') return null; const s2 = study(fs, g.solution, g.nodes, e.child, dealt); if (!s2) return null; const kinds = child.edges.map((x) => x.kind); const vs = []; for (let v = 0; v < N; v++) if (s2.f.mine[v] > 0) vs.push(v); return { s2, kinds, vs }; });
+  const replies = f.node.edges.map((e) => { if (lite) return null; const child = g.nodes[e.child]; if (child.kind !== 'decision' || e.kind === 'check' || e.kind === 'call' || e.kind === 'fold') return null; const s2 = study(fs, g.solution, g.nodes, e.child, dealt); if (!s2) return null; const kinds = child.edges.map((x) => x.kind); const vs = []; for (let v = 0; v < N; v++) if (s2.f.mine[v] > 0) vs.push(v); return { s2, kinds, vs }; });
   const through = (c, r) => { let w = 0, fold = 0, raise = 0; for (const v of r.vs) { if (clash(c, v)) continue; const m = r.s2.f.mine[v]; w += m; r.kinds.forEach((k, i) => { const p = r.s2.sigma(v, i); if (k === 'fold') fold += m * p; else if (k !== 'call') raise += m * p; }); } return w > 0 ? [r4(fold / w), r4(raise / w)] : [null, null]; };
   let values = null; if (withValue) { try { values = evaluator(fs, g.solution, g.nodes)(f, 'average'); } catch { values = null; } }
   const hands = [];
@@ -39,7 +41,7 @@ function record(g, meta, id, dealt, line, withValue) {
     hands.push(h);
   }
   return { ...meta, line, seat: f.me, board: fs.formatCards(f.board), pot: st.pot, toCall: st.toCall, behind: +(meta.stack - (Math.max(...f.node.invested) - Math.max(...g.nodes[0].invested))).toFixed(2), reach: st.lineReach.map(r4),
-    actions: f.node.edges.map((e, i) => ({ kind: e.kind, label: e.label, freq: r4(st.actions[i].freq), add: g.nodes[e.child].invested[f.me] - f.node.invested[f.me] })), hands };
+    actions: f.node.edges.map((e, i) => ({ kind: e.kind, label: e.label, freq: r4(st.actions[i].freq), add: g.nodes[e.child].invested[f.me] - f.node.invested[f.me] })), hands, vr };
 }
 const used = new Set(); let done = 0;
 while (done < +count) {
@@ -63,7 +65,28 @@ while (done < +count) {
   const lines = []; const xx = g.nodes[afterCheck].edges.find((x) => x.kind === 'check'); if (xx) lines.push(['xx', turnOf(xx.child)]);
   for (const [from, tag] of [[0, 'bc'], [afterCheck, 'xbc']]) { const st = study(fs, g.solution, g.nodes, from, []); let best = -1; g.nodes[from].edges.forEach((ed, i) => { if (ed.kind === 'bet' && (best < 0 || st.actions[i].freq > st.actions[best].freq)) best = i; }); if (best < 0 || st.actions[best].freq < 0.1) continue; const call = g.nodes[g.nodes[from].edges[best].child].edges.find((x) => x.kind === 'call'); if (call) lines.push([`${tag}${best}`, turnOf(call.child)]); }
   const free = []; for (let c = 0; c < 52; c++) if (!spot.board.includes(c)) free.push(c);
-  for (let k = 0; k < 3; k++) { const card = free.splice(rand(free.length), 1)[0]; for (const [tag, id] of lines) { if (id == null) continue; try { push(record(g, meta, id, [card], `${tag}|first`, false)); const n = g.nodes[id]; const ch = n.edges.find((x) => x.kind === 'check'); if (ch && g.nodes[ch.child].kind === 'decision') push(record(g, meta, ch.child, [card], `${tag}|x`, false)); } catch (err) { console.error('turn skip', name, String(err.message).slice(0, 80)); } } }
+  // one street from its first decision: the two who may bet, each bet faced, and where the next street starts
+  const streetOf = (id, cards, tag, lite) => {
+    const next = []; const n = g.nodes[id]; if (!n || n.kind !== 'decision') return next;
+    push(record(g, meta, id, cards, `${tag}|first`, false, lite)); const ch = n.edges.find((x) => x.kind === 'check'); const second = ch && g.nodes[ch.child].kind === 'decision' ? ch.child : null;
+    if (second != null) { push(record(g, meta, second, cards, `${tag}|x`, false, lite)); const cc = g.nodes[second].edges.find((x) => x.kind === 'check'); if (cc) next.push([`${tag}|xx`, turnOf(cc.child)]); }
+    for (const [from, t] of [[id, 'b'], [second, 'xb']]) {
+      if (from == null) continue; const st = study(fs, g.solution, g.nodes, from, cards); if (!st) continue; let best = -1;
+      g.nodes[from].edges.forEach((ed, i) => { if ((ed.kind === 'bet' || ed.kind === 'allin') && st.actions[i].freq >= 0.08 && g.nodes[ed.child].kind === 'decision') { push(record(g, meta, ed.child, cards, `${tag}|${t}${i}`, false, true)); if (ed.kind === 'bet' && (best < 0 || st.actions[i].freq > st.actions[best].freq)) best = i; } });
+      if (best >= 0) { const call = g.nodes[g.nodes[from].edges[best].child].edges.find((x) => x.kind === 'call'); if (call) next.push([`${tag}|${t}c`, turnOf(call.child)]); }
+    }
+    return next;
+  };
+  for (let k = 0; k < 3; k++) {
+    const card = free.splice(rand(free.length), 1)[0];
+    for (const [tag, id] of lines) {
+      if (id == null) continue;
+      try {
+        const rivers = streetOf(id, [card], tag, false); const left = free.filter((c) => c !== card);
+        for (let j = 0; j < 2; j++) { const river = left.splice(rand(left.length), 1)[0]; for (const [t2, rid] of rivers) if (rid != null) streetOf(rid, [card, river], t2, true); }
+      } catch (err) { console.error('later street skip', name, String(err.message).slice(0, 80)); }
+    }
+  }
   if (out.length) appendFileSync(file, out.join('\n') + '\n'); done++;
   console.error(`  ${name} done (${e.toFixed(3)}%, ${run.completed} it, ${Math.round((Date.now() - t0) / 1000)}s, ${out.length} decisions)`);
 }
