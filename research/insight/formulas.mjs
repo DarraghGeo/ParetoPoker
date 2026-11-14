@@ -102,7 +102,7 @@ export function folding(kind, board, mine, his, ids, share, s) {
  * Before the river the ruler is what the hand beats now, and a bluff counts by its equity when called.
  * Returns each hand's chance of each size (`bets[i][combo]`) and what folds to each (`folds[i]`).
  */
-export function acting(board, mine, his, ids, sizes, first, river, after = 0.75) {
+export function acting(board, mine, his, ids, sizes, first, river, after = 0.75, depth = null) {
   const live = ids.filter((c) => mine[c] > 0); const W = live.reduce((t, c) => t + mine[c], 0); const n = sizes.length; const bets = sizes.map(() => new Float64Array(N));
   if (!W || !n) return { bets, folds: sizes.map((s) => s / (1 + s)) };
   const e = equityVs(fs, board, mine, his); const x = river ? e : beatsNow(board, mine, his, ids); const hands = live.filter((c) => !Number.isNaN(x[c])); const G = dist(x, mine, hands); const rho = sizes.map((s) => s / (1 + s));
@@ -128,7 +128,21 @@ export function acting(board, mine, his, ids, sizes, first, river, after = 0.75)
       sol = solve();
     }
   }
-  pick = sol.choice; folds = sol.c; const value = new Float64Array(N); for (const h of hands) if (pick[h] >= 0) { bets[pick[h]][h] = 1; value[h] = 1; }
+  pick = sol.choice; folds = sol.c;
+  if (depth && !river) {
+    // Value by the money behind. A bet now is the first of as many as the stacks allow, and each is called by less of his
+    // range: after a bet he folds c to, and another he folds c' to, what is still calling is (1 - c)(1 - c') of it. A hand
+    // bets for value through all of them only if it beats half of that: it must beat 1 - (1 - c)(1 - c').../2 of his range.
+    // Hands short of that are worth fewer bets than there are streets, and take them later: they check now.
+    // `mode` 'all': every value bet needs it. 'big': only the biggest size does (the others move down a size).
+    for (let i = 0; i < n; i++) {
+      let pot = 1 + 2 * sizes[i]; let left = depth.left - sizes[i]; let through = 1 - sol.c[i];
+      for (let k = 0; k < depth.streets - 1; k++) { const sz = Math.min(depth.later ?? 0.75, left / pot); if (sz <= 0.05) break; through *= 1 - sz / (1 + sz); left -= sz * pot; pot *= 1 + 2 * sz; }
+      const need = 1 - through / 2;
+      for (const h of hands) if (pick[h] === i && x[h] < need) { if (depth.mode === 'big') { if (i > 0 && i === n - 1) { pick[h] = i - 1; sol.V[i] -= mine[h]; sol.V[i - 1] += mine[h]; } } else { pick[h] = -1; sol.V[i] -= mine[h]; } }
+    }
+  }
+  const value = new Float64Array(N); for (const h of hands) if (pick[h] >= 0) { bets[pick[h]][h] = 1; value[h] = 1; }
   // the bluffs: the biggest size first. On the river the weakest hands; before it, the hands that gain most, each counted by its equity when called
   let order; let q = null;
   if (river) order = [...G.order];

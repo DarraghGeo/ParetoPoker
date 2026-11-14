@@ -485,3 +485,68 @@ In deep pots the later-street formulas are themselves three times as costly as i
 - **The other closure is worse.** It does make the flop aggressor bet more, but it overbets the turn.
 
 **Where this leaves the tails.** Fixing one street's amounts in deep pots moves the loss to the next, because the turn and river formulas are only good on ranges shaped the way a sound player shapes them, and only when stacks are short. The deep-stack turn and river need their own derivation: what is known so far is that they bet too much and too big.
+
+## Two hours on the deep pots: what the loss is made of
+
+`play-full.mjs` with `ROOT=turn`. A fast version of the test: 16 turn spots from the collection with 3 to 16 pots behind (median 8.8), the ranges as the solver brought them to the turn, two bet sizes and a raise on the turn and the river. Seconds a spot, so many variants could be run on the same spots. The derived strategy gives up **8.4%** of the turn pot there (worst case 22.5%), nearly all of it on the river (7.25).
+
+**Whose decisions cost it**
+
+| Variant | Gives up | Worst |
+|---|---|---|
+| Derived strategy | 8.4 | 22.5 |
+| Solver's amounts, our hands | 3.1 | 5.8 |
+| Our amounts, solver's hands | 5.3 | 20.9 |
+| Solver plays the turn, we play the river | 3.1 | 6.0 |
+| Solver plays our turn bet-or-check decisions only | 3.9 | 8.5 |
+| Solver plays our turn facing-a-bet decisions only | 6.0 | 10.5 |
+| Fitted turn bet amount, our hands | 7.8 | 22.8 |
+
+- The river formulas cost about 3% on sound ranges when deep. Switching off sizing costs 1.2 more, raising 2.0 more, both 3.1 more: the multi-size and raise formulas earn their place here too.
+- **The turn bet-or-check decision is the one that matters** (8.4 to 3.9 when the solver makes it). The fitted amount does not repair it (7.8), so when deep it is which hands bet and at what size, not how many.
+
+**Who bets the turn, by strength** (the range in ten parts by equity; in position after a check):
+
+| Equity | 0.19 | 0.28 | 0.37 | 0.44 | 0.54 | 0.59 | 0.67 | 0.79 | 0.86 | 0.91 |
+|---|---|---|---|---|---|---|---|---|---|---|
+| Solver bets | 44% | 48% | 42% | 26% | 19% | 15% | 28% | 31% | 57% | 85% |
+| We bet | 66% | 61% | 42% | 29% | 31% | 42% | 59% | 82% | 90% | 91% |
+| Solver uses the big size | 17% | 19% | 22% | 15% | 5% | 4% | 6% | 7% | 25% | 42% |
+| We use the big size | 57% | 37% | 19% | 15% | 9% | 6% | 10% | 47% | 74% | 82% |
+
+With money behind, the solver bets the turn for value only from the very top, checks most hands between 55% and 85% equity, and rarely uses the big size. The formulas bet those middle-strong hands and bet them big. This is the note on nut advantage, seen in the solution: what is strong enough to bet depends on how much can still go in.
+
+**Why it costs so much: the picture of his range.** The formulas take the other player to play as they do. So after he checks the turn they take him to hold nothing strong, and bet the river into a range that is in fact full of the hands the table above shows checking.
+
+| | Gives up | Worst |
+|---|---|---|
+| Derived strategy | 8.4 | 22.5 |
+| The same play, but his earlier actions read as the solver plays them | **5.4** | **9.3** |
+
+Reading his range rightly, with no change to how we bet, is worth 3 points and removes the tail.
+
+**Refinements tried**
+
+| Refinement | Gives up | Worst |
+|---|---|---|
+| Before | 8.4 | 22.5 |
+| His actions read less cleanly: each of his hands taken to play the average of the hands within 0.3 of the range around it | 7.3 | 21.7 |
+| ... within 0.6 | **6.9** | 20.3 |
+| ... not read at all (every hand takes each action alike) | 7.5 | 21.1 |
+| Value by the money behind: a hand bets for value only if it beats half of what calls every bet still to come | 8.1 | 28.8 |
+| The same, for the big size only | 8.3 | 22.5 |
+| Both of the above together | 6.9 | 28.8 |
+| His play modelled as value-by-the-money-behind | 10.3 | 29.7 |
+| Size by the stacks | 8.4 | 22.5 |
+
+- **Reading him less cleanly is the one that helps**: 8.4 to 6.9 on these spots. On the flop tests it is worth less: eight 4-bet pots 4.83 to 4.76, four 3-bet and squeeze pots 10.5 to 9.4.
+- **Value by the money behind** is the right direction on the plain thresholds (9.9 to 8.1) but adds little to the denial amount, and makes the worst case worse. As written it removes the middle-strong value bets without giving those hands anything better to do later.
+- **Size by the stacks** changes nothing here: with this much behind, the bet that gets the money in is the big one.
+
+**What is established**
+1. In deep pots the loss is a turn problem that is paid on the river.
+2. Half of it is a wrong picture of his range, because he does not sort his hands as cleanly as a threshold strategy does. A blur is a crude repair worth a point and a half.
+3. The other half is our own turn betting: too many middle-strong hands, too big.
+4. The fitted amounts do not fix either. The derived value-by-depth rule points the right way and is not yet right.
+
+**What would fix it, not yet built:** a turn rule under which middle-strong hands check when deep, for both players at once. Then our range and our picture of his are right together. The table above is the target: bet from the top tenth, check from there down to the hands that are behind, bluff from below.
