@@ -239,3 +239,41 @@ The derived strategy gives up less than the old base on 73% of the spots.
 - **Depth is where it costs.** With little behind it is nearly free (0.1 to 1.2); with six and a half pots behind it gives up 2.4 to 3.2.
 
 **What this does not cover.** Flops, raises, more than one bet size, and the hand-selection findings beyond what the formulas already order by (no blockers, no backdoor draws). 22 spots is few.
+
+## The play test from the flop
+
+`play-flop.mjs`, `formulas.mjs`. The same test over three streets: the formulas decide every action on the flop, every turn card and every river card; the solver scores the result. 29 random flops on the position ranges (11 4-bet, 10 3-bet, 6 single-raised, 2 squeeze pots), one bet size (75%) a street, no raises. On every spot the solver's own strategy copied through the same path scores as the solve does.
+
+In % of the flop pot, one seat on the formulas and the other on the solver's equilibrium:
+
+| Strategy | Gives up to the equilibrium player (mean / median / worst tenth) | A perfect best response wins |
+|---|---|---|
+| **Derived formulas** | **6.3 / 5.7 / 8.8** | 39 |
+| The base as it stood before | 8.7 / 7.9 / 15.7 | 39 |
+
+The derived strategy gives up less than the old base on 83% of the spots.
+
+**Where it is given up.** The formulas on the flop alone (the solver playing the later streets), then on the flop and turn, then on all three; each step adds that street's share.
+
+| | Flop | Turn | River | All |
+|---|---|---|---|---|
+| Out of position | 0.7 | 2.1 | 3.8 | 6.6 |
+| In position | 0.6 | 2.1 | 3.3 | 6.0 |
+
+| By pot type | Spots | Stack to pot | Derived | Old base |
+|---|---|---|---|---|
+| Single-raised | 6 | 17.5 | 6.7 | 8.4 |
+| 3-bet | 10 | 4.2 | 6.1 | 10.2 |
+| 4-bet | 11 | 1.5 | 6.1 | 6.7 |
+| Squeeze | 2 | 3.0 | 6.9 | 13.1 |
+
+**Reading it**
+- **The flop decision itself is nearly free: 0.7% of the pot.** This is the street where the frequency formula was worst (13 to 23 points off). How often the range bets the flop hardly matters, as long as the later streets are played well. That is the point about heuristics, measured.
+- **The loss is on the turn and the river, and it is too large.** 2% on the turn and 3.5% on the river, of the flop pot. They are larger pots, and by then the formulas are working from ranges their own earlier play built, while the opponent plays the equilibrium.
+- **6% of the pot is not good enough.** A good player's heuristics give up something like 1 to 2%. The derived formulas took a quarter off the old base, which is progress in the right measure, but this is not yet a strategy to play.
+- **The turn-only test (2.3% of the turn pot) was the kinder case**: it started from the solver's own turn ranges.
+
+**What to look at next**, by what it costs:
+1. **The river after betting has happened** (3.5%). The river formulas are derived for ranges as they stand; here the ranges are the product of two streets of formula play. Either the earlier streets leave the wrong hands in, or the river thresholds are being applied to ranges they do not fit. Splitting the river loss by line (after a check-through, after a bet and call) says which.
+2. **The turn** (2.1%). The value side is known to overbet (section E).
+3. **Hand selection.** Nothing here uses blockers or backdoor draws.
