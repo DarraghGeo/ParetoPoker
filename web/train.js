@@ -1,7 +1,7 @@
 // Train: questions on boards dealt at random. The ranges, pot and bet sizes are the ones set up in Study.
 import { explain, survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
-import { $, COLORS, DEFAULTS, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
+import { $, COLORS, COPY_ICON, DEFAULTS, copied, copyText, studyUrl as linkToStudy, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
 const TYPES = { range: 'Range advantage', nuts: 'Nut advantage', size: 'Maximum bet or raise', hand: 'What a hand can do' };
 const STREETS = { flop: 'Flop', turn: 'Turn', river: 'River' };
@@ -54,15 +54,7 @@ try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (sa
 if (!Array.isArray(config.raises)) config.raises = [];
 // What is being asked about, and what waits: `board` is the board on screen with its positions, `boards` the ones solved ahead of it
 /** The address that opens a spot in Study: the setup, the board, the line to the decision and, when one is asked about, the hand. A flop is solved lite there as it is here. */
-function studyUrl(board, line, hand) {
-  const q = new URLSearchParams({ board: board.replace(/\s+/g, ''), pot: config.pot, stack: config.stack,
-    bets: (Array.isArray(config.bets[0]) ? config.bets : [config.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(',')).join('/'),
-    raises: config.raises.join(','), max: config.maxRaises, allin: config.allIn ? 1 : 0, oop: config.oop, ip: config.ip });
-  if (line?.length) q.set('line', line.join(','));
-  if (hand) q.set('hand', hand);
-  if ((board.match(/[2-9TJQKA][shdc]/g) ?? []).length === 3) q.set('lite', '1');
-  return `study.html?${q}`;
-}
+const studyUrl = (board, line, hand) => linkToStudy(config, board, { line: line ?? [], hand, lite: (board.match(/[2-9TJQKA][shdc]/g) ?? []).length === 3 });
 const game = { boards: [], board: null, spot: null, q: null, busy: null, progress: null, id: 0, failed: 0, error: '' };
 /** How many boards to keep solved ahead of the one on screen. */
 const AHEAD = 3;
@@ -243,15 +235,6 @@ function spotText() {
   ];
   return rows.filter(Boolean).join('\n');
 }
-/** Put text on the clipboard; where the browser will not allow that directly, through a field selected and copied. */
-async function copyText(text) {
-  try { await navigator.clipboard.writeText(text); return true; } catch { /* not allowed here: the older way */ }
-  const field = document.createElement('textarea'); field.value = text; field.setAttribute('readonly', ''); field.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
-  document.body.append(field); field.select();
-  let ok = false; try { ok = document.execCommand('copy'); } catch { /* nothing more to try */ }
-  field.remove(); return ok;
-}
-const copyIcon = `<path d="M5.5 5.5v-3h8v8h-3M2.5 5.5h8v8h-8z" ${STROKE}/>`;
 /** Where the hand stands: who hero is, the line so far, the pot and what is left behind. */
 function renderWhere() {
   const spot = game.spot;
@@ -261,7 +244,7 @@ function renderWhere() {
   const num = (x) => String(Math.round(10 * x) / 10);
   $('where').innerHTML = `<span class="who">Hero ${seatName(d.seat)}</span><span class="stands">${esc(stands)}</span><span class="grow"></span><span class="chips">Pot ${num(d.pot)}</span><span class="chips">Behind ${num(d.behind)}</span>`
     + `<a class="icon" id="study" target="_blank" rel="noopener" href="${esc(studyUrl(d.boardText, d.line, game.q?.hand))}" aria-label="Open this spot in Study, in a new tab" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
-    + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${copyIcon}</svg></button>`
+    + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${COPY_ICON}</svg></button>`
     + `<button type="button" class="icon" id="view" aria-label="${store.view === 'grid' ? 'Equity distribution' : 'Ranges'}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${store.view === 'grid' ? curveIcon : gridIcon}</svg></button>`;
 }
 /** The two ranges side by side, hero in ink and villain faded; or, in their place, the two equity curves drawn the same way. */
@@ -331,10 +314,7 @@ $('ask').addEventListener('click', (ev) => {
 });
 $('where').addEventListener('click', async (ev) => {
   const b = ev.target.closest('#copy'); if (!b) return;
-  // the button says how it went, for a moment
-  const ok = await copyText(spotText());
-  b.classList.add(ok ? 'done' : 'failed'); b.setAttribute('aria-label', ok ? 'Copied' : 'Could not copy'); b.querySelector('svg').innerHTML = ok ? '<path d="M3.5 8.5l3 3 6-7" ' + STROKE + '/>' : '<path d="M4 4l8 8M12 4l-8 8" ' + STROKE + '/>';
-  setTimeout(() => { if (b.isConnected) { b.classList.remove('done', 'failed'); b.setAttribute('aria-label', 'Copy this spot'); b.querySelector('svg').innerHTML = copyIcon; } }, 1400);
+  copied(b, await copyText(spotText()));
 });
 $('where').addEventListener('click', (ev) => { if (!ev.target.closest('#view')) return; store.view = store.view === 'grid' ? 'curve' : 'grid'; save(); renderWhere(); renderRanges(); $('view')?.focus(); });
 // the number keys answer, Enter moves on

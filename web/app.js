@@ -3,7 +3,7 @@ import { survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
 import { profile } from '../src/explain/profile.js';
 import { KNOBS, isNeutral, neutral } from '../src/warp/reshape.js';
-import { $, COLORS, DEFAULTS, GLYPH, RANKS, bar, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
+import { $, COLORS, COPY_ICON, DEFAULTS, copied, copyText, studyUrl, GLYPH, RANKS, bar, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
 const state = {
   mode: 'spot', config: { ...DEFAULTS }, nodes: null, node: 0, decision: null, survey: null, hand: null, cell: null, detail: false, view: 'grid', split: false,
@@ -35,7 +35,7 @@ try {
     for (const side of ['oop', 'ip']) if (q.get(side)?.trim()) c[side] = q.get(side).trim();
     c.lite = q.get('lite') === '1';
     Object.assign(state.config, c);
-    state.open = { line: (q.get('line') ?? '').split(',').filter(Boolean), hand: /^([2-9TJQKA][shdc]){2}$/.test(q.get('hand') ?? '') ? q.get('hand') : null };
+    state.open = { line: (q.get('line') ?? '').split(',').filter(Boolean), dealt: (q.get('dealt') ?? '').match(/[2-9TJQKA][shdc]/g) ?? [], hand: /^([2-9TJQKA][shdc]){2}$/.test(q.get('hand') ?? '') ? q.get('hand') : null };
   }
 } catch { /* an address that cannot be read opens the saved spot */ }
 const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, detail: state.detail, view: state.view, split: state.split })); } catch { /* private window */ } };
@@ -60,8 +60,16 @@ worker.onmessage = ({ data }) => {
     if (state.open) {
       // the decision the address names: its line walked from the first decision, as far as this tree has it
       let at = 0;
-      for (const label of state.open.line) { const edge = state.nodes[at].edges.find((e) => e.label === label); if (!edge || state.nodes[edge.child].kind !== 'decision') break; at = edge.child; }
-      version().pos = { node: at, dealt: [] };
+      const cards = [];
+      for (const label of state.open.line) {
+        const edge = state.nodes[at].edges.find((e) => e.label === label); if (!edge) break;
+        let next = state.nodes[edge.child];
+        // an action that ends the street: on through the card the address gives for it
+        if (next.kind === 'chance' && state.open.dealt[next.round] && state.nodes[next.edges[0]?.child]?.kind === 'decision') { cards[next.round] = state.open.dealt[next.round]; next = state.nodes[next.edges[0].child]; }
+        if (next.kind !== 'decision') break;
+        at = next.id;
+      }
+      version().pos = { node: at, dealt: cards };
       if (state.open.hand) { state.hand = state.open.hand; state.cell = cellOf(state.open.hand); }
       state.open = null;
     }
@@ -173,6 +181,39 @@ function render() {
     try { part(); } catch (error) { console.error(error); }
   }
 }
+/** The spot on screen, written out to paste elsewhere: the board, the line, the chips, what the range and the hand picked do, the ranges and the betting, and the address that opens it here. */
+function spotText() {
+  const d = state.decision; const nodes = state.nodes; if (!d || !nodes) return '';
+  const c = conf(); const v = version(); const here = nodes[state.node];
+  const num = (x) => String(Math.round(10 * x) / 10);
+  // the line: each action with who took it, each card as it was dealt
+  const told = []; const labels = []; let at = state.node;
+  while (nodes[at].parent >= 0) { const parent = nodes[nodes[at].parent]; if (parent.kind === 'chance') told.unshift(`dealt ${state.dealt[parent.round] ?? '?'}`); else { const label = parent.edges[nodes[at].via].label; told.unshift(`${parent.seat === 'oop' ? 'OOP' : 'IP'} ${label}`); labels.unshift(label); } at = parent.id; }
+  const dealt = state.dealt.slice(0, here.round);
+  const mix = (list) => d.actions.map((a, k) => (list[k] > 0.004 ? `${a.label} ${pct(list[k])}%` : '')).filter(Boolean).join(', ');
+  const row = state.survey?.byName.get(state.hand);
+  const neutralDials = isNeutral(v.dials?.oop) && isNeutral(v.dials?.ip);
+  const range = (side) => (typeof v[side] === 'string' ? `${v[side]}${isNeutral(v.dials?.[side]) ? '' : ' (reshaped in the editor)'}` : 'as it arrives at this street');
+  const me = d.seat; const him = me === 'oop' ? 'ip' : 'oop'; const name = (seat) => (seat === 'oop' ? 'OOP' : 'IP');
+  const held = (list) => Math.round(list.reduce((t, h) => t + h.weight, 0));
+  const lists = Array.isArray(c.bets[0]) ? c.bets : [c.bets];
+  const linked = typeof v.oop === 'string' && typeof v.ip === 'string' && neutralDials && !v.base;
+  const rows = [
+    `Board: ${[...boardCards(c.board), ...dealt].join(' ')} (${d.street})`,
+    `To act: ${name(me)}, ${told.length ? `after ${told.join(', ')}` : 'first to act'}`,
+    `Pot: ${num(d.pot)}${d.toCall > 0 ? `, to call ${num(d.toCall)}` : ''}, behind ${num(c.stack - here.invested[me === 'oop' ? 0 : 1])} (started at pot ${num(c.pot)}, stacks ${num(c.stack)})`,
+    `Actions: ${d.actions.map((a) => a.label).join(', ')}`,
+    `The range plays: ${mix(state.survey.mix)}`,
+    row ? `Hand: ${row.hand.name}, which plays ${mix(row.hand.strategy)}` : '',
+    `${name(me)}'s starting range: ${range(me)} (${held(d.hands)} combinations reach this decision)`,
+    `${name(him)}'s starting range: ${range(him)} (${held(d.villain)} combinations reach this decision)`,
+    `Bet sizes, % of pot: ${lists.map((list) => list.map((b) => Math.round(100 * b)).join(' ')).join(' / ')}`,
+    `Raises: ${c.raises.length && c.maxRaises > 0 ? `${c.raises.map((r) => `${r}x`).join(' ')}, ${c.maxRaises} allowed` : 'none'}; all-in ${c.allIn ? 'offered' : 'not offered'}`,
+    `Solved ${c.lite ? 'lite (these sizes on the first street, one bet size after it), ' : ''}to ${state.status.replace('lite ', '')} of the pot`,
+    linked ? new URL(studyUrl({ ...c, oop: v.oop, ip: v.ip }, c.board, { line: labels, dealt, hand: row?.hand.name ?? null, lite: !!c.lite }), location.href).href : '',
+  ];
+  return rows.filter(Boolean).join('\n');
+}
 function renderLine(strata) {
   const nodes = state.nodes;
   if (!nodes || !state.decision) { $('line').innerHTML = ''; return; }
@@ -188,6 +229,7 @@ function renderLine(strata) {
   $('line').innerHTML = `<div class="trail">${path.map((p) => (p.deal != null ? `<button type="button" class="crumb card" data-deal="${p.deal}" aria-label="Change the card dealt">${cardsHtml(p.card ?? '')}</button>` : `<button type="button" class="crumb" data-go="${p.back}">${esc(p.label)}</button>`) + '<span class="sep">/</span>').join('')}<span class="who">${here.seat === 'oop' ? 'OOP' : 'IP'}</span></div>`
     + `<div class="acts">${here.edges.map((e, k) => `<button type="button" class="act" ${onward(e)}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)}</button>`).join('')}</div>`
     + '<div class="tools">'
+    + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${COPY_ICON}</svg></button>`
     + icon('villain', here.seat === 'oop' ? 'In position\'s range' : 'Out of position\'s range', `<circle cx="8" cy="5.2" r="2.6" ${stroke}/><path d="M2.8 13.6c.6-2.6 2.6-4 5.2-4s4.6 1.4 5.2 4" ${stroke}/>`)
     + (version().fixed ? '' : icon('edit', 'Edit ranges', `<path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" ${stroke}/>`))
     + icon('split', state.split ? 'One bar' : 'By made hand', state.split ? `<path d="M2 6.5h12v3H2z" ${stroke}/>` : `<path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" ${stroke}/>`, `aria-pressed="${state.split}"`)
@@ -354,6 +396,7 @@ function renderWhy() {
 const W = 560, PAD = 8;
 $('line').addEventListener('click', (ev) => {
   if (ev.target.closest('#edit')) { openEditor(); return; }
+  if (ev.target.closest('#copy')) { const b = ev.target.closest('#copy'); copyText(spotText()).then((ok) => copied(b, ok)); return; }
   if (ev.target.closest('#villain')) { showVillain(ev.target.closest('#villain')); return; }
   const deal = ev.target.closest('[data-deal]'); if (deal) { state.pick = +deal.dataset.deal; render(); return; }
   if (ev.target.closest('#split')) { state.split = !state.split; remember(); render(); $('split')?.focus(); return; }

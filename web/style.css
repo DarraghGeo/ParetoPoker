@@ -306,4 +306,4 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .where .icon + .icon{margin-left:-12px}
 /* a narrow screen: the seat is over the range already, and the line needs the room */
 @media (max-width:600px){.where .who{display:none}}
-.where .icon.done{color:var(--ok)}.where .icon.failed{color:var(--danger)}
+.icon.done{color:var(--ok)}.icon.failed{color:var(--danger)}
