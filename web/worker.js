@@ -23,12 +23,15 @@ function keep(key, entry) {
 }
 let current = null; // the solve on screen
 const studies = new Map(); // decisions already studied in it
-const use = (entry) => { solution = entry.solution; nodes = entry.nodes; last = { board: entry.board, run: entry.run, lite: entry.lite }; current = entry; studies.clear(); };
+const use = (entry) => { solution = entry.solution; nodes = entry.nodes; if (entry.run) last = { board: entry.board, run: entry.run, lite: entry.lite }; current = entry; studies.clear(); };
+/** A solve handed over from Train for the next solve of this key: shown at once, then solved finer here. */
+let adopted = null;
 /** The spot as the solver takes it. One list of bet sizes plays on every street; several, one for each street from the board's own. The solver counts the bet as the first raise. */
 const spotOf = (c, oop, ip) => ({ board: c.board, pot: c.pot, stack: c.stack, oop, ip, betSizes: Array.isArray(c.bets[0]) ? c.bets : [c.bets], raiseSizes: c.raises.length ? c.raises.map((times) => ({ times })) : undefined, maxRaises: 1 + (c.raises.length ? c.maxRaises : 0), allowAllIn: !!c.allIn });
 
 self.onmessage = async ({ data }) => {
   if (data.type === 'stop') { halt = true; return; }
+  if (data.type === 'adopt') { adopted = { key: data.key, sums: data.sums, exploit: data.exploit }; return; }
   if (data.type === 'solve') {
     const mine = ++job;
     halt = false;
@@ -49,6 +52,20 @@ self.onmessage = async ({ data }) => {
       const spot = fs.defineSpot(preset ? preset.config : whole);
       // Same board as the solve before, solved the same way: carry its regrets over, which is quicker than starting cold
       const warm = last && last.board === c.board && !!last.lite === !!c.lite ? last.run : undefined;
+      // Train's solve of this very spot: its average strategy read as it is (never stepped), shown before anything is solved here
+      let shown = false;
+      if (adopted?.key === data.key && !preset) {
+        try {
+          const read = fs.createRun(spot, { analysisOnly: true });
+          if (read.solver.ctx.strategySum.length === adopted.sums.length) {
+            read.solver.ctx.strategySum.set(adopted.sums);
+            use({ solution: read.snapshot(), nodes: treeOf(fs, spot), run: null, board: c.board, exploit: adopted.exploit, lite: false, bytes: spot.estimate.bytes, provisional: true });
+            self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit: adopted.exploit, lite: false, iterations: 0, ms: 0, provisional: true });
+            shown = true;
+          }
+        } catch { /* a strategy that does not fit this spot: solved here as usual */ }
+      }
+      if (adopted?.key === data.key) adopted = null;
       const run = fs.createRun(spot, { ...(preset?.options ?? {}), ...(warm ? { warmStart: warm } : {}) });
       const started = Date.now();
       const river = board.length === 5;
@@ -57,7 +74,7 @@ self.onmessage = async ({ data }) => {
       const target = river ? 0.01 : board.length === 4 ? 0.02 : 0.3; const patience = river ? 15000 : board.length === 4 ? 90000 : 180000;
       const chunk = river ? (warm ? 10 : 50) : board.length === 4 ? 10 : 2;
       let exploit = Infinity;
-      self.postMessage({ type: 'progress', job: data.job, iterations: 0, exploit: Infinity, target, street: ['flop', 'turn', 'river'][board.length - 3] });
+      self.postMessage({ type: 'progress', job: data.job, iterations: 0, exploit: Infinity, target, refine: shown, street: ['flop', 'turn', 'river'][board.length - 3] });
       await new Promise((resolve) => setTimeout(resolve));
       if (preset) {
         // a lite solve never reaches an accuracy target: it stops once the first decisions stop moving
@@ -75,7 +92,7 @@ self.onmessage = async ({ data }) => {
         while (mine === job && !halt && exploit > target && run.completed < 3000 && Date.now() - started < patience) {
           run.step(chunk);
           exploit = run.exploitabilityPercent();
-          self.postMessage({ type: 'progress', job: data.job, iterations: run.completed, exploit, target, street: ['flop', 'turn', 'river'][board.length - 3] });
+          self.postMessage({ type: 'progress', job: data.job, iterations: run.completed, exploit, target, refine: shown, street: ['flop', 'turn', 'river'][board.length - 3] });
           await new Promise((resolve) => setTimeout(resolve));
         }
       }

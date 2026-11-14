@@ -41,6 +41,8 @@ try {
     c.lite = q.get('lite') === '1';
     Object.assign(state.config, c);
     state.open = { line: (q.get('line') ?? '').split(',').filter(Boolean), dealt: (q.get('dealt') ?? '').match(/[2-9TJQKA][shdc]/g) ?? [], hand: /^([2-9TJQKA][shdc]){2}$/.test(q.get('hand') ?? '') ? q.get('hand') : null, resolve: q.get('resolve') === '1' };
+    // opened from Train's Study pane, which hands over its own solve of the street (see `adopt` below)
+    state.handover = q.get('handover') === '1' && window.parent !== window;
   }
 } catch { /* an address that cannot be read opens the saved spot */ }
 const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, detail: state.detail, view: state.view, chart: state.chart })); } catch { /* private window */ } };
@@ -51,6 +53,8 @@ worker.onmessage = ({ data }) => {
   if (data.type === 'preview') { onPreview(data); return; }
   if (data.type === 'fits') { onFits(data); return; }
   if (data.job !== state.job) return;
+  // the street handed over from Train is on screen: the finer solve runs behind it, with no loader in the way
+  if (data.type === 'progress' && data.refine) { state.status = `Train's solve; refining ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; return; }
   if (data.type === 'progress') { loading(data); state.status = data.lite ? 'solving lite' : `solving ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; }
   if (data.type === 'error') { loaded(); state.status = ''; $('state').textContent = ''; delete $('state').dataset.busy; openSetup(state.sub ? { sub: true } : undefined); $('f-error').textContent = data.message; }
   if (data.type === 'subgame') {
@@ -61,6 +65,10 @@ worker.onmessage = ({ data }) => {
   }
   if (data.type === 'solved') {
     loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.looked.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    if (data.provisional) { state.status = `Train's solve, ${data.exploit.toFixed(2)}%; refining`; $('state').dataset.busy = '1'; }
+    // the finer solve of a street shown from Train's: stay where the walk has got to since
+    if (state.refining && !data.provisional && !state.open) version().pos = { node: state.node, dealt: [...state.dealt] };
+    state.refining = !!data.provisional;
     // back where this version was last looked at, if that place exists in it
     if (state.open) {
       // the decision the address names: its line walked from the first decision, as far as this tree has it
@@ -889,6 +897,28 @@ $('e-curve').addEventListener('pointerdown', (ev) => { const k = ev.target.datas
 $('e-curve').addEventListener('keydown', (ev) => { const k = ev.target.dataset?.grab; const step = ev.key === 'ArrowUp' ? 0.02 : ev.key === 'ArrowDown' ? -0.02 : 0; if (k == null || !step) return; ev.preventDefault(); const c = edit.dials[edit.who].curve; c[+k] = Math.round(100 * (c[+k] + step)) / 100; preview(); });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('editor').hidden) closeEditor(); });
 
+// A turn or river from Train's Study pane: Train hands over its own solve of the street, which is shown at once and then
+// solved finer here (the flop before it is solved only if it is asked for). Without it in time, the spot is solved
+// from its flop as the address says.
+function adopt(h) {
+  const own = boardCards(h.board); const c = state.config; const lists = Array.isArray(c.bets[0]) ? c.bets : [c.bets]; const left = 6 - own.length;
+  const sub = { bets: lists.length > left ? lists.slice(-left) : c.bets, raises: c.raises, maxRaises: c.maxRaises, allIn: c.allIn };
+  state.versions = [{ id: ++versionId, oop: state.config.oop, ip: state.config.ip, dials: { oop: neutral(), ip: neutral() }, curves: new Map(), pos: { node: 0, dealt: [] } },
+    { id: ++versionId, oop: h.oop, ip: h.ip, dials: { oop: neutral(), ip: neutral() }, curves: new Map(), fixed: true, base: { board: own.join(' '), pot: h.pot, stack: h.stack, ...sub, lite: false }, pos: { node: 0, dealt: [] } }];
+  state.at = 1;
+  state.open = { line: h.line ?? [], dealt: [], hand: state.open?.hand ?? null, resolve: false };
+  worker.postMessage({ type: 'adopt', key: version().id, sums: h.sums, exploit: h.exploit }, [h.sums.buffer]);
+  solve();
+}
 // The page opens on setup: nothing is solved until Solve is pressed. A spot handed over in the address is the
 // exception: it was asked for, so it is solved as it arrives.
-if (state.open) begin(); else { render(); openSetup(); }
+if (state.open && state.handover) {
+  let waiting = true;
+  const fallback = setTimeout(() => { if (waiting) { waiting = false; begin(); } }, 4000);
+  addEventListener('message', (ev) => {
+    if (ev.source !== window.parent || ev.origin !== location.origin || ev.data?.type !== 'handover' || !waiting) return;
+    waiting = false; clearTimeout(fallback);
+    if (ev.data.found) adopt(ev.data); else begin();
+  });
+  window.parent.postMessage({ type: 'study-ready', url: location.href }, location.origin);
+} else if (state.open) begin(); else { render(); openSetup(); }
