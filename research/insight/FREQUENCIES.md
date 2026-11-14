@@ -335,3 +335,40 @@ Both extensions earn their place: sizing is worth about 1.7 points and raising a
 This corrects the reading of the one-size test. There the flop looked free whatever the frequency; in a tree with raises and sizes, getting the amounts wrong is three quarters of the loss.
 
 **How the solver's amounts are taken.** At each decision the solver's strategy is applied to the range the formula player actually has there, and added up action by action. It is the range-level frequency, not a hand-by-hand copy; the hands are then chosen by the formulas. The ranges differ from the solver's own by then, so both oracle rows are approximate.
+
+## How much of the later-street loss is inherited
+
+`play-full.mjs` with `START` and `SOFT`. The same eight 4-bet-pot flops, two sizes and a raise. Two questions: how much of what the turn and river give up comes from the ranges the earlier streets left, and is it the pureness of the play that does it.
+
+**Later streets from the solver's ranges.** The solver plays the earlier streets, so the later ones start from ranges shaped as the solver shapes them; the formulas play from there.
+
+| | After the formulas' own earlier play | After the solver's earlier play | Inherited |
+|---|---|---|---|
+| Turn and river together | 5.35 | 2.87 | 2.5 |
+| River alone | 3.50 | 0.85 | 2.65 |
+
+In % of the flop pot; both seats agree (river alone: 0.84 out of position, 0.86 in position).
+
+- **The river formulas are good.** On ranges as a sound player brings them to the river they give up 0.85% of the pot, in a tree with two sizes and a raise. Three quarters of the river's loss in the full test was inherited.
+- **About half of everything is inherited.** Of the 8.1% the full strategy gives up: 2.7 on the flop itself, about 2.9 on the turn and river in their own right, and about 2.5 because the flop left the wrong ranges.
+
+**Is it the pureness?** The same amounts with the edges blurred: every hand plays the average of the hands around it by equity, across a tenth or three tenths of the range, so no action holds only one kind of hand.
+
+| | Gives up | Flop / turn / river | A best response wins |
+|---|---|---|---|
+| As the formulas have it | 8.09 | 2.74 / 1.84 / 3.50 | 34.4 |
+| Blurred over a tenth of the range | 7.72 | 2.75 / 1.60 / 3.36 | 32.5 |
+| Blurred over three tenths | 7.72 | 2.96 / 1.63 / 3.13 | 29.6 |
+
+- **No.** Mixing at the edges recovers 0.4 of the 8.1, and makes the strategy a little harder to exploit. The ranges are wrong for later streets because the amounts are wrong on earlier ones, not because the hands are sorted too cleanly.
+
+**Where the loss is, all told** (eight 4-bet pots):
+
+| | % of the pot |
+|---|---|
+| Flop decisions | 2.7 |
+| Turn decisions, on sound ranges | about 2.0 |
+| River decisions, on sound ranges | 0.85 |
+| Inherited from earlier streets | about 2.5 |
+
+The flop and turn amounts are the whole problem twice over: once for what they cost on their own street, and again for the ranges they hand on.

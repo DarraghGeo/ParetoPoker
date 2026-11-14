@@ -27,6 +27,8 @@ function copySolved(solved, target, nodes, counts, player, rounds = [0, 1, 2]) {
  * written as they are worked out into each run of `live` ([{ write, players }]), since there are too many to keep.
  */
 const VARIANT = process.env.VARIANT ?? 'full';   // 'noraise': never raises; 'onesize': bets one size (the one nearest three quarters of the pot); 'plain': both
+const START = +(process.env.START ?? 0);   // the first street the formulas play; the solver's own play before it (1: from the turn, 2: the river only)
+const SOFT = +(process.env.SOFT ?? 0);     // blur: each hand plays the average of the hands within this share of the range around it (0: as the formulas have it)
 function formulaStrategy(spot, nodes, live, solved = null) {
   const R = spot.runouts; const ids = Array.from({ length: N }, (_, c) => c); const out = []; let count = 0;
   const start = [0, 1].map((p) => { const w = new Float64Array(N); const pl = spot.players[p]; Array.from(pl.combos).forEach((c, i) => { w[c] = pl.weights.length === N ? pl.weights[c] : pl.weights[i]; }); return w; });
@@ -45,7 +47,10 @@ function formulaStrategy(spot, nodes, live, solved = null) {
     const p = seatOf(n); const mine = reach[p]; const his = reach[1 - p]; const river = board.length === 5; const toCall = n.invested[1 - p] - n.invested[p]; const kinds = n.edges.map((x) => x.kind); const k = kinds.length;
     const hands = ids.filter((c) => mine[c] > 0); const probs = new Float32Array(hands.length * k); const passDown = kinds.map(() => null); count++;
     const addOf = (a) => nodes[n.edges[a].child].invested[p] - n.invested[p];
-    if (!hands.length) { /* nothing gets here */ } else if (toCall > 0) {
+    if (hands.length && n.round < START) {
+      // the solver's own play on the earlier streets: the later ones then start from ranges shaped as the solver shapes them
+      const view = solved.strategyAt(id, bIndex); const row = new Map(Array.from(view.combos).map((c, i) => [c, i])); hands.forEach((c, i) => { const j = row.get(c); for (let a = 0; a < k; a++) probs[i * k + a] = j == null ? (a === 0 ? 1 : 0) : view.probs[j * k + a]; });
+    } else if (!hands.length) { /* nothing gets here */ } else if (toCall > 0) {
       const fi = kinds.indexOf('fold'); const ci = kinds.indexOf('call'); let ri = kinds.indexOf('raise'); if (ri < 0) ri = kinds.indexOf('allin'); if (VARIANT === 'noraise' || VARIANT === 'plain') ri = -1;
       const t = facing(board, mine, his, ids, expectFold ?? toCall / n.pot, ri >= 0 ? { add: addOf(ri), pot: n.pot, toCall } : null, river);
       hands.forEach((c, i) => { const up = ri >= 0 ? t.up[c] : 0; const f = Math.min(1 - up, t.fold[c]); probs[i * k + fi] = f; if (ri >= 0) probs[i * k + ri] = up; probs[i * k + ci] = Math.max(0, 1 - f - up); });
@@ -60,6 +65,15 @@ function formulaStrategy(spot, nodes, live, solved = null) {
         hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
         sized.forEach((y, j) => { passDown[y.a] = t.folds[j]; });
       }
+    }
+    if (SOFT > 0 && hands.length > 2 && n.round >= START) {
+      // the same amounts, the edges blurred: every hand plays the average of its neighbours by equity, so no action holds only one kind of hand
+      const eq = equityVs(fs, board, mine, his); const order = hands.map((c, i) => i).sort((x, y) => (eq[hands[x]] || 0) - (eq[hands[y]] || 0)); const W = order.reduce((t, i) => t + mine[hands[i]], 0);
+      const mid = new Float64Array(order.length); const cumW = new Float64Array(order.length + 1); const cum = Array.from({ length: k }, () => new Float64Array(order.length + 1)); let run = 0;
+      order.forEach((i, r) => { const w = mine[hands[i]]; mid[r] = (run + w / 2) / W; run += w; cumW[r + 1] = cumW[r] + w; for (let a = 0; a < k; a++) cum[a][r + 1] = cum[a][r] + w * probs[i * k + a]; });
+      const next = new Float32Array(probs.length); let lo = 0, hi = 0;
+      order.forEach((i, r) => { while (mid[lo] < mid[r] - SOFT / 2) lo++; while (hi < order.length && mid[hi] <= mid[r] + SOFT / 2) hi++; const w = cumW[hi] - cumW[lo]; for (let a = 0; a < k; a++) next[i * k + a] = w > 0 ? (cum[a][hi] - cum[a][lo]) / w : probs[i * k + a]; });
+      probs.set(next);
     }
     if (VARIANT === 'oraclehands' && solved && hands.length) {
       // the formulas' amounts, the solver's choice of hands: each action keeps how much of the range the formulas gave it,
