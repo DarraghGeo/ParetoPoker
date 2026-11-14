@@ -1,7 +1,7 @@
 // Train: questions on boards dealt at random. The ranges, pot and bet sizes are the ones set up in Study.
 import { explain, survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
-import { $, COLORS, DEFAULTS, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
+import { $, COLORS, COPY_ICON, DEFAULTS, copied, copyText, studyUrl as linkToStudy, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
 
 const TYPES = { range: 'Range advantage', nuts: 'Nut advantage', size: 'Maximum bet or raise', hand: 'What a hand can do' };
 const STREETS = { flop: 'Flop', turn: 'Turn', river: 'River' };
@@ -54,15 +54,7 @@ try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (sa
 if (!Array.isArray(config.raises)) config.raises = [];
 // What is being asked about, and what waits: `board` is the board on screen with its positions, `boards` the ones solved ahead of it
 /** The address that opens a spot in Study: the setup, the board, the line to the decision and, when one is asked about, the hand. A flop is solved lite there as it is here. */
-function studyUrl(board, line, hand) {
-  const q = new URLSearchParams({ board: board.replace(/\s+/g, ''), pot: config.pot, stack: config.stack,
-    bets: (Array.isArray(config.bets[0]) ? config.bets : [config.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(',')).join('/'),
-    raises: config.raises.join(','), max: config.maxRaises, allin: config.allIn ? 1 : 0, oop: config.oop, ip: config.ip });
-  if (line?.length) q.set('line', line.join(','));
-  if (hand) q.set('hand', hand);
-  if ((board.match(/[2-9TJQKA][shdc]/g) ?? []).length === 3) q.set('lite', '1');
-  return `study.html?${q}`;
-}
+const studyUrl = (board, line, hand) => linkToStudy(config, board, { line: line ?? [], hand, lite: (board.match(/[2-9TJQKA][shdc]/g) ?? []).length === 3 });
 const game = { boards: [], board: null, spot: null, q: null, busy: null, progress: null, id: 0, failed: 0, error: '' };
 /** How many boards to keep solved ahead of the one on screen. */
 const AHEAD = 3;
@@ -219,6 +211,30 @@ function renderScore() {
 const seatName = (seat) => (seat === 'oop' ? 'OOP' : 'IP');
 const curveIcon = `<path d="M2 13c3 0 3-4 6-5s3-5 6-5" ${STROKE}/>`;
 const gridIcon = `<path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" ${STROKE}/>`;
+/** The spot on screen, written out to paste elsewhere: the board, the line, the chips, the choices, the ranges and the betting it was solved with, and the address that opens it in Study. */
+function spotText() {
+  const spot = game.spot; if (!spot) return '';
+  const d = spot.decision; const q = game.q;
+  const num = (x) => String(Math.round(10 * x) / 10);
+  const lists = Array.isArray(config.bets[0]) ? config.bets : [config.bets];
+  // the line, each action with who took it: out of position acts first
+  const line = d.line.map((label, k) => `${k % 2 === 0 ? 'OOP' : 'IP'} ${label}`).join(', ');
+  const villain = d.seat === 'oop' ? 'ip' : 'oop';
+  const rows = [
+    `Board: ${d.boardText} (${d.street})`,
+    `Hero: ${seatName(d.seat)}, ${!d.line.length ? 'first to act' : `after ${line}`}`,
+    `Pot: ${num(d.pot)}${d.toCall > 0 ? `, to call ${num(d.toCall)}` : ''}, behind ${num(d.behind)} (started at pot ${num(config.pot)}, stacks ${num(config.stack)})`,
+    `Hero's actions: ${d.actions.map((a) => a.label).join(', ')}`,
+    q?.hand ? `Hand: ${q.hand}` : '',
+    `Hero's starting range, ${seatName(d.seat)}: ${config[d.seat]} (${Math.round(spot.mine.combos)} combinations reach this decision)`,
+    `Villain's starting range, ${seatName(villain)}: ${config[villain]} (${Math.round(spot.his.combos)} combinations reach this decision)`,
+    `Bet sizes, % of pot: ${lists.map((list) => list.map((b) => Math.round(100 * b)).join(' ')).join(' / ')}`,
+    `Raises: ${config.raises.length && config.maxRaises > 0 ? `${config.raises.map((r) => `${r}x`).join(' ')}, ${config.maxRaises} allowed` : 'none'}; all-in ${config.allIn ? 'offered' : 'not offered'}`,
+    d.street === 'flop' ? 'Solved lite: these sizes on the flop, one bet size on the turn and river.' : '',
+    new URL(studyUrl(d.boardText, d.line, q?.hand), location.href).href,
+  ];
+  return rows.filter(Boolean).join('\n');
+}
 /** Where the hand stands: who hero is, the line so far, the pot and what is left behind. */
 function renderWhere() {
   const spot = game.spot;
@@ -227,7 +243,8 @@ function renderWhere() {
   const stands = !d.line.length ? 'First to act' : last === 'X' ? 'Checked to you' : `Facing ${last}`;
   const num = (x) => String(Math.round(10 * x) / 10);
   $('where').innerHTML = `<span class="who">Hero ${seatName(d.seat)}</span><span class="stands">${esc(stands)}</span><span class="grow"></span><span class="chips">Pot ${num(d.pot)}</span><span class="chips">Behind ${num(d.behind)}</span>`
-    + `<a class="icon" id="study" href="${esc(studyUrl(d.boardText, d.line, game.q?.hand))}" aria-label="Open this spot in Study" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
+    + `<a class="icon" id="study" target="_blank" rel="noopener" href="${esc(studyUrl(d.boardText, d.line, game.q?.hand))}" aria-label="Open this spot in Study, in a new tab" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
+    + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${COPY_ICON}</svg></button>`
     + `<button type="button" class="icon" id="view" aria-label="${store.view === 'grid' ? 'Equity distribution' : 'Ranges'}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${store.view === 'grid' ? curveIcon : gridIcon}</svg></button>`;
 }
 /** The two ranges side by side, hero in ink and villain faded; or, in their place, the two equity curves drawn the same way. */
@@ -295,6 +312,10 @@ $('ask').addEventListener('click', (ev) => {
   if (q.chosen.has(k)) q.chosen.delete(k); else q.chosen.add(k);
   renderAsk(); $('ask').querySelector(`[data-opt="${k}"]`)?.focus({ preventScroll: true });
 });
+$('where').addEventListener('click', async (ev) => {
+  const b = ev.target.closest('#copy'); if (!b) return;
+  copied(b, await copyText(spotText()));
+});
 $('where').addEventListener('click', (ev) => { if (!ev.target.closest('#view')) return; store.view = store.view === 'grid' ? 'curve' : 'grid'; save(); renderWhere(); renderRanges(); $('view')?.focus(); });
 // the number keys answer, Enter moves on
 document.addEventListener('keydown', (ev) => {
@@ -351,7 +372,7 @@ function renderHistory() {
     const open = openRows.has(e.t);
     const where = !e.line?.length ? 'first to act' : e.line[e.line.length - 1] === 'X' ? 'checked to' : `facing ${e.line[e.line.length - 1]}`;
     return `<li class="${e.ok ? 'good' : 'bad'}"><button type="button" class="past" aria-expanded="${open}" data-row="${e.t}"><i class="mark">${e.ok ? TICK : CROSS}</i><span class="q"><span>${esc(TYPES[e.type] ?? e.type)}${e.hand ? ` <b>${cardsHtml(e.hand)}</b>` : ''}</span><span class="spot"><b>${cardsHtml(e.board)}</b> ${seatName(e.seat)} ${esc(where)}</span></span></button>`
-      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}<p><a href="${esc(studyUrl(e.board, e.line, e.hand))}">Open in Study</a></p></dd></dl>` : '') + '</li>';
+      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}<p><a target="_blank" rel="noopener" href="${esc(studyUrl(e.board, e.line, e.hand))}">Open in Study</a></p></dd></dl>` : '') + '</li>';
   };
   $('history').innerHTML = `<div class="total"><span class="big"><b>${t.ok}</b>/${t.n}</span><span>${t.n ? `${pct(t.ok / t.n)}% today` : 'Nothing answered today'}</span></div>`
     + (store.log.length ? `<h3>Last questions</h3><ul class="log">${store.log.map(row).join('')}</ul>` : '');

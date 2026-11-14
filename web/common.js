@@ -22,3 +22,35 @@ export function cellOf(name) {
   return a === b ? `${hi},${hi}` : name[1] === name[3] ? `${hi},${lo}` : `${lo},${hi}`;
 }
 export const cellName = (i, j) => (i === j ? RANKS[i] + RANKS[i] : i < j ? `${RANKS[i]}${RANKS[j]}s` : `${RANKS[j]}${RANKS[i]}o`);
+
+/**
+ * The address that opens a spot in Study: the setup, the board, and where in it to open: the
+ * actions taken to reach the decision, the cards dealt on the way, the hand picked.
+ */
+export function studyUrl(config, board, { line = [], dealt = [], hand = null, lite = false } = {}) {
+  const q = new URLSearchParams({ board: board.replace(/\s+/g, ''), pot: config.pot, stack: config.stack,
+    bets: (Array.isArray(config.bets[0]) ? config.bets : [config.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(',')).join('/'),
+    raises: config.raises.join(','), max: config.maxRaises, allin: config.allIn ? 1 : 0, oop: config.oop, ip: config.ip });
+  if (line.length) q.set('line', line.join(','));
+  if (dealt.length) q.set('dealt', dealt.join(','));
+  if (hand) q.set('hand', hand);
+  if (lite) q.set('lite', '1');
+  return `study.html?${q}`;
+}
+/** Put text on the clipboard; where the browser will not allow that directly, through a field selected and copied. */
+export async function copyText(text) {
+  try { await navigator.clipboard.writeText(text); return true; } catch { /* not allowed here: the older way */ }
+  const field = document.createElement('textarea'); field.value = text; field.setAttribute('readonly', ''); field.style.cssText = 'position:fixed;top:0;left:0;opacity:0';
+  document.body.append(field); field.select();
+  let ok = false; try { ok = document.execCommand('copy'); } catch { /* nothing more to try */ }
+  field.remove(); return ok;
+}
+const DRAWN = 'fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"';
+export const COPY_ICON = `<path d="M5.5 5.5v-3h8v8h-3M2.5 5.5h8v8h-8z" ${DRAWN}/>`;
+/** A copy button says how it went, for a moment: a tick, or a cross. */
+export function copied(button, ok) {
+  const label = button.getAttribute('aria-label');
+  button.classList.add(ok ? 'done' : 'failed'); button.setAttribute('aria-label', ok ? 'Copied' : 'Could not copy');
+  button.querySelector('svg').innerHTML = ok ? `<path d="M3.5 8.5l3 3 6-7" ${DRAWN}/>` : `<path d="M4 4l8 8M12 4l-8 8" ${DRAWN}/>`;
+  setTimeout(() => { if (button.isConnected) { button.classList.remove('done', 'failed'); button.setAttribute('aria-label', label); button.querySelector('svg').innerHTML = COPY_ICON; } }, 1400);
+}
