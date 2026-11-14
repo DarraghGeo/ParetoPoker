@@ -121,3 +121,58 @@ Put into the base it moves the average bet frequency to about the right place (f
 Why it overshoots: the derivation assumes value hands that stay value and a caller holding only bluff-catchers. It requires the bettor to fire again about 72% of the time after a call; the solver fires again 48% out of position and 59% in position. The caller's range holds hands that beat value bets, and equities move with the card.
 
 So the direction and the size of the flop and turn bluff surplus are explained. Which spots bet more than others on those streets is not.
+
+### C. What the caller's range does to the second bet
+
+`derive2.py`. The streets-to-come ratio assumed a caller holding only bluff-catchers. He folds the bottom `c` of his range, so a hand that beat a share `x` of his whole range beats only `x' = (x − c)/(1 − c)` of what called. The thin value bets of this street are not value bets against that range, and check the next street.
+
+Keeping the order of hands from turn to river (the river card left out):
+
+- **River.** The bettor's range is his turn value hands at `x'` and his turn bluffs at the bottom. The base thresholds on that curve give how much of it bets for value. Call `phi` the share of the turn value bets that still do.
+- **Turn.** The caller's weakest call beats only the bluffs that give up on the river and loses to everything else, the value bets that check the river included. Indifference gives
+  `bluffs for every value bet on the turn = r_t + r_r × phi × (1 + r_t)`, with `r = s/(1+s)`.
+  `phi = 1` is the streets-to-come ratio; `phi = 0` is the one-street ratio.
+- The turn threshold and `phi` depend on each other, so the pair is solved as a fixed point.
+- **Fires again** `= phi × (1 + r_r) / (1 + turn ratio)`.
+
+Nothing fitted, 1,785 turn betting decisions:
+
+| | Solver | One street | Bluff-catchers only | With the caller's range |
+|---|---|---|---|---|
+| Bluffs for every value bet, turn | 0.69 | 0.43 | 0.87 | **0.66** |
+| Fires again on the river, out of position | 0.48 | | 0.70 | **0.43** |
+| Fires again on the river, in position | 0.59 | | 0.70 | **0.41** |
+
+The derived `phi` is 0.42: fewer than half of the turn value bets are still value bets against the range that called. That is the whole gap between 0.87 and 0.69.
+
+**It explains the level, not the spots.** Decision by decision the turn bet frequency is no closer (18 to 20 points off, as the base), and the fire-again frequency is 19 to 20 off with a weak correlation (0.24 to 0.32). In position it fires again too rarely: the order of hands is not kept across the river card, and a bettor in position sees a check first.
+
+### D. The ruler: what a hand beats now, not its equity
+
+`derive3.py`. On the river equity is the share of his range beaten, and the thresholds are stated in that. On the turn and flop a draw has 30% equity and beats nothing yet. Putting the same untouched thresholds on the share of his range each hand beats now:
+
+| Untuned base | Ruler: equity | Ruler: beats now |
+|---|---|---|
+| Turn, in position: misses by / tracks (r) | 18.9 / 0.16 | **14.2 / 0.42** |
+| Turn, out of position | 18.5 / 0.29 | **16.9 / 0.54** |
+| Turn, out of position, with the check game of A | 19.8 / 0.45 | **16.0 / 0.58** |
+| Flop, in position | 18.7 / 0.26 | **12.6 / 0.47** |
+| Flop, out of position | 22.6 / 0.65 | 23.1 / 0.63 |
+
+On the 15 unseen flops the turn comes out the same (in position 20.6 to 15.0, out of position 18.0 to 15.8). The average bet frequency also lands near the solver's with no bluff correction at all (turn in position 49.5% against 47.3%).
+
+This is the largest untuned gain on the earlier streets, and it is a change of input, not of formula. It is still 13 to 17 points off. Adding C on top of it bets too much (the draws are then counted twice: once as hands that beat little now, once as extra bluffs).
+
+### Where the derivations stand
+
+| | Derived, nothing fitted | Miss |
+|---|---|---|
+| Fold, river | base | 4 |
+| Bet, river, in position | base | 7 |
+| Bet, river, out of position | A | 9.5 |
+| Bluff level, turn | C | average right (0.66 against 0.69) |
+| Bet, turn | base on "beats now" (D), with A out of position | 14 to 16 |
+| Bet, flop, in position | base on "beats now" (D) | 13 |
+| Bet, flop, out of position | none that helps | 23 |
+
+What is still missing on the earlier streets is the card to come: which hands change places, for the bettor and for the range that called.
