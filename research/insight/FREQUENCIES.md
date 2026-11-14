@@ -372,3 +372,32 @@ In % of the flop pot; both seats agree (river alone: 0.84 out of position, 0.86 
 | Inherited from earlier streets | about 2.5 |
 
 The flop and turn amounts are the whole problem twice over: once for what they cost on their own street, and again for the ranges they hand on.
+
+## What the fitted corrections are worth
+
+`freq_export.py`, `tuned.mjs`, `play-full.mjs` with `TUNE`. The fitted corrections were refitted on facts cheap enough to work out at every decision (the shapes of the two ranges, seat, stack depth, board) and switched into the play test in place of the derived amounts. The hands are still chosen as the formulas choose them: a fitted amount thins the derived bets alike, or tops them up alike. Same eight 4-bet-pot flops, two sizes and a raise.
+
+| Amounts from | Gives up (mean / median) | Flop / turn / river | A best response wins |
+|---|---|---|---|
+| Derived, nothing fitted | 8.1 / 5.6 | 2.7 / 1.8 / 3.5 | 34 |
+| Fitted fold amounts | 7.9 / 5.8 | 2.7 / 1.6 / 3.6 | 33 |
+| Fitted raise amount (flop) | 8.2 / 5.6 | 2.6 / 1.9 / 3.7 | 35 |
+| **Fitted bet amounts (flop and turn)** | **4.4 / 4.4** | 1.8 / 1.7 / 0.9 | 30 |
+| All three fitted | 4.3 / 4.2 | 1.8 / 1.5 / 1.0 | 30 |
+| The solver's amounts | 2.0 / 1.9 | 0.5 / 0.6 / 0.9 | 29 |
+
+- **How much of the range bets on the flop and turn is worth 3.7% of the pot.** It is nearly the whole of what fitting buys, and it closes three fifths of the gap to the solver's amounts.
+- **The fold correction is worth 0.15, the raise correction nothing.** The derived fold and raise amounts are already as good as the fitted ones, in money.
+- **The river is repaired without being touched** (3.5 to 0.9): with the right amount betting earlier, the ranges that reach it are sound. This is the inherited loss of the last section, recovered.
+- **2.3 points remain** between the fitted amounts and the solver's, on the flop and the turn.
+
+**The fitted bet corrections** (`out/tuned.json`), each added to the log-odds of the base:
+
+| | Correction | Miss in frequency, base to fitted |
+|---|---|---|
+| Flop, out of position | +2.10 + 4.25 strong advantage − 1.04 log(stack/pot) + 3.39 nut advantage | 22.6 to 12.4 |
+| Flop, in position | +5.09 − 21.1 spread of own range + 6.38 (own spread − his) + 0.59 if monotone | 19.5 to 9.1 |
+| Turn, out of position | +8.05 − 28.7 his spread − 8.98 (own spread − his) + 3.54 strong advantage − 6.79 own nut share | 18.5 to 12.8 |
+| Turn, in position | +9.60 − 37.5 his spread − 18.0 (own spread − his) | 19.2 to 11.4 |
+
+So a frequency still 9 to 13 points from the solver's is worth most of the money. What they have in common is the thing no derivation here produces: **how spread out the two ranges are.** A range with many middling hands bets more than the thresholds say; into a polarised range it bets less. That is the correction to derive.

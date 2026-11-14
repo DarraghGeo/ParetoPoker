@@ -8,6 +8,7 @@ import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/presets.js';
 import { acting, facing, fill } from './formulas.mjs';
+import { facts, tunedBet, tunedFold, tunedRaise, foldBase } from './tuned.mjs';
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1];
 const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
 /** Writes strategies into a run's store: `probsOf(combo)` for one node on one board. */
@@ -27,10 +28,11 @@ function copySolved(solved, target, nodes, counts, player, rounds = [0, 1, 2]) {
  * written as they are worked out into each run of `live` ([{ write, players }]), since there are too many to keep.
  */
 const VARIANT = process.env.VARIANT ?? 'full';   // 'noraise': never raises; 'onesize': bets one size (the one nearest three quarters of the pot); 'plain': both
+const TUNE = new Set((process.env.TUNE ?? '').split(',').filter(Boolean));   // which fitted corrections replace the derived amounts: bet, fold, raise
 const START = +(process.env.START ?? 0);   // the first street the formulas play; the solver's own play before it (1: from the turn, 2: the river only)
 const SOFT = +(process.env.SOFT ?? 0);     // blur: each hand plays the average of the hands within this share of the range around it (0: as the formulas have it)
 function formulaStrategy(spot, nodes, live, solved = null) {
-  const R = spot.runouts; const ids = Array.from({ length: N }, (_, c) => c); const out = []; let count = 0;
+  const R = spot.runouts; const ids = Array.from({ length: N }, (_, c) => c); const out = []; let count = 0; const stack = spot.source?.stack ?? spot.stackUnits / spot.chipScale;
   const start = [0, 1].map((p) => { const w = new Float64Array(N); const pl = spot.players[p]; Array.from(pl.combos).forEach((c, i) => { w[c] = pl.weights.length === N ? pl.weights[c] : pl.weights[i]; }); return w; });
   const walk = (id, board, bIndex, reach, expectFold) => {
     const n = nodes[id];
@@ -52,9 +54,16 @@ function formulaStrategy(spot, nodes, live, solved = null) {
       const view = solved.strategyAt(id, bIndex); const row = new Map(Array.from(view.combos).map((c, i) => [c, i])); hands.forEach((c, i) => { const j = row.get(c); for (let a = 0; a < k; a++) probs[i * k + a] = j == null ? (a === 0 ? 1 : 0) : view.probs[j * k + a]; });
     } else if (!hands.length) { /* nothing gets here */ } else if (toCall > 0) {
       const fi = kinds.indexOf('fold'); const ci = kinds.indexOf('call'); let ri = kinds.indexOf('raise'); if (ri < 0) ri = kinds.indexOf('allin'); if (VARIANT === 'noraise' || VARIANT === 'plain') ri = -1;
-      const t = facing(board, mine, his, ids, expectFold ?? toCall / n.pot, ri >= 0 ? { add: addOf(ri), pot: n.pot, toCall } : null, river);
+      let share = (expectFold && expectFold.fold != null ? expectFold.fold : expectFold) ?? toCall / n.pot; let F = null;
+      if ((TUNE.has('fold') || TUNE.has('raise')) && expectFold && expectFold.thr != null) { const e1 = equityVs(fs, board, mine, his); const e2 = equityVs(fs, board, his, mine); F = facts(board, mine, his, e1, e2, ids, { ip: p, s: toCall / (n.pot - toCall), prior_adv: expectFold.prior, lspr: Math.log(Math.min(30, Math.max(0.05, (stack - Math.max(...n.invested)) / n.pot))) }); if (TUNE.has('fold')) share = tunedFold(board.length, expectFold.thr, F) ?? share; }
+      const t = facing(board, mine, his, ids, share, ri >= 0 ? { add: addOf(ri), pot: n.pot, toCall } : null, river);
+      if (TUNE.has('raise') && F && ri >= 0 && kinds[ri] === 'raise') {
+        // the fitted raise frequency: the derived raises thinned alike, or topped up alike from the hands that call
+        const want = tunedRaise(board.length, F); const W = hands.reduce((u, c) => u + mine[c], 0); const have = hands.reduce((u, c) => u + mine[c] * t.up[c], 0) / W;
+        if (want != null) { if (have > want) for (const c of hands) t.up[c] *= want / have; else { const room = hands.reduce((u, c) => u + mine[c] * Math.max(0, 1 - t.up[c] - t.fold[c]), 0) / W; const lam = room > 0 ? Math.min(1, (want - have) / room) : 0; for (const c of hands) t.up[c] += lam * Math.max(0, 1 - t.up[c] - t.fold[c]); } }
+      }
       hands.forEach((c, i) => { const up = ri >= 0 ? t.up[c] : 0; const f = Math.min(1 - up, t.fold[c]); probs[i * k + fi] = f; if (ri >= 0) probs[i * k + ri] = up; probs[i * k + ci] = Math.max(0, 1 - f - up); });
-      if (ri >= 0) passDown[ri] = t.expect;
+      if (ri >= 0) passDown[ri] = t.expect;   // a raise is answered by the derived rule: the corrections were fitted on bets
     } else {
       const bets = kinds.map((x, a) => (x === 'bet' || x === 'allin' ? a : -1)).filter((a) => a >= 0); const xi = kinds.indexOf('check');
       if (!bets.length) hands.forEach((c, i) => { probs[i * k + xi] = 1; });
@@ -63,7 +72,16 @@ function formulaStrategy(spot, nodes, live, solved = null) {
         let sized = bets.map((a) => ({ a, s: addOf(a) / n.pot })).sort((y, z) => y.s - z.s); if (VARIANT === 'onesize' || VARIANT === 'plain') sized = [sized.reduce((b, y) => (Math.abs(y.s - 0.75) < Math.abs(b.s - 0.75) ? y : b))]; const first = n.parent < 0 || nodes[n.parent].kind === 'chance';
         const t = acting(board, mine, his, ids, sized.map((y) => y.s), first, river);
         hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
-        sized.forEach((y, j) => { passDown[y.a] = t.folds[j]; });
+        if (TUNE.has('bet') || TUNE.has('fold') || TUNE.has('raise')) {
+          const e1 = equityVs(fs, board, mine, his); const e2 = equityVs(fs, board, his, mine); const F = facts(board, mine, his, e1, e2, ids, { lspr: Math.log(Math.min(30, Math.max(0.05, (stack - Math.max(...n.invested)) / n.pot))) });
+          if (TUNE.has('bet') && board.length < 5) {
+            // the fitted bet frequency: the derived bets thinned alike, or topped up alike with the smallest size
+            const want = tunedBet(board.length, first, e1, mine, ids, sized[0].s, F); const W = hands.reduce((u, c) => u + mine[c], 0); const total = (c) => t.bets.reduce((u, b) => u + b[c], 0); const have = hands.reduce((u, c) => u + mine[c] * Math.min(1, total(c)), 0) / W;
+            if (want != null && have > 0) { if (have > want) for (const b of t.bets) for (const c of hands) b[c] *= want / have; else { const lam = Math.min(1, (want - have) / Math.max(1e-9, 1 - have)); for (const c of hands) t.bets[0][c] += lam * Math.max(0, 1 - total(c)); } }
+            hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
+          }
+          sized.forEach((y, j) => { passDown[y.a] = { fold: t.folds[j], thr: foldBase(e1, mine, ids, y.s), prior: F.adv }; });
+        } else sized.forEach((y, j) => { passDown[y.a] = t.folds[j]; });
       }
     }
     if (SOFT > 0 && hands.length > 2 && n.round >= START) {
