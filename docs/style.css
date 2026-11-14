@@ -398,3 +398,6 @@ header .board{min-width:0;flex:0 1 auto}
 @media (min-width:900px) and (min-height:520px){.train .ladder{height:160px}}
 /* a thumb slid along the action chart picks hands: sideways is the chart's, up and down still scrolls the page */
 #strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+/* under the cards to pick from: the street dealt at random */
+.deal button.random{aspect-ratio:auto;width:100%;margin-top:6px;padding:9px 12px;font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);border-radius:3px}
+.deal button.random:hover{border-color:var(--ink);color:var(--ink)}
