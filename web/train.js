@@ -82,6 +82,7 @@ function want() {
   worker.postMessage({ type: 'deal', id: game.id, street, config });
 }
 worker.onmessage = ({ data }) => {
+  if (data.type === 'export') { handedOver(data); return; }
   if (!game.busy || data.id !== game.busy.id) return;
   if (data.type === 'progress') { game.progress = data; if (!game.q) renderAsk(); return; }
   game.busy = null;
@@ -443,8 +444,12 @@ function showStudy(on) {
   pager.classList.toggle('on-study', on);
   studyPane.inert = !on; trainPane.inert = on;
 }
-function openStudy(href) {
+function openStudy(href, spot = null) {
+  // a turn or river on screen: Study opens on Train's own solve of it, handed over, and solves finer behind it
+  const solve = spot?.decision.solve;
+  if (solve != null) { const u = new URL(href, location.href); u.searchParams.set('handover', '1'); href = u.href; }
   const url = new URL(href, location.href).href;
+  if (solve != null && frame.dataset.url !== url) { handover.url = url; handover.data = null; handover.ready = false; handover.line = spot.decision.line; worker.postMessage({ type: 'export', solve, ask: url }); }
   if (frame.dataset.url !== url) {
     // a new spot replaces the last one in place, so the back gesture keeps meaning "back to Train"
     if (frame.dataset.url) frame.contentWindow.location.replace(url); else frame.src = url;
@@ -457,7 +462,19 @@ addEventListener('popstate', () => showStudy(!!history.state?.study));
 document.addEventListener('click', (ev) => {
   const a = ev.target.closest('a[data-pane]');
   if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return; // a modified click still opens a new tab
-  ev.preventDefault(); openStudy(a.getAttribute('href'));
+  ev.preventDefault(); openStudy(a.getAttribute('href'), a.id === 'study' ? game.spot : null);
+});
+// The handover: Train's worker sends the solve, Study says when it is listening; whichever comes second sends it on.
+const handover = { url: null, data: null, ready: false, line: null };
+function sendHandover() {
+  if (!handover.data || !handover.ready) return;
+  const d = handover.data; handover.data = null;
+  frame.contentWindow.postMessage({ type: 'handover', found: d.found, board: d.board, pot: d.pot, stack: d.stack, oop: d.oop, ip: d.ip, exploit: d.exploit, sums: d.sums, line: handover.line }, location.origin, d.found ? [d.sums.buffer] : []);
+}
+function handedOver(data) { if (data.ask !== handover.url) return; handover.data = data; sendHandover(); }
+addEventListener('message', (ev) => {
+  if (ev.source !== frame.contentWindow || ev.origin !== location.origin || ev.data?.type !== 'study-ready' || ev.data.url !== handover.url) return;
+  handover.ready = true; sendHandover();
 });
 $('to-train').onclick = closeStudy;
 /** A swipe: one finger, mostly sideways, far enough. */

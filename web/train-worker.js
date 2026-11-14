@@ -59,6 +59,12 @@ function onto(board, old) {
 let flop = null;
 /** The turn solved last: rivers are dealt off it. */
 let turn = null;
+/**
+ * The last turn and river solves, kept so that Study can open on them (Train's "Study this spot"): their strategy is
+ * handed over whole and Study shows it at once while it solves finer. A flop's lite solve is too big to hand over.
+ */
+const shelf = new Map(); const SHELF = 6; let solveId = 0;
+function shelve(entry) { const id = ++solveId; shelf.set(id, entry); for (const k of shelf.keys()) { if (shelf.size <= SHELF) break; shelf.delete(k); } return id; }
 /** After this many flops each a card from the one before, a new flop is dealt and solved from nothing. */
 const CHAIN = 2;
 const pause = () => new Promise((resolve) => setTimeout(resolve));
@@ -146,7 +152,8 @@ async function solveNext(parent, c, live, say) {
   if (!live()) return null;
   if (!run.completed) run.step(1);
   const history = [...parent.history, { street: parent.street, cards: parent.street === 'flop' ? parent.cards : [parent.cards[parent.cards.length - 1]], actions }];
-  return { street, cards, board: pick.board, solution: run.snapshot(), nodes: treeOf(fs, next), spot: next, stack: sub.stack, history, left: RIVERS };
+  const solve = shelve({ run, board: cards.join(' '), pot: sub.pot, stack: sub.stack, oop: pick.oop, ip: pick.ip, exploit: run.exploitabilityPercent() });
+  return { street, cards, board: pick.board, solution: run.snapshot(), nodes: treeOf(fs, next), spot: next, stack: sub.stack, history, left: RIVERS, solve };
 }
 
 /** The decisions on a solved street worth asking about: first to act, checked to, facing a bet, facing a bet after checking. */
@@ -174,12 +181,20 @@ function positions(solved) {
     while (nodes[at].parent >= 0) { const parent = nodes[nodes[at].parent]; line.unshift(parent.edges[nodes[at].via].label); at = parent.id; }
     const me = d.seat === 'oop' ? 0 : 1;
     // `history`: the streets before this one, each with its cards and the actions that ended it
-    decisions.push({ ...d, line, behind: solved.stack - nodes[id].invested[me], history: solved.history, flop: solved.cards.slice(0, 3) });
+    decisions.push({ ...d, line, behind: solved.stack - nodes[id].invested[me], history: solved.history, flop: solved.cards.slice(0, 3), solve: solved.solve ?? null });
   }
   return decisions;
 }
 
 self.onmessage = async ({ data }) => {
+  if (data.type === 'export') {
+    // A solve on the shelf, for Study: the spot as it was defined and its average strategy (copied: the run keeps solving nothing more)
+    const e = shelf.get(data.solve);
+    if (!e) { self.postMessage({ type: 'export', ask: data.ask, found: false }); return; }
+    const sums = e.run.solver.ctx.strategySum.slice();
+    self.postMessage({ type: 'export', ask: data.ask, found: true, board: e.board, pot: e.pot, stack: e.stack, oop: e.oop, ip: e.ip, exploit: e.exploit, sums }, [sums.buffer]);
+    return;
+  }
   if (data.type !== 'deal') return;
   const mine = ++job; const live = () => mine === job;
   try {
