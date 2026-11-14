@@ -422,13 +422,11 @@ function lookHtml(row, strata) {
     const R = look.spread.range; const H = look.spread.hand.length ? look.spread.hand : R; const alone = !look.spread.hand.length; const SW = 560, SH = 220, P = 10;
     const Y = (e) => SH - P - e * (SH - 2 * P);
     const steps = (list, get) => list.map((v, i) => `${((i / list.length) * SW).toFixed(1)},${Y(get(v)).toFixed(1)} ${(((i + 1) / list.length) * SW).toFixed(1)},${Y(get(v)).toFixed(1)}`).join(' ');
-    const up = H.filter((x) => x.eq > look.spread.now + 0.1).length; const down = H.filter((x) => x.eq < look.spread.now - 0.1).length;
     html += `<div class="spread"><svg viewBox="0 0 ${SW} ${SH}" role="img" aria-label="Equity on each ${look.spread.street} card">`
       + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="0" x2="${SW}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')
       + `<line class="axis" x1="0" x2="${SW}" y1="${Y(0)}" y2="${Y(0)}"/><line class="now" x1="0" x2="${SW}" y1="${Y(look.spread.now)}" y2="${Y(look.spread.now)}"/>`
       + `${alone ? '' : `<polyline class="wait" points="${steps(R, (v) => v.eq)}"/>`}<polyline class="act" points="${steps(H, (v) => v.eq)}"/></svg>`
-      + `<div class="cap"><span>${H.length} ${look.spread.street} cards</span><span>now ${pct(look.spread.now)}%</span>${alone ? '' : `<span>${up} lift it</span><span>${down} sink it</span>`}</div>`
-      + `<div class="ends"><span>${cardsHtml(H.slice(0, 4).map((x) => x.card).join(' '))}</span><span>${cardsHtml(H.slice(-4).map((x) => x.card).join(' '))}</span></div></div>`;
+      + `<div class="cap"><span>Equity ${pct(look.spread.now)}%</span>${look.spread.equityNow != null ? `<span>Equity now ${pct(look.spread.equityNow)}%</span>` : ''}${look.spread.drawEquity != null ? `<span>Draw equity ${pct(look.spread.drawEquity)}%</span>` : ''}</div></div>`;
   }
   // a hand picked: the names it carries; none: every name in the range
   html += `<ul class="types${row ? '' : ' all'}">${look.types.filter((t) => !row || t.has).map((t) => `<li class="${t.has ? 'has' : ''}" data-tag="${esc(t.name)}" role="button" tabindex="0">${row ? '<span class="mark">\u2713</span>' : '<span class="mark"></span>'}<span class="tname">${esc(t.name)}</span><span class="share">${pct(t.share)}%</span><span class="bar">${bar(t.mix, strata)}</span></li>`).join('')}</ul>`;

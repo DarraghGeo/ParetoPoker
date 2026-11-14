@@ -86,6 +86,30 @@ export function study(fs, solution, nodes, id, dealt = []) {
     const tagList = [...tags.values()].sort((x, y) => TAG_ORDER.indexOf(x.name) - TAG_ORDER.indexOf(y.name));
     return (fifths = { of, list, near, nameOf, kinds: [...kinds.values()].sort((x, y) => y.eq - x.eq), tagsFor, tagList, hands, all });
   };
+  // A hand's equity in two parts. `now`: how much of his range it beats as the board stands. `draw`: the part of its
+  // equity that it wins from behind, against hands that beat it now, on the cards still to come.
+  let split = null;
+  const drawParts = () => {
+    if (split || f.board.length === 5) return split;
+    const A = (c) => fs.COMBO_CARDS[2 * c]; const B = (c) => fs.COMBO_CARDS[2 * c + 1];
+    const heroes = []; const villains = []; for (let c = 0; c < N; c++) { if (f.mine[c] > 0) heroes.push(c); if (f.his[c] > 0) villains.push(c); }
+    const cur = new Float64Array(N); for (const c of new Set([...heroes, ...villains])) cur[c] = fs.evaluateCards([...f.board, A(c), B(c)]);
+    const now = new Float64Array(N).fill(NaN); const draw = new Float64Array(N).fill(NaN);
+    const clash = (h, v) => A(h) === A(v) || A(h) === B(v) || B(h) === A(v) || B(h) === B(v);
+    for (const h of heroes) { let w = 0, t = 0; for (const v of villains) { if (clash(h, v)) continue; w += f.his[v]; t += f.his[v] * (cur[h] > cur[v] ? 1 : cur[h] === cur[v] ? 0.5 : 0); } if (w > 0) now[h] = t / w; }
+    const won = new Float64Array(N); const mass = new Float64Array(N); const s = new Float64Array(N);
+    const deck = []; for (let x = 0; x < 52; x++) if (!f.taken[x]) deck.push(x);
+    const deal = (x, y) => {
+      const full = y < 0 ? [...f.board, x] : [...f.board, x, y]; const out = (c) => A(c) === x || B(c) === x || A(c) === y || B(c) === y;
+      const hs = heroes.filter((c) => !out(c)); const vs = villains.filter((c) => !out(c));
+      for (const c of new Set([...hs, ...vs])) s[c] = fs.evaluateCards([...full, A(c), B(c)]);
+      for (const h of hs) for (const v of vs) { if (clash(h, v)) continue; mass[h] += f.his[v]; if (cur[v] > cur[h]) won[h] += f.his[v] * (s[h] > s[v] ? 1 : s[h] === s[v] ? 0.5 : 0); }
+    };
+    if (f.board.length === 4) for (const x of deck) deal(x, -1);
+    else for (let i = 0; i < deck.length; i++) for (let j = i + 1; j < deck.length; j++) deal(deck[i], deck[j]);
+    for (const h of heroes) if (mass[h] > 0) draw[h] = won[h] / mass[h];
+    return (split = { now, draw });
+  };
   // Every card that can come next, and each hand's equity once it has: how a hand's strength is spread over the next street
   let nextCards = null;
   const spread = () => {
@@ -99,7 +123,7 @@ export function study(fs, solution, nodes, id, dealt = []) {
     }
     return nextCards;
   };
-  return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, spread, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
+  return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, spread, drawParts, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
 }
 
 /** One hand at a studied decision. `onlyOn`: measure only the actions on the path (the others cannot be relied on). */
@@ -468,7 +492,9 @@ export function analysis(s, c) {
     hand.sort((x, y) => x.eq - y.eq); range.sort((x, y) => x.eq - y.eq);
     // the range's own equity now: its hands' equities by weight
     let w = 0, t = 0; const eq = s.equity(); for (const h of b.hands) { w += f.mine[h]; t += f.mine[h] * eq[h]; }
-    spread = { hand, range, now: one ? eq[c] : t / w, street: f.board.length === 3 ? 'turn' : 'river' };
+    // equity, and its two parts: what the hand beats as the board stands, and what it wins from behind
+    const parts = s.drawParts(); const avg = (v) => { let ww = 0, tt = 0; for (const h of b.hands) if (!Number.isNaN(v[h])) { ww += f.mine[h]; tt += f.mine[h] * v[h]; } return ww > 0 ? tt / ww : null; };
+    spread = { hand, range, now: one ? eq[c] : t / w, equityNow: parts ? (one ? parts.now[c] : avg(parts.now)) : null, drawEquity: parts ? (one ? parts.draw[c] : avg(parts.draw)) : null, street: f.board.length === 3 ? 'turn' : 'river' };
   }
   return { name: one ? fs.formatCombo(c) : null, types, spread };
 }
