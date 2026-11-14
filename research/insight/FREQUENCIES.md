@@ -176,3 +176,31 @@ This is the largest untuned gain on the earlier streets, and it is a change of i
 | Bet, flop, out of position | none that helps | 23 |
 
 What is still missing on the earlier streets is the card to come: which hands change places, for the bettor and for the range that called.
+
+### E. Multi-street equities in place of solving
+
+`runouts.mjs` computes, with equities only, every turn hand's standing on every river card (the share of his range it beats there) for 2,076 turn decisions. Two ways of using that were tried, both untuned.
+
+**As the ruler (`derive4.py`): no.** The base thresholds on one number made from a hand's spread of river standings:
+
+| Ruler | Turn, in position: misses by / tracks | Turn, out of position (check game) |
+|---|---|---|
+| Equity (the average over rivers) | 19.6 / 0.16 | 20.6 / 0.39 |
+| **What it beats now** | **14.2 / 0.42** | **17.1 / 0.53** |
+| Median river standing | 15.4 / 0.32 | 17.0 / 0.52 |
+| Low quarter | 21.6 / 0.10 | 21.3 / 0.36 |
+| High quarter | 15.1 / 0.36 | 16.7 / 0.55 |
+| Equivalent standing (the fixed standing worth as much as the spread, with a river bet to come) | 18.4 / 0.16 | 20.0 / 0.41 |
+
+Nothing made from the runouts beats the turn standing itself. The spread of a hand over river cards is not what the value threshold is about.
+
+**In the count of bluffs (`derive5.py`): right on average.** Before the river a called bluff still wins `q` of the time, so toward the caller's indifference it is worth `1 − q(1+2s)/(1+s)` of a bluff. The budget stays `s/(1+s)` for every value bet but is spent in those fractions, on the hands that gain most by betting over checking. `q` is the hand's equity against the range that calls.
+
+| Turn | Solver: bets from hands behind | Derived bluffs | Solver: bets from hands ahead | Derived value |
+|---|---|---|---|---|
+| In position | 18.9% | 19.7% | 28.4% | 34.6% |
+| Out of position | 13.0% | 14.8% | 18.4% | 24.7% |
+
+The bluff side now comes out of the derivation at the right size, and the frequency tracks the solver a little better (0.42 to 0.47 in position, 0.58 to 0.60 out of position). The miss does not fall (15 to 17 points), because the error has moved to the other side: the formula bets a quarter more hands for value than the solver does, on the turn and far more on the flop (40% against 26%).
+
+**What that leaves.** Every remaining point of error on the turn is on the value side: which of the hands that are ahead now check. Section C says why in the average (under half of the turn value bets are still value bets against the range that called), and the runout standings are the data needed to say it hand by hand: a turn value bet is a hand that is still ahead of his calling range on most rivers. That is the next derivation, and it uses only equities.
