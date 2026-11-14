@@ -456,8 +456,15 @@ function openGroup(name) {
   const rows = s.rows.filter((r) => ids.has(r.hand.id)).sort((x, y) => y.equity - x.equity || (x.hand.name < y.hand.name ? -1 : 1));
   $('group').innerHTML = `<div class="g-head"><h3>${esc(name)}</h3><span>${rows.length} hands \u00b7 ${pct(type.share)}% of the range</span></div>`
     + `<div class="mix"><span class="bar">${bar(type.mix, strata)}</span></div>`
-    + `<div class="g-list">${rows.map((r) => `<button type="button" data-hand="${r.hand.name}" aria-pressed="${state.hand === r.hand.name}"><span>${cardsHtml(r.hand.name)}</span><span class="bar">${bar(r.hand.strategy, strata)}</span></button>`).join('')}</div>`;
+    + `<div class="g-list">${rows.map((r) => `<button type="button" data-hand="${r.hand.name}" aria-pressed="${state.hand === r.hand.name}"><span>${cardsHtml(r.hand.name)}</span><span class="bar">${bar(r.hand.strategy, strata)}</span>${spark(look.curves?.[r.hand.id], r.equity)}</button>`).join('')}</div>`;
   $('group').hidden = false; $('scrim').hidden = false; $('group').focus({ preventScroll: true });
+}
+/** A hand's equity on each card that can come next, weakest first, drawn small: the dotted line is its equity now. */
+function spark(list, now) {
+  if (!list?.length) return '';
+  const SW = 60, SH = 24; const Y = (e) => SH - 1 - e * (SH - 2);
+  const pts = list.map((e, i) => `${((i / list.length) * SW).toFixed(1)},${Y(e).toFixed(1)} ${(((i + 1) / list.length) * SW).toFixed(1)},${Y(e).toFixed(1)}`).join(' ');
+  return `<svg class="spark" viewBox="0 0 ${SW} ${SH}" preserveAspectRatio="none" aria-hidden="true"><line class="mid" x1="0" x2="${SW}" y1="${Y(0.5)}" y2="${Y(0.5)}"/><line class="now" x1="0" x2="${SW}" y1="${Y(now)}" y2="${Y(now)}"/><polyline points="${pts}"/></svg>`;
 }
 function closeGroup() { if ($('group').hidden) return; $('group').hidden = true; $('scrim').hidden = true; }
 $('group').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (!b) return; state.hand = b.dataset.hand; state.cell = cellOf(state.hand); closeGroup(); render(); });

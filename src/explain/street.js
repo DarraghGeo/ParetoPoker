@@ -496,5 +496,8 @@ export function analysis(s, c) {
     const parts = s.drawParts(); const avg = (v) => { let ww = 0, tt = 0; for (const h of b.hands) if (!Number.isNaN(v[h])) { ww += f.mine[h]; tt += f.mine[h] * v[h]; } return ww > 0 ? tt / ww : null; };
     spread = { hand, range, now: one ? eq[c] : t / w, equityNow: parts ? (one ? parts.now[c] : avg(parts.now)) : null, drawEquity: parts ? (one ? parts.draw[c] : avg(parts.draw)) : null, street: f.board.length === 3 ? 'turn' : 'river' };
   }
-  return { name: one ? fs.formatCombo(c) : null, types, spread };
+  // every hand's own spread, weakest card first, for drawing small: { combo: [equity on each next card] }
+  let curves = null;
+  if (cards) { curves = {}; for (const h of b.hands) { const list = []; for (const k of cards) if (!Number.isNaN(k.eq[h])) list.push(Math.round(k.eq[h] * 100) / 100); curves[h] = list.sort((x, y) => x - y); } }
+  return { name: one ? fs.formatCombo(c) : null, types, spread, curves };
 }
