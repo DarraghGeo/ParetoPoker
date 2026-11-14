@@ -5,7 +5,7 @@ import { treeOf } from '../src/solver/flopsolve.js';
 import { frameAt, actionValues, byReply, byCard } from '../src/explain/account.js';
 import { evaluator } from '../src/explain/best.js';
 import { features, groupOf } from '../src/explain/features.js';
-import { study, measure, claims, holds, tolerance, explainStreet, describe } from '../src/explain/street.js';
+import { study, measure, claims, holds, tolerance, explainStreet, describe, twins, worthAround } from '../src/explain/street.js';
 
 // A small turn spot, solved finely: quick, and every kind of node is in it
 const spot = fs.defineSpot({ board: 'Td9d6hQc', pot: 100, stack: 200, oop: 'AA,KK,QQ,AKs,AQs,KQs,JTs,98s,87s,76s,A5s,KJs,QJs,T9s', ip: 'JJ,TT,99,AQs,AJs,KQs,KJs,QJs,J9s,T8s,97s,65s,AdKd,Ad5d,8d7d', betSizes: [[0.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 });
@@ -116,4 +116,23 @@ test('numbers: equity is the brute-force count, his fold frequency is the count 
   // facing the bet: the cards to come are weighted so that they add to one, and lifted cards are counted by the evaluator
   const facing = study(fs, solution, nodes, nodes[0].edges[bet].child); const call = facing.actions.findIndex((a) => a.kind === 'call');
   for (let c = 0; c < fs.COMBOS; c += 7) { const m = measure(facing, c, { onlyOn: false }); if (!m || !m.actions[call].cards) continue; const k = m.actions[call].cards; assert.ok(Math.abs(k.lift.weight + k.rest.weight - 1) < 1e-9); assert.equal(k.lift.n + k.rest.n, 46); assert.ok(Math.abs(k.lift.part + k.rest.part - m.actions[call].worth) < 1e-7); }
+});
+
+test('twins: the same ranks with a different flush draw, and nothing else different', () => {
+  const s = study(fs, solution, nodes, 0);
+  // the ace-king of diamonds has the flush draw on this board; its twin in the range is the hand without one
+  const withDraw = combo('AdKd'); const tw = twins(s, withDraw);
+  if (tw) {
+    assert.equal(tw.have, true); assert.match(tw.draw, /diamond flush draw/);
+    assert.ok(Math.abs(tw.mix.reduce((a, b) => a + b, 0) - 1) < 1e-6);
+    assert.ok(s.equity()[withDraw] > tw.eq);
+  }
+  // every twin differs from its hand in the flush draw only: seen from the other side it is the hand that has the draw
+  let seen = 0;
+  for (let c = 0; c < fs.COMBOS; c++) {
+    if (!(s.f.mine[c] > 0)) continue; const x = twins(s, c); if (!x) continue; seen++;
+    assert.ok(x.weight > 0); assert.ok(x.eq >= 0 && x.eq <= 1);
+    const w = worthAround(s, c); if (w) assert.ok(Number.isFinite(w.mine) && Number.isFinite(w.others));
+  }
+  assert.ok(seen > 0);
 });

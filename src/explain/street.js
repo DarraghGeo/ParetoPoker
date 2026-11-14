@@ -388,6 +388,29 @@ export function explainStreet(s, m, T) {
       }
     }
   }
+  // ---- its twin: the same two ranks with or without its flush draw (or, on the flop, its backdoor flush draw). Nothing
+  // else differs between them, so what they do differently is down to the draw. Numbers of this solution.
+  if (!river) {
+    const tw = twins(s, m.combo);
+    if (tw) {
+      const groups = facing ? [['fold', (k) => k === 'fold', 'folds'], ['call', (k) => k === 'call', 'calls'], ['raise', (k) => !['fold', 'call'].includes(k), 'raises']] : [['check', (k) => k === 'check', 'checks'], ['bet', (k) => k !== 'check', 'bets']];
+      const share = (mix) => groups.map(([, is]) => m.actions.reduce((t, x, i) => t + (is(x.kind) ? mix[i] : 0), 0));
+      const mine = share(m.actions.map((x) => x.sigma)); const theirs = share(tw.mix);
+      const g = mine.reduce((b, x, i) => (Math.abs(x - theirs[i]) > Math.abs(mine[b] - theirs[b]) ? i : b), 0); const gap = Math.abs(mine[g] - theirs[g]);
+      const verb = groups[g][2]; const other = `${tw.several ? 'such as ' : ''}${pretty(tw.name)}`;
+      const dWorth = tw.worth != null && tw.mineWorth != null ? tw.mineWorth - tw.worth : null; const dEq = m.equity - tw.eq;
+      const value = dWorth != null && Math.abs(dWorth) >= 1 ? ` The draw gives it ${pts(Math.abs(dEq))} ${dEq >= 0 ? 'more' : 'less'} equity, and in this solution makes it worth ${pot(dWorth)} of the pot ${dWorth >= 0 ? 'more' : 'less'}.` : '';
+      if (gap >= 0.15) reasons.push({ id: 'twin', text: tw.have ? `Its twin: the same hand without the ${tw.draw} (${other}) ${verb} ${pts(theirs[g])} of the time here, and this one ${pts(mine[g])}. Nothing else differs between them, so the ${tw.draw} is the reason.${value}` : `Its twin: the same hand with a ${tw.draw} (${other}) ${verb} ${pts(theirs[g])} of the time here, and this one ${pts(mine[g])}. Nothing else differs between them: the draw is what this hand lacks.${value.replace('The draw gives it', 'Without it this hand has').replace('makes it worth', 'is worth')}` });
+      else if (tw.have && dWorth != null && dWorth >= 2) reasons.push({ id: 'twin', text: `Its twin: the same hand without the ${tw.draw} (${other}) plays about the same way here.${value}` });
+    }
+    // what the hand is worth against your other hands of the same equity: equity that can improve wins more than equity that cannot
+    const w = worthAround(s, m.combo);
+    if (w && Math.abs(w.mine - w.others) >= 3) {
+      const less = w.mine < w.others; const x = m.features; const drawn = x.draw != null;
+      const why = less && !drawn && x.own === 0 ? ' Its equity is showdown equity: it wins the small pots that get checked down and has little to improve to.' : less && x.pocket && (x.pair === 'underpair' || x.pair === 'middle pair') ? ' A pocket pair that is not an overpair has only two cards that improve it.' : !less && drawn ? ' A draw wins a bigger pot when it comes in than a made hand of the same equity wins.' : '';
+      reasons.push({ id: 'worth', text: `In this solution it is worth ${pot(w.mine - w.others)} of the pot ${less ? 'less' : 'more'} than your other hands with about the same equity.${why}` });
+    }
+  }
   // ---- why this hand: where it sits in your range, and what that part of the range does ----
   if (m.bands && m.band >= 0) {
     const NAME = ['the weakest fifth', 'the second-weakest fifth', 'the middle fifth', 'the second-strongest fifth', 'the strongest fifth'];
@@ -468,6 +491,58 @@ export function explainStreet(s, m, T) {
   return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: see the proof file for which decisions those are.' };
 }
 
+
+const SUIT = { s: '♠', h: '♥', d: '♦', c: '♣' }; const SUIT_NAME = ['spade', 'heart', 'diamond', 'club'];
+const pretty = (name) => name.replace(/([2-9TJQKA])([shdc])/g, (_, r, x) => r + SUIT[x]);
+/** A hand's flush draw, or on the flop its backdoor flush draw: 2, 1 or 0, and the suit. */
+function flushLevel(s, c) {
+  const { fs, f } = s; const x = s.featuresOf(c); const cards = [fs.COMBO_CARDS[2 * c], fs.COMBO_CARDS[2 * c + 1]];
+  if (x.made >= 5) return { level: 0, suit: -1 };
+  for (const card of cards) {
+    const suit = fs.suitOf(card); const n = f.board.filter((b) => fs.suitOf(b) === suit).length + cards.filter((b) => fs.suitOf(b) === suit).length;
+    if (n === 4 && x.flushOuts >= 8) return { level: 2, suit };
+  }
+  if (f.board.length === 3) for (const card of cards) {
+    const suit = fs.suitOf(card); const n = f.board.filter((b) => fs.suitOf(b) === suit).length + cards.filter((b) => fs.suitOf(b) === suit).length;
+    if (n === 3) return { level: 1, suit };
+  }
+  return { level: 0, suit: -1 };
+}
+/** What each of a decision's hands is worth by the actions it takes there, in % of the pot (as measure() has it). */
+function worthOf(s) {
+  if (s.worths) return s.worths;
+  const N = s.fs.COMBOS; const out = new Float64Array(N).fill(NaN); const on = s.actions.map((a, i) => (a.on ? i : -1)).filter((i) => i >= 0); const vals = on.map((a) => s.closely(a).value);
+  for (let c = 0; c < N; c++) { if (!(s.f.mine[c] > 0)) continue; let w = 0, t = 0; on.forEach((a, k) => { const p = s.sigma(c, a); if (p > 0 && !Number.isNaN(vals[k][c])) { w += p; t += p * vals[k][c]; } }); if (w > 0.5) out[c] = (100 * t) / w / s.pot; }
+  return (s.worths = out);
+}
+/**
+ * The twins of a hand at a decision: the hands of your range with the same two ranks, suited or not as it is, making
+ * the same hand and the same straight draw, but with a different flush draw. Compared with the hand: those without a
+ * draw when it has one, those with one when it has none. Null when there are none.
+ */
+export function twins(s, c) {
+  const { fs, f } = s; const rank = (k) => fs.rankOf(fs.COMBO_CARDS[k]); const suited = (h) => fs.suitOf(fs.COMBO_CARDS[2 * h]) === fs.suitOf(fs.COMBO_CARDS[2 * h + 1]);
+  const hi = Math.max(rank(2 * c), rank(2 * c + 1)); const lo = Math.min(rank(2 * c), rank(2 * c + 1)); const x = s.featuresOf(c); const mine = flushLevel(s, c); const found = [];
+  for (let h = 0; h < fs.COMBOS; h++) {
+    if (h === c || !(f.mine[h] > 0) || Math.max(rank(2 * h), rank(2 * h + 1)) !== hi || Math.min(rank(2 * h), rank(2 * h + 1)) !== lo || suited(h) !== suited(c)) continue;
+    const y = s.featuresOf(h); if (y.made !== x.made || y.straightOuts !== x.straightOuts) continue;
+    const l = flushLevel(s, h); if (l.level !== mine.level) found.push({ h, level: l.level, suit: l.suit });
+  }
+  if (!found.length) return null;
+  // against the hands without the draw; or, for a hand with none, against the ones with the least draw more than it (the backdoor before the flush draw)
+  const want = Math.min(...found.map((t) => t.level)); const group = found.filter((t) => t.level === want);
+  if (mine.level > 0 && want >= mine.level) return null;
+  let w = 0; const mix = s.actions.map(() => 0); let eq = 0; let worth = 0, ww = 0; const E = s.equity(); const W = worthOf(s);
+  for (const t of group) { const k = f.mine[t.h]; w += k; s.actions.forEach((_, a) => { mix[a] += k * s.sigma(t.h, a); }); eq += k * E[t.h]; if (!Number.isNaN(W[t.h])) { worth += k * W[t.h]; ww += k; } }
+  const level = mine.level > 0 ? mine.level : want; const suit = mine.level > 0 ? mine.suit : group[0].suit; const best = group.reduce((b, t) => (f.mine[t.h] > f.mine[b.h] ? t : b));
+  return { have: mine.level > 0, draw: `${level === 1 ? 'backdoor ' : ''}${SUIT_NAME[suit] ?? ''} ${level === 1 ? 'draw' : 'flush draw'}`.replace('  ', ' '), name: fs.formatCombo(best.h), several: group.length > 1, weight: w, mix: mix.map((v) => v / w), eq: eq / w, worth: ww > 0 ? worth / ww : null, mineWorth: Number.isNaN(W[c]) ? null : W[c] };
+}
+/** A hand's worth beside the average worth of your other hands within five points of its equity. Null when there are too few. */
+export function worthAround(s, c) {
+  const { f } = s; const E = s.equity(); const W = worthOf(s); if (Number.isNaN(W[c])) return null;
+  let w = 0, t = 0, all = 0; for (let h = 0; h < s.fs.COMBOS; h++) { if (!(f.mine[h] > 0)) continue; all += f.mine[h]; if (h === c || Number.isNaN(W[h]) || Number.isNaN(E[h]) || Math.abs(E[h] - E[c]) > 0.05) continue; w += f.mine[h]; t += f.mine[h] * W[h]; }
+  return w >= 0.03 * all ? { mine: W[c], others: t / w } : null;
+}
 
 /**
  * The analytical look at one hand: every hand type in the range with what it does and whether this
