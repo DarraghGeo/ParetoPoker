@@ -316,3 +316,22 @@ By pot type on the fuller tree: 4-bet pots 9.0 (9 spots), squeeze 11.4 (2), 3-be
 Both extensions earn their place: sizing is worth about 1.7 points and raising about 1.5. The loss is larger than on the simple tree because the opponent now has raises and sizes to use against a strategy that is still rough, not because the new formulas are wrong.
 
 **Where that leaves it.** In a tree that looks like poker the formulas give up 8 to 11% of the pot to an equilibrium opponent, and far more in 3-bet pots. That is a long way from good enough. The flop is no longer free (2.4%): facing a raise and choosing a size both cost there.
+
+## Hand selection or amounts: which one costs
+
+`play-full.mjs` with `VARIANT=oraclehands` and `VARIANT=oraclefreq`. The same eight 4-bet-pot flops on the tree with two sizes and a raise. At every decision the strategy is split in two: how much of the range takes each action, and which hands do. One part is taken from the formulas and the other from the solver.
+
+| How much of the range takes each action | Which hands take it | Gives up (mean / median / worst tenth) | Flop / turn / river |
+|---|---|---|---|
+| Formulas | Formulas | 8.1 / 5.6 / 15.5 | 2.7 / 1.8 / 3.5 |
+| Formulas | **Solver** | 6.3 / 5.3 / 8.9 | 2.9 / 1.5 / 1.9 |
+| **Solver** | Formulas (their picks first, then by equity) | **2.0 / 1.9 / 3.3** | 0.5 / 0.6 / 0.9 |
+| Solver | Solver | 0.1 | |
+
+- **Hand selection is the small part.** Giving the formulas the solver's own choice of hands takes the loss from 8.1 to 6.3. That is the most any hand-selection rule could recover, blockers and backdoor draws included.
+- **The amounts are the large part.** With the solver's amounts and nothing better than "strongest hands first, weakest hands fold", the strategy gives up 2.0% of the pot, on every street under 1%.
+- **So ordering hands by strength and equity is already good enough.** What is not good enough is how much of the range bets, raises and folds at each decision.
+
+This corrects the reading of the one-size test. There the flop looked free whatever the frequency; in a tree with raises and sizes, getting the amounts wrong is three quarters of the loss.
+
+**How the solver's amounts are taken.** At each decision the solver's strategy is applied to the range the formula player actually has there, and added up action by action. It is the range-level frequency, not a hand-by-hand copy; the hands are then chosen by the formulas. The ranges differ from the solver's own by then, so both oracle rows are approximate.

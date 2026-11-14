@@ -5,9 +5,9 @@
 //   node play-flop.mjs [spots] [seed]     -> out/play-flop.jsonl
 import { writeFileSync, appendFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
-import { treeOf } from '../../src/solver/flopsolve.js';
+import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/presets.js';
-import { acting, facing } from './formulas.mjs';
+import { acting, facing, fill } from './formulas.mjs';
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1];
 const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
 /** Writes strategies into a run's store: `probsOf(combo)` for one node on one board. */
@@ -27,7 +27,7 @@ function copySolved(solved, target, nodes, counts, player, rounds = [0, 1, 2]) {
  * written as they are worked out into each run of `live` ([{ write, players }]), since there are too many to keep.
  */
 const VARIANT = process.env.VARIANT ?? 'full';   // 'noraise': never raises; 'onesize': bets one size (the one nearest three quarters of the pot); 'plain': both
-function formulaStrategy(spot, nodes, live) {
+function formulaStrategy(spot, nodes, live, solved = null) {
   const R = spot.runouts; const ids = Array.from({ length: N }, (_, c) => c); const out = []; let count = 0;
   const start = [0, 1].map((p) => { const w = new Float64Array(N); const pl = spot.players[p]; Array.from(pl.combos).forEach((c, i) => { w[c] = pl.weights.length === N ? pl.weights[c] : pl.weights[i]; }); return w; });
   const walk = (id, board, bIndex, reach, expectFold) => {
@@ -61,6 +61,24 @@ function formulaStrategy(spot, nodes, live) {
         sized.forEach((y, j) => { passDown[y.a] = t.folds[j]; });
       }
     }
+    if (VARIANT === 'oraclehands' && solved && hands.length) {
+      // the formulas' amounts, the solver's choice of hands: each action keeps how much of the range the formulas gave it,
+      // and goes to the hands the solver plays it with most. What is left over is the part of the loss that is not selection.
+      const view = solved.strategyAt(id, bIndex); const row = new Map(Array.from(view.combos).map((c, i) => [c, i])); const passive = toCall > 0 ? kinds.indexOf('call') : kinds.indexOf('check');
+      const mass = kinds.map((_, a) => hands.reduce((t, c, i) => t + mine[c] * probs[i * k + a], 0)); const taken = new Float64Array(N); const next = new Float32Array(hands.length * k);
+      const order = kinds.map((_, a) => a).filter((a) => a !== passive).sort((x, y) => (kinds[y] === 'fold' ? -1 : addOf(y)) - (kinds[x] === 'fold' ? -1 : addOf(x)));   // the biggest wager first, folding last
+      for (const a of order) { const key = new Float64Array(N); for (const c of hands) { const i = row.get(c); key[c] = i == null ? 0 : -Math.round(view.probs[i * k + a] * 1e6) / 1e6; } const list = [...hands].sort((x, y) => key[x] - key[y]); const share = fill(list, mine, mass[a], taken, key); hands.forEach((c, i) => { next[i * k + a] = share[c]; taken[c] = Math.min(1, taken[c] + share[c]); }); }
+      hands.forEach((c, i) => { next[i * k + passive] = Math.max(0, 1 - taken[c]); }); probs.set(next);
+    }
+    if (VARIANT === 'oraclefreq' && solved && hands.length) {
+      // the mirror: the solver's amounts (what its strategy would do with this range, action by action), the formulas' choice
+      // of hands: each action goes first to the hands the formulas gave it, then on by equity (up for a wager, down for a fold)
+      const view = solved.strategyAt(id, bIndex); const row = new Map(Array.from(view.combos).map((c, i) => [c, i])); const passive = toCall > 0 ? kinds.indexOf('call') : kinds.indexOf('check'); const eq = equityVs(fs, board, mine, his);
+      const mass = kinds.map((_, a) => hands.reduce((t, c) => { const i = row.get(c); return t + mine[c] * (i == null ? 0 : view.probs[i * k + a]); }, 0)); const taken = new Float64Array(N); const next = new Float32Array(hands.length * k);
+      const order = kinds.map((_, a) => a).filter((a) => a !== passive).sort((x, y) => (kinds[y] === 'fold' ? -1 : addOf(y)) - (kinds[x] === 'fold' ? -1 : addOf(x)));
+      for (const a of order) { const key = new Float64Array(N); hands.forEach((c, i) => { const e1 = Number.isNaN(eq[c]) ? 0.5 : eq[c]; key[c] = -Math.round(probs[i * k + a] * 1e3) - (kinds[a] === 'fold' ? 1 - e1 : e1) * 0.999; }); const list = [...hands].sort((x, y) => key[x] - key[y]); const share = fill(list, mine, mass[a], taken, key); hands.forEach((c, i) => { next[i * k + a] = share[c]; taken[c] = Math.min(1, taken[c] + share[c]); }); }
+      hands.forEach((c, i) => { next[i * k + passive] = Math.max(0, 1 - taken[c]); }); probs.set(next);
+    }
     const rec = { node: id, board: bIndex, seat: p, round: n.round, ids: Int16Array.from(hands), probs, k };
     if (n.round < 2) out.push(rec); else for (const run of live) writeOne(run.write, rec, run.players);
     n.edges.forEach((edge, a) => { let any = false; const mineNext = new Float64Array(N); hands.forEach((c, i) => { const v = mine[c] * probs[i * k + a]; mineNext[c] = v; if (v > 0) any = true; }); if (!any && nodes[edge.child].kind !== 'decision') return; const next = [reach[0], reach[1]]; next[p] = mineNext; walk(edge.child, board, bIndex, next, passDown[a]); });
@@ -90,7 +108,7 @@ while (done < +count) {
   const row = { spot: `${p.action}-${p.oop}-${p.ip}`, action: p.action, board: board.join(''), spr: +(p.stack / p.pot).toFixed(1), solved: +ex.toFixed(3), copied: +lossOf(same).toFixed(3), boards: counts };
   // one walk writes the river into three runs: both seats on the formulas, and each seat alone against the solver
   const both = fresh(); const alone = [0, 1].map((seat) => { const run = fresh(); copySolved(solved, run, nodes, counts, 1 - seat); return run; });
-  const strategy = formulaStrategy(spot, nodes, [{ write: writer(both), players: [0, 1] }, { write: writer(alone[0]), players: [0] }, { write: writer(alone[1]), players: [1] }]);
+  const strategy = formulaStrategy(spot, nodes, [{ write: writer(both), players: [0, 1] }, { write: writer(alone[0]), players: [0] }, { write: writer(alone[1]), players: [1] }], solved);
   writeFormulas(both, strategy.early, [0, 1]); row.derived = +lossOf(both).toFixed(2); row.decisions = strategy.count;
   for (const seat of [0, 1]) {
     const tag = `derived_${seat ? 'ip' : 'oop'}`; writeFormulas(alone[seat], strategy.early, [seat]); row[tag] = +(2 * lossOf(alone[seat])).toFixed(2); row[`${tag}_eq`] = +(100 * (solved.ev(seat) - alone[seat].snapshot().ev(seat)) / pot).toFixed(2);
