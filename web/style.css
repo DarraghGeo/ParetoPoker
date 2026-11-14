@@ -387,5 +387,4 @@ header .board{min-width:0;flex:0 1 auto}
 .ladder .row{display:flex;flex-direction:column;gap:3px}
 .ladder .strip{height:30px}
 .ladder .strip .other{background:var(--ink);opacity:.28}
-.ladder .name{position:static;transform:none;color:var(--ink-2)}
-@media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}.ladder .name{transform:none}}
+@media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}}

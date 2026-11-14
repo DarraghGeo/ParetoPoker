@@ -408,20 +408,19 @@ function ladder(s, column) {
   const at = (k) => { let level = levels.get(k); if (!level) levels.set(k, level = { mine: [], his: [] }); return level; };
   for (const row of s.rows) at(key(row.hand.strength, row.equity)).mine.push(row);
   for (const v of d.villain) at(key(v.strength, v.equity)).his.push(v);
-  const top = []; const bottom = []; let mine = 0; let his = 0;
+  const top = []; const bottom = [];
   for (const k of [...levels.keys()].sort((a, b) => a - b)) {
     const level = levels.get(k);
     level.mine.sort((a, b) => (a.hand.name < b.hand.name ? -1 : 1));
-    mine += level.mine.length; his += level.his.length;
     for (let i = 0; i < Math.max(level.mine.length, level.his.length); i++) {
       const acting = level.mine[i] ? column(level.mine[i]) : '<span></span>';
       const waiting = level.his[i] ? `<span class="other" title="${esc(level.his[i].name)}"></span>` : '<span></span>';
       (d.seat === 'oop' ? top : bottom).push(acting); (d.seat === 'oop' ? bottom : top).push(waiting);
     }
   }
-  // each row is named outside its bars, above the top one and below the bottom one, so that no hand is covered
-  const name = (seat, count) => `<span class="name">${seat} ${count}</span>`; const bars = (cells) => `<div class="strip">${cells.join('')}</div>`;
-  return `<div class="row">${name('OOP', d.seat === 'oop' ? mine : his)}${bars(top)}</div><div class="row">${bars(bottom)}${name('IP', d.seat === 'oop' ? his : mine)}</div>`;
+  // no names on the rows: out of position is the top one, in position the bottom one
+  const bars = (cells, seat) => `<div class="row"><div class="strip" role="group" aria-label="${seat}">${cells.join('')}</div></div>`;
+  return bars(top, 'Out of position') + bars(bottom, 'In position');
 }
 /** The hands of the range to act, weakest first: the order of the strategy chart and of the equity curve above it. */
 const handsInOrder = (s) => [...s.rows].sort((a, b) => (a.hand.strength ?? 0) - (b.hand.strength ?? 0) || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
