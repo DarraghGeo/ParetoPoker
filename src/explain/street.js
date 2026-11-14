@@ -123,7 +123,7 @@ export function study(fs, solution, nodes, id, dealt = []) {
     }
     return nextCards;
   };
-  return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, spread, drawParts, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
+  return { fs, f, solution, dealt, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, spread, drawParts, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
 }
 
 /** One hand at a studied decision. `onlyOn`: measure only the actions on the path (the others cannot be relied on). */
@@ -316,10 +316,36 @@ const pts = (x) => `${Math.round(100 * x)}%`;
 const pot = (x) => (Math.abs(x) >= 3 ? `${Math.round(Math.abs(x))}%` : `${(Math.round(Math.abs(x) * 10) / 10).toFixed(1)}%`);
 const floorHalf = (x) => Math.floor(x * 2) / 2;
 
+/** How often, in a word. */
+const often = (x, verb) => (x >= 0.97 ? `always ${verb}` : x >= 0.85 ? `almost always ${verb}` : x >= 0.6 ? `mostly ${verb}` : x >= 0.4 ? `${verb} about half the time` : x >= 0.15 ? `sometimes ${verb}` : x >= 0.03 ? `rarely ${verb}` : `never ${verb}`);
+const listOf = (names) => (names.length <= 1 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
+/** One of his hands, named the way a player would name what he is blocking. */
+function hisName(x) {
+  if (x.made >= 6) return 'full houses'; if (x.made === 5) return 'flushes'; if (x.made === 4) return 'straights';
+  if (x.made === 3 && x.own > 0) return x.pocket ? 'sets' : 'trips'; if (x.own >= 2 || (x.made === 2 && x.own >= 1 && x.boardMade === 0)) return 'two pair';
+  if (x.own === 1) return x.pair === 'overpair' ? 'overpairs' : x.pair === 'top pair' ? 'top pair' : 'weaker pairs';
+  if (x.flushOuts >= 8) return 'flush draws'; if (x.straightOuts >= 4) return 'straight draws';
+  return 'unpaired hands';
+}
+/** Which of his hands this hand's cards take away, among those that continue against a bet and those that fold to it. */
+function blocked(s, a, c) {
+  const { fs, f } = s; if (!s.solution) return null;
+  const s2 = study(fs, s.solution, f.nodes, f.node.edges[a].child, s.dealt ?? []); if (!s2) return null;
+  const fold = s2.f.node.edges.findIndex((e) => e.kind === 'fold'); const A = fs.COMBO_CARDS[2 * c]; const B = fs.COMBO_CARDS[2 * c + 1];
+  const cont = new Map(); const gone = new Map(); let contAll = 0, foldAll = 0;
+  for (let v = 0; v < fs.COMBOS; v++) {
+    const w = s2.f.mine[v]; if (!(w > 0)) continue; const x = fs.COMBO_CARDS[2 * v]; const y = fs.COMBO_CARDS[2 * v + 1]; if (x !== A && x !== B && y !== A && y !== B) continue;
+    const p = fold >= 0 ? s2.sigma(v, fold) : 0; const name = hisName(s2.featuresOf(v));
+    cont.set(name, (cont.get(name) ?? 0) + w * (1 - p)); gone.set(name, (gone.get(name) ?? 0) + w * p); contAll += w * (1 - p); foldAll += w * p;
+  }
+  const top = (map, all) => [...map.entries()].filter(([, w]) => all > 0 && w / all >= 0.2).sort((p, q) => q[1] - p[1]).slice(0, 2).map(([n]) => n);
+  return { continues: top(cont, contAll), folds: top(gone, foldAll) };
+}
+
 /**
- * One hand explained. Returns `{ name, strategy, line, reasons, claims, silent }`:
- * `line` is what the hand is; `reasons` the paragraphs, each built from claims that passed the
- * gates; `silent` says why nothing more is said when the decision is not one the proof covers.
+ * The explanation of one hand at a flop, turn or river decision: what it does and why, in plain words. Each reason has
+ * its `text`, and where numbers stand behind it a `detail` that carries them. Conclusions are drawn only inside the
+ * proven gates; `silent` says why nothing more is said when the decision is not one the proof covers.
  */
 export function explainStreet(s, m, T) {
   if (!m) return null;
@@ -330,17 +356,20 @@ export function explainStreet(s, m, T) {
   // Where the line is hardly ever taken the solution was never trained, and nothing is said.
   const proven = !!T;
   if (!T && (Math.min(...s.lineReach) < RARE || m.equity == null)) {
-    return { name: m.name, strategy, line: `You have ${what}.`, reasons, claims: [], silent: 'This line is taken too rarely for the solution to be settled on it, so nothing more is said.' };
+    return { name: m.name, strategy, line: `You have ${what}.`, detail: null, reasons, claims: [], silent: 'This line is taken too rarely for the solution to be settled on it, so nothing more is said.' };
   }
   if (!T) T = NUMBERS_ONLY;
   const made = claims(s, m, T);
-  const label = (i) => m.actions[i].label;
+  // an action in words: checking, calling, the 33% bet, raising
+  const raises = m.actions.filter((x) => x.kind === 'raise').length;
+  const label = (i) => { const x = m.actions[i]; const n = /\d+/.exec(x.label)?.[0]; return x.kind === 'check' ? 'checking' : x.kind === 'call' ? 'calling' : x.kind === 'fold' ? 'folding' : x.kind === 'allin' ? 'going all in' : x.kind === 'raise' ? (raises > 1 ? `raising (${x.label})` : 'raising') : n ? `the ${n}% bet` : 'betting'; };
   const facing = s.toCall > 0;
   const street = s.f.board.length === 3 ? 'the turn and river still to come' : s.f.board.length === 4 ? 'the river still to come' : 'no cards to come';
   const river = s.f.board.length === 5;
-  // on the river equity is simply how much of his range the hand beats; and a bet names its own price
-  let line = river ? `You have ${what}. It beats ${pts(m.equity)} of the range he has here.` : `You have ${what}. With ${street} it has ${pts(m.equity)} equity against the range he has here.`;
-  if (river && facing) line += ` He has bet ${Math.round(s.toCall)} into ${Math.round(s.pot - s.toCall)}, so a call has to win ${pts(s.toCall / (s.pot + s.toCall))} of the time.`;
+  // the numbers behind the first line: on the river equity is simply how much of his range the hand beats, and a bet names its own price
+  let detail = river ? `It beats ${pts(m.equity)} of the range he has here.` : `With ${street} it has ${pts(m.equity)} equity against the range he has here.`;
+  if (river && facing) detail += ` He has bet ${Math.round(s.toCall)} into ${Math.round(s.pot - s.toCall)}, so a call has to win ${pts(s.toCall / (s.pot + s.toCall))} of the time.`;
+  let line = `You have ${what}.`;
   const taken = m.actions.map((a, i) => i).filter((i) => m.actions[i].sigma >= TAKES).sort((x, y) => m.actions[y].sigma - m.actions[x].sigma);
   const passiveName = facing ? 'calling' : 'checking';
   // ---- the answer first: what the hand does, and what kind of play that is ----
@@ -363,20 +392,20 @@ export function explainStreet(s, m, T) {
     const doing = facing ? 'continue' : 'bet'; const nr = m.near; const floor = nr ? 0.02 * nr.all : 0;
     // its own type against the rest; or, when there are too few of its type to speak of, draws against the hands without one
     let kind = null;
-    if (nr && nr.same.weight >= floor && nr.rest.weight >= floor && Math.abs(nr.same.move - nr.rest.move) >= 0.2) kind = { group: TYPES[nr.type] ?? nr.type, mine: nr.same.move, theirs: nr.rest.move, rest: 'the rest' };
+    if (nr && nr.same.weight >= floor && nr.rest.weight >= floor && Math.abs(nr.same.move - nr.rest.move) >= 0.2) kind = { group: TYPES[nr.type] ?? `hands with ${nr.type.replace(' + backdoor flush', ' and a backdoor flush draw')}`, mine: nr.same.move, theirs: nr.rest.move, rest: 'the rest' };
     else if (nr && nr.draw && nr.draws.weight > 0 && nr.others.weight >= floor && Math.abs(nr.draws.move - nr.others.move) >= 0.2) kind = { group: 'the draws', mine: nr.draws.move, theirs: nr.others.move, rest: 'the hands without a draw' };
     else if (nr && !nr.draw && m.features.own === 0 && !river && nr.draws.weight >= floor && nr.others.weight > 0 && Math.abs(nr.draws.move - nr.others.move) >= 0.2) kind = { group: 'the hands without a draw', mine: nr.others.move, theirs: nr.draws.move, rest: 'the draws' };
     if (kind) {
       const more = kind.mine > kind.theirs; const outs = m.features.flushOuts + m.features.straightOuts; const isDraw = nr.draw;
-      let text = `What sets it apart: in this solution, among your hands of about this strength, ${kind.group} ${doing} ${pts(kind.mine)} of the time and ${kind.rest} ${doing} ${pts(kind.theirs)}.`;
-      if (!facing && more && isDraw && outs > 0) text += ` A draw has two ways to win: he folds now, or one of its ${outs} outs comes.`;
+      let text = `Among your hands of about this strength, ${kind.group} ${doing} ${more ? 'more' : 'less'} often than ${kind.rest}.`;
+      if (!facing && more && isDraw && outs > 0) text += ' A draw has two ways to win: he folds now, or it gets there.';
       else if (!facing && !more && !isDraw && !river && m.features.own === 0) text += ' It has no draw: when a bet is called it has almost nothing to improve to, so the draws do the betting at this strength.';
       else if (!facing && !more && river && m.features.own >= 1) text += ' A pair still wins some showdowns when checked; the hands with nothing at all do the bluffing.';
       else if (!facing && more && river && m.features.own === 0) text += ' It has no showdown value to protect.';
-      else if (facing && more && isDraw && outs > 0) text += ` It can still make the best hand: ${outs} outs.`;
-      reasons.push({ id: 'type', text });
+      else if (facing && more && isDraw && outs > 0) text += ' It can still make the best hand.';
+      reasons.push({ id: 'type', text, detail: `In this solution ${kind.group} ${doing} ${pts(kind.mine)} of the time and ${kind.rest} ${pts(kind.theirs)}.${isDraw && outs > 0 ? ` This hand has ${outs} outs.` : ''}` });
     }
-    // its cards: how often he folds to this hand, against the weak hands around it (a number of this solution)
+    // its cards: whose hands they take away, and so how often he folds to this hand against the weak hands around it
     const bets = m.actions.map((x, i) => i).filter((i) => m.actions[i].on && m.actions[i].folds != null && !['check', 'call', 'fold'].includes(m.actions[i].kind));
     if (bets.length && m.equity < 0.25) {
       const main = bets.sort((x, y) => m.actions[y].freq - m.actions[x].freq)[0];
@@ -384,7 +413,12 @@ export function explainStreet(s, m, T) {
       if (fold) {
         let w = 0, t = 0; for (let c = 0; c < eq.length; c++) if (s.f.mine[c] > 0 && eq[c] < 0.25 && !Number.isNaN(fold[c])) { w += s.f.mine[c]; t += s.f.mine[c] * fold[c]; }
         const avg = w > 0 ? t / w : null; const mine = m.actions[main].folds;
-        if (avg != null && Math.abs(mine - avg) >= 0.015) reasons.push({ id: 'cards-held', text: mine > avg ? `Its cards help: he folds ${pts(mine)} to ${label(main)} against this hand, and ${pts(avg)} against your weak hands on average. It holds cards his calling hands need.` : `Its cards work against it: he folds ${pts(mine)} to ${label(main)} against this hand, and ${pts(avg)} against your weak hands on average. It holds cards his folding hands need.` });
+        if (avg != null && Math.abs(mine - avg) >= 0.015) {
+          const helps = mine > avg; const b = blocked(s, main, m.combo); const names = b ? (helps ? b.continues : b.folds) : [];
+          const text = helps ? (names.length ? `It blocks hands that would continue: his ${listOf(names)}. So he folds more often to this hand.` : 'Its cards help: he folds more often to this hand than to your other weak hands.')
+            : (names.length ? `It blocks hands that would fold: his ${listOf(names)}. So he folds less often to this hand.` : 'Its cards work against it: he folds less often to this hand than to your other weak hands.');
+          reasons.push({ id: 'cards-held', text, detail: `He folds ${pts(mine)} to ${label(main)} against this hand, and ${pts(avg)} against your weak hands on average.` });
+        }
       }
     }
   }
@@ -399,39 +433,44 @@ export function explainStreet(s, m, T) {
       const g = mine.reduce((b, x, i) => (Math.abs(x - theirs[i]) > Math.abs(mine[b] - theirs[b]) ? i : b), 0); const gap = Math.abs(mine[g] - theirs[g]);
       const verb = groups[g][2]; const other = `${tw.several ? 'such as ' : ''}${pretty(tw.name)}`;
       const dWorth = tw.worth != null && tw.mineWorth != null ? tw.mineWorth - tw.worth : null; const dEq = m.equity - tw.eq;
-      const value = dWorth != null && Math.abs(dWorth) >= 1 ? ` The draw gives it ${pts(Math.abs(dEq))} ${dEq >= 0 ? 'more' : 'less'} equity, and in this solution makes it worth ${pot(dWorth)} of the pot ${dWorth >= 0 ? 'more' : 'less'}.` : '';
-      if (gap >= 0.15) reasons.push({ id: 'twin', text: tw.have ? `Its twin: the same hand without the ${tw.draw} (${other}) ${verb} ${pts(theirs[g])} of the time here, and this one ${pts(mine[g])}. Nothing else differs between them, so the ${tw.draw} is the reason.${value}` : `Its twin: the same hand with a ${tw.draw} (${other}) ${verb} ${pts(theirs[g])} of the time here, and this one ${pts(mine[g])}. Nothing else differs between them: the draw is what this hand lacks.${value.replace('The draw gives it', 'Without it this hand has').replace('makes it worth', 'is worth')}` });
-      else if (tw.have && dWorth != null && dWorth >= 2) reasons.push({ id: 'twin', text: `Its twin: the same hand without the ${tw.draw} (${other}) plays about the same way here.${value}` });
+      const value = dWorth != null ? ` This hand has ${pts(Math.abs(dEq))} ${dEq >= 0 ? 'more' : 'less'} equity and is worth ${pot(dWorth)} of the pot ${dWorth >= 0 ? 'more' : 'less'}.` : '';
+      const numbers = `In this solution the twin ${verb} ${pts(theirs[g])} of the time and this hand ${pts(mine[g])}.${value}`;
+      if (gap >= 0.15) reasons.push({ id: 'twin', detail: numbers, text: tw.have ? `The ${tw.draw} is the reason. The same hand without it (${other}) ${often(theirs[g], verb)} here, and this one ${often(mine[g], verb)}. Nothing else differs between them.` : `It lacks a ${tw.draw}. The same hand with one (${other}) ${often(theirs[g], verb)} here, and this one ${often(mine[g], verb)}. Nothing else differs between them.` });
+      else if (tw.have && dWorth != null && dWorth >= 2) reasons.push({ id: 'twin', detail: numbers, text: `The ${tw.draw} does not change how it plays here, but it makes the hand worth more than the same hand without it (${other}).` });
     }
     // what the hand is worth against your other hands of the same equity: equity that can improve wins more than equity that cannot
     const w = worthAround(s, m.combo);
     if (w && Math.abs(w.mine - w.others) >= 3) {
       const less = w.mine < w.others; const x = m.features; const drawn = x.draw != null;
-      const why = less && !drawn && x.own === 0 ? ' Its equity is showdown equity: it wins the small pots that get checked down and has little to improve to.' : less && x.pocket && (x.pair === 'underpair' || x.pair === 'middle pair') ? ' A pocket pair that is not an overpair has only two cards that improve it.' : !less && drawn ? ' A draw wins a bigger pot when it comes in than a made hand of the same equity wins.' : '';
-      reasons.push({ id: 'worth', text: `In this solution it is worth ${pot(w.mine - w.others)} of the pot ${less ? 'less' : 'more'} than your other hands with about the same equity.${why}` });
+      const text = less && !drawn && x.own === 0 ? 'Its equity is showdown equity: it wins the small pots that get checked down and has little to improve to. So it is worth less than its equity suggests.'
+        : less && x.pocket && (x.pair === 'underpair' || x.pair === 'middle pair') ? 'A pocket pair that is not an overpair has only two cards that improve it. So it is worth less than its equity suggests.'
+          : !less && drawn ? 'A draw wins a bigger pot when it comes in than a made hand of the same equity wins. So it is worth more than its equity suggests.'
+            : `It is worth ${less ? 'less' : 'more'} than your other hands of about the same equity.`;
+      reasons.push({ id: 'worth', text, detail: `In this solution it is worth ${pot(w.mine - w.others)} of the pot ${less ? 'less' : 'more'} than your other hands within five points of its equity.` });
     }
   }
   // ---- why this hand: where it sits in your range, and what that part of the range does ----
   if (m.bands && m.band >= 0) {
     const NAME = ['the weakest fifth', 'the second-weakest fifth', 'the middle fifth', 'the second-strongest fifth', 'the strongest fifth'];
-    const doing = facing ? 'continues against the bet' : 'bets';
+    const doing = facing ? 'continues' : 'bets';
     const mine = m.bands[m.band]; const role = made.find((c) => c.kind === 'role');
-    let text = `Where it sits: in ${NAME[m.band]} of the hands you get here with. As a group that fifth ${doing} ${pts(mine.move)} of the time.`;
+    let text = `It sits in ${NAME[m.band]} of your range here, which ${often(mine.move, doing)}.`; let numbers = `As a group that fifth ${doing} ${pts(mine.move)} of the time.`;
     if (role) {
       const other = m.bands[role.other];
-      text += ` ${NAME[role.other].replace(/^t/, 'T')} ${doing} ${pts(other.move)}.`;
+      text += ` ${NAME[role.other].replace(/^t/, 'T')} ${often(other.move, doing)}.`;
+      numbers += ` ${NAME[role.other].replace(/^t/, 'T')} ${doing} ${pts(other.move)}. Those hands beat ${pts(other.eq)} of ${facing ? 'what he bets' : 'his range'} on average and this one ${pts(m.equity)}.`;
       // what separates the two groups is how much of his range each beats
       const weakSide = role.band < role.other; const own = m.actions.reduce((t, x) => t + ((facing ? x.kind !== 'fold' : !['check', 'call', 'fold'].includes(x.kind)) ? x.sigma : 0), 0);
       const along = role.more ? own >= 0.25 : own <= 0.75;
       if (!along) text += ' This hand goes the other way from its part of the range.';
-      else if (!facing && role.more && weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it has the least to lose by betting, which is why the bluffs come from down here.`;
-      else if (!facing && role.more && !weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it is strong enough to be paid by worse, which they are not.`;
-      else if (!facing && !role.more && weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: not enough to bet for value the way they do.`;
-      else if (!facing && !role.more && !weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it wins too often at showdown to be turned into a bluff the way they are.`;
-      else if (facing && role.more) text += ` Those hands beat ${pts(other.eq)} of what he bets on average; this one beats ${pts(m.equity)}.`;
-      else if (facing) text += ` Those hands beat ${pts(other.eq)} of what he bets on average; this one beats only ${pts(m.equity)}.`;
+      else if (!facing && role.more && weakSide) text += ' It has the least to lose by betting, which is why the bluffs come from down here.';
+      else if (!facing && role.more && !weakSide) text += ' It is strong enough to be paid by worse hands, which they are not.';
+      else if (!facing && !role.more && weakSide) text += ' It is not strong enough to bet for value the way they do.';
+      else if (!facing && !role.more && !weakSide) text += ' It wins too often at showdown to be turned into a bluff the way they are.';
+      else if (facing && role.more) text += ' It beats more of what he bets than they do.';
+      else if (facing) text += ' It beats less of what he bets than they do.';
     }
-    reasons.push({ id: 'role', text });
+    reasons.push({ id: 'role', text, detail: numbers });
   }
   const passive = m.actions.findIndex((x) => x.on && x.worth != null && (x.kind === 'check' || x.kind === 'call'));
   const passiveIdx = passive >= 0 ? passive : null;
@@ -439,13 +478,17 @@ export function explainStreet(s, m, T) {
   for (const i of taken) {
     const folds = made.find((c) => c.kind === 'folds' && c.a === i); if (!folds) continue;
     const needs = made.find((c) => c.kind === 'needs' && c.a === i); const builds = made.find((c) => c.kind === 'builds' && c.a === i);
-    let text = `${label(i)}: he folds ${pts(folds.value)} of the time against this hand.`;
+    let text; let numbers = `He folds ${pts(folds.value)} of the time to ${label(i)} against this hand.`;
     // what is compared: the hand's expectation over the times he continues, with its expectation by the passive action over everything he holds
-    if (needs) text += ` The times he does not fold are worth less to you than ${passiveName} is overall, by ${pot(needs.by)} of the pot, so the bet earns its keep through the times he folds.`;
-    else if (builds) text += ` Even the times he does not fold are worth more to you than ${passiveName} is overall, by ${pot(builds.by)} of the pot: the bet does not depend on his folding.`;
-    else if (passiveIdx != null && m.actions[i].whenContinued != null && m.actions[i].continues >= 0.05) { const d = m.actions[i].whenContinued - m.actions[passiveIdx].worth; text += ` In this solution the times he does not fold are worth ${pot(d)} of the pot ${d >= 0 ? 'more' : 'less'} to you than ${passiveName} is overall.`; }
-    if (m.actions[i].aheadWhenCalled != null) text += ` When he calls you are ahead ${pts(m.actions[i].aheadWhenCalled)} of the time.`;
-    reasons.push({ id: needs ? 'needs' : builds ? 'builds' : 'folds', text });
+    const strong = m.actions[i].aheadWhenCalled != null ? m.actions[i].aheadWhenCalled >= 0.5 : m.equity >= 0.5;
+    if (needs) { text = strong ? `${label(i)} earns from his folds as well as his calls.` : `${label(i)} works because he folds. When he does not, you are worse off than by ${passiveName}.`; numbers += ` The times he does not fold are worth ${pot(needs.by)} of the pot less than ${passiveName} is overall.`; }
+    else if (builds) { text = `${label(i)} does not need him to fold. Even when he continues, you do better than by ${passiveName}.`; numbers += ` The times he does not fold are worth ${pot(builds.by)} of the pot more than ${passiveName} is overall.`; }
+    else {
+      text = `He ${often(folds.value, 'folds')} to ${label(i)} against this hand.`;
+      if (passiveIdx != null && m.actions[i].whenContinued != null && m.actions[i].continues >= 0.05) { const d = m.actions[i].whenContinued - m.actions[passiveIdx].worth; numbers += ` In this solution the times he does not fold are worth ${pot(d)} of the pot ${d >= 0 ? 'more' : 'less'} than ${passiveName} is overall.`; }
+    }
+    if (m.actions[i].aheadWhenCalled != null) { text += m.actions[i].aheadWhenCalled >= 0.5 ? ' When he calls you are usually ahead.' : ' When he calls you are usually behind.'; numbers += ` When he calls you are ahead ${pts(m.actions[i].aheadWhenCalled)} of the time.`; }
+    reasons.push({ id: needs ? 'needs' : builds ? 'builds' : 'folds', text, detail: numbers });
   }
   // a hand that does not bet: what the range's main bet would have met, as this solution's numbers
   if (!taken.some((i) => m.actions[i].folds != null && m.actions[i].kind !== 'check' && m.actions[i].kind !== 'call')) {
@@ -453,7 +496,8 @@ export function explainStreet(s, m, T) {
     const main = bets.sort((x, y) => m.actions[y].freq - m.actions[x].freq)[0];
     if (main != null && passiveIdx != null && m.actions[main].whenContinued != null && m.actions[main].continues >= 0.05) {
       const d = m.actions[main].whenContinued - m.actions[passiveIdx].worth;
-      reasons.push({ id: 'unbet', text: `In this solution, had it made the bet the range makes most, ${label(main)}, he would fold ${pts(m.actions[main].folds)} of the time, and the times he did not would be worth ${pot(d)} of the pot ${d >= 0 ? 'more' : 'less'} to you than ${passiveName} is overall.` });
+      reasons.push({ id: 'unbet', text: d >= 0 ? `Had it bet, it would still do well when he continued: ${passiveName} here is a choice, not a need.` : `Had it bet, the times he continued would leave it worse off than ${passiveName}.`,
+        detail: `In this solution, to ${label(main)} (the bet the range makes most) he would fold ${pts(m.actions[main].folds)} of the time, and the times he did not would be worth ${pot(d)} of the pot ${d >= 0 ? 'more' : 'less'} than ${passiveName} is overall.` });
     }
   }
   // a call: which cards it is for
@@ -462,8 +506,8 @@ export function explainStreet(s, m, T) {
     const each = (part, weight) => (weight > 0 ? part / weight : 0);
     const up = c.liftSure ? `when one of the ${c.n} cards that improve the hand comes (${pts(c.liftWeight)} of the time) it is ${pot(each(c.lift, c.liftWeight))} of the pot ${c.lift > 0 ? 'better' : 'worse'} off` : '';
     const down = c.restSure ? `on the other ${c.others} cards it is ${pot(each(c.rest, c.restWeight))} ${c.rest > 0 ? 'better' : 'worse'} off` : '';
-    const moral = c.liftSure && c.restSure ? (c.lift > 0 && c.rest < 0 ? ' The call is for those cards.' : c.lift > 0 && c.rest > 0 ? ' The call pays whether or not it improves.' : '') : '';
-    reasons.push({ id: 'cards', text: `${label(c.a)}, set against folding: ${[up, down].filter(Boolean).join(', and ')}.${moral}` });
+    const text = c.liftSure && c.restSure ? (c.lift > 0 && c.rest < 0 ? `${label(c.a)} is for the cards that improve it: on the others it would rather have folded.` : c.lift > 0 && c.rest > 0 ? `${label(c.a)} pays whether or not the hand improves.` : `${label(c.a)}, set against folding, depends on the card that comes.`) : `${label(c.a)}, set against folding, depends on the card that comes.`;
+    reasons.push({ id: 'cards', text, detail: `${label(c.a)}, set against folding: ${[up, down].filter(Boolean).join(', and ')}.` });
   }
   // what it mixes
   const same = made.filter((x) => x.kind === 'same');
@@ -472,23 +516,25 @@ export function explainStreet(s, m, T) {
     const set = [...new Set(same.flatMap((c) => [c.a, c.b]))].sort((x, y) => x - y);
     const whole = same.length === (set.length * (set.length - 1)) / 2;
     const list = (ids) => (ids.length === 2 ? `${label(ids[0])} and ${label(ids[1])}` : `${ids.slice(0, -1).map(label).join(', ')} and ${label(ids[ids.length - 1])}`);
-    if (whole) reasons.push({ id: 'same', text: `${list(set)} earn the same with this hand, to within ${pot(Math.max(...same.map((c) => c.within)))} of the pot, so it can do ${set.length === 2 ? 'either' : 'any of them'}.` });
-    else for (const c of same) reasons.push({ id: 'same', text: `${list([c.a, c.b])} earn the same with this hand, to within ${pot(c.within)} of the pot.` });
+    if (whole) reasons.push({ id: 'same', text: `${list(set)} earn the same with this hand, so it can do ${set.length === 2 ? 'either' : 'any of them'}.`, detail: `To within ${pot(Math.max(...same.map((c) => c.within)))} of the pot.` });
+    else for (const c of same) reasons.push({ id: 'same', text: `${list([c.a, c.b])} earn the same with this hand.`, detail: `To within ${pot(c.within)} of the pot.` });
   }
   // what it does not do, and what that would cost
-  for (const c of made.filter((x) => x.kind === 'worse')) reasons.push({ id: 'worse', text: `${label(c.a)} is worse with this hand: against his strategy in this solution it gives up ${pot(c.gap)} of the pot${m.actions[c.a].sigma >= TAKES ? `, though this solution still plays it ${pts(m.actions[c.a].sigma)} of the time` : ''}.` });
-  // numbers where no conclusion is drawn: what this solution has, said as that
+  for (const c of made.filter((x) => x.kind === 'worse')) reasons.push({ id: 'worse', text: `${label(c.a)} is worse with this hand${m.actions[c.a].sigma >= TAKES ? ', though this solution still plays it sometimes' : ''}.`, detail: `Against his strategy in this solution it gives up ${pot(c.gap)} of the pot${m.actions[c.a].sigma >= TAKES ? `; it is played ${pts(m.actions[c.a].sigma)} of the time` : ''}.` });
+  // where no conclusion is drawn: what this solution has, said as that
   {
     const on = m.actions.map((x, i) => (x.on && x.worth != null ? i : -1)).filter((i) => i >= 0);
     const best = on.reduce((b, i) => (b < 0 || m.actions[i].worth > m.actions[b].worth ? i : b), -1);
     for (const i of on) {
       if (i === best || made.some((c) => (c.kind === 'worse' && c.a === i) || (c.kind === 'same' && (c.a === i || c.b === i)))) continue;
       const gap = m.actions[best].worth - m.actions[i].worth;
-      if (gap < 0.25) { reasons.push({ id: 'level', text: `In this solution ${label(i)} and ${label(best)} come out level with this hand.` }); continue; }
-      reasons.push({ id: 'behind', text: m.actions[i].sigma >= TAKES ? `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}, and the hand still does both.` : `In this solution ${label(i)} comes out ${pot(gap)} of the pot behind ${label(best)}${proven ? ': too close to call it worse' : ''}.` });
+      if (gap < 0.25) { reasons.push({ id: 'level', text: `${label(i)} and ${label(best)} come out level with this hand.`, detail: 'In this solution, to within a quarter of a percent of the pot.' }); continue; }
+      reasons.push({ id: 'behind', text: m.actions[i].sigma >= TAKES ? `${label(i)} comes out a little behind ${label(best)}, and the hand still does both.` : `${label(i)} comes out behind ${label(best)}${proven ? ', but too close to call it worse' : ''}.`, detail: `By ${pot(gap)} of the pot in this solution.` });
     }
   }
-  return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: see the proof file for which decisions those are.' };
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  for (const r of reasons) { r.text = cap(r.text); if (r.detail) r.detail = cap(r.detail); }
+  return { name: m.name, strategy, line, detail, reasons, claims: made, silent: proven ? null : 'These are this solution\'s own numbers. Conclusions are drawn only where they have been proven to carry over.' };
 }
 
 

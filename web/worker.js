@@ -165,7 +165,7 @@ self.onmessage = async ({ data }) => {
       const T = st.f.round === 0 ? tolerance(street, current.exploit, st.lineReach) : tolerance(`${street} after a deal`, current.exploit, st.lineReach);
       const m = measure(st, data.combo, { worth: !!T || Math.min(...st.lineReach) >= RARE });
       const told = explainStreet(st, m, T);
-      self.postMessage({ type: 'told', job: data.job, id: data.id, combo: data.combo, told: told && { name: told.name, strategy: told.strategy, line: told.line, reasons: told.reasons, silent: told.silent } });
+      self.postMessage({ type: 'told', job: data.job, id: data.id, combo: data.combo, told: told && { name: told.name, strategy: told.strategy, line: told.line, detail: told.detail, reasons: told.reasons, silent: told.silent } });
     } catch (error) {
       self.postMessage({ type: 'told', job: data.job, id: data.id, combo: data.combo, told: null, error: String(error?.message ?? error) });
     }

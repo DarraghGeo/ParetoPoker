@@ -460,6 +460,8 @@ function hisEquity(s, v) {
   for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); }
   return mass > 0 ? win / mass : 0;
 }
+/** A sentence of the explanation; the numbers behind it, where there are any, open under it on a tap. */
+const said = (text, detail, cls) => (detail ? `<p class="${cls}" data-more tabindex="0" role="button" aria-expanded="false" title="${esc(detail)}"><span class="t">${esc(text)}</span><small>${esc(detail)}</small></p>` : `<p${cls ? ` class="${cls}"` : ''}>${esc(text)}</p>`);
 function renderWhy() {
   const s = state.survey; const row = s?.byName.get(state.hand);
   // before the river there is the hand and what it does; the reasons are a river matter for now
@@ -468,7 +470,7 @@ function renderWhy() {
   if (told && row) {
     // the reasons come from the worker: asked for once a hand, shown when they arrive
     const key = `${state.node}|${state.dealt.join(' ')}|${row.hand.id}`; const got = state.told.get(key);
-    if (got) told = { ...told, line: got.line, reasons: got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : got.reasons };
+    if (got) told = { ...told, line: got.line, detail: got.detail, reasons: got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : got.reasons };
     else { told = { ...told, reasons: [{ text: 'Working out the reasons\u2026', quiet: true }] }; if (!state.asked.has(key) && !state.scrub) { state.asked.add(key); worker.postMessage({ type: 'explain', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); } }
   }
   if (!told) { rangeWhy(); return; }
@@ -480,7 +482,7 @@ function renderWhy() {
   $('why').innerHTML = `<h2>${title}</h2>`
     + `<div class="mix"><span class="bar">${bar(told.strategy, strata)}</span><div class="nums">${d.actions.map((a, k) => (told.strategy[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(told.strategy[k])}</span>` : '')).join('')}</div></div>`
     + `<div class="seg tabs" role="tablist"><button type="button" role="tab" data-tab="why" aria-selected="${state.tab === 'why'}" aria-pressed="${state.tab === 'why'}">Why</button><button type="button" role="tab" data-tab="look" aria-selected="${state.tab === 'look'}" aria-pressed="${state.tab === 'look'}">Analysis</button></div>`
-    + (state.tab === 'look' ? lookHtml(row, strata) : (told.line ? `<p class="lead">${esc(told.line)}</p>` : '') + reasons.map((r) => `<p${r.quiet ? ' class="quiet"' : ''}>${esc(r.text)}</p>`).join(''));
+    + (state.tab === 'look' ? lookHtml(row, strata) : (told.line ? said(told.line, told.detail, 'lead') : '') + reasons.map((r) => said(r.text, r.detail, r.quiet ? 'quiet' : '')).join(''));
 }
 /** No hand picked: the range to act, what it does, and the two ranges set side by side. */
 function rangeWhy() {
@@ -525,10 +527,11 @@ function lookHtml(row, strata) {
   return html;
 }
 $('why').addEventListener('click', (ev) => {
+  const more = ev.target.closest('[data-more]'); if (more) { const open = more.classList.toggle('open'); more.setAttribute('aria-expanded', String(open)); return; }
   const tag = ev.target.closest('[data-tag]'); if (tag) { openGroup(tag.dataset.tag); return; }
   const b = ev.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; renderWhy();
 });
-$('why').addEventListener('keydown', (ev) => { const tag = ev.target.closest?.('[data-tag]'); if (tag && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openGroup(tag.dataset.tag); } });
+$('why').addEventListener('keydown', (ev) => { const more = ev.target.closest?.('[data-more]'); if (more && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); more.click(); return; } const tag = ev.target.closest?.('[data-tag]'); if (tag && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openGroup(tag.dataset.tag); } });
 // ---- every hand that carries a name: a drawer, strongest first, each with what it does ----
 function openGroup(name) {
   const s = state.survey; if (!s) return;

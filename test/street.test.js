@@ -89,7 +89,7 @@ test('river: how often the hand is ahead when called, read off the bet\'s worth,
   // and the river line names the price when a bet is faced
   const facing = study(fs, sol, tree, tree[0].edges[bet].child); const T = tolerance('river', 0.005, [1, 1]);
   const one = [...Array(fs.COMBOS).keys()].map((c) => measure(facing, c)).find(Boolean);
-  assert.match(explainStreet(facing, one, T).line, /He has bet 50 into 100, so a call has to win 25% of the time\./);
+  assert.match(explainStreet(facing, one, T).detail, /He has bet 50 into 100, so a call has to win 25% of the time\./);
 });
 
 test('numbers: equity is the brute-force count, his fold frequency is the count over his hands, card weights add to one', async () => {

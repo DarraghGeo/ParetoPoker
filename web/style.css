@@ -410,3 +410,10 @@ header .board{min-width:0;flex:0 1 auto}
 .presets .said{margin:2px 0 0;font:400 12px/17px var(--sans);color:var(--ink-3);text-wrap:pretty}
 .seatpick{width:min(340px,calc(100vw - 24px));padding:14px}
 .presets .seg button.far{color:var(--ink-3);opacity:.55}
+
+/* a sentence with numbers behind it: they open under it on a tap */
+.why p[data-more]{cursor:pointer}
+.why p[data-more] .t::after{content:' \22EF';color:var(--ink-3)}
+.why p[data-more].open .t::after{content:''}
+.why p small{display:none;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-3)}
+.why p.open small{display:block}
