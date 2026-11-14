@@ -338,3 +338,17 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .logo{display:flex;flex:none;border-radius:5px}
 .logo .mark,.home h1 .mark{display:block;border-radius:5px}
 .home h1{display:flex;align-items:center;gap:14px}
+
+/* the hands that carry one name */
+.types li[data-tag]{cursor:pointer}
+.types li[data-tag]:hover .tname{text-decoration:underline;text-underline-offset:3px}
+.group{gap:14px}
+.group:focus{outline:none}
+.g-head{display:flex;flex-direction:column;gap:2px}
+.g-head h3{margin:0;font:500 20px/24px var(--sans);text-transform:none;letter-spacing:0;color:var(--ink)}
+.g-head span{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.group .mix .bar{height:8px}
+.g-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:4px}
+.g-list button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
+.g-list button[aria-pressed="true"]{border-color:var(--ink)}
+.g-list button span:first-child{display:flex;gap:3px}

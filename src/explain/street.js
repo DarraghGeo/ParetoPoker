@@ -81,7 +81,7 @@ export function study(fs, solution, nodes, id, dealt = []) {
     for (const k of kinds.values()) { k.eq /= k.weight; k.mix = k.mix.map((x) => x / k.weight); k.share = k.weight / all; }
     // every name that fits each hand (a hand can carry several): how much of the range has it, and what those hands do
     const tagsFor = new Array(N); const tags = new Map();
-    for (const c of hands) { tagsFor[c] = tagsOf(fs, f.board, c, featuresOf(c)); for (const name of tagsFor[c]) { let k = tags.get(name); if (!k) tags.set(name, k = { name, weight: 0, eq: 0, mix: f.node.edges.map(() => 0) }); k.weight += f.mine[c]; k.eq += f.mine[c] * eq[c]; for (let a = 0; a < n; a++) k.mix[a] += f.mine[c] * sigma(c, a); } }
+    for (const c of hands) { tagsFor[c] = tagsOf(fs, f.board, c, featuresOf(c)); for (const name of tagsFor[c]) { let k = tags.get(name); if (!k) tags.set(name, k = { name, weight: 0, eq: 0, mix: f.node.edges.map(() => 0), ids: [] }); k.ids.push(c); k.weight += f.mine[c]; k.eq += f.mine[c] * eq[c]; for (let a = 0; a < n; a++) k.mix[a] += f.mine[c] * sigma(c, a); } }
     for (const k of tags.values()) { k.eq /= k.weight; k.mix = k.mix.map((x) => x / k.weight); k.share = k.weight / all; }
     const tagList = [...tags.values()].sort((x, y) => TAG_ORDER.indexOf(x.name) - TAG_ORDER.indexOf(y.name));
     return (fifths = { of, list, near, nameOf, kinds: [...kinds.values()].sort((x, y) => y.eq - x.eq), tagsFor, tagList, hands, all });
@@ -455,7 +455,7 @@ export function analysis(s, c) {
   const one = c != null && f.mine[c] > 0;
   const b = s.bands(); const mine = one ? new Set(b.tagsFor[c] ?? []) : new Set();
   // every name some hand in the range carries; with a hand given, `has` marks the ones it carries
-  const types = b.tagList.map((k) => ({ name: k.name, share: k.share, equity: k.eq, mix: k.mix, has: mine.has(k.name) }));
+  const types = b.tagList.map((k) => ({ name: k.name, share: k.share, equity: k.eq, mix: k.mix, has: mine.has(k.name), ids: k.ids }));
   let spread = null;
   const cards = s.spread();
   if (cards) {

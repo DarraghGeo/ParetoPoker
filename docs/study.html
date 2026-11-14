@@ -8,7 +8,7 @@
 <title>Pareto: Study</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=f45f8af7a8">
+<link rel="stylesheet" href="style.css?v=a67991dc42">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = 'f45f8af7a8'; const opening = !/(study|train)\.html/.test(location.pathname);
+  const here = 'a67991dc42'; const opening = !/(study|train)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
@@ -65,6 +65,7 @@ if ('serviceWorker' in navigator) {
   </section>
 </main>
 <div class="scrim" id="scrim" hidden></div>
+<aside class="drawer group" id="group" hidden aria-label="Hands of this kind" tabindex="-1"></aside>
 <div class="loader" id="loader" hidden role="status" aria-live="polite">
   <div class="card">
     <div class="title" id="l-title"></div>
@@ -124,6 +125,6 @@ if ('serviceWorker' in navigator) {
   <p class="error fit" id="f-fit"></p>
   <button type="submit" class="primary" id="f-solve">Solve</button>
 </form>
-<script type="module" src="app.js?v=f45f8af7a8"></script>
+<script type="module" src="app.js?v=a67991dc42"></script>
 </body>
 </html>

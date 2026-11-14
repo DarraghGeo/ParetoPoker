@@ -431,10 +431,28 @@ function lookHtml(row, strata) {
       + `<div class="ends"><span>${cardsHtml(H.slice(0, 4).map((x) => x.card).join(' '))}</span><span>${cardsHtml(H.slice(-4).map((x) => x.card).join(' '))}</span></div></div>`;
   }
   // a hand picked: the names it carries; none: every name in the range
-  html += `<ul class="types${row ? '' : ' all'}">${look.types.filter((t) => !row || t.has).map((t) => `<li class="${t.has ? 'has' : ''}">${row ? '<span class="mark">\u2713</span>' : '<span class="mark"></span>'}<span class="tname">${esc(t.name)}</span><span class="share">${pct(t.share)}%</span><span class="bar">${bar(t.mix, strata)}</span></li>`).join('')}</ul>`;
+  html += `<ul class="types${row ? '' : ' all'}">${look.types.filter((t) => !row || t.has).map((t) => `<li class="${t.has ? 'has' : ''}" data-tag="${esc(t.name)}" role="button" tabindex="0">${row ? '<span class="mark">\u2713</span>' : '<span class="mark"></span>'}<span class="tname">${esc(t.name)}</span><span class="share">${pct(t.share)}%</span><span class="bar">${bar(t.mix, strata)}</span></li>`).join('')}</ul>`;
   return html;
 }
-$('why').addEventListener('click', (ev) => { const b = ev.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; renderWhy(); });
+$('why').addEventListener('click', (ev) => {
+  const tag = ev.target.closest('[data-tag]'); if (tag) { openGroup(tag.dataset.tag); return; }
+  const b = ev.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; renderWhy();
+});
+$('why').addEventListener('keydown', (ev) => { const tag = ev.target.closest?.('[data-tag]'); if (tag && (ev.key === 'Enter' || ev.key === ' ')) { ev.preventDefault(); openGroup(tag.dataset.tag); } });
+// ---- every hand that carries a name: a drawer, strongest first, each with what it does ----
+function openGroup(name) {
+  const s = state.survey; if (!s) return;
+  const look = state.looked.get(`${state.node}|${state.dealt.join(' ')}|${s.byName.get(state.hand)?.hand.id ?? null}`); const type = look?.types.find((t) => t.name === name); if (!type) return;
+  const ids = new Set(type.ids); const strata = strataOf(state.decision.actions);
+  const rows = s.rows.filter((r) => ids.has(r.hand.id)).sort((x, y) => y.equity - x.equity || (x.hand.name < y.hand.name ? -1 : 1));
+  $('group').innerHTML = `<div class="g-head"><h3>${esc(name)}</h3><span>${rows.length} hands \u00b7 ${pct(type.share)}% of the range</span></div>`
+    + `<div class="mix"><span class="bar">${bar(type.mix, strata)}</span></div>`
+    + `<div class="g-list">${rows.map((r) => `<button type="button" data-hand="${r.hand.name}" aria-pressed="${state.hand === r.hand.name}"><span>${cardsHtml(r.hand.name)}</span><span class="bar">${bar(r.hand.strategy, strata)}</span></button>`).join('')}</div>`;
+  $('group').hidden = false; $('scrim').hidden = false; $('group').focus({ preventScroll: true });
+}
+function closeGroup() { if ($('group').hidden) return; $('group').hidden = true; $('scrim').hidden = true; }
+$('group').addEventListener('click', (ev) => { const b = ev.target.closest('[data-hand]'); if (!b) return; state.hand = b.dataset.hand; state.cell = cellOf(state.hand); closeGroup(); render(); });
+document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeGroup(); });
 
 const W = 560, PAD = 8;
 $('line').addEventListener('click', (ev) => {
@@ -532,7 +550,7 @@ const closeSetup = () => { $('drawer').hidden = true; $('scrim').hidden = true; 
 // copy and the pen sit in the header, beside setup
 $('copy').onclick = () => { if (state.decision) copyText(spotText()).then((ok) => copied($('copy'), ok)); };
 $('edit').onclick = () => { if (state.decision && !version().fixed) openEditor(); };
-$('open-setup').onclick = () => openSetup(); $('f-sub').onclick = () => openSetup({ sub: true }); $('scrim').onclick = () => { closeSetup(); closeEditor(); };
+$('open-setup').onclick = () => openSetup(); $('f-sub').onclick = () => openSetup({ sub: true }); $('scrim').onclick = () => { closeSetup(); closeEditor(); closeGroup(); };
 $('state').onclick = () => { if ($('state').dataset.busy) worker.postMessage({ type: 'stop' }); };
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('drawer').hidden) closeSetup(); });
 /** What the setup form holds: the betting, the board as typed, or what is missing. */
