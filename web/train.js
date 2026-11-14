@@ -18,13 +18,15 @@ const CROSS = `<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true
 
 // ---- what is kept between visits: the choices, each day's results, the last questions ----
 const KEY = 'pareto-train';
+/** What sits above the question: the two ranges side by side, their equity curves, or the ladder of both on one scale. */
+const VIEWS = ['grid', 'curve', 'ladder'];
 const store = { types: { range: true, nuts: true, size: true, hand: true }, streets: { flop: false, turn: false, river: true }, view: 'grid', days: {}, log: [] };
 try {
   const saved = JSON.parse(localStorage.getItem(KEY) ?? 'null');
   if (saved) {
     for (const k of Object.keys(TYPES)) if (typeof saved.types?.[k] === 'boolean') store.types[k] = saved.types[k];
     for (const k of Object.keys(STREETS)) if (typeof saved.streets?.[k] === 'boolean') store.streets[k] = saved.streets[k];
-    if (saved.view === 'curve') store.view = 'curve';
+    if (VIEWS.includes(saved.view)) store.view = saved.view;
     if (saved.days && typeof saved.days === 'object') store.days = saved.days;
     if (Array.isArray(saved.log)) store.log = saved.log;
   }
@@ -222,6 +224,7 @@ function renderScore() {
 }
 const seatName = (seat) => (seat === 'oop' ? 'OOP' : 'IP');
 const curveIcon = `<path d="M2 13c3 0 3-4 6-5s3-5 6-5" ${STROKE}/>`;
+const ladderIcon = `<path d="M2 5.5h6M10.5 5.5H14M2 10.5h2.5M7 10.5h7" ${STROKE}/>`;
 const gridIcon = `<path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" ${STROKE}/>`;
 /** The spot on screen, written out to paste elsewhere: the board, the line, the chips, the choices, the ranges and the betting it was solved with, and the address that opens it in Study. */
 function spotText() {
@@ -261,12 +264,14 @@ function renderWhere() {
   $('where').innerHTML = `<span class="who">Hero ${seatName(d.seat)}</span><span class="stands">${esc(stands)}</span><span class="grow"></span><span class="chips">Pot ${Math.round(d.pot)}</span><span class="chips">Behind ${Math.round(d.behind)}</span>`
     + `<a class="icon" id="study" target="_blank" rel="noopener" href="${esc(studyUrl({ board: d.boardText, history: d.history, line: d.line }, game.q?.hand))}" aria-label="Open this spot in Study, in a new tab" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
     + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${COPY_ICON}</svg></button>`
-    + `<button type="button" class="icon" id="view" aria-label="${store.view === 'grid' ? 'Equity distribution' : 'Ranges'}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${store.view === 'grid' ? curveIcon : gridIcon}</svg></button>`;
+    // the button shows the view it turns to next
+    + `<button type="button" class="icon" id="view" aria-label="${{ grid: 'Equity distribution', curve: 'Ladder: both ranges on one scale', ladder: 'Ranges' }[store.view]}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${{ grid: curveIcon, curve: ladderIcon, ladder: gridIcon }[store.view]}</svg></button>`;
 }
 /** The two ranges side by side, hero in ink and villain faded; or, in their place, the two equity curves drawn the same way. */
 function renderRanges() {
   const spot = game.spot; const grid = store.view === 'grid';
-  $('minis').hidden = !grid; $('dist').hidden = grid;
+  $('minis').hidden = !grid; $('dist').hidden = store.view !== 'curve'; $('ladder').hidden = store.view !== 'ladder';
+  $('ladder').innerHTML = spot && store.view === 'ladder' ? ladder(spot, game.q?.hand ?? null) : '';
   if (!spot) { $('minis').innerHTML = mini('Hero', null) + mini('Villain', null, 'villain'); $('dist').innerHTML = ''; return; }
   const d = spot.decision; const hand = game.q?.hand ?? null;
   if (grid) {
@@ -282,6 +287,29 @@ function renderRanges() {
     + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="0" x2="${W}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')
     + `<line class="axis" x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}"/><polyline class="wait" points="${his}"/><polyline class="act" points="${mine}"/>`
     + (pick ? `<circle class="dot" cx="${(pick.mid * W).toFixed(1)}" cy="${Y(pick.e).toFixed(1)}" r="5"/>` : '') + '</svg>';
+}
+/**
+ * The ladder: every hand of both ranges on one scale, lowest equity to highest, out of position's on
+ * the top row and in position's below. A hand takes a column and the other row is empty there;
+ * hands with the same equity, to a tenth of a percent, share columns. Hero in ink and villain
+ * faded, as everywhere here, and no strategy: that is what is being asked.
+ */
+function ladder(spot, hand) {
+  const levels = new Map();
+  const at = (e) => { const k = Math.round(1e3 * e); let level = levels.get(k); if (!level) levels.set(k, level = { hero: [], villain: [] }); return level; };
+  for (const h of spot.hero) at(h.e).hero.push(h);
+  for (const v of spot.villain) at(v.e).villain.push(v);
+  const mine = []; const his = [];
+  for (const k of [...levels.keys()].sort((a, b) => a - b)) {
+    const level = levels.get(k);
+    for (let i = 0; i < Math.max(level.hero.length, level.villain.length); i++) {
+      mine.push(level.hero[i] ? `<span class="hero${level.hero[i].name === hand ? ' mark' : ''}"></span>` : '<span></span>');
+      his.push(level.villain[i] ? '<span class="other"></span>' : '<span></span>');
+    }
+  }
+  const oop = spot.decision.seat === 'oop';
+  const bars = (cells, label) => `<div class="row"><div class="strip" role="img" aria-label="${label}">${cells.join('')}</div></div>`;
+  return bars(oop ? mine : his, `Out of position, ${oop ? 'hero' : 'villain'}`) + bars(oop ? his : mine, `In position, ${oop ? 'villain' : 'hero'}`);
 }
 function mini(title, hands, kind = '', marked = null) {
   const cells = new Map(); let combos = 0;
@@ -332,7 +360,7 @@ $('where').addEventListener('click', async (ev) => {
   const b = ev.target.closest('#copy'); if (!b) return;
   copied(b, await copyText(spotText()));
 });
-$('where').addEventListener('click', (ev) => { if (!ev.target.closest('#view')) return; store.view = store.view === 'grid' ? 'curve' : 'grid'; save(); renderWhere(); renderRanges(); $('view')?.focus(); });
+$('where').addEventListener('click', (ev) => { if (!ev.target.closest('#view')) return; store.view = VIEWS[(VIEWS.indexOf(store.view) + 1) % VIEWS.length]; save(); renderWhere(); renderRanges(); $('view')?.focus(); });
 // the number keys answer, Enter moves on
 document.addEventListener('keydown', (ev) => {
   if (!$('settings').hidden || !$('history').hidden || ev.metaKey || ev.ctrlKey || ev.altKey) return;
