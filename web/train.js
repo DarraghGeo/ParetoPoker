@@ -262,7 +262,7 @@ function renderWhere() {
   const stands = !d.line.length ? 'First to act' : last === 'X' ? 'Checked to you' : `Facing ${last}`;
   const num = (x) => String(Math.round(10 * x) / 10);
   $('where').innerHTML = `<span class="who">Hero ${seatName(d.seat)}</span><span class="stands">${esc(stands)}</span><span class="grow"></span><span class="chips">Pot ${Math.round(d.pot)}</span><span class="chips">Behind ${Math.round(d.behind)}</span>`
-    + `<a class="icon" id="study" target="_blank" rel="noopener" href="${esc(studyUrl({ board: d.boardText, history: d.history, line: d.line }, game.q?.hand))}" aria-label="Open this spot in Study, in a new tab" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
+    + `<a class="icon" id="study" data-pane href="${esc(studyUrl({ board: d.boardText, history: d.history, line: d.line }, game.q?.hand))}" aria-label="Study this spot (or swipe left)" title="Study this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
     + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${COPY_ICON}</svg></button>`
     // the button shows the view it turns to next
     + `<button type="button" class="icon" id="view" aria-label="${{ grid: 'Equity distribution', curve: 'Ladder: both ranges on one scale', ladder: 'Ranges' }[store.view]}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${{ grid: curveIcon, curve: ladderIcon, ladder: gridIcon }[store.view]}</svg></button>`;
@@ -416,7 +416,7 @@ function renderHistory() {
     const open = openRows.has(e.t);
     const where = !e.line?.length ? 'first to act' : e.line[e.line.length - 1] === 'X' ? 'checked to' : `facing ${e.line[e.line.length - 1]}`;
     return `<li class="${e.ok ? 'good' : 'bad'}"><button type="button" class="past" aria-expanded="${open}" data-row="${e.t}"><i class="mark">${e.ok ? TICK : CROSS}</i><span class="q"><span>${esc(TYPES[e.type] ?? e.type)}${e.hand ? ` <b>${cardsHtml(e.hand)}</b>` : ''}</span><span class="spot"><b>${cardsHtml(e.board)}</b> ${seatName(e.seat)} ${esc(where)}</span></span></button>`
-      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}<p><a target="_blank" rel="noopener" href="${esc(studyUrl(e, e.hand))}">Open in Study</a></p></dd></dl>` : '') + '</li>';
+      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}<p><a data-pane href="${esc(studyUrl(e, e.hand))}">Open in Study</a></p></dd></dl>` : '') + '</li>';
   };
   $('history').innerHTML = `<div class="total"><span class="big"><b>${t.ok}</b>/${t.n}</span><span>${t.n ? `${pct(t.ok / t.n)}% today` : 'Nothing answered today'}</span></div>`
     + (store.log.length ? `<h3>Last questions</h3><ul class="log">${store.log.map(row).join('')}</ul>` : '');
@@ -431,3 +431,48 @@ $('history').addEventListener('click', (ev) => {
 render();
 want();
 renderAsk();
+
+
+// ---- Study beside Train: the spot on screen opens in Study in the same tab, in a pane beside this one ----
+// Swipe left (or the Study button) turns to it; swipe right from the left edge, the back bar or the phone's back turns
+// back. Neither page is reloaded: Train keeps its question and Study keeps its walk, and the same spot opened again is
+// not solved again.
+const pager = $('pager'); const frame = $('study-frame'); const studyPane = $('study-pane'); const trainPane = $('train-pane');
+const onStudy = () => pager.classList.contains('on-study');
+function showStudy(on) {
+  pager.classList.toggle('on-study', on);
+  studyPane.inert = !on; trainPane.inert = on;
+}
+function openStudy(href) {
+  const url = new URL(href, location.href).href;
+  if (frame.dataset.url !== url) {
+    // a new spot replaces the last one in place, so the back gesture keeps meaning "back to Train"
+    if (frame.dataset.url) frame.contentWindow.location.replace(url); else frame.src = url;
+    frame.dataset.url = url;
+  }
+  if (!onStudy()) { history.pushState({ study: true }, ''); showStudy(true); }
+}
+function closeStudy() { if (history.state?.study) history.back(); else showStudy(false); }
+addEventListener('popstate', () => showStudy(!!history.state?.study));
+document.addEventListener('click', (ev) => {
+  const a = ev.target.closest('a[data-pane]');
+  if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return; // a modified click still opens a new tab
+  ev.preventDefault(); openStudy(a.getAttribute('href'));
+});
+$('to-train').onclick = closeStudy;
+/** A swipe: one finger, mostly sideways, far enough. */
+function swiper(target, ok, done) {
+  let start = null;
+  target.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; start = ev.touches.length === 1 && ok(t, ev) ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+  target.addEventListener('touchend', (ev) => {
+    if (!start) return; const t = ev.changedTouches[0]; const dx = t.clientX - start.x; const dy = t.clientY - start.y; start = null;
+    if (Math.abs(dx) > 70 && Math.abs(dy) < 40) done(dx);
+  }, { passive: true });
+}
+const busy = () => !$('settings').hidden || !$('history').hidden;
+swiper(trainPane, (t, ev) => !busy() && !ev.target.closest('input, textarea, select'), (dx) => { if (dx < 0) $('study')?.click(); });
+// Study is the same site, so its document takes the edge swipe back; Study's own sideways swipe (between versions of the
+// ranges) leaves the left edge to this one when it sits here.
+frame.addEventListener('load', () => {
+  try { swiper(frame.contentDocument, (t) => t.clientX < 28, (dx) => { if (dx > 0) closeStudy(); }); } catch { /* not readable: the back bar still works */ }
+});

@@ -4,11 +4,13 @@
 <meta charset="utf-8">
 <!-- A refresh, or a tab the browser reloads, opens on the choice between Study and Train; this address followed or typed stays here -->
 <script>if (performance.getEntriesByType('navigation')[0]?.type === 'reload') location.replace('./');</script>
+<!-- Opened inside Train's Study pane: the way home is Train's back bar, so the logo is hidden there -->
+<script>if (window.top !== window) document.documentElement.classList.add('embedded');</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Pareto: Study</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=c3629103fc">
+<link rel="stylesheet" href="style.css?v=0b4ddb3f02">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +22,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = 'c3629103fc'; const opening = !/(study|train)\.html/.test(location.pathname);
+  const here = '0b4ddb3f02'; const opening = !/(study|train)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
@@ -128,6 +130,6 @@ if ('serviceWorker' in navigator) {
   <p class="error fit" id="f-fit"></p>
   <button type="submit" class="primary" id="f-solve">Solve</button>
 </form>
-<script type="module" src="app.js?v=c3629103fc"></script>
+<script type="module" src="app.js?v=0b4ddb3f02"></script>
 </body>
 </html>
