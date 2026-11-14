@@ -351,7 +351,7 @@ function renderDist() {
   const steps = (list) => { const total = list.reduce((t, r) => t + r.w, 0); let x = 0; const pts = []; for (const r of list) { const w = r.w / total; pts.push(`${Xd(x).toFixed(1)},${Yd(r.e).toFixed(1)} ${Xd(x + w).toFixed(1)},${Yd(r.e).toFixed(1)}`); r.mid = x + w / 2; x += w; } return pts.join(' '); };
   const mine = handsInOrder(s).map((r) => ({ w: r.hand.weight, e: r.equity, name: r.hand.name }));
   // his hands against the range to act, with the cards each removes
-  const his = d.villain.map((v) => { if (v.equity !== undefined) return { w: v.weight, e: Number.isNaN(v.equity) ? 0 : v.equity }; let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
+  const his = d.villain.map((v) => ({ w: v.weight, e: hisEquity(s, v) })).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
   const pick = mine.find((r) => r.name === state.hand);
   // The same decision in the version before this one stays as a dotted line
@@ -367,7 +367,7 @@ function renderDist() {
 }
 const SHORT = { 'High card': 'HC', Pair: 'P', 'Two pair': '2P', 'Three of a kind': '3K', Straight: 'ST', Flush: 'FL', 'Full house': 'FH', 'Four of a kind': '4K', 'Straight flush': 'SF' };
 /**
- * The strategy along the range, weakest to strongest: one column per hand, all the same width.
+ * The strategy along the range, lowest equity to highest: one column per hand, all the same width.
  * Split, it opens into a row for each made hand, strongest first, each in its own place on the
  * same scale.
  */
@@ -388,30 +388,32 @@ function renderStrip(strata) {
   if (state.chart !== 'split' || !names) { el.className = 'strip'; el.innerHTML = hands.map(column).join(''); return; }
   // Every row keeps the whole range's scale: a made hand sits where it sits in the single bar, with gaps either side
   const span = new Map();
-  hands.forEach((row, k) => { const c = row.hand.category; if (!span.has(c)) span.set(c, [k, k]); span.get(c)[1] = k + 1; });
+  // a made hand's hands need not sit side by side in equity order: its share of the range is counted, not read off its span
+  const held = new Map();
+  hands.forEach((row, k) => { const c = row.hand.category; if (!span.has(c)) span.set(c, [k, k]); span.get(c)[1] = k + 1; held.set(c, (held.get(c) ?? 0) + 1); });
   el.className = 'rows';
   el.innerHTML = [...span.entries()].sort((a, b) => b[0] - a[0]).map(([c, [from, to]]) => {
     const name = names[c] ?? ''; const nice = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
     const n = hands.length;
     const place = (from + to) / 2 < n / 2 ? `left:calc(${(100 * to / n).toFixed(2)}% + 8px)` : `right:calc(${(100 * (1 - from / n)).toFixed(2)}% + 8px)`;
-    return `<div class="row"><div class="strip">${hands.map((row) => (row.hand.category === c ? column(row) : '<span></span>')).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct((to - from) / n)}</span></div>`;
+    return `<div class="row"><div class="strip">${hands.map((row) => (row.hand.category === c ? column(row) : '<span></span>')).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct(held.get(c) / n)}</span></div>`;
   }).join('');
 }
 /**
- * The ladder: every hand of both ranges on one scale, weakest to strongest, out of position's on the
+ * The ladder: every hand of both ranges on one scale, lowest equity to highest, out of position's on the
  * top row and in position's below. A hand takes a column, and the other row is empty there, so the
  * two rows read as one chart cut in two: where each range sits, where they overlap, which one
- * reaches further at either end. Hands that are worth the same share their columns, one above the
+ * reaches further at either end. Hands with the same equity share their columns, one above the
  * other. Only the player to act has a strategy to show; the other range is drawn plain.
  */
 function ladder(s, column) {
-  const d = state.decision; const river = d.street === 'river';
-  // one scale for both: the made hand on the river, before it each hand's equity against the other range
-  const key = (strength, equity) => (river ? strength : Math.round(1e4 * (Number.isNaN(equity) ? 0 : equity ?? 0)));
+  const d = state.decision;
+  // one scale for both, on every street: each hand's equity against the other range, to a tenth of a percent
+  const key = (equity) => Math.round(1e3 * equity);
   const levels = new Map();
   const at = (k) => { let level = levels.get(k); if (!level) levels.set(k, level = { mine: [], his: [] }); return level; };
-  for (const row of s.rows) at(key(row.hand.strength, row.equity)).mine.push(row);
-  for (const v of d.villain) at(key(v.strength, v.equity)).his.push(v);
+  for (const row of s.rows) at(key(row.equity)).mine.push(row);
+  for (const v of d.villain) at(key(hisEquity(s, v))).his.push(v);
   const top = []; const bottom = [];
   for (const k of [...levels.keys()].sort((a, b) => a - b)) {
     const level = levels.get(k);
@@ -426,8 +428,15 @@ function ladder(s, column) {
   const bars = (cells, seat) => `<div class="row"><div class="strip" role="group" aria-label="${seat}">${cells.join('')}</div></div>`;
   return bars(top, 'Out of position') + bars(bottom, 'In position');
 }
-/** The hands of the range to act, weakest first: the order of the strategy chart and of the equity curve above it. */
-const handsInOrder = (s) => [...s.rows].sort((a, b) => (a.hand.strength ?? 0) - (b.hand.strength ?? 0) || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
+/** The hands of the range to act, by equity against the other range, lowest first: the order of the strategy chart and of the equity curve above it. */
+const handsInOrder = (s) => [...s.rows].sort((a, b) => a.equity - b.equity || (a.hand.strength ?? 0) - (b.hand.strength ?? 0) || (a.hand.name < b.hand.name ? -1 : 1));
+/** A hand of the other player's, and its equity against the range to act: given before the river; on it, counted against that range with the cards the hand removes. */
+function hisEquity(s, v) {
+  if (v.equity !== undefined) return Number.isNaN(v.equity) ? 0 : v.equity;
+  let mass = 0, win = 0;
+  for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); }
+  return mass > 0 ? win / mass : 0;
+}
 function renderWhy() {
   const s = state.survey; const row = s?.byName.get(state.hand);
   // before the river there is the hand and what it does; the reasons are a river matter for now
