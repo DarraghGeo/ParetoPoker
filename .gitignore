@@ -19,3 +19,5 @@ research/proof/out/stability-*.jsonl
 research/proof/out/measure-*.jsonl
 research/proof/out/buckets-*.jsonl
 research/proof/out/valuesize-*.jsonl
+research/insight/out/*.jsonl
+research/insight/out/*.log
