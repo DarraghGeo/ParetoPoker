@@ -18,3 +18,4 @@ research/diagnosis/curve-turns2.log
 research/proof/out/stability-*.jsonl
 research/proof/out/measure-*.jsonl
 research/proof/out/buckets-*.jsonl
+research/proof/out/valuesize-*.jsonl
