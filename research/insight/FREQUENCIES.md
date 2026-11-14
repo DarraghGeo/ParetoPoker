@@ -277,3 +277,42 @@ The derived strategy gives up less than the old base on 83% of the spots.
 1. **The river after betting has happened** (3.5%). The river formulas are derived for ranges as they stand; here the ranges are the product of two streets of formula play. Either the earlier streets leave the wrong hands in, or the river thresholds are being applied to ranges they do not fit. Splitting the river loss by line (after a check-through, after a bet and call) says which.
 2. **The turn** (2.1%). The value side is known to overbet (section E).
 3. **Hand selection.** Nothing here uses blockers or backdoor draws.
+
+## Any bet sizes and any raises
+
+`formulas.mjs` (`acting`, `facing`), `play-full.mjs`. One size and no raises is not poker, so the formulas were extended by the same indifference arguments and the test rerun on a tree with two bet sizes on every street (33% and 100% on the flop, 50% and 100% after), a raise to three times the bet, and all-in when most of the stack is in.
+
+**Several bet sizes**
+- One weakest bluff is indifferent between checking and every size, so he folds `c_i = (s_i + u)/(1 + s_i)` to size `i`, with `u` what that bluff is worth checked.
+- A hand that beats `x` of his range earns `x(1 + 2 s_i) − s_i(1 + c_i)` betting size `i` for value. It takes the best of those and checking, so stronger hands make the bigger bets.
+- Each size has `s_i/(1 + s_i)` bluffs for every value bet of that size.
+- `u` is the one unknown, found by a search. Any number of sizes.
+
+**Raises**
+- A bluff raise risks what it puts in to win the pot, so the range that bet folds `f = add/(add + pot)` to it.
+- His bluff-catcher calls the difference to win the pot and the raise, which fixes the bluff raises for every value raise.
+- A value raise beats half of what calls it: `(1 + f)/2` of the range that bet.
+- The hands that fold are still the share his bluffs need. Before the river the bluff raises are the hands with the most equity against his strong hands (the draws), each counted by that equity; on the river, the best of the hands that would fold.
+- The same rule answers a re-raise, so it covers any raise size and any number of raises.
+
+**What it loses**, in % of the flop pot, one seat on the formulas against the solver's equilibrium:
+
+| Tree | Spots | Gives up (mean / median / worst tenth) | Flop / turn / river |
+|---|---|---|---|
+| One size, no raises (above) | 29 | 6.3 / 5.7 / 8.8 | 0.7 / 2.1 / 3.5 |
+| **Two sizes and a raise** | 15 | **11.3 / 10.0 / 18.2** | 2.4 / 3.5 / 5.4 |
+
+By pot type on the fuller tree: 4-bet pots 9.0 (9 spots), squeeze 11.4 (2), 3-bet 16.6 (4). The batch was stopped at 15 spots and has no single-raised pots.
+
+**Do the new formulas help, or is the game just harder?** The same eight 4-bet-pot flops on the fuller tree, with parts of the formulas switched off:
+
+| Formula strategy | Gives up |
+|---|---|
+| **Sizes and raises (the full formulas)** | **8.1** |
+| Never raises | 9.6 |
+| Bets one size only | 9.8 |
+| One size and never raises | 10.5 |
+
+Both extensions earn their place: sizing is worth about 1.7 points and raising about 1.5. The loss is larger than on the simple tree because the opponent now has raises and sizes to use against a strategy that is still rough, not because the new formulas are wrong.
+
+**Where that leaves it.** In a tree that looks like poker the formulas give up 8 to 11% of the pot to an equilibrium opponent, and far more in 3-bet pots. That is a long way from good enough. The flop is no longer free (2.4%): facing a raise and choosing a size both cost there.
