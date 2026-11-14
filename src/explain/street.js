@@ -38,7 +38,29 @@ export function study(fs, solution, nodes, id, dealt = []) {
   // (the split by what he holds is not asked for: it does not survive the proof, see PROOF.md)
   const closely = (a) => { let x = close.get(a); if (!x) close.set(a, x = best.closely(f, a, null)); return x; };
   let equity = null;
-  return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
+  // The range in five parts by strength (equity against his range here), each a fifth of its weight: what each part
+  // does as a group. A hand's own frequency is arbitrary; a fifth of the range's is not.
+  let fifths = null;
+  const facingBet = f.node.invested[1 - f.me] - f.node.invested[f.me] > 0;
+  const bands = () => {
+    if (fifths) return fifths;
+    const eq = equity ?? (equity = equityVs(fs, f.board, f.mine, f.his));
+    const hands = []; for (let c = 0; c < N; c++) if (f.mine[c] > 0 && !Number.isNaN(eq[c])) hands.push(c);
+    hands.sort((x, y) => eq[x] - eq[y]);
+    const all = hands.reduce((t, c) => t + f.mine[c], 0);
+    const of = new Int8Array(N).fill(-1); const list = [0, 1, 2, 3, 4].map(() => ({ weight: 0, lo: 1, hi: 0, eq: 0, move: 0 }));
+    let seen = 0;
+    for (const c of hands) {
+      const b = Math.min(4, Math.floor((5 * (seen + f.mine[c] / 2)) / all)); seen += f.mine[c]; of[c] = b;
+      const t = list[b]; t.weight += f.mine[c]; t.lo = Math.min(t.lo, eq[c]); t.hi = Math.max(t.hi, eq[c]); t.eq += f.mine[c] * eq[c];
+      // what the group does: puts money in (first to act), or does not fold (facing a bet)
+      let move = 0; f.node.edges.forEach((e, a) => { if (facingBet ? e.kind !== 'fold' : (e.kind !== 'check' && e.kind !== 'call' && e.kind !== 'fold')) move += sigma(c, a); });
+      t.move += f.mine[c] * move;
+    }
+    for (const t of list) if (t.weight > 0) { t.eq /= t.weight; t.move /= t.weight; }
+    return (fifths = { of, list });
+  };
+  return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
 }
 
 /** One hand at a studied decision. `onlyOn`: measure only the actions on the path (the others cannot be relied on). */
@@ -75,7 +97,8 @@ export function measure(s, c, { onlyOn = true, worth = true } = {}) {
     }
     return out;
   });
-  return { combo: c, name: fs.formatCombo(c), features: s.featuresOf(c), equity: worth ? s.equity()[c] : null, reach: f.mine[c], actions: acts };
+  const fifths = worth ? s.bands() : null;
+  return { combo: c, name: fs.formatCombo(c), features: s.featuresOf(c), equity: worth ? s.equity()[c] : null, reach: f.mine[c], actions: acts, band: fifths ? fifths.of[c] : null, bands: fifths ? fifths.list : null };
 }
 
 /**
@@ -95,15 +118,15 @@ export const TOLERANCE = {
   // Lines at least half of each range takes, and (with wider gates) lines a fifth to a half take.
   // Thinner than that, nothing is concluded.
   turn: [
-    { upTo: 0.02, lines: [{ from: 0.5, eq: 1, folds: 1, gap: 1.1, sign: 2, cmp: 3.5, lift: 0.5, rest: 1.5 }, { from: 0.2, eq: 4, folds: 2, gap: 2.3, sign: 4, cmp: 4.2, lift: 2.6, rest: 4.2 }] },
+    { upTo: 0.02, lines: [{ from: 0.5, eq: 1, folds: 1, gap: 1.1, sign: 2, role: 0.25, cmp: 3.5, lift: 0.5, rest: 1.5 }, { from: 0.2, eq: 4, folds: 2, gap: 2.3, sign: 4, role: null, cmp: 4.2, lift: 2.6, rest: 4.2 }] },
   ],
   // Rivers solve in a moment, so they are held to a finer solve; their mixes are looser all the same
   river: [
-    { upTo: 0.01, lines: [{ from: 0.5, eq: 2, folds: 3, gap: 2.7, sign: 2, cmp: 7.8, lift: null, rest: null }, { from: 0.2, eq: 4, folds: 3, gap: 4, sign: 5, cmp: 10, lift: null, rest: null }] },
+    { upTo: 0.01, lines: [{ from: 0.5, eq: 2, folds: 3, gap: 2.7, sign: 2, role: 0.25, cmp: 7.8, lift: null, rest: null }, { from: 0.2, eq: 4, folds: 3, gap: 4, sign: 5, role: null, cmp: 10, lift: null, rest: null }] },
   ],
   // The river once a card has come, inside a spot that started on the turn and was solved to 0.02% as a turn spot
   'river after a deal': [
-    { upTo: 0.02, lines: [{ from: 0.5, eq: 3, folds: 3, gap: 4, sign: 5, cmp: 10, lift: null, rest: null }] },
+    { upTo: 0.02, lines: [{ from: 0.5, eq: 3, folds: 3, gap: 4, sign: 5, role: 0.25, cmp: 10, lift: null, rest: null }] },
   ],
 };
 /**
@@ -116,8 +139,8 @@ export const ON_TRIAL = {
   // Gates are twice the largest differences measured on the one flop spot measured in full.
   // (the gate for 'worse' was raised from 3 to 5 after the first seventeen flop spots, where a finer solve reversed a
   // difference of 2.1; the 'extra' flop set was run after that and is the test of these gates as they stand)
-  flop: [{ upTo: 0.3, lines: [{ from: 0.5, eq: 1, folds: 2, gap: 2.8, sign: 5, cmp: 5, lift: 0.8, rest: 1.4 }] }],
-  'turn after a deal': [{ upTo: 0.3, lines: [{ from: 0.5, eq: 2, folds: 2, gap: 2.4, sign: 5, cmp: 3.6, lift: 1, rest: 2 }] }],
+  flop: [{ upTo: 0.3, lines: [{ from: 0.5, eq: 1, folds: 2, gap: 2.8, sign: 5, role: 0.25, cmp: 5, lift: 0.8, rest: 1.4 }] }],
+  'turn after a deal': [{ upTo: 0.3, lines: [{ from: 0.5, eq: 2, folds: 2, gap: 2.4, sign: 5, role: 0.25, cmp: 3.6, lift: 1, rest: 2 }] }],
 };
 /** The tolerances that apply: `street` is 'turn' or 'flop' (where the decision is), `exploit` the solve's accuracy in % of the pot. */
 export function tolerance(street, exploit, lineReach, table = TOLERANCE) {
@@ -147,6 +170,8 @@ export function tolerance(street, exploit, lineReach, table = TOLERANCE) {
  *                                 passive action is overall: the bet earns through his folds
  *   builds  { a, passive, by }    they are worth more: the bet does not depend on his folding
  *   cards   { a, n, lift, rest }  a call's gain over folding, on the n cards that lift the hand and on the others
+ *   role    { band, other, more } the hand's fifth of the range (by strength) bets, or continues, more (or less) than
+ *                                 another fifth does, by at least T.role in this solve
  * The last four are made only about actions the hand itself takes (`TAKES` of the time or more).
  */
 /** Below this share of either range, a line is too rare for the solution to mean anything on it. */
@@ -165,6 +190,12 @@ export function claims(s, m, T) {
     for (const i of on) { if (i === best) continue; const gap = m.actions[best].worth - m.actions[i].worth; if (T.sign != null && gap >= T.sign) out.push({ kind: 'worse', best, a: i, gap }); }
     const played = on.filter((i) => m.actions[i].sigma >= 0.1);
     for (let x = 0; x < played.length; x++) for (let y = x + 1; y < played.length; y++) { const d = Math.abs(m.actions[played[x]].worth - m.actions[played[y]].worth); if (d <= T.gap / 2) out.push({ kind: 'same', a: played[x], b: played[y], within: d + T.gap }); }
+  }
+  // where the hand sits: its fifth of the range against the fifth that does the opposite most
+  if (m.bands && m.band >= 0 && T.role != null) {
+    const mine = m.bands[m.band].move; let other = -1;
+    m.bands.forEach((b, k) => { if (k !== m.band && b.weight > 0 && (other < 0 || Math.abs(b.move - mine) > Math.abs(m.bands[other].move - mine))) other = k; });
+    if (other >= 0 && Math.abs(m.bands[other].move - mine) >= T.role) out.push({ kind: 'role', band: m.band, other, more: mine > m.bands[other].move, mine, theirs: m.bands[other].move });
   }
   const passive = on.find((i) => m.actions[i].kind === 'check' || m.actions[i].kind === 'call');
   for (const i of on) {
@@ -196,6 +227,7 @@ export function holds(claim, m, T) {
   switch (claim.kind) {
     case 'equity': return Math.abs(m.equity - claim.value) <= T.eq / 100;
     case 'folds': return A[claim.a].folds != null && Math.abs(A[claim.a].folds - claim.value) <= T.folds / 100;
+    case 'role': return !!m.bands && (claim.more ? m.bands[claim.band].move > m.bands[claim.other].move : m.bands[claim.band].move < m.bands[claim.other].move);
     case 'worse': return A[claim.best].worth - A[claim.a].worth > 0;
     case 'same': return Math.abs(A[claim.a].worth - A[claim.b].worth) <= claim.within;
     // the conclusion is the direction; how far is a number of the solution it was read from
@@ -248,6 +280,37 @@ export function explainStreet(s, m, T) {
   if (river && facing) line += ` He has bet ${Math.round(s.toCall)} into ${Math.round(s.pot - s.toCall)}, so a call has to win ${pts(s.toCall / (s.pot + s.toCall))} of the time.`;
   const taken = m.actions.map((a, i) => i).filter((i) => m.actions[i].sigma >= TAKES).sort((x, y) => m.actions[y].sigma - m.actions[x].sigma);
   const passiveName = facing ? 'calling' : 'checking';
+  // ---- the answer first: what the hand does, and what kind of play that is ----
+  {
+    const top = taken[0]; const kindOf = (i) => m.actions[i].kind; const pushes = (i) => !['check', 'call', 'fold'].includes(kindOf(i));
+    const verb = (i) => (kindOf(i) === 'check' ? 'check' : kindOf(i) === 'call' ? 'call' : kindOf(i) === 'fold' ? 'fold' : facing ? 'raise' : 'bet');
+    const purpose = (i) => (made.some((c) => c.kind === 'needs' && c.a === i) ? (river ? ' as a bluff' : ' to make him fold') : made.some((c) => c.kind === 'builds' && c.a === i) ? ' for value' : '');
+    if (top != null) {
+      const second = taken.find((i) => i !== top && verb(i) !== verb(top) && m.actions[i].sigma >= 0.25);
+      const first = `${verb(top)}${pushes(top) ? purpose(top) : ''}`;
+      line = (second != null ? `You ${first}, and sometimes ${verb(second)}${pushes(second) ? purpose(second) : ''}. ` : `You ${first}. `) + line.replace(/^You have /, 'It is ');
+    }
+  }
+  // ---- why this hand: where it sits in your range, and what that part of the range does ----
+  if (m.bands && m.band >= 0) {
+    const NAME = ['the weakest fifth', 'the second-weakest fifth', 'the middle fifth', 'the second-strongest fifth', 'the strongest fifth'];
+    const doing = facing ? 'continues against the bet' : 'bets';
+    const mine = m.bands[m.band]; const role = made.find((c) => c.kind === 'role');
+    let text = `Where it sits: in ${NAME[m.band]} of the hands you get here with. As a group that fifth ${doing} ${pts(mine.move)} of the time.`;
+    if (role) {
+      const other = m.bands[role.other];
+      text += ` ${NAME[role.other].replace(/^t/, 'T')} ${doing} ${pts(other.move)}.`;
+      // what separates the two groups is how much of his range each beats
+      const weakSide = role.band < role.other;
+      if (!facing && role.more && weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it has the least to lose by betting, which is why the bluffs come from down here.`;
+      else if (!facing && role.more && !weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it is strong enough to be paid by worse, which they are not.`;
+      else if (!facing && !role.more && weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: not enough to bet for value the way they do.`;
+      else if (!facing && !role.more && !weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it wins too often at showdown to be turned into a bluff the way they are.`;
+      else if (facing && role.more) text += ` Those hands beat ${pts(other.eq)} of what he bets on average; this one beats ${pts(m.equity)}.`;
+      else if (facing) text += ` Those hands beat ${pts(other.eq)} of what he bets on average; this one beats only ${pts(m.equity)}.`;
+    }
+    reasons.push({ id: 'role', text });
+  }
   const passive = m.actions.findIndex((x) => x.on && x.worth != null && (x.kind === 'check' || x.kind === 'call'));
   const passiveIdx = passive >= 0 ? passive : null;
   // the bets and raises it makes: who pays for them

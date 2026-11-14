@@ -65,7 +65,7 @@ test('claims: made only where the proof covers, and each one true of the hand it
   for (let c = 0; c < fs.COMBOS; c++) {
     const m = measure(s, c); if (!m) continue;
     for (const claim of claims(s, m, T)) { made++; assert.ok(holds(claim, measure(s, c, { onlyOn: false }), T), `${m.name} ${claim.kind}`); }
-    const told = explainStreet(s, m, T); assert.ok(told.line.startsWith('You have ')); assert.equal(told.silent, null);
+    const told = explainStreet(s, m, T); assert.ok(/^You (check|bet|call|fold|raise)/.test(told.line) && told.line.includes('It is '), told.line); assert.equal(told.silent, null);
     const quiet = explainStreet(s, measure(s, c, { worth: false }), null); assert.ok(quiet.silent && quiet.reasons.length === 0);
     // unproven ground: numbers, said as this solution's, and no conclusion
     const plain = explainStreet(s, m, null); assert.ok(plain.silent && plain.claims.every((x) => x.number));

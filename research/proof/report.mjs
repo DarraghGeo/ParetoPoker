@@ -133,6 +133,7 @@ What the conclusions are:
 | needs | the times he continues against a bet the hand makes are worth less than the passive action is overall, by at least twice the tolerance | they are worth less there too |
 | builds | they are worth more, by at least twice the tolerance | they are worth more there too |
 | cards | a call the hand makes gains or loses, against folding, at least twice the tolerance on the cards that lift the hand (or on the others) | it has the same direction there |
+| role | the hand's fifth of the range (by strength) bets, or continues, at least 25 points more or less often than another fifth | that fifth does so more (or less) often than the other there too |
 
 ### Thinner lines: a fifth to a half of each range
 
@@ -184,7 +185,15 @@ equities and fold frequencies fell more than one or two points from a reference.
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 `; })()}
 ${(() => { const r1 = json('./out/v05/accept-fresh-river-0.01.json'), r2 = json('./out/v05/accept-fresh-turn-0.02.json'); const b = jsonl('./out/v05/best.jsonl'), i = jsonl('./out/v05/identities.jsonl'); if (!r1 && !r2) return ''; const big = (rows, pick) => (rows.length ? Math.max(...rows.flatMap((r) => pick(r).map(Number))).toExponential(1) : '—');
-return `### Run again on the solver version the page now uses
+return `${(() => { const rr = json('./out/v05/accept-fresh-river-0.01.json'), rt = json('./out/v05/accept-fresh-turn-0.02.json'); const pick = (r) => (r ? Object.entries(r.byKind).filter(([k]) => k.startsWith('role') && k.endsWith('0.5+')).reduce((t, [, v]) => [t[0] + v.made, t[1] + v.failed], [0, 0]) : [0, 0]); const a = pick(rr), b = pick(rt); return a[0] + b[0] ? `### "Why this hand": its part of the range against another part
+
+Added after the rest: the range is cut into five parts by strength, each a fifth of its weight, and what each
+part does as a group is compared ("the weakest fifth bets 59% of the time, the second-weakest 6%"). A single
+hand's frequency is arbitrary; a fifth of the range's is not. Tested on the fresh random sets, on lines at
+least half of each range takes: **${n(a[0])} river and ${n(b[0])} turn comparisons, ${a[1] + b[1]} false.** On thinner river
+lines it failed (8 of 18,997), so it is made only on the main lines.
+
+` : ''; })()}### Run again on the solver version the page now uses
 
 Most of the above was run on poker-flopsolve 0.4.1. The page has since moved to ${r1?.solver ?? r2?.solver ?? 'a newer version'}, so the
 fresh sets and the accounting proofs were run again on it:
@@ -202,6 +211,7 @@ ${r1 ? `| Fresh random river spots (${r1.spots.length}) | ${n(r1.conclusions.mad
 | "He has bet 33 into 100, so a call has to win 20% of the time" | exact | arithmetic |
 | "B33: he folds 27% of the time against this hand" | number | proofs 1 and 3 (his reply, with the cards the hand removes) |
 | "When he calls you are ahead 81% of the time" (river) | number | read off the called bet's worth; checked against a direct count over his calling hands (test) |
+| "Where it sits: in the weakest fifth … that fifth bets 59% of the time. The second-weakest fifth bets 6%" | conclusion (role) + numbers | proof 4, "Why this hand" |
 | "The times he does not fold are worth less to you than checking is overall … the bet earns its keep through the times he folds" | conclusion (needs) | proof 4 |
 | "Even the times he does not fold are worth more … the bet does not depend on his folding" | conclusion (builds) | proof 4 |
 | "X and B33 earn the same with this hand, to within 1.1% of the pot" | conclusion (same) | proof 4 |

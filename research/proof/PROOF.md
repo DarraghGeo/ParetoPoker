@@ -130,6 +130,7 @@ What the conclusions are:
 | needs | the times he continues against a bet the hand makes are worth less than the passive action is overall, by at least twice the tolerance | they are worth less there too |
 | builds | they are worth more, by at least twice the tolerance | they are worth more there too |
 | cards | a call the hand makes gains or loses, against folding, at least twice the tolerance on the cards that lift the hand (or on the others) | it has the same direction there |
+| role | the hand's fifth of the range (by strength) bets, or continues, at least 25 points more or less often than another fifth | that fifth does so more (or less) often than the other there too |
 
 ### Thinner lines: a fifth to a half of each range
 
@@ -191,6 +192,14 @@ The numbers are another matter at this accuracy: 1,203 of 44,199
 equities and fold frequencies fell more than one or two points from a reference. They remain what they are
 worded as, this solution's numbers, but a flop solved to 0.3% is a coarse solution.
 
+### "Why this hand": its part of the range against another part
+
+Added after the rest: the range is cut into five parts by strength, each a fifth of its weight, and what each
+part does as a group is compared ("the weakest fifth bets 59% of the time, the second-weakest 6%"). A single
+hand's frequency is arbitrary; a fifth of the range's is not. Tested on the fresh random sets, on lines at
+least half of each range takes: **18,930 river and 9,236 turn comparisons, 0 false.** On thinner river
+lines it failed (8 of 18,997), so it is made only on the main lines.
+
 ### Run again on the solver version the page now uses
 
 Most of the above was run on poker-flopsolve 0.4.1. The page has since moved to 0.5.0-beta.0, so the
@@ -198,8 +207,8 @@ fresh sets and the accounting proofs were run again on it:
 
 | Check | Result |
 |---|---|
-| Fresh random river spots (60) | 51,717 conclusions, **0 false** |
-| Fresh random turn spots (30) | 30,711 conclusions, **0 false** |
+| Fresh random river spots (60) | 70,647 conclusions, **0 false** |
+| Fresh random turn spots (30) | 49,756 conclusions, **0 false** |
 | River decisions inside those turn spots (30) | 9,751 conclusions, **0 false** |
 | Best reply: same values as the solver when the hand follows its strategy (6 turn spots) | largest difference 5.1e-13% of the pot |
 | Best reply: both players' values for the whole game, averaged, against the solver's own exploitability | largest difference 2.5e-7 points of exploitability |
@@ -215,6 +224,7 @@ fresh sets and the accounting proofs were run again on it:
 | "He has bet 33 into 100, so a call has to win 20% of the time" | exact | arithmetic |
 | "B33: he folds 27% of the time against this hand" | number | proofs 1 and 3 (his reply, with the cards the hand removes) |
 | "When he calls you are ahead 81% of the time" (river) | number | read off the called bet's worth; checked against a direct count over his calling hands (test) |
+| "Where it sits: in the weakest fifth … that fifth bets 59% of the time. The second-weakest fifth bets 6%" | conclusion (role) + numbers | proof 4, "Why this hand" |
 | "The times he does not fold are worth less to you than checking is overall … the bet earns its keep through the times he folds" | conclusion (needs) | proof 4 |
 | "Even the times he does not fold are worth more … the bet does not depend on his folding" | conclusion (builds) | proof 4 |
 | "X and B33 earn the same with this hand, to within 1.1% of the pot" | conclusion (same) | proof 4 |
