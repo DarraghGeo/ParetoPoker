@@ -202,6 +202,40 @@ fresh sets and the accounting proofs were run again on it:
 |---|---|
 ${r1 ? `| Fresh random river spots (${r1.spots.length}) | ${n(r1.conclusions.made)} conclusions, **${r1.conclusions.failed} false** |\n` : ''}${r2 ? `| Fresh random turn spots (${r2.spots.length}) | ${n(r2.conclusions.made)} conclusions, **${r2.conclusions.failed} false** |\n` : ''}${(() => { const r3 = json('./out/v05/accept-fresh-turn-river-after-0.02.json'); return r3 ? `| River decisions inside those turn spots (${r3.spots.length}) | ${n(r3.conclusions.made)} conclusions, **${r3.conclusions.failed} false** |\n` : ''; })()}${b.length ? `| Best reply: same values as the solver when the hand follows its strategy (${b.length} turn spots) | largest difference ${big(b, (r) => [r.worst.average])}% of the pot |\n| Best reply: both players' values for the whole game, averaged, against the solver's own exploitability | largest difference ${big(b, (r) => [r.worst.exploitability])} points of exploitability |\n` : ''}${i.length ? `| Accounting identities and independent play-out (${i.length} turn spots) | largest error ${big(i, (r) => Object.values(r.worst))}% of the pot |\n` : ''}
 `; })()}
+${(() => { const T = json('./out/buckets-turn.json'), R = json('./out/buckets-river.json'), F = json('./out/buckets-flop.json'); if (!T) return '';
+const pc = (x) => (x == null ? '—' : `${Math.round(100 * x)}%`);
+const table = (B) => `| Hand type | Share of range | Average equity | Bets | Bets at 10-20% equity | at 20-30% | at 30-45% |\n|---|---|---|---|---|---|---|\n${B.types.map((t) => `| ${t.type} | ${(100 * t.share).toFixed(1)}% | ${pc(t.equity)} | ${pc(t.bets)} | ${pc(B.behind[t.type]?.['10-20'])} | ${pc(B.behind[t.type]?.['20-30'])} | ${pc(B.behind[t.type]?.['30-45'])} |`).join('\n')}`;
+return `## Hand types are buckets (a correction)
+
+Earlier work here set the "napkin" selection order aside because, as an ordering rule, it reproduced the
+solver's bluffs no better than plain equity order. That test asked the wrong question. Asked directly
+(\`buckets.mjs\`, \`buckets.py\`): at the first decision of each player, on fresh random spots solved finely,
+does a hand's named type bet at its own rate, and does the type say something its equity does not?
+
+**Turn** (${n(T.hands)} hands on ${T.spots} spots). Yes, clearly. At the same equity the draws bet about twice as
+often as the hands without one, and within a spot equity alone accounts for ${pc(T.explained.equityInSpot)} of how often hands bet
+where equity and type together account for ${pc(T.explained.equityAndTypeInSpot)}.
+
+${table(T)}
+
+Blockers are as plain. Among the weakest hands (equity under 15%), split into quarters by how often he folds
+to them compared with their spot's average: ${T.blockers.map((b) => `${b.group} (${(100 * b.folds).toFixed(1)} points): they bet ${pc(b.bets)}`).join('; ')}.
+
+${F ? `**Flop** (${n(F.hands)} hands on ${F.spots} small spots, solved to 0.25%: thinner evidence). The same direction: gutshots and backdoor flush draws bet more than hands of like equity without them; equity accounts for ${pc(F.explained.equityInSpot)} within a spot, equity and type ${pc(F.explained.equityAndTypeInSpot)}.
+
+${table(F)}
+
+` : ''}${R ? `**River** (${n(R.hands)} hands on ${R.spots} spots). There are no draws, and equity does most of the work: ${pc(R.explained.equityInSpot)} within a spot, ${pc(R.explained.equityAndTypeInSpot)} with type. What is left is the cards held: ${R.blockers.map((b) => `${b.group}: bet ${pc(b.bets)}`).join('; ')}.
+
+${table(R)}
+
+` : ''}What the page does with this: it says what type the hand is, and how that type bets among the hands of about
+its strength in the spot on screen against the rest ("the draws bet 60% of the time and the hands without a
+draw 1%"), and how often he folds to this hand against the weak hands around it. Those are numbers of the
+solution on screen. As a conclusion meant to carry over to a finer solve, the type comparison was tried and
+failed on rivers (4 of 4,394), so it is not worded as one.
+
+`; })()}
 ## What the page says, and what each sentence rests on
 
 | Sentence | Sort | Rests on |

@@ -208,11 +208,78 @@ fresh sets and the accounting proofs were run again on it:
 | Check | Result |
 |---|---|
 | Fresh random river spots (60) | 70,647 conclusions, **0 false** |
-| Fresh random turn spots (30) | 49,756 conclusions, **0 false** |
+| Fresh random turn spots (30) | 39,947 conclusions, **0 false** |
 | River decisions inside those turn spots (30) | 9,751 conclusions, **0 false** |
 | Best reply: same values as the solver when the hand follows its strategy (6 turn spots) | largest difference 5.1e-13% of the pot |
 | Best reply: both players' values for the whole game, averaged, against the solver's own exploitability | largest difference 2.5e-7 points of exploitability |
 | Accounting identities and independent play-out (6 turn spots) | largest error 1.2e-12% of the pot |
+
+
+## Hand types are buckets (a correction)
+
+Earlier work here set the "napkin" selection order aside because, as an ordering rule, it reproduced the
+solver's bluffs no better than plain equity order. That test asked the wrong question. Asked directly
+(`buckets.mjs`, `buckets.py`): at the first decision of each player, on fresh random spots solved finely,
+does a hand's named type bet at its own rate, and does the type say something its equity does not?
+
+**Turn** (18,503 hands on 80 spots). Yes, clearly. At the same equity the draws bet about twice as
+often as the hands without one, and within a spot equity alone accounts for 66% of how often hands bet
+where equity and type together account for 80%.
+
+| Hand type | Share of range | Average equity | Bets | Bets at 10-20% equity | at 20-30% | at 30-45% |
+|---|---|---|---|---|---|---|
+| no overcard | 7.2% | 15% | 25% | 29% | 23% | 12% |
+| one overcard | 7.2% | 26% | 24% | 28% | 26% | 23% |
+| gutshot | 9.7% | 27% | 46% | 35% | 52% | 50% |
+| open-ended | 2.8% | 28% | 55% | 26% | 53% | 67% |
+| two overcards | 6.3% | 34% | 28% | 44% | 29% | 19% |
+| flush draw | 6.2% | 39% | 57% | — | 58% | 64% |
+| combo draw | 0.8% | 41% | 71% | — | — | 72% |
+| lower pair | 24.0% | 49% | 29% | 35% | 24% | 14% |
+| lower pair + draw | 4.3% | 57% | 38% | — | 34% | 36% |
+| top pair or overpair | 18.1% | 76% | 64% | — | — | — |
+| top pair or overpair + draw | 2.2% | 78% | 65% | — | — | — |
+| two pair or better | 11.2% | 89% | 63% | — | — | — |
+
+Blockers are as plain. Among the weakest hands (equity under 15%), split into quarters by how often he folds
+to them compared with their spot's average: fewest folds (-1.9 points): they bet 7%; fewer (-0.2 points): they bet 26%; more (0.4 points): they bet 33%; most folds (1.8 points): they bet 55%.
+
+**Flop** (4,105 hands on 36 small spots, solved to 0.25%: thinner evidence). The same direction: gutshots and backdoor flush draws bet more than hands of like equity without them; equity accounts for 83% within a spot, equity and type 92%.
+
+| Hand type | Share of range | Average equity | Bets | Bets at 10-20% equity | at 20-30% | at 30-45% |
+|---|---|---|---|---|---|---|
+| no overcard | 4.0% | 16% | 33% | 31% | — | — |
+| no overcard + backdoor flush | 4.1% | 21% | 46% | 25% | — | 64% |
+| gutshot | 4.0% | 33% | 75% | — | — | 80% |
+| one overcard | 4.6% | 35% | 48% | — | 60% | 44% |
+| two overcards | 9.3% | 38% | 67% | — | 67% | 59% |
+| one overcard + backdoor flush | 3.4% | 38% | 69% | — | — | 69% |
+| open-ended | 2.9% | 41% | 56% | — | — | 53% |
+| two overcards + backdoor flush | 5.9% | 43% | 72% | — | — | 80% |
+| lower pair | 21.6% | 54% | 66% | 19% | — | 56% |
+| flush draw | 5.4% | 54% | 73% | — | — | — |
+| combo draw | 0.4% | 59% | 51% | — | — | — |
+| lower pair + draw | 1.5% | 61% | 75% | — | — | — |
+| top pair or overpair | 22.2% | 75% | 83% | — | — | — |
+| top pair or overpair + draw | 1.6% | 81% | 71% | — | — | — |
+| two pair or better | 9.1% | 87% | 71% | — | — | — |
+
+**River** (24,865 hands on 80 spots). There are no draws, and equity does most of the work: 77% within a spot, 80% with type. What is left is the cards held: fewest folds: bet 31%; fewer: bet 30%; more: bet 46%; most folds: bet 55%.
+
+| Hand type | Share of range | Average equity | Bets | Bets at 10-20% equity | at 20-30% | at 30-45% |
+|---|---|---|---|---|---|---|
+| lower high card | 9.7% | 15% | 57% | 51% | — | — |
+| king or queen high | 11.3% | 16% | 30% | 32% | 15% | 10% |
+| ace high | 13.3% | 32% | 17% | 28% | 8% | 4% |
+| lower pair | 29.7% | 45% | 16% | 12% | 3% | 2% |
+| top pair or overpair | 14.9% | 75% | 51% | — | — | — |
+| two pair or better | 21.3% | 89% | 74% | — | — | 0% |
+
+What the page does with this: it says what type the hand is, and how that type bets among the hands of about
+its strength in the spot on screen against the rest ("the draws bet 60% of the time and the hands without a
+draw 1%"), and how often he folds to this hand against the weak hands around it. Those are numbers of the
+solution on screen. As a conclusion meant to carry over to a finer solve, the type comparison was tried and
+failed on rivers (4 of 4,394), so it is not worded as one.
 
 
 ## What the page says, and what each sentence rests on

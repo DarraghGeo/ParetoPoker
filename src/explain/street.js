@@ -10,11 +10,13 @@
  */
 import { frameAt } from './account.js';
 import { evaluator } from './best.js';
-import { features, groupOf } from './features.js';
+import { features, groupOf, typeOf, TYPES } from './features.js';
 import { equityVs } from '../solver/flopsolve.js';
 
 /** An action the range takes at least this often is on the path; a rarer one leads where the solution is not pinned down. */
 export const ON_PATH = 0.05;
+/** Hands within this much equity of one another are 'of about the same strength'. */
+export const NEAR = 0.1;
 
 export function study(fs, solution, nodes, id, dealt = []) {
   const f = frameAt(fs, solution, nodes, id, dealt);
@@ -58,7 +60,22 @@ export function study(fs, solution, nodes, id, dealt = []) {
       t.move += f.mine[c] * move;
     }
     for (const t of list) if (t.weight > 0) { t.eq /= t.weight; t.move /= t.weight; }
-    return (fifths = { of, list });
+    // each hand's own move and name, for comparing a type with the other hands of about its strength
+    const moveOf = new Float64Array(N); const nameOf = new Array(N);
+    for (const c of hands) { let mv = 0; f.node.edges.forEach((e, a) => { if (facingBet ? e.kind !== 'fold' : (e.kind !== 'check' && e.kind !== 'call' && e.kind !== 'fold')) mv += sigma(c, a); }); moveOf[c] = mv; nameOf[c] = typeOf(fs, f.board, c, featuresOf(c)); }
+    /** Around a hand's equity (ten points either side): its own type as a group, and every other type as a group. */
+    const isDraw = (name) => /draw|open-ended|gutshot/.test(name ?? '') && !/pair/.test(name ?? '');
+    const near = (c) => {
+      const out = { type: nameOf[c], draw: isDraw(nameOf[c]), same: { weight: 0, move: 0 }, rest: { weight: 0, move: 0 }, draws: { weight: 0, move: 0 }, others: { weight: 0, move: 0 }, all };
+      if (!nameOf[c]) return out;
+      for (const h of hands) {
+        if (Math.abs(eq[h] - eq[c]) > NEAR) continue;
+        for (const t of [nameOf[h] === nameOf[c] ? out.same : out.rest, isDraw(nameOf[h]) ? out.draws : out.others]) { t.weight += f.mine[h]; t.move += f.mine[h] * moveOf[h]; }
+      }
+      for (const t of [out.same, out.rest, out.draws, out.others]) if (t.weight > 0) t.move /= t.weight;
+      return out;
+    };
+    return (fifths = { of, list, near });
   };
   return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
 }
@@ -98,7 +115,7 @@ export function measure(s, c, { onlyOn = true, worth = true } = {}) {
     return out;
   });
   const fifths = worth ? s.bands() : null;
-  return { combo: c, name: fs.formatCombo(c), features: s.featuresOf(c), equity: worth ? s.equity()[c] : null, reach: f.mine[c], actions: acts, band: fifths ? fifths.of[c] : null, bands: fifths ? fifths.list : null };
+  return { combo: c, name: fs.formatCombo(c), features: s.featuresOf(c), equity: worth ? s.equity()[c] : null, reach: f.mine[c], actions: acts, band: fifths ? fifths.of[c] : null, bands: fifths ? fifths.list : null, near: fifths ? fifths.near(c) : null };
 }
 
 /**
@@ -284,11 +301,45 @@ export function explainStreet(s, m, T) {
   {
     const top = taken[0]; const kindOf = (i) => m.actions[i].kind; const pushes = (i) => !['check', 'call', 'fold'].includes(kindOf(i));
     const verb = (i) => (kindOf(i) === 'check' ? 'check' : kindOf(i) === 'call' ? 'call' : kindOf(i) === 'fold' ? 'fold' : facing ? 'raise' : 'bet');
-    const purpose = (i) => (made.some((c) => c.kind === 'needs' && c.a === i) ? (river ? ' as a bluff' : ' to make him fold') : made.some((c) => c.kind === 'builds' && c.a === i) ? ' for value' : '');
+    const purpose = (i) => {
+      const needs = made.some((c) => c.kind === 'needs' && c.a === i); const builds = made.some((c) => c.kind === 'builds' && c.a === i); const ahead = m.actions[i].aheadWhenCalled;
+      if (river) return ahead != null && ahead >= 0.5 ? ' for value' : needs && (ahead == null || ahead < 0.35) ? ' as a bluff' : builds ? ' for value' : '';
+      return builds ? ' for value' : needs && m.equity < 0.5 ? ' to make him fold' : '';
+    };
     if (top != null) {
       const second = taken.find((i) => i !== top && verb(i) !== verb(top) && m.actions[i].sigma >= 0.25);
       const first = `${verb(top)}${pushes(top) ? purpose(top) : ''}`;
       line = (second != null ? `You ${first}, and sometimes ${verb(second)}${pushes(second) ? purpose(second) : ''}. ` : `You ${first}. `) + line.replace(/^You have /, 'It is ');
+    }
+  }
+  // ---- what this hand has that the hands around it do not: its type, and its cards ----
+  {
+    const doing = facing ? 'continue' : 'bet'; const nr = m.near; const floor = nr ? 0.02 * nr.all : 0;
+    // its own type against the rest; or, when there are too few of its type to speak of, draws against the hands without one
+    let kind = null;
+    if (nr && nr.same.weight >= floor && nr.rest.weight >= floor && Math.abs(nr.same.move - nr.rest.move) >= 0.2) kind = { group: TYPES[nr.type] ?? nr.type, mine: nr.same.move, theirs: nr.rest.move, rest: 'the rest' };
+    else if (nr && nr.draw && nr.draws.weight > 0 && nr.others.weight >= floor && Math.abs(nr.draws.move - nr.others.move) >= 0.2) kind = { group: 'the draws', mine: nr.draws.move, theirs: nr.others.move, rest: 'the hands without a draw' };
+    else if (nr && !nr.draw && m.features.own === 0 && !river && nr.draws.weight >= floor && nr.others.weight > 0 && Math.abs(nr.draws.move - nr.others.move) >= 0.2) kind = { group: 'the hands without a draw', mine: nr.others.move, theirs: nr.draws.move, rest: 'the draws' };
+    if (kind) {
+      const more = kind.mine > kind.theirs; const outs = m.features.flushOuts + m.features.straightOuts; const isDraw = nr.draw;
+      let text = `What sets it apart: in this solution, among your hands of about this strength, ${kind.group} ${doing} ${pts(kind.mine)} of the time and ${kind.rest} ${doing} ${pts(kind.theirs)}.`;
+      if (!facing && more && isDraw && outs > 0) text += ` A draw has two ways to win: he folds now, or one of its ${outs} outs comes.`;
+      else if (!facing && !more && !isDraw && !river && m.features.own === 0) text += ' It has no draw: when a bet is called it has almost nothing to improve to, so the draws do the betting at this strength.';
+      else if (!facing && !more && river && m.features.own >= 1) text += ' A pair still wins some showdowns when checked; the hands with nothing at all do the bluffing.';
+      else if (!facing && more && river && m.features.own === 0) text += ' It has no showdown value to protect.';
+      else if (facing && more && isDraw && outs > 0) text += ` It can still make the best hand: ${outs} outs.`;
+      reasons.push({ id: 'type', text });
+    }
+    // its cards: how often he folds to this hand, against the weak hands around it (a number of this solution)
+    const bets = m.actions.map((x, i) => i).filter((i) => m.actions[i].on && m.actions[i].folds != null && !['check', 'call', 'fold'].includes(m.actions[i].kind));
+    if (bets.length && m.equity < 0.25) {
+      const main = bets.sort((x, y) => m.actions[y].freq - m.actions[x].freq)[0];
+      const fold = s.closely(main).replies?.find((r) => r.kind === 'fold')?.share; const eq = s.equity();
+      if (fold) {
+        let w = 0, t = 0; for (let c = 0; c < eq.length; c++) if (s.f.mine[c] > 0 && eq[c] < 0.25 && !Number.isNaN(fold[c])) { w += s.f.mine[c]; t += s.f.mine[c] * fold[c]; }
+        const avg = w > 0 ? t / w : null; const mine = m.actions[main].folds;
+        if (avg != null && Math.abs(mine - avg) >= 0.015) reasons.push({ id: 'cards-held', text: mine > avg ? `Its cards help: he folds ${pts(mine)} to ${label(main)} against this hand, and ${pts(avg)} against your weak hands on average. It holds cards his calling hands need.` : `Its cards work against it: he folds ${pts(mine)} to ${label(main)} against this hand, and ${pts(avg)} against your weak hands on average. It holds cards his folding hands need.` });
+      }
     }
   }
   // ---- why this hand: where it sits in your range, and what that part of the range does ----
@@ -301,8 +352,10 @@ export function explainStreet(s, m, T) {
       const other = m.bands[role.other];
       text += ` ${NAME[role.other].replace(/^t/, 'T')} ${doing} ${pts(other.move)}.`;
       // what separates the two groups is how much of his range each beats
-      const weakSide = role.band < role.other;
-      if (!facing && role.more && weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it has the least to lose by betting, which is why the bluffs come from down here.`;
+      const weakSide = role.band < role.other; const own = m.actions.reduce((t, x) => t + ((facing ? x.kind !== 'fold' : !['check', 'call', 'fold'].includes(x.kind)) ? x.sigma : 0), 0);
+      const along = role.more ? own >= 0.25 : own <= 0.75;
+      if (!along) text += ' This hand goes the other way from its part of the range.';
+      else if (!facing && role.more && weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it has the least to lose by betting, which is why the bluffs come from down here.`;
       else if (!facing && role.more && !weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it is strong enough to be paid by worse, which they are not.`;
       else if (!facing && !role.more && weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: not enough to bet for value the way they do.`;
       else if (!facing && !role.more && !weakSide) text += ` Those hands beat ${pts(other.eq)} of his range on average and this one beats ${pts(m.equity)}: it wins too often at showdown to be turned into a bluff the way they are.`;

@@ -61,3 +61,24 @@ export function groupOf(feature) {
   return 'nothing';
 }
 export const GROUPS = ['strong', 'top pair', 'lower pair', 'flush draw', 'straight draw', 'nothing'];
+
+/**
+ * What a player would call the hand, one name a hand: its made hand if it has one, else its draw,
+ * else what its high cards are against the board. These names behave as buckets: on turns, at the
+ * same equity, the draws bet about twice as often as the hands without one (research/proof/buckets.mjs).
+ */
+export function typeOf(fs, board, combo, f) {
+  const a = fs.COMBO_CARDS[2 * combo]; const b = fs.COMBO_CARDS[2 * combo + 1];
+  const top = Math.max(...board.map((c) => fs.rankOf(c))); const over = (fs.rankOf(a) > top) + (fs.rankOf(b) > top);
+  // three to a flush with a hole card in it, on the flop: a backdoor draw
+  let backdoor = false;
+  if (board.length === 3) for (let s = 0; s < 4; s++) { const n = [...board, a, b].filter((c) => fs.suitOf(c) === s).length; const mine = [a, b].filter((c) => fs.suitOf(c) === s).length; if (n === 3 && mine >= 1) backdoor = true; }
+  const draw = f.flushOuts >= 8 && f.straightOuts >= 4 ? 'combo draw' : f.flushOuts >= 8 ? 'flush draw' : f.straightOuts >= 8 ? 'open-ended' : f.straightOuts >= 4 ? 'gutshot' : null;
+  if (f.own >= 2 || f.made >= 4) return 'two pair or better';
+  if (f.own === 1) { const p = f.pair === 'top pair' || f.pair === 'overpair' ? 'top pair or overpair' : 'lower pair'; return draw && draw !== 'gutshot' ? `${p} + draw` : p; }
+  if (draw) return draw;
+  if (board.length === 5) return fs.rankOf(a) === 12 || fs.rankOf(b) === 12 ? 'ace high' : Math.max(fs.rankOf(a), fs.rankOf(b)) >= 10 ? 'king or queen high' : 'lower high card';
+  return `${over === 2 ? 'two overcards' : over === 1 ? 'one overcard' : 'no overcard'}${backdoor ? ' + backdoor flush' : ''}`;
+}
+/** The same names for a group of hands. */
+export const TYPES = { 'two pair or better': 'two pair and better', 'top pair or overpair': 'top pairs and overpairs', 'lower pair': 'the lower pairs', 'top pair or overpair + draw': 'top pairs with a draw', 'lower pair + draw': 'lower pairs with a draw', 'combo draw': 'combo draws', 'flush draw': 'flush draws', 'open-ended': 'open-ended straight draws', gutshot: 'gutshots', 'ace high': 'ace-high hands', 'king or queen high': 'king- and queen-high hands', 'lower high card': 'the lowest unpaired hands', 'two overcards': 'two overcards', 'one overcard': 'hands with one overcard', 'no overcard': 'hands with no pair, no draw and no overcard', 'two overcards + backdoor flush': 'two overcards with a backdoor flush draw', 'one overcard + backdoor flush': 'one overcard with a backdoor flush draw', 'no overcard + backdoor flush': 'backdoor flush draws with no overcard' };
