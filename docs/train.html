@@ -8,7 +8,7 @@
 <title>Pareto: Train</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=eb40cf4a22">
+<link rel="stylesheet" href="style.css?v=0a5c08f7dc">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = 'eb40cf4a22'; const opening = !/(study|train)\.html/.test(location.pathname);
+  const here = '0a5c08f7dc'; const opening = !/(study|train)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
@@ -45,6 +45,7 @@ if ('serviceWorker' in navigator) {
   </header>
   <section class="t-stage">
     <div class="left">
+      <div class="past" id="past" aria-label="The streets before this one"></div>
       <div class="where" id="where"></div>
       <div class="minis" id="minis"></div>
       <div class="curve" id="dist" hidden></div>
@@ -55,6 +56,6 @@ if ('serviceWorker' in navigator) {
 <div class="scrim" id="scrim" hidden></div>
 <section class="drawer" id="settings" hidden aria-label="Settings" tabindex="-1"></section>
 <section class="drawer" id="history" hidden aria-label="Last questions" tabindex="-1"></section>
-<script type="module" src="train.js?v=eb40cf4a22"></script>
+<script type="module" src="train.js?v=0a5c08f7dc"></script>
 </body>
 </html>

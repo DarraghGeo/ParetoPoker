@@ -27,7 +27,7 @@ export const cellName = (i, j) => (i === j ? RANKS[i] + RANKS[i] : i < j ? `${RA
  * The address that opens a spot in Study: the setup, the board, and where in it to open: the
  * actions taken to reach the decision, the cards dealt on the way, the hand picked.
  */
-export function studyUrl(config, board, { line = [], dealt = [], hand = null, lite = false } = {}) {
+export function studyUrl(config, board, { line = [], dealt = [], hand = null, lite = false, resolve = false } = {}) {
   const q = new URLSearchParams({ board: board.replace(/\s+/g, ''), pot: config.pot, stack: config.stack,
     bets: (Array.isArray(config.bets[0]) ? config.bets : [config.bets]).map((list) => list.map((b) => Math.round(100 * b)).join(',')).join('/'),
     raises: config.raises.join(','), max: config.maxRaises, allin: config.allIn ? 1 : 0, oop: config.oop, ip: config.ip });
@@ -35,6 +35,8 @@ export function studyUrl(config, board, { line = [], dealt = [], hand = null, li
   if (dealt.length) q.set('dealt', dealt.join(','));
   if (hand) q.set('hand', hand);
   if (lite) q.set('lite', '1');
+  // each street after the first solved again for the ranges that arrive, as Train does
+  if (resolve) q.set('resolve', '1');
   return `study.html?${q}`;
 }
 /** Put text on the clipboard; where the browser will not allow that directly, through a field selected and copied. */
