@@ -432,3 +432,12 @@ the equity it takes from the hands that fold, less what it pays the hands that c
 - **Letting the rule choose the hands as well is worse** (7.0 on the 4-bet pots): "every hand that gains bets" leaves no bluffs chosen as bluffs and sorts the range too hard. It is a rule for how much, not for which.
 
 **Where the strategy stands, fully derived:** about 4.8% of the pot in 4-bet pots and 8% across the mixed set, from 8.1% and 10% before this step.
+
+## To assess later
+
+**Nut advantage that depends on stack depth** (owner's note, from a book; not yet assessed or tested).
+
+- So far "nut advantage" has been a fixed cut: the share of each range with 80% equity or more.
+- The suggestion is that the cut should move with the stack-to-pot ratio and the stack size: what counts as a nut hand depends on how much money can still go in.
+- Heuristically, the advantage is said to do two things: set the largest bet or raise size a range can use, and tighten or loosen how often it bets.
+- Worth assessing whether this can be brought into the formulas. Two places it might fit: the choice among bet sizes (which sizes a range may use at all), and the 3-bet and squeeze pots, where stacks are three to four pots deep and the derived strategy still gives up the most.
