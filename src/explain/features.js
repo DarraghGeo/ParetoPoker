@@ -87,19 +87,33 @@ export const TYPES = { 'two pair or better': 'two pair and better', 'top pair or
  * Every name that fits a hand, uncompressed: its made hand, each draw it has, and its overcards.
  * A hand can carry several (top pair and a flush draw). `TAG_ORDER` is strongest first.
  */
-export const TAG_ORDER = ['Straight flush', 'Four of a kind', 'Full house', 'Flush', 'Straight', 'Set', 'Trips', 'Two pair', 'Overpair', 'Top pair', 'Middle pair', 'Bottom pair', 'Underpair', 'Pair', 'Flush draw', 'Open-ended straight draw', 'Gutshot', 'Backdoor flush draw', 'Two overcards', 'One overcard', 'Ace high', 'King high', 'Queen high', 'Lower high card', 'No pair'];
+export const TAG_ORDER = ['Straight flush', 'Four of a kind', 'Full house', 'Flush', 'Straight', 'Three of a kind', 'Set', 'Trips', 'Two pair', 'Pair', 'Overpair', 'Top pair', 'Middle pair', 'Bottom pair', 'Underpair', 'Combo draw', 'Flush draw', 'Open-ended straight draw', 'Gutshot', 'Backdoor flush draw', 'Two overcards', 'One overcard', 'High card', 'Ace high', 'King high', 'Queen high', 'Lower high card', 'No pair'];
 export function tagsOf(fs, board, combo, f) {
   const a = fs.COMBO_CARDS[2 * combo]; const b = fs.COMBO_CARDS[2 * combo + 1]; const out = [];
   const river = board.length === 5;
-  if (f.own >= 2 || f.made >= 4) out.push(['', '', 'Two pair', f.pocket ? 'Set' : 'Trips', 'Straight', 'Flush', 'Full house', 'Four of a kind', 'Straight flush'][f.made] || 'Two pair');
-  else if (f.own === 1) out.push({ overpair: 'Overpair', 'top pair': 'Top pair', 'middle pair': 'Middle pair', 'bottom pair': 'Bottom pair', underpair: 'Underpair' }[f.pair] ?? 'Pair');
-  else if (river) { const high = Math.max(fs.rankOf(a), fs.rankOf(b)); out.push(high === 12 ? 'Ace high' : high === 11 ? 'King high' : high === 10 ? 'Queen high' : 'Lower high card'); }
+  // the made hand, and the wider family it belongs to: a set is also three of a kind, top pair is also a pair
+  if (f.own >= 2 || f.made >= 4) {
+    out.push(['', '', 'Two pair', f.pocket ? 'Set' : 'Trips', 'Straight', 'Flush', 'Full house', 'Four of a kind', 'Straight flush'][f.made] || 'Two pair');
+    if (f.made === 3) out.push('Three of a kind');
+    if (f.made === 8) out.push('Straight', 'Flush');
+  } else if (f.own === 1) {
+    out.push({ overpair: 'Overpair', 'top pair': 'Top pair', 'middle pair': 'Middle pair', 'bottom pair': 'Bottom pair', underpair: 'Underpair' }[f.pair] ?? 'Pair');
+    if (f.pair) out.push('Pair');
+  } else if (river) { const high = Math.max(fs.rankOf(a), fs.rankOf(b)); out.push(high === 12 ? 'Ace high' : high === 11 ? 'King high' : high === 10 ? 'Queen high' : 'Lower high card', 'High card'); }
   else out.push('No pair');
-  if (!river && f.made < 4) {
-    if (f.flushOuts >= 8) out.push('Flush draw');
-    if (f.straightOuts >= 8) out.push('Open-ended straight draw'); else if (f.straightOuts >= 4) out.push('Gutshot');
-    if (board.length === 3 && f.flushOuts < 8) for (let s = 0; s < 4; s++) { const n = [...board, a, b].filter((c) => fs.suitOf(c) === s).length; const mine = [a, b].filter((c) => fs.suitOf(c) === s).length; if (n === 3 && mine >= 1) { out.push('Backdoor flush draw'); break; } }
-    if (f.own === 0 && f.made < 2) { const top = Math.max(...board.map((c) => fs.rankOf(c))); const over = (fs.rankOf(a) > top) + (fs.rankOf(b) > top); if (over === 2) out.push('Two overcards'); else if (over === 1) out.push('One overcard'); }
+  if (!river) {
+    // every draw it has, whatever it has made already: a straight can hold a flush draw, a pair a gutshot
+    const flush = f.flushOuts >= 8; const straight = f.straightOuts >= 4;
+    if (flush) out.push('Flush draw');
+    if (f.straightOuts >= 8) out.push('Open-ended straight draw'); else if (straight) out.push('Gutshot');
+    if (flush && straight) out.push('Combo draw');
+    if (board.length === 3 && !flush && f.made < 5) for (let s = 0; s < 4; s++) { const n = [...board, a, b].filter((c) => fs.suitOf(c) === s).length; const mine = [a, b].filter((c) => fs.suitOf(c) === s).length; if (n === 3 && mine >= 1) { out.push('Backdoor flush draw'); break; } }
+    // cards above the board that are not already part of a pair: a bottom pair can still hold an overcard
+    if (f.own <= 1 && f.made < 4 && !f.pocket) {
+      const top = Math.max(...board.map((c) => fs.rankOf(c))); const paired = (c) => board.some((x) => fs.rankOf(x) === fs.rankOf(c));
+      const over = [a, b].filter((c) => fs.rankOf(c) > top && !paired(c)).length;
+      if (over === 2) out.push('Two overcards'); else if (over === 1) out.push('One overcard');
+    }
   }
   return out;
 }
