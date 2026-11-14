@@ -26,6 +26,8 @@ export async function profile(RangeManager, { oop, ip, board }) {
     // The rest are poker-rangeman's own measures and labels, kept here as `detail` until their definitions are checked too.
     // the same comparison as rows, for the page's range view: [label, out of position, in position]
     const share = (x) => `${Math.round(100 * (x ?? 0))}%`;
+    // the shape that scores highest; when rangeman calls none of them dominant it is marked as mixed
+    const shapeOf = (sh) => { if (!sh) return 'mixed'; const best = ['polarized', 'linear', 'condensed'].reduce((b, k) => ((sh[k] ?? 0) > (sh[b] ?? 0) ? k : b), 'polarized'); return sh.dominant ?? `${best} (mixed)`; };
     const facts = [
       ['Hands', `${Math.round(hero.weight)}`, `${Math.round(villain.weight)}`],
       ['Equity', share(hero.equity), share(villain.equity)],
@@ -34,7 +36,7 @@ export async function profile(RangeManager, { oop, ip, board }) {
       ['Weak (33-50%)', share(hero.buckets?.weak?.share), share(villain.buckets?.weak?.share)],
       ['Trash (under 33%)', share(hero.buckets?.trash?.share), share(villain.buckets?.trash?.share)],
       ['Nut hands', share(hero.nuts?.share), share(villain.nuts?.share)],
-      ['Shape', hero.shape?.dominant ?? 'mixed', villain.shape?.dominant ?? 'mixed'],
+      ['Shape', shapeOf(hero.shape), shapeOf(villain.shape)],
       ['Capped', share(hero.capped?.relative), share(villain.capped?.relative)],
     ];
     return { text: parts[0], detail: parts.join(' '), sentences: parts, facts, advantage: { range: advantage.range, nut: advantage.nut, polarization: advantage.polarization }, shapes: { oop: hero.shape?.dominant ?? null, ip: villain.shape?.dominant ?? null }, capped: { oop: hero.capped?.relative ?? 0, ip: villain.capped?.relative ?? 0 } };
