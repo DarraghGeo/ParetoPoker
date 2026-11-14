@@ -54,7 +54,19 @@ try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (sa
 if (!Array.isArray(config.raises)) config.raises = [];
 // What is being asked about, and what waits: `board` is the board on screen with its positions, `boards` the ones solved ahead of it
 /** The address that opens a spot in Study: the setup, the board, the line to the decision and, when one is asked about, the hand. A flop is solved lite there as it is here. */
-const studyUrl = (board, line, hand) => linkToStudy(config, board, { line: line ?? [], hand, lite: (board.match(/[2-9TJQKA][shdc]/g) ?? []).length === 3 });
+/** Every action on the way to a decision, in order: the streets before it, then its own. */
+const wholeLine = (at) => [...(at.history ?? []).flatMap((h) => h.actions.map((a) => a.label)), ...(at.line ?? [])];
+/**
+ * The address that opens a spot in Study the way it was made here: the flop solved lite, its line
+ * played, each later street solved again for the ranges that arrive. `at`: the board, the streets
+ * before and the line (a decision, or a past question).
+ */
+function studyUrl(at, hand) {
+  const cards = at.board.match(/[2-9TJQKA][shdc]/g) ?? [];
+  // a question kept from before spots started on the flop: its board as it was
+  if (!at.history && cards.length > 3) return linkToStudy(config, at.board, { line: at.line ?? [], hand });
+  return linkToStudy(config, cards.slice(0, 3).join(''), { line: wholeLine(at), dealt: cards.slice(3), hand, lite: true, resolve: cards.length > 3 });
+}
 const game = { boards: [], board: null, spot: null, q: null, busy: null, progress: null, id: 0, failed: 0, error: '' };
 /** How many boards to keep solved ahead of the one on screen. */
 const AHEAD = 3;
@@ -191,7 +203,7 @@ function grade() {
   q.done = true;
   q.ok = q.chosen.size === q.right.length && q.right.every((k) => q.chosen.has(k));
   const d = game.spot.decision;
-  record({ t: Date.now(), day: dayKey(), type: q.type, street: q.street, ok: q.ok, board: d.boardText, seat: d.seat, line: d.line, hand: q.hand ?? null, text: q.text, mine: namesOf(q, q.chosen), right: namesOf(q, q.right), why: q.why, explained: q.street === 'river' });
+  record({ t: Date.now(), day: dayKey(), type: q.type, street: q.street, ok: q.ok, board: d.boardText, seat: d.seat, line: d.line, history: d.history, hand: q.hand ?? null, text: q.text, mine: namesOf(q, q.chosen), right: namesOf(q, q.right), why: q.why, explained: q.street === 'river' });
   render();
   $('next')?.focus({ preventScroll: true });
 }
@@ -219,10 +231,12 @@ function spotText() {
   const lists = Array.isArray(config.bets[0]) ? config.bets : [config.bets];
   // the line, each action with who took it: out of position acts first
   const line = d.line.map((label, k) => `${k % 2 === 0 ? 'OOP' : 'IP'} ${label}`).join(', ');
+  const before = d.history.map((h) => `${h.street[0].toUpperCase()}${h.street.slice(1)} ${h.cards.join(' ')}: ${h.actions.map((a) => `${seatName(a.seat)} ${a.label}`).join(', ')}`);
   const villain = d.seat === 'oop' ? 'ip' : 'oop';
   const rows = [
     `Board: ${d.boardText} (${d.street})`,
-    `Hero: ${seatName(d.seat)}, ${!d.line.length ? 'first to act' : `after ${line}`}`,
+    ...before,
+    `Hero: ${seatName(d.seat)}, ${!d.line.length ? `first to act on the ${d.street}` : `on the ${d.street} after ${line}`}`,
     `Pot: ${num(d.pot)}${d.toCall > 0 ? `, to call ${num(d.toCall)}` : ''}, behind ${num(d.behind)} (started at pot ${num(config.pot)}, stacks ${num(config.stack)})`,
     `Hero's actions: ${d.actions.map((a) => a.label).join(', ')}`,
     q?.hand ? `Hand: ${q.hand}` : '',
@@ -230,20 +244,22 @@ function spotText() {
     `Villain's starting range, ${seatName(villain)}: ${config[villain]} (${Math.round(spot.his.combos)} combinations reach this decision)`,
     `Bet sizes, % of pot: ${lists.map((list) => list.map((b) => Math.round(100 * b)).join(' ')).join(' / ')}`,
     `Raises: ${config.raises.length && config.maxRaises > 0 ? `${config.raises.map((r) => `${r}x`).join(' ')}, ${config.maxRaises} allowed` : 'none'}; all-in ${config.allIn ? 'offered' : 'not offered'}`,
-    d.street === 'flop' ? 'Solved lite: these sizes on the flop, one bet size on the turn and river.' : '',
-    new URL(studyUrl(d.boardText, d.line, q?.hand), location.href).href,
+    d.street === 'flop' ? 'Solved lite: these sizes on the flop, one bet size on the turn and river.' : `Solved from the flop (lite), then the ${d.street === 'river' ? 'turn and the river each' : 'turn'} solved again for the ranges that arrive.`,
+    new URL(studyUrl({ board: d.boardText, history: d.history, line: d.line }, q?.hand), location.href).href,
   ];
   return rows.filter(Boolean).join('\n');
 }
 /** Where the hand stands: who hero is, the line so far, the pot and what is left behind. */
 function renderWhere() {
   const spot = game.spot;
-  if (!spot) { $('where').innerHTML = ''; return; }
+  if (!spot) { $('where').innerHTML = ''; $('past').innerHTML = ''; return; }
+  // how the hand got here: each street before this one, with who did what
+  $('past').innerHTML = spot.decision.history.map((h) => `<div><span class="street">${esc(h.street)}</span>${h.actions.map((a) => `<span><i>${a.seat === spot.decision.seat ? 'Hero' : 'Villain'}</i> ${esc(a.label)}</span>`).join('')}</div>`).join('');
   const d = spot.decision; const last = d.line[d.line.length - 1];
   const stands = !d.line.length ? 'First to act' : last === 'X' ? 'Checked to you' : `Facing ${last}`;
   const num = (x) => String(Math.round(10 * x) / 10);
-  $('where').innerHTML = `<span class="who">Hero ${seatName(d.seat)}</span><span class="stands">${esc(stands)}</span><span class="grow"></span><span class="chips">Pot ${num(d.pot)}</span><span class="chips">Behind ${num(d.behind)}</span>`
-    + `<a class="icon" id="study" target="_blank" rel="noopener" href="${esc(studyUrl(d.boardText, d.line, game.q?.hand))}" aria-label="Open this spot in Study, in a new tab" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
+  $('where').innerHTML = `<span class="who">Hero ${seatName(d.seat)}</span><span class="stands">${esc(stands)}</span><span class="grow"></span><span class="chips">Pot ${Math.round(d.pot)}</span><span class="chips">Behind ${Math.round(d.behind)}</span>`
+    + `<a class="icon" id="study" target="_blank" rel="noopener" href="${esc(studyUrl({ board: d.boardText, history: d.history, line: d.line }, game.q?.hand))}" aria-label="Open this spot in Study, in a new tab" title="Open in Study"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5" ${STROKE}/></svg></a>`
     + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${COPY_ICON}</svg></button>`
     + `<button type="button" class="icon" id="view" aria-label="${store.view === 'grid' ? 'Equity distribution' : 'Ranges'}"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${store.view === 'grid' ? curveIcon : gridIcon}</svg></button>`;
 }
@@ -282,9 +298,9 @@ function renderAsk() {
   if (!q) {
     if (game.failed >= 3) { el.innerHTML = `<p class="lead">This setup cannot be solved.</p><p>${esc(game.error)}</p><p>The ranges, pot and bet sizes are the ones set up in <a href="study.html">Study</a>.</p>`; return; }
     // nothing ready: say what is being solved and how far along
-    const p = game.progress; const street = game.busy?.street ?? '';
+    const p = game.progress; const street = p?.street ?? 'flop';
     const near = Math.max(0.04, p?.done ?? 0);
-    el.innerHTML = `<div class="kind">Next spot</div><p class="lead">Solving a ${esc(street)}</p><div class="track"><i style="width:${(100 * near).toFixed(1)}%"></i></div>${street === 'flop' ? '<p>A flop takes up to a minute, solved lite: its own bets and raises, one bet size on the turn and river.</p>' : ''}`;
+    el.innerHTML = `<div class="kind">Next spot</div><p class="lead">Solving a ${esc(street)}</p><div class="track"><i style="width:${(100 * near).toFixed(1)}%"></i></div>${street === 'flop' ? '<p>Every spot starts from a flop, which takes up to a minute to solve. Turns and rivers are dealt off it.</p>' : ''}`;
     return;
   }
   const strata = strataOf(game.spot.decision.actions);
@@ -346,7 +362,7 @@ function choice(group, key, name) {
 function renderSettings() {
   $('settings').innerHTML = '<h3>Questions</h3>' + Object.entries(TYPES).map(([k, name]) => choice('types', k, name)).join('')
     + '<h3>Streets</h3>' + Object.entries(STREETS).map(([k, name]) => choice('streets', k, name)).join('')
-    + '<p class="note">Spots are dealt at random with the ranges, pot and bet sizes set up in <a href="study.html">Study</a>. A turn takes a few seconds to solve, a flop up to a minute.</p>';
+    + '<p class="note">Spots are dealt at random with the ranges, pot and bet sizes set up in <a href="study.html">Study</a>. Every spot starts from a flop, solved lite, which takes up to a minute. A turn or river is that flop played down a line its solution takes, then solved again for the ranges that arrive.</p>';
 }
 $('open-settings').onclick = () => { renderSettings(); open('settings'); };
 $('settings').addEventListener('click', (ev) => {
@@ -372,7 +388,7 @@ function renderHistory() {
     const open = openRows.has(e.t);
     const where = !e.line?.length ? 'first to act' : e.line[e.line.length - 1] === 'X' ? 'checked to' : `facing ${e.line[e.line.length - 1]}`;
     return `<li class="${e.ok ? 'good' : 'bad'}"><button type="button" class="past" aria-expanded="${open}" data-row="${e.t}"><i class="mark">${e.ok ? TICK : CROSS}</i><span class="q"><span>${esc(TYPES[e.type] ?? e.type)}${e.hand ? ` <b>${cardsHtml(e.hand)}</b>` : ''}</span><span class="spot"><b>${cardsHtml(e.board)}</b> ${seatName(e.seat)} ${esc(where)}</span></span></button>`
-      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}<p><a target="_blank" rel="noopener" href="${esc(studyUrl(e.board, e.line, e.hand))}">Open in Study</a></p></dd></dl>` : '') + '</li>';
+      + (open ? `<dl><dt>Your answer</dt><dd>${esc(e.mine)}</dd><dt>Right answer</dt><dd>${esc(e.right)}</dd><dt>Why</dt><dd>${e.why.map((p) => `<p>${esc(p)}</p>`).join('')}${e.explained ? '' : '<p class="soon">Fuller explanations are written for the river only for now.</p>'}<p><a target="_blank" rel="noopener" href="${esc(studyUrl(e, e.hand))}">Open in Study</a></p></dd></dl>` : '') + '</li>';
   };
   $('history').innerHTML = `<div class="total"><span class="big"><b>${t.ok}</b>/${t.n}</span><span>${t.n ? `${pct(t.ok / t.n)}% today` : 'Nothing answered today'}</span></div>`
     + (store.log.length ? `<h3>Last questions</h3><ul class="log">${store.log.map(row).join('')}</ul>` : '');

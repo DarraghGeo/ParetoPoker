@@ -37,12 +37,18 @@ The page opens on a choice between the two:
   of question and the streets; each shows its last five days played. The day's score opens the
   last questions with the answer given, the right one and why. A question whose answer is too
   close to call is not asked.
-  A flop is solved with poker-flopsolve's lite preset (`litePreset`): the flop's betting as set up,
-  one bet size on the turn and river, stopped when the first decisions stop moving.
+  Every spot starts on a flop, solved with poker-flopsolve's lite preset (`litePreset`): the flop's
+  betting as set up, one bet size on the turn and river, stopped when the first decisions stop
+  moving. A turn is that flop played down a line its solution takes (picked by how often it is
+  taken), a card dealt, and the turn solved again for the two ranges as they arrive, with the
+  setup's own betting; a river, the same from a turn. So the ranges asked about are ones play
+  produces, and the page shows the action on the streets before. Four turns are dealt off a flop
+  and three rivers off a turn before a new one is solved.
   Solves run in the background until three boards wait behind the one on screen. A board is asked
   about from several positions, and with nothing waiting it is gone round again with other hands.
   Every third flop is dealt new; the two after it are each one card away from the flop before, and
   start from its solve (`warmStart` with `warmCards`), which settles in about half the iterations.
+  A spot opens in Study through its address, where it is solved the same way, or is copied as text.
 
 ```bash
 npm install

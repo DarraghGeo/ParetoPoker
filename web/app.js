@@ -37,7 +37,7 @@ try {
     for (const side of ['oop', 'ip']) if (q.get(side)?.trim()) c[side] = q.get(side).trim();
     c.lite = q.get('lite') === '1';
     Object.assign(state.config, c);
-    state.open = { line: (q.get('line') ?? '').split(',').filter(Boolean), dealt: (q.get('dealt') ?? '').match(/[2-9TJQKA][shdc]/g) ?? [], hand: /^([2-9TJQKA][shdc]){2}$/.test(q.get('hand') ?? '') ? q.get('hand') : null };
+    state.open = { line: (q.get('line') ?? '').split(',').filter(Boolean), dealt: (q.get('dealt') ?? '').match(/[2-9TJQKA][shdc]/g) ?? [], hand: /^([2-9TJQKA][shdc]){2}$/.test(q.get('hand') ?? '') ? q.get('hand') : null, resolve: q.get('resolve') === '1' };
   }
 } catch { /* an address that cannot be read opens the saved spot */ }
 const remember = () => { try { localStorage.setItem('pareto', JSON.stringify({ config: state.config, detail: state.detail, view: state.view, split: state.split })); } catch { /* private window */ } };
@@ -61,23 +61,35 @@ worker.onmessage = ({ data }) => {
     // back where this version was last looked at, if that place exists in it
     if (state.open) {
       // the decision the address names: its line walked from the first decision, as far as this tree has it
-      let at = 0;
-      const cards = [];
-      for (const label of state.open.line) {
-        const edge = state.nodes[at].edges.find((e) => e.label === label); if (!edge) break;
-        let next = state.nodes[edge.child];
+      let at = 0; let again = null;
+      const cards = []; const { line, dealt } = state.open;
+      for (let i = 0; i < line.length; i++) {
+        const edge = state.nodes[at].edges.find((e) => e.label === line[i]); if (!edge) break;
+        const next = state.nodes[edge.child];
         // an action that ends the street: on through the card the address gives for it
-        if (next.kind === 'chance' && state.open.dealt[next.round] && state.nodes[next.edges[0]?.child]?.kind === 'decision') { cards[next.round] = state.open.dealt[next.round]; next = state.nodes[next.edges[0].child]; }
+        if (next.kind === 'chance' && dealt[next.round] && state.nodes[next.edges[0]?.child]?.kind === 'decision') {
+          cards[next.round] = dealt[next.round]; at = next.edges[0].child;
+          // a spot from Train: each street after the first is solved again for the ranges that arrive, and the rest of the line is walked in that solve
+          if (state.open.resolve) { again = { ...state.open, line: line.slice(i + 1), dealt: dealt.slice(next.round + 1) }; break; }
+          continue;
+        }
         if (next.kind !== 'decision') break;
         at = next.id;
       }
       version().pos = { node: at, dealt: cards };
-      if (state.open.hand) { state.hand = state.open.hand; state.cell = cellOf(state.open.hand); }
-      state.open = null;
+      if (!again && state.open.hand) { state.hand = state.open.hand; state.cell = cellOf(state.open.hand); }
+      state.open = again;
+      if (again) state.onward = { id: at, dealt: cards };
     }
     const pos = version().pos ?? { node: 0, dealt: [] }; const there = state.nodes[pos.node];
     const ok = there?.kind === 'decision' && pos.dealt.length >= there.round;
     state.dealt = ok ? [...pos.dealt] : []; state.pick = null; go(ok ? pos.node : 0);
+    if (state.onward) {
+      const { id, dealt } = state.onward; state.onward = null;
+      const c = state.config; const lists = Array.isArray(c.bets[0]) ? c.bets : [c.bets]; const left = 3 - boardCards(conf().board).length - dealt.length + 3;
+      state.sub = { bets: lists.length > left ? lists.slice(-left) : c.bets, raises: c.raises, maxRaises: c.maxRaises, allIn: c.allIn };
+      worker.postMessage({ type: 'subgame', job: state.job, id, dealt });
+    }
   }
   if (data.type === 'decision') show(data.decision);
   if (data.type === 'looked') { state.looked.set(`${data.id}|${state.dealt.join(' ')}|${data.combo ?? null}`, data.look ?? { types: [], spread: null }); renderWhy(); }
