@@ -2,7 +2,7 @@
 import * as fs from 'poker-flopsolve';
 import { decisionAt, equityVs, treeOf } from '../src/solver/flopsolve.js';
 import { KNOBS, describe, isNeutral, reshape } from '../src/warp/reshape.js';
-import { study, measure, tolerance, explainStreet, RARE } from '../src/explain/street.js';
+import { study, measure, tolerance, explainStreet, analysis, RARE } from '../src/explain/street.js';
 
 let solution = null;
 let nodes = null;
@@ -144,6 +144,16 @@ self.onmessage = async ({ data }) => {
       self.postMessage({ type: 'preview', id: data.id, sides: { oop: side(0), ip: side(1) } });
     } catch (error) {
       self.postMessage({ type: 'preview', id: data.id, error: String(error?.message ?? error) });
+    }
+  } else if (data.type === 'analysis' && solution) {
+    // The analytical look at one hand: the types in the range, and how its equity is spread over the next card
+    try {
+      const dealt = fs.parseCards((data.dealt ?? []).join(' '));
+      const key = `${data.id}|${dealt.join(',')}`;
+      let st = studies.get(key); if (!st) studies.set(key, st = study(fs, solution, nodes, data.id, dealt));
+      self.postMessage({ type: 'looked', job: data.job, id: data.id, combo: data.combo, look: analysis(st, data.combo) });
+    } catch (error) {
+      self.postMessage({ type: 'looked', job: data.job, id: data.id, combo: data.combo, look: null, error: String(error?.message ?? error) });
     }
   } else if (data.type === 'explain' && solution) {
     // One hand at a flop or turn decision. The decision is studied once; other hands at it then answer at once

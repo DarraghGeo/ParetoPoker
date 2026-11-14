@@ -75,9 +75,26 @@ export function study(fs, solution, nodes, id, dealt = []) {
       for (const t of [out.same, out.rest, out.draws, out.others]) if (t.weight > 0) t.move /= t.weight;
       return out;
     };
-    return (fifths = { of, list, near });
+    // every type in the range: how much of it, how strong, and what it does action by action
+    const kinds = new Map();
+    for (const c of hands) { let k = kinds.get(nameOf[c]); if (!k) kinds.set(nameOf[c], k = { name: nameOf[c], weight: 0, eq: 0, mix: f.node.edges.map(() => 0) }); k.weight += f.mine[c]; k.eq += f.mine[c] * eq[c]; for (let a = 0; a < n; a++) k.mix[a] += f.mine[c] * sigma(c, a); }
+    for (const k of kinds.values()) { k.eq /= k.weight; k.mix = k.mix.map((x) => x / k.weight); k.share = k.weight / all; }
+    return (fifths = { of, list, near, nameOf, kinds: [...kinds.values()].sort((x, y) => y.eq - x.eq) });
   };
-  return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
+  // Every card that can come next, and each hand's equity once it has: how a hand's strength is spread over the next street
+  let nextCards = null;
+  const spread = () => {
+    if (nextCards || f.board.length === 5) return nextCards;
+    nextCards = [];
+    for (let x = 0; x < 52; x++) {
+      if (f.taken[x]) continue;
+      const mine = Float64Array.from(f.mine); const his = Float64Array.from(f.his);
+      for (let c = 0; c < N; c++) if (fs.COMBO_CARDS[2 * c] === x || fs.COMBO_CARDS[2 * c + 1] === x) { mine[c] = 0; his[c] = 0; }
+      nextCards.push({ card: x, eq: equityVs(fs, [...f.board, x], mine, his) });
+    }
+    return nextCards;
+  };
+  return { fs, f, pot: f.node.pot, toCall: f.node.invested[1 - f.me] - f.node.invested[f.me], actions, lineReach, sigma, featuresOf, closely, bands, spread, equity: () => equity ?? (equity = equityVs(fs, f.board, f.mine, f.his)) };
 }
 
 /** One hand at a studied decision. `onlyOn`: measure only the actions on the path (the others cannot be relied on). */
@@ -420,4 +437,30 @@ export function explainStreet(s, m, T) {
     }
   }
   return { name: m.name, strategy, line, reasons, claims: made, silent: proven ? null : 'Numbers only, as this solution has them. Conclusions are drawn only where they have been proven to carry over: see the proof file for which decisions those are.' };
+}
+
+
+/**
+ * The analytical look at one hand: every hand type in the range with what it does and whether this
+ * hand is one of them, and (before the river) how the hand's equity is spread over the cards that
+ * can come next, beside the same for the range as a whole.
+ */
+export function analysis(s, c) {
+  const { fs, f } = s;
+  if (!(f.mine[c] > 0)) return null;
+  const b = s.bands(); const mine = b.nameOf[c];
+  const types = b.kinds.map((k) => ({ name: k.name, label: TYPES[k.name] ?? k.name, share: k.share, equity: k.eq, mix: k.mix, has: k.name === mine }));
+  let spread = null;
+  const cards = s.spread();
+  if (cards) {
+    const hand = []; const range = [];
+    for (const k of cards) {
+      if (!Number.isNaN(k.eq[c])) hand.push({ card: fs.formatCards([k.card]), eq: k.eq[c] });
+      let w = 0, t = 0; for (let h = 0; h < fs.COMBOS; h++) if (f.mine[h] > 0 && !Number.isNaN(k.eq[h])) { w += f.mine[h]; t += f.mine[h] * k.eq[h]; }
+      if (w > 0) range.push(t / w);
+    }
+    hand.sort((x, y) => x.eq - y.eq); range.sort((x, y) => x - y);
+    spread = { hand, range, now: s.equity()[c], street: f.board.length === 3 ? 'turn' : 'river' };
+  }
+  return { name: fs.formatCombo(c), type: mine, types, spread };
 }

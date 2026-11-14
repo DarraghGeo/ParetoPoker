@@ -14,6 +14,8 @@ const state = {
   dealt: [], pick: null, sub: null,
   // flop and turn reasons, as the worker has worked them out: `${node}|${dealt}|${combo}`
   told: new Map(), asked: new Set(),
+  // the analytical look at a hand, likewise, and which of the two the panel shows
+  looked: new Map(), tab: 'why',
 };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config);
   // an earlier visit saved one raise size as `raise`
@@ -55,7 +57,7 @@ worker.onmessage = ({ data }) => {
     state.sub = null; turnTo(state.versions.length - 1);
   }
   if (data.type === 'solved') {
-    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.looked.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
     // back where this version was last looked at, if that place exists in it
     if (state.open) {
       // the decision the address names: its line walked from the first decision, as far as this tree has it
@@ -78,6 +80,7 @@ worker.onmessage = ({ data }) => {
     state.dealt = ok ? [...pos.dealt] : []; state.pick = null; go(ok ? pos.node : 0);
   }
   if (data.type === 'decision') show(data.decision);
+  if (data.type === 'looked') { state.looked.set(`${data.id}|${state.dealt.join(' ')}|${data.combo}`, data.look ?? { types: [], spread: null }); renderWhy(); }
   if (data.type === 'told') { state.told.set(`${data.id}|${state.dealt.join(' ')}|${data.combo}`, data.told ?? { line: '', reasons: [], silent: data.error ?? '' }); renderWhy(); }
 };
 // ---- a solve that takes a while says so: what is being solved, how far along, and a way to stop ----
@@ -389,9 +392,34 @@ function renderWhy() {
   if (state.spot?.text && !d.abstract && !(state.nodes?.[state.node]?.round > 0)) reasons.push({ text: state.spot.text });
   $('why').innerHTML = `<h2>${title}</h2>`
     + `<div class="mix"><span class="bar">${bar(told.strategy, strata)}</span><div class="nums">${d.actions.map((a, k) => (told.strategy[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(told.strategy[k])}</span>` : '')).join('')}</div></div>`
-    + (told.line ? `<p class="lead">${esc(told.line)}</p>` : '')
-    + reasons.map((r) => `<p${r.quiet ? ' class="quiet"' : ''}>${esc(r.text)}</p>`).join('');
+    + `<div class="seg tabs" role="tablist"><button type="button" role="tab" data-tab="why" aria-selected="${state.tab === 'why'}" aria-pressed="${state.tab === 'why'}">Why</button><button type="button" role="tab" data-tab="look" aria-selected="${state.tab === 'look'}" aria-pressed="${state.tab === 'look'}">Analysis</button></div>`
+    + (state.tab === 'look' ? lookHtml(row, strata) : (told.line ? `<p class="lead">${esc(told.line)}</p>` : '') + reasons.map((r) => `<p${r.quiet ? ' class="quiet"' : ''}>${esc(r.text)}</p>`).join(''));
 }
+/** The analytical look: how the hand's equity is spread over the next card, and every hand type in the range with what it does. */
+function lookHtml(row, strata) {
+  const key = `${state.node}|${state.dealt.join(' ')}|${row.hand.id}`; const look = state.looked.get(key);
+  if (!look) {
+    if (!state.asked.has(`look|${key}`)) { state.asked.add(`look|${key}`); worker.postMessage({ type: 'analysis', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); }
+    return '<p class="quiet">Working it out\u2026</p>';
+  }
+  let html = '';
+  if (look.spread && look.spread.hand.length) {
+    // each card that can come, weakest for this hand first, against the equity the hand has then; the range the same way, faded
+    const H = look.spread.hand; const R = look.spread.range; const SW = 560, SH = 220, P = 10;
+    const Y = (e) => SH - P - e * (SH - 2 * P);
+    const steps = (list, get) => list.map((v, i) => `${((i / list.length) * SW).toFixed(1)},${Y(get(v)).toFixed(1)} ${(((i + 1) / list.length) * SW).toFixed(1)},${Y(get(v)).toFixed(1)}`).join(' ');
+    const up = H.filter((x) => x.eq > look.spread.now + 0.1).length; const down = H.filter((x) => x.eq < look.spread.now - 0.1).length;
+    html += `<div class="spread"><svg viewBox="0 0 ${SW} ${SH}" role="img" aria-label="Equity on each ${look.spread.street} card">`
+      + [0.25, 0.5, 0.75].map((v) => `<line class="gridl" x1="0" x2="${SW}" y1="${Y(v)}" y2="${Y(v)}"/>`).join('')
+      + `<line class="axis" x1="0" x2="${SW}" y1="${Y(0)}" y2="${Y(0)}"/><line class="now" x1="0" x2="${SW}" y1="${Y(look.spread.now)}" y2="${Y(look.spread.now)}"/>`
+      + `<polyline class="wait" points="${steps(R, (v) => v)}"/><polyline class="act" points="${steps(H, (v) => v.eq)}"/></svg>`
+      + `<div class="cap"><span>${H.length} ${look.spread.street} cards</span><span>now ${pct(look.spread.now)}%</span><span>${up} lift it</span><span>${down} sink it</span></div>`
+      + `<div class="ends"><span>${cardsHtml(H.slice(0, 4).map((x) => x.card).join(' '))}</span><span>${cardsHtml(H.slice(-4).map((x) => x.card).join(' '))}</span></div></div>`;
+  }
+  html += `<ul class="types">${look.types.map((t) => `<li class="${t.has ? 'has' : ''}"><span class="mark" aria-label="${t.has ? 'This hand is one' : 'Not this hand'}">${t.has ? '\u2713' : '\u00d7'}</span><span class="tname">${esc(t.name.charAt(0).toUpperCase() + t.name.slice(1))}</span><span class="share">${pct(t.share)}%</span><span class="bar">${bar(t.mix, strata)}</span></li>`).join('')}</ul>`;
+  return html;
+}
+$('why').addEventListener('click', (ev) => { const b = ev.target.closest('[data-tab]'); if (!b) return; state.tab = b.dataset.tab; renderWhy(); });
 
 const W = 560, PAD = 8;
 $('line').addEventListener('click', (ev) => {

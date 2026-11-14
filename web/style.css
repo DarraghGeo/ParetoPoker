@@ -307,3 +307,20 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 /* a narrow screen: the seat is over the range already, and the line needs the room */
 @media (max-width:600px){.where .who{display:none}}
 .icon.done{color:var(--ok)}.icon.failed{color:var(--danger)}
+
+/* the explanation's two faces, and the analytical one */
+.why .tabs{align-self:flex-start}
+.why .tabs button{padding:3px 10px;font:400 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.spread svg{display:block;width:100%;height:auto}
+.spread .axis{stroke:var(--line-strong);stroke-width:1}.spread .gridl{stroke:var(--line);stroke-width:1}
+.spread .now{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 4}
+.spread .act{fill:none;stroke:var(--ink);stroke-width:1.75}.spread .wait{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28}
+.spread .cap,.spread .ends{display:flex;justify-content:space-between;gap:12px;font:400 11px/16px var(--mono);color:var(--ink-3);margin-top:6px}
+.spread .ends span{display:flex;gap:6px;font-size:13px}
+.types{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.types li{display:grid;grid-template-columns:16px minmax(0,1.4fr) 40px minmax(0,2fr);gap:10px;align-items:center;font:400 13px/18px var(--sans);color:var(--ink-3)}
+.types li.has{color:var(--ink);font-weight:500}
+.types .mark{font:500 13px/18px var(--mono);text-align:center}
+.types li.has .mark{color:var(--ok)}
+.types .share{font:400 12px/18px var(--mono);text-align:right}
+.types .bar{height:10px;display:flex}
