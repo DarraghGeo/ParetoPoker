@@ -365,3 +365,9 @@ header .board{min-width:0;flex:0 1 auto}
   header .icon{padding:6px 5px}
   .logo .mark{width:24px;height:24px}
 }
+
+/* where the turn and the river will go */
+.board .slot{width:1.15em;height:30px;border:1px dashed var(--line-strong);border-radius:3px;padding:0;background:none;align-self:center;margin-left:3px;font-size:22px}
+.board .slot[data-later]{opacity:.5}
+.board .slot:hover{border-color:var(--ink-3);background:var(--surface)}
+.board button{touch-action:manipulation}

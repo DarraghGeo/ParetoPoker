@@ -170,7 +170,10 @@ function render() {
   const round = state.nodes?.[state.node]?.round ?? 0;
   // every board card is a button: tap one to change it
   const own = boardCards(conf().board); const shown = [...own, ...state.dealt.slice(0, round)];
-  $('board').innerHTML = shown.map((c, i) => `<button type="button" class="s-${c[1]}${i >= own.length ? ' dealt' : ''}" data-board="${i}" aria-label="Change ${c}">${c[0]}${GLYPH[c[1]]}</button>`).join('');
+  // (where the spot starts before the river and no card has been dealt along the line, faint boxes mark the turn and river: tap one to add the next card)
+  const empty = round === 0 ? 5 - own.length : 0;
+  $('board').innerHTML = shown.map((c, i) => `<button type="button" class="s-${c[1]}${i >= own.length ? ' dealt' : ''}" data-board="${i}" aria-label="Change ${c}${i >= 3 && i < own.length ? '; double tap to remove' : ''}">${c[0]}${GLYPH[c[1]]}</button>`).join('')
+    + Array.from({ length: empty }, (_, k) => `<button type="button" class="slot" data-board="${own.length}" data-add="1" aria-label="Add the ${own.length + k === 3 ? 'turn' : 'river'}"${k ? ' data-later="1"' : ''}></button>`).join('');
   const d = state.decision;
   const strata = d ? strataOf(d.actions) : [];
   $('rule').innerHTML = d ? bar(state.survey.mix, strata) : '';
@@ -262,12 +265,22 @@ function showVillain(anchor) {
 document.addEventListener('pointerdown', (ev) => { if (!$('theirs').hidden && !ev.target.closest('#theirs') && !ev.target.closest('#villain')) $('theirs').hidden = true; });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') $('theirs').hidden = true; });
 // ---- the board: tap a card, pick another from the cards that drop down under it ----
-let swapping = null;
-const closeCards = () => { swapping = null; $('cardpick').hidden = true; };
+let swapping = null; let adding = false; let tapped = { i: -1, at: 0 };
+const closeCards = () => { swapping = null; adding = false; $('cardpick').hidden = true; };
+/** The spot's own board changes: a new spot, solved again. */
+function setBoard(own) {
+  const v = version();
+  if (v.base) { v.base = { ...v.base, board: own.join(' ') }; v.id = ++versionId; v.pos = { node: 0, dealt: [] }; state.hand = null; state.cell = null; solve(); return; }
+  state.config.board = own.join(' '); remember(); state.node = 0; state.hand = null; state.cell = null; begin();
+}
 $('board').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-board]'); if (!b) return;
-  const i = +b.dataset.board; if (swapping === i) { closeCards(); return; }
-  const own = boardCards(conf().board); const round = state.nodes?.[state.node]?.round ?? 0; const all = [...own, ...state.dealt.slice(0, round)];
+  const i = +b.dataset.board; const own = boardCards(conf().board);
+  // the turn or the river tapped twice quickly: it comes off the board, and the river with the turn
+  const twice = tapped.i === i && Date.now() - tapped.at < 450; tapped = { i, at: Date.now() };
+  if (twice && !b.dataset.add && i >= 3 && i < own.length) { closeCards(); tapped = { i: -1, at: 0 }; setBoard(own.slice(0, i)); return; }
+  if (swapping === i && adding === !!b.dataset.add) { closeCards(); return; }
+  adding = !!b.dataset.add; const round = state.nodes?.[state.node]?.round ?? 0; const all = [...own, ...state.dealt.slice(0, round)];
   swapping = i;
   const pick = $('cardpick'); pick.innerHTML = cardGrid(new Set(all), all[i]); pick.hidden = false;
   const box = b.getBoundingClientRect(); const width = pick.offsetWidth;
@@ -275,13 +288,11 @@ $('board').addEventListener('click', (ev) => {
 });
 $('cardpick').addEventListener('click', (ev) => {
   const b = ev.target.closest('[data-card]'); if (!b || swapping == null) return;
-  const own = boardCards(conf().board); const i = swapping; closeCards();
+  const own = boardCards(conf().board); const i = swapping; const add = adding; closeCards();
+  // an empty box: the next card of the spot's own board
+  if (add) { setBoard([...own, b.dataset.card]); return; }
   if (i >= own.length) { state.dealt[i - own.length] = b.dataset.card; state.hand = null; state.cell = null; go(state.node); return; }
-  // one of the spot's own cards: a new spot, solved again
-  own[i] = b.dataset.card;
-  const v = version();
-  if (v.base) { v.base = { ...v.base, board: own.join(' ') }; v.id = ++versionId; v.pos = { node: 0, dealt: [] }; state.hand = null; solve(); return; }
-  state.config.board = own.join(' '); remember(); state.node = 0; state.hand = null; begin();
+  own[i] = b.dataset.card; setBoard(own);
 });
 document.addEventListener('pointerdown', (ev) => { if (swapping != null && !ev.target.closest('#cardpick') && !ev.target.closest('#board')) closeCards(); });
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeCards(); });
