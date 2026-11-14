@@ -8,7 +8,7 @@
 <title>Pareto: Study</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=3048911a93">
+<link rel="stylesheet" href="style.css?v=11f4104658">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = '3048911a93'; const opening = !/(study|train)\.html/.test(location.pathname);
+  const here = '11f4104658'; const opening = !/(study|train)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
@@ -44,6 +44,7 @@ if ('serviceWorker' in navigator) {
     </nav>
     <span class="grow"></span>
     <span id="state" hidden></span>
+    <button type="button" class="icon" id="seats" aria-label="Ranges by position and preflop action" title="Positions"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><ellipse cx="8" cy="8" rx="6" ry="3.6" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="3.2" cy="3.6" r="1.1" fill="currentColor"/><circle cx="12.8" cy="3.6" r="1.1" fill="currentColor"/><circle cx="8" cy="13.6" r="1.1" fill="currentColor"/></svg></button>
     <button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M5.5 5.5v-3h8v8h-3M2.5 5.5h8v8h-8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button type="button" class="icon" id="edit" aria-label="Edit ranges" title="Edit ranges"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button type="button" class="icon" id="open-setup" aria-label="Setup">
@@ -74,6 +75,7 @@ if ('serviceWorker' in navigator) {
   </div>
 </div>
 <div class="pop theirs" id="theirs" hidden role="img" aria-label="The other player's range"></div>
+<div class="pop seatpick" id="seatpick" hidden role="group" aria-label="Ranges by position and preflop action"></div>
 <div class="deal pop" id="cardpick" hidden role="group" aria-label="Board card"></div>
 <section class="editor" id="editor" hidden aria-label="Edit ranges" tabindex="-1">
   <div class="ed-head">
@@ -96,6 +98,7 @@ if ('serviceWorker' in navigator) {
   <div class="spot-only">
     <button type="button" class="link" id="f-sub" hidden>Re-solve from this street</button>
     <label>Board<input id="f-board" autocomplete="off" spellcheck="false"></label>
+    <div class="presets" id="f-presets" aria-label="Ranges by position and preflop action"></div>
     <div class="painter">
       <div class="head">
         <div class="seg" role="group" aria-label="Range">
@@ -125,6 +128,6 @@ if ('serviceWorker' in navigator) {
   <p class="error fit" id="f-fit"></p>
   <button type="submit" class="primary" id="f-solve">Solve</button>
 </form>
-<script type="module" src="app.js?v=3048911a93"></script>
+<script type="module" src="app.js?v=11f4104658"></script>
 </body>
 </html>

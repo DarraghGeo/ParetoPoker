@@ -401,3 +401,11 @@ header .board{min-width:0;flex:0 1 auto}
 /* under the cards to pick from: the street dealt at random */
 .deal button.random{aspect-ratio:auto;width:100%;margin-top:6px;padding:9px 12px;font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);border-radius:3px}
 .deal button.random:hover{border-color:var(--ink);color:var(--ink)}
+/* ranges by position and preflop action: three rows of choices, in setup and in a menu off the top bar */
+.presets{display:flex;flex-direction:column;gap:8px}
+.presets .line{display:flex;align-items:center;gap:10px}
+.presets .line > span{flex:none;width:46px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.presets .seg{flex-wrap:wrap;row-gap:4px}
+.presets .seg button{padding:4px 7px;font:400 11px/14px var(--mono);letter-spacing:.02em}
+.presets .said{margin:2px 0 0;font:400 12px/17px var(--sans);color:var(--ink-3);text-wrap:pretty}
+.seatpick{width:min(340px,calc(100vw - 24px));padding:14px}
