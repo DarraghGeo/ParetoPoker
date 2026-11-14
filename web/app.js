@@ -227,13 +227,13 @@ function renderLine(strata) {
   $('line').innerHTML = `<div class="trail">${path.map((p) => (p.deal != null ? `<button type="button" class="crumb card" data-deal="${p.deal}" aria-label="Change the card dealt">${cardsHtml(p.card ?? '')}</button>` : `<button type="button" class="crumb" data-go="${p.back}">${esc(p.label)}</button>`) + '<span class="sep">/</span>').join('')}<span class="who">${here.seat === 'oop' ? 'OOP' : 'IP'}</span></div>`
     + `<div class="acts">${here.edges.map((e, k) => `<button type="button" class="act" ${onward(e)}><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(e.label)}</button>`).join('')}</div>`
     + '<div class="tools">'
-    + `<button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">${COPY_ICON}</svg></button>`
     + icon('villain', here.seat === 'oop' ? 'In position\'s range' : 'Out of position\'s range', `<circle cx="8" cy="5.2" r="2.6" ${stroke}/><path d="M2.8 13.6c.6-2.6 2.6-4 5.2-4s4.6 1.4 5.2 4" ${stroke}/>`)
-    + (version().fixed ? '' : icon('edit', 'Edit ranges', `<path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" ${stroke}/>`))
     + icon('split', state.split ? 'One bar' : 'By made hand', state.split ? `<path d="M2 6.5h12v3H2z" ${stroke}/>` : `<path d="M2 3h12M2 6.3h9M2 9.7h12M2 13h6" ${stroke}/>`, `aria-pressed="${state.split}"`)
     + icon('view', state.view === 'grid' ? 'Equity distribution' : 'Grid', state.view === 'grid' ? `<path d="M2 13c3 0 3-4 6-5s3-5 6-5" ${stroke}/>` : `<path d="M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11" ${stroke}/>`)
     + '</div>';
   $('f-sub').hidden = !opensStreet(here);
+  // the pen is for ranges that were typed or painted; a re-solved street has none to edit
+  $('edit').hidden = !!version().fixed;
 }
 /** Choosing the card dealt: every card still in the deck, a row a suit. */
 function renderDeal() {
@@ -438,8 +438,6 @@ $('why').addEventListener('click', (ev) => { const b = ev.target.closest('[data-
 
 const W = 560, PAD = 8;
 $('line').addEventListener('click', (ev) => {
-  if (ev.target.closest('#edit')) { openEditor(); return; }
-  if (ev.target.closest('#copy')) { const b = ev.target.closest('#copy'); copyText(spotText()).then((ok) => copied(b, ok)); return; }
   if (ev.target.closest('#villain')) { showVillain(ev.target.closest('#villain')); return; }
   const deal = ev.target.closest('[data-deal]'); if (deal) { state.pick = +deal.dataset.deal; render(); return; }
   if (ev.target.closest('#split')) { state.split = !state.split; remember(); render(); $('split')?.focus(); return; }
@@ -531,6 +529,9 @@ function openSetup(how) {
   $('drawer').focus({ preventScroll: true });
 }
 const closeSetup = () => { $('drawer').hidden = true; $('scrim').hidden = true; $('f-error').textContent = ''; };
+// copy and the pen sit in the header, beside setup
+$('copy').onclick = () => { if (state.decision) copyText(spotText()).then((ok) => copied($('copy'), ok)); };
+$('edit').onclick = () => { if (state.decision && !version().fixed) openEditor(); };
 $('open-setup').onclick = () => openSetup(); $('f-sub').onclick = () => openSetup({ sub: true }); $('scrim').onclick = () => { closeSetup(); closeEditor(); };
 $('state').onclick = () => { if ($('state').dataset.busy) worker.postMessage({ type: 'stop' }); };
 document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape' && !$('drawer').hidden) closeSetup(); });

@@ -333,3 +333,8 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .facts thead th{font:400 11px/16px var(--mono);letter-spacing:.08em;color:var(--ink-3)}
 .facts tbody th{font-weight:400;color:var(--ink-2)}
 .facts td{font-family:var(--mono);font-size:12px;width:22%}
+
+/* the mark: home on every page, and beside the name on the opening one */
+.logo{display:flex;flex:none;border-radius:5px}
+.logo .mark,.home h1 .mark{display:block;border-radius:5px}
+.home h1{display:flex;align-items:center;gap:14px}

@@ -8,7 +8,7 @@
 <title>Pareto: Study</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=3c8afc9c50">
+<link rel="stylesheet" href="style.css?v=c6af833dcd">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +20,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = '3c8afc9c50'; const opening = !/(study|train)\.html/.test(location.pathname);
+  const here = 'c6af833dcd'; const opening = !/(study|train)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
@@ -35,7 +35,7 @@ if ('serviceWorker' in navigator) {
 <div class="rule" id="rule"></div>
 <main>
   <header>
-    <a class="icon" href="./" aria-label="Home"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2.5 7.5L8 3l5.5 4.5M4 6.5V13h8V6.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+    <a class="logo" href="./" aria-label="Home"><svg class="mark" viewBox="0 0 512 512" width="26" height="26" aria-hidden="true"><rect width="512" height="512" rx="72" fill="#15171B"/><rect x="96" y="150" width="68" height="212" fill="#7FCDBB"/><rect x="180" y="150" width="68" height="212" fill="#F4C261"/><rect x="180" y="150" width="68" height="90" fill="#7FCDBB"/><rect x="264" y="150" width="68" height="212" fill="#F4C261"/><rect x="348" y="150" width="68" height="212" fill="#F08A6B"/><rect x="348" y="150" width="68" height="60" fill="#F4C261"/></svg></a>
     <div class="board" id="board"></div>
     <nav class="versions" id="versions" aria-label="Versions" hidden>
       <button type="button" class="icon" id="older" aria-label="Previous version"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
@@ -43,7 +43,9 @@ if ('serviceWorker' in navigator) {
       <button type="button" class="icon" id="newer" aria-label="Next version"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </nav>
     <span class="grow"></span>
-    <button type="button" class="state" id="state" aria-live="polite" aria-label="Solve state; stops a solve in progress"></button>
+    <span id="state" hidden></span>
+    <button type="button" class="icon" id="copy" aria-label="Copy this spot" title="Copy this spot"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M5.5 5.5v-3h8v8h-3M2.5 5.5h8v8h-8z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    <button type="button" class="icon" id="edit" aria-label="Edit ranges" title="Edit ranges"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 13l.6-2.8L10.9 3a1.1 1.1 0 0 1 1.6 0l.5.5a1.1 1.1 0 0 1 0 1.6L5.8 12.4z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     <button type="button" class="icon" id="open-setup" aria-label="Setup">
       <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M2 4h8M13 4h1M2 8h2M7 8h7M2 12h6M11 12h3" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><circle cx="11.5" cy="4" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="5.5" cy="8" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/><circle cx="9.5" cy="12" r="1.5" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>
     </button>
@@ -122,6 +124,6 @@ if ('serviceWorker' in navigator) {
   <p class="error fit" id="f-fit"></p>
   <button type="submit" class="primary" id="f-solve">Solve</button>
 </form>
-<script type="module" src="app.js?v=3c8afc9c50"></script>
+<script type="module" src="app.js?v=c6af833dcd"></script>
 </body>
 </html>
