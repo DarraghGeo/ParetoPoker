@@ -1,7 +1,7 @@
 // The app's service worker. Its one job: the newest build whenever there is a network, the last one seen when there is not.
 // Every request for the app's own files goes to the network first and skips the browser's cache; what comes back is kept
-// for offline. `574f9e7da9` changes with every build, so a new build is a new worker, and it takes over at once.
-const CACHE = 'pareto-574f9e7da9';
+// for offline. `40464c5482` changes with every build, so a new build is a new worker, and it takes over at once.
+const CACHE = 'pareto-40464c5482';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil((async () => {
   for (const key of await caches.keys()) if (key !== CACHE && key !== 'pareto-fonts') await caches.delete(key);

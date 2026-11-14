@@ -386,6 +386,15 @@ header .board{min-width:0;flex:0 1 auto}
 .ladder{gap:4px}
 .ladder .row{display:flex;flex-direction:column;gap:3px}
 .ladder .strip{height:30px}
-.ladder .strip .other{background:var(--ink);opacity:.28}
-.ladder .name{position:static;transform:none;color:var(--ink-2)}
-@media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}.ladder .name{transform:none}}
+/* a flat grey, not ink seen through: see-through columns that overlap by a hair draw dark lines */
+.ladder .strip .other{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+@media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}}
+/* Train's ladder: hero in ink, villain faded, the hand asked about marked */
+.train .ladder{margin:0}
+.train .ladder .strip{height:44px}
+.ladder .strip .hero{background:var(--ink)}
+.ladder .strip .mark{background:var(--accent);position:relative;z-index:1;box-shadow:0 0 0 1px var(--accent)}
+.ladder .strip .mark::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);border:5px solid transparent;border-top:7px solid var(--accent);border-bottom:0}
+@media (min-width:900px) and (min-height:520px){.train .ladder{height:160px}}
+/* a thumb slid along the action chart picks hands: sideways is the chart's, up and down still scrolls the page */
+#strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}

@@ -351,7 +351,7 @@ function renderDist() {
   const steps = (list) => { const total = list.reduce((t, r) => t + r.w, 0); let x = 0; const pts = []; for (const r of list) { const w = r.w / total; pts.push(`${Xd(x).toFixed(1)},${Yd(r.e).toFixed(1)} ${Xd(x + w).toFixed(1)},${Yd(r.e).toFixed(1)}`); r.mid = x + w / 2; x += w; } return pts.join(' '); };
   const mine = handsInOrder(s).map((r) => ({ w: r.hand.weight, e: r.equity, name: r.hand.name }));
   // his hands against the range to act, with the cards each removes
-  const his = d.villain.map((v) => { if (v.equity !== undefined) return { w: v.weight, e: Number.isNaN(v.equity) ? 0 : v.equity }; let mass = 0, win = 0; for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); } return { w: v.weight, e: mass > 0 ? win / mass : 0 }; }).sort((a, b) => a.e - b.e);
+  const his = d.villain.map((v) => ({ w: v.weight, e: hisEquity(s, v) })).sort((a, b) => a.e - b.e);
   const minePts = steps(mine); const hisPts = steps(his);
   const pick = mine.find((r) => r.name === state.hand);
   // The same decision in the version before this one stays as a dotted line
@@ -367,7 +367,7 @@ function renderDist() {
 }
 const SHORT = { 'High card': 'HC', Pair: 'P', 'Two pair': '2P', 'Three of a kind': '3K', Straight: 'ST', Flush: 'FL', 'Full house': 'FH', 'Four of a kind': '4K', 'Straight flush': 'SF' };
 /**
- * The strategy along the range, weakest to strongest: one column per hand, all the same width.
+ * The strategy along the range, lowest equity to highest: one column per hand, all the same width.
  * Split, it opens into a row for each made hand, strongest first, each in its own place on the
  * same scale.
  */
@@ -377,54 +377,66 @@ function renderStrip(strata) {
   const hands = handsInOrder(s);
   const column = (row) => {
     const parts = [0, 0, 0, 0, 0]; row.hand.strategy.forEach((p, a) => { parts[strata[a]] += p; });
-    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:100%">${parts.map((x, k) => (x > 0.004 ? `<i style="flex:${x};background:var(${COLORS[k]})"></i>` : '')).join('')}</b></button>`;
+    // one painted box a column, the actions as bands of its background from the bottom up: a band too thin for a
+    // pixel then stays inside the column, where a box of its own was drawn as a loose pixel under it
+    const total = parts.reduce((t, x) => t + x, 0) || 1; let at = 0;
+    const bands = parts.map((x, k) => { if (!(x > 0)) return ''; const from = at; at += (100 * x) / total; return `var(${COLORS[k]}) ${from.toFixed(2)}% ${at.toFixed(2)}%`; }).filter(Boolean);
+    return `<button type="button" data-hand="${row.hand.name}" aria-pressed="${row.hand.name === state.hand}" aria-label="${esc(row.hand.name)}"><b style="height:100%;background:linear-gradient(to top,${bands.join(',')})"></b></button>`;
   };
   const names = state.decision.categories;
   if (state.chart === 'ladder') { el.className = 'rows ladder'; el.innerHTML = ladder(s, column); return; }
   if (state.chart !== 'split' || !names) { el.className = 'strip'; el.innerHTML = hands.map(column).join(''); return; }
   // Every row keeps the whole range's scale: a made hand sits where it sits in the single bar, with gaps either side
   const span = new Map();
-  hands.forEach((row, k) => { const c = row.hand.category; if (!span.has(c)) span.set(c, [k, k]); span.get(c)[1] = k + 1; });
+  // a made hand's hands need not sit side by side in equity order: its share of the range is counted, not read off its span
+  const held = new Map();
+  hands.forEach((row, k) => { const c = row.hand.category; if (!span.has(c)) span.set(c, [k, k]); span.get(c)[1] = k + 1; held.set(c, (held.get(c) ?? 0) + 1); });
   el.className = 'rows';
   el.innerHTML = [...span.entries()].sort((a, b) => b[0] - a[0]).map(([c, [from, to]]) => {
     const name = names[c] ?? ''; const nice = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
     const n = hands.length;
     const place = (from + to) / 2 < n / 2 ? `left:calc(${(100 * to / n).toFixed(2)}% + 8px)` : `right:calc(${(100 * (1 - from / n)).toFixed(2)}% + 8px)`;
-    return `<div class="row"><div class="strip">${hands.map((row) => (row.hand.category === c ? column(row) : '<span></span>')).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct((to - from) / n)}</span></div>`;
+    return `<div class="row"><div class="strip">${hands.map((row) => (row.hand.category === c ? column(row) : '<span></span>')).join('')}</div><span class="name" style="${place}"><span class="long">${esc(nice)}</span><span class="short">${esc(SHORT[nice] ?? nice)}</span> ${pct(held.get(c) / n)}</span></div>`;
   }).join('');
 }
 /**
- * The ladder: every hand of both ranges on one scale, weakest to strongest, out of position's on the
+ * The ladder: every hand of both ranges on one scale, lowest equity to highest, out of position's on the
  * top row and in position's below. A hand takes a column, and the other row is empty there, so the
  * two rows read as one chart cut in two: where each range sits, where they overlap, which one
- * reaches further at either end. Hands that are worth the same share their columns, one above the
+ * reaches further at either end. Hands with the same equity share their columns, one above the
  * other. Only the player to act has a strategy to show; the other range is drawn plain.
  */
 function ladder(s, column) {
-  const d = state.decision; const river = d.street === 'river';
-  // one scale for both: the made hand on the river, before it each hand's equity against the other range
-  const key = (strength, equity) => (river ? strength : Math.round(1e4 * (Number.isNaN(equity) ? 0 : equity ?? 0)));
+  const d = state.decision;
+  // one scale for both, on every street: each hand's equity against the other range, to a tenth of a percent
+  const key = (equity) => Math.round(1e3 * equity);
   const levels = new Map();
   const at = (k) => { let level = levels.get(k); if (!level) levels.set(k, level = { mine: [], his: [] }); return level; };
-  for (const row of s.rows) at(key(row.hand.strength, row.equity)).mine.push(row);
-  for (const v of d.villain) at(key(v.strength, v.equity)).his.push(v);
-  const top = []; const bottom = []; let mine = 0; let his = 0;
+  for (const row of s.rows) at(key(row.equity)).mine.push(row);
+  for (const v of d.villain) at(key(hisEquity(s, v))).his.push(v);
+  const top = []; const bottom = [];
   for (const k of [...levels.keys()].sort((a, b) => a - b)) {
     const level = levels.get(k);
     level.mine.sort((a, b) => (a.hand.name < b.hand.name ? -1 : 1));
-    mine += level.mine.length; his += level.his.length;
     for (let i = 0; i < Math.max(level.mine.length, level.his.length); i++) {
       const acting = level.mine[i] ? column(level.mine[i]) : '<span></span>';
       const waiting = level.his[i] ? `<span class="other" title="${esc(level.his[i].name)}"></span>` : '<span></span>';
       (d.seat === 'oop' ? top : bottom).push(acting); (d.seat === 'oop' ? bottom : top).push(waiting);
     }
   }
-  // each row is named outside its bars, above the top one and below the bottom one, so that no hand is covered
-  const name = (seat, count) => `<span class="name">${seat} ${count}</span>`; const bars = (cells) => `<div class="strip">${cells.join('')}</div>`;
-  return `<div class="row">${name('OOP', d.seat === 'oop' ? mine : his)}${bars(top)}</div><div class="row">${bars(bottom)}${name('IP', d.seat === 'oop' ? his : mine)}</div>`;
+  // no names on the rows: out of position is the top one, in position the bottom one
+  const bars = (cells, seat) => `<div class="row"><div class="strip" role="group" aria-label="${seat}">${cells.join('')}</div></div>`;
+  return bars(top, 'Out of position') + bars(bottom, 'In position');
 }
-/** The hands of the range to act, weakest first: the order of the strategy chart and of the equity curve above it. */
-const handsInOrder = (s) => [...s.rows].sort((a, b) => (a.hand.strength ?? 0) - (b.hand.strength ?? 0) || a.equity - b.equity || (a.hand.name < b.hand.name ? -1 : 1));
+/** The hands of the range to act, by equity against the other range, lowest first: the order of the strategy chart and of the equity curve above it. */
+const handsInOrder = (s) => [...s.rows].sort((a, b) => a.equity - b.equity || (a.hand.strength ?? 0) - (b.hand.strength ?? 0) || (a.hand.name < b.hand.name ? -1 : 1));
+/** A hand of the other player's, and its equity against the range to act: given before the river; on it, counted against that range with the cards the hand removes. */
+function hisEquity(s, v) {
+  if (v.equity !== undefined) return Number.isNaN(v.equity) ? 0 : v.equity;
+  let mass = 0, win = 0;
+  for (const r of s.rows) { const h = r.hand; if (v.cards && h.cards && (v.cards[0] === h.cards[0] || v.cards[0] === h.cards[1] || v.cards[1] === h.cards[0] || v.cards[1] === h.cards[1])) continue; mass += h.weight; win += h.weight * (v.strength > h.strength ? 1 : v.strength < h.strength ? 0 : 0.5); }
+  return mass > 0 ? win / mass : 0;
+}
 function renderWhy() {
   const s = state.survey; const row = s?.byName.get(state.hand);
   // before the river there is the hand and what it does; the reasons are a river matter for now
@@ -434,7 +446,7 @@ function renderWhy() {
     // the reasons come from the worker: asked for once a hand, shown when they arrive
     const key = `${state.node}|${state.dealt.join(' ')}|${row.hand.id}`; const got = state.told.get(key);
     if (got) told = { ...told, line: got.line, reasons: got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : got.reasons };
-    else { told = { ...told, reasons: [{ text: 'Working out the reasons\u2026', quiet: true }] }; if (!state.asked.has(key)) { state.asked.add(key); worker.postMessage({ type: 'explain', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); } }
+    else { told = { ...told, reasons: [{ text: 'Working out the reasons\u2026', quiet: true }] }; if (!state.asked.has(key) && !state.scrub) { state.asked.add(key); worker.postMessage({ type: 'explain', job: state.job, id: state.node, dealt: state.dealt, combo: row.hand.id }); } }
   }
   if (!told) { rangeWhy(); return; }
   const d = state.decision; const strata = strataOf(d.actions);
@@ -524,7 +536,49 @@ $('line').addEventListener('click', (ev) => {
   if (ev.target.closest('#view')) { state.view = state.view === 'grid' ? 'curve' : 'grid'; remember(); render(); $('view')?.focus(); return; }
   const b = ev.target.closest('[data-go]'); if (b) go(+b.dataset.go);
 });
+// ---- the action chart under a thumb: slide along it and the hand under the thumb is the one picked ----
+const scrub = { on: false, moved: false, x: 0, frame: 0 };
+/** The hand whose column is at a place across the chart. With several rows, the row nearest up and down that has a hand there. */
+function handAt(x, y) {
+  const el = $('strip'); const inner = el.querySelectorAll('.strip'); const rows = inner.length ? [...inner] : [el];
+  let best = null; let gap = Infinity;
+  for (const row of rows) {
+    const r = row.getBoundingClientRect(); const mid = r.top + r.height / 2;
+    const b = document.elementFromPoint(Math.min(r.right - 1, Math.max(r.left, x)), mid)?.closest?.('#strip [data-hand]');
+    if (b && Math.abs(y - mid) < gap) { gap = Math.abs(y - mid); best = b.dataset.hand; }
+  }
+  return best;
+}
+const pickHand = (name) => {
+  // the hand already picked, picked again: back to the range
+  if (state.hand === name) { state.hand = null; state.cell = null; } else { state.hand = name; state.cell = cellOf(name); }
+  render();
+};
+$('strip').addEventListener('pointerdown', (ev) => {
+  if (ev.button > 0 || !state.survey) return;
+  Object.assign(scrub, { on: true, moved: false, x: ev.clientX });
+  // the chart is drawn again as hands are passed over: the touch stays with the chart itself, not with a column that is gone
+  try { $('strip').setPointerCapture(ev.pointerId); } catch { /* a pointer that cannot be held */ }
+});
+$('strip').addEventListener('pointermove', (ev) => {
+  if (!scrub.on) return;
+  if (Math.abs(ev.clientX - scrub.x) > 4) scrub.moved = true;
+  if (!scrub.moved) return;
+  const name = handAt(ev.clientX, ev.clientY); if (!name || name === state.hand) return;
+  state.hand = name; state.cell = cellOf(name); state.scrub = true;
+  // once a frame at most; the reasons are asked for when the thumb lifts, not for every hand it passes
+  if (!scrub.frame) scrub.frame = requestAnimationFrame(() => { scrub.frame = 0; render(); });
+});
+const scrubEnd = (ev) => {
+  if (!scrub.on) return; scrub.on = false;
+  if (state.scrub) { state.scrub = false; render(); return; }
+  // a tap: the column under it, as before
+  if (ev.type === 'pointerup' && !scrub.moved) { const b = document.elementFromPoint(ev.clientX, ev.clientY)?.closest?.('#strip [data-hand]'); if (b) pickHand(b.dataset.hand); }
+};
+$('strip').addEventListener('pointerup', scrubEnd); $('strip').addEventListener('pointercancel', scrubEnd);
+// the keyboard still picks a column with Enter or the space bar: a click that no pointer made
 $('strip').addEventListener('click', (ev) => {
+  if (ev.detail !== 0) return;
   const b = ev.target.closest('[data-hand]'); if (!b) return;
   // the hand already picked, picked again: back to the range
   if (state.hand === b.dataset.hand) { state.hand = null; state.cell = null; render(); return; }
