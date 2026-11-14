@@ -179,3 +179,41 @@ export function facing(board, mine, his, ids, foldShare, raise, river) {
   const order = [...hands].sort((y, z) => e[y] - e[z]); const share = fill(order, mine, foldShare * W, up, e); for (const h of hands) fold[h] = share[h];
   return { fold, up, expect };
 }
+
+// ---- how much of a range bets before the river: denial -------------------------------------------------------------------
+/**
+ * Why a range of middling hands bets more than the thresholds say, and less into a polarised range. On the river a hand
+ * that makes him fold gains nothing from it unless it was behind: the hands that fold had no equity. Before the river
+ * they do. A hand that bets `s` pots, is folded to c of the time, has e_f against the hands that fold and e_c against
+ * the hands that continue, and would have had its whole equity by checking, gains by betting
+ *       c (1 - e_f)  -  s (1 - c)(1 - 2 e_c)
+ * the equity it takes from the hands that fold, less what it pays the hands that continue when it is behind them.
+ * On the river e_f is 1 for a hand ahead and this is the rule "beat half of what calls". Before it, a hand behind the
+ * callers still bets when the folders had enough equity against it: many of them when his range is middling, few when
+ * it is nuts or air.
+ * He calls with the top (1 - c) of his range, and c is where his weakest call is indifferent: its equity against the
+ * hands that bet is the price, s/(1 + 2s). One unknown, found by a search; everything else is equities.
+ * His range is cut into `K` parts by strength, and our equity against each part is worked out once.
+ * Returns the share of the range that bets, and c.
+ */
+export function denial(board, mine, his, ids, s, K = 8) {
+  const live = ids.filter((c) => mine[c] > 0); const W = live.reduce((t, c) => t + mine[c], 0); if (!W) return null;
+  const hisEq = equityVs(fs, board, his, mine); const ranked = ids.filter((c) => his[c] > 0 && !Number.isNaN(hisEq[c])).sort((x, y) => hisEq[x] - hisEq[y]); const all = ranked.reduce((t, c) => t + his[c], 0); if (!all) return null;
+  // his range in K parts of equal weight, weakest first, and our equity against each
+  const parts = Array.from({ length: K }, () => new Float64Array(N)); let seen = 0; for (const c of ranked) { let left = his[c]; while (left > 1e-12) { const k = Math.min(K - 1, Math.floor((seen / all) * K + 1e-9)); const room = ((k + 1) / K) * all - seen; const take = k === K - 1 ? left : Math.min(left, Math.max(room, 1e-12)); parts[k][c] += take; seen += take; left -= take; } }
+  const E = parts.map((p) => equityVs(fs, board, mine, p)); const hands = live.filter((c) => E.every((x) => !Number.isNaN(x[c])));
+  const price = s / (1 + 2 * s);
+  const at = (c) => {
+    // weights of each part among the hands that fold (below c) and that continue (above)
+    const lo = E.map((_, k) => Math.max(0, Math.min(c, (k + 1) / K) - k / K)); const hi = E.map((_, k) => 1 / K - lo[k]); const sl = lo.reduce((t, x) => t + x, 0); const sh = hi.reduce((t, x) => t + x, 0);
+    let mass = 0; const pos = Math.min(K - 1.0001, Math.max(0, c * K - 0.5)); const k0 = Math.floor(pos); const frac = pos - k0; let caller = 0;
+    const bets = [];
+    for (const h of hands) {
+      let ef = 0, ec = 0; for (let k = 0; k < K; k++) { ef += lo[k] * E[k][h]; ec += hi[k] * E[k][h]; } ef = sl > 0 ? ef / sl : 1; ec = sh > 0 ? ec / sh : 0;
+      if (c * (1 - ef) - s * (1 - c) * (1 - 2 * ec) > 0) { bets.push(h); mass += mine[h]; caller += mine[h] * ((1 - frac) * E[k0][h] + frac * E[Math.min(K - 1, k0 + 1)][h]); }
+    }
+    return { share: mass / W, callerEquity: mass > 0 ? 1 - caller / mass : 0, bets };
+  };
+  let lo = 0, hi = 1; for (let i = 0; i < 24; i++) { const c = (lo + hi) / 2; if (at(c).callerEquity > price) hi = c; else lo = c; }
+  const c = (lo + hi) / 2; const t = at(c); return { share: t.share, fold: c, bets: t.bets };
+}

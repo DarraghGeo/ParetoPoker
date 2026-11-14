@@ -401,3 +401,34 @@ The flop and turn amounts are the whole problem twice over: once for what they c
 | Turn, in position | +9.60 − 37.5 his spread − 18.0 (own spread − his) | 19.2 to 11.4 |
 
 So a frequency still 9 to 13 points from the solver's is worth most of the money. What they have in common is the thing no derivation here produces: **how spread out the two ranges are.** A range with many middling hands bets more than the thresholds say; into a polarised range it bets less. That is the correction to derive.
+
+## The fitted bet amount, derived: denial
+
+`formulas.mjs` (`denial`), `play-full.mjs` with `TUNE=deny`. The valuable fitting was "a range of middling hands bets more than the thresholds say, and less into a polarised range". The reason, from indifference:
+
+On the river a hand that makes him fold gains nothing by it unless it was behind, because the hands that fold had no equity. Before the river they do. A hand that bets `s` pots, is folded to `c` of the time, has equity `e_f` against the hands that fold and `e_c` against the hands that continue, and would have kept its whole equity by checking, gains by betting
+
+`c (1 − e_f) − s (1 − c)(1 − 2 e_c)`
+
+the equity it takes from the hands that fold, less what it pays the hands that continue when it is behind them.
+
+- On the river `e_f` is 1 for a hand that is ahead, and this is the old rule: bet when you beat half of what calls.
+- Before the river a hand that is behind the callers still bets if the folders had enough equity against it. There are many such folders when his range is middling and few when it is nuts or air. That is the fitted "spread" term.
+- He calls with the top `1 − c` of his range, and `c` is where his weakest call is indifferent: its equity against the hands that bet equals the price `s/(1 + 2s)`. One unknown, found by a search.
+- Everything else is multi-street equities: our equity against his range cut into eight parts by strength.
+
+**What it is worth.** The amount that bets on the flop and turn comes from this rule; the hands are still chosen as before (the derived bets thinned or topped up alike). Two sizes and a raise, % of the flop pot given up to the equilibrium player:
+
+| Amount that bets (flop, turn) | Eight 4-bet pots | Ten mixed pots (6 4-bet, 2 3-bet, 2 squeeze) |
+|---|---|---|
+| Thresholds, as before | 8.1 | 10.0 |
+| **Denial, derived** | **4.8** | **8.1** |
+| Fitted to the solver | 4.4 | 7.3 |
+| The solver's amounts | 2.0 | not run |
+
+- **In 4-bet pots the derivation recovers 3.3 of the 3.7 points the fitting did**, with nothing fitted.
+- **In 3-bet and squeeze pots neither helps much** (3-bet 12.5, 11.9, 11.4; squeeze 11.4, 10.3, 9.9). Whatever costs there is not the amount that bets, and is still to be found.
+- **The frequency it gives is still far from the solver's** (`denial-check.mjs`: 15 to 25 points off, tracking at 0.5 to 0.6), further than the fitted version (9 to 13). In money it is nearly as good. Matching the frequency is not what earns it; betting more when his folds have equity and less when they do not is.
+- **Letting the rule choose the hands as well is worse** (7.0 on the 4-bet pots): "every hand that gains bets" leaves no bluffs chosen as bluffs and sorts the range too hard. It is a rule for how much, not for which.
+
+**Where the strategy stands, fully derived:** about 4.8% of the pot in 4-bet pots and 8% across the mixed set, from 8.1% and 10% before this step.

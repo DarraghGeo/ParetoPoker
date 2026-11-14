@@ -7,7 +7,7 @@ import { writeFileSync, appendFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/presets.js';
-import { acting, facing, fill } from './formulas.mjs';
+import { acting, facing, fill, denial } from './formulas.mjs';
 import { facts, tunedBet, tunedFold, tunedRaise, foldBase } from './tuned.mjs';
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1];
 const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
@@ -72,15 +72,20 @@ function formulaStrategy(spot, nodes, live, solved = null) {
         let sized = bets.map((a) => ({ a, s: addOf(a) / n.pot })).sort((y, z) => y.s - z.s); if (VARIANT === 'onesize' || VARIANT === 'plain') sized = [sized.reduce((b, y) => (Math.abs(y.s - 0.75) < Math.abs(b.s - 0.75) ? y : b))]; const first = n.parent < 0 || nodes[n.parent].kind === 'chance';
         const t = acting(board, mine, his, ids, sized.map((y) => y.s), first, river);
         hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
-        if (TUNE.has('bet') || TUNE.has('fold') || TUNE.has('raise')) {
+        if (TUNE.has('bet') || TUNE.has('fold') || TUNE.has('raise') || TUNE.has('deny') || TUNE.has('denyhands')) {
           const e1 = equityVs(fs, board, mine, his); const e2 = equityVs(fs, board, his, mine); const F = facts(board, mine, his, e1, e2, ids, { lspr: Math.log(Math.min(30, Math.max(0.05, (stack - Math.max(...n.invested)) / n.pot))) });
-          if (TUNE.has('bet') && board.length < 5) {
+          if (TUNE.has('denyhands') && board.length < 5) {
+            // the denial rule choosing the hands as well: every hand that gains by betting bets (the size the thresholds gave it, else the smallest), the rest check
+            const dn = denial(board, mine, his, ids, sized[0].s); if (dn) { const inSet = new Uint8Array(N); for (const c of dn.bets) inSet[c] = 1; for (const c of hands) { const had = t.bets.reduce((u, b) => u + b[c], 0); if (!inSet[c]) for (const b of t.bets) b[c] = 0; else if (had < 1) t.bets[0][c] += 1 - had; }
+              hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); }); }
+          }
+          if ((TUNE.has('bet') || TUNE.has('deny')) && board.length < 5) {
             // the fitted bet frequency: the derived bets thinned alike, or topped up alike with the smallest size
-            const want = tunedBet(board.length, first, e1, mine, ids, sized[0].s, F); const W = hands.reduce((u, c) => u + mine[c], 0); const total = (c) => t.bets.reduce((u, b) => u + b[c], 0); const have = hands.reduce((u, c) => u + mine[c] * Math.min(1, total(c)), 0) / W;
+            const want = TUNE.has('deny') ? denial(board, mine, his, ids, sized[0].s)?.share : tunedBet(board.length, first, e1, mine, ids, sized[0].s, F); const W = hands.reduce((u, c) => u + mine[c], 0); const total = (c) => t.bets.reduce((u, b) => u + b[c], 0); const have = hands.reduce((u, c) => u + mine[c] * Math.min(1, total(c)), 0) / W;
             if (want != null && have > 0) { if (have > want) for (const b of t.bets) for (const c of hands) b[c] *= want / have; else { const lam = Math.min(1, (want - have) / Math.max(1e-9, 1 - have)); for (const c of hands) t.bets[0][c] += lam * Math.max(0, 1 - total(c)); } }
             hands.forEach((c, i) => { let all = 0; sized.forEach((y, j) => { const v = Math.min(1 - all, t.bets[j][c]); probs[i * k + y.a] = v; all += v; }); probs[i * k + xi] = Math.max(0, 1 - all); });
           }
-          sized.forEach((y, j) => { passDown[y.a] = { fold: t.folds[j], thr: foldBase(e1, mine, ids, y.s), prior: F.adv }; });
+          if (TUNE.has('fold') || TUNE.has('raise')) sized.forEach((y, j) => { passDown[y.a] = { fold: t.folds[j], thr: foldBase(e1, mine, ids, y.s), prior: F.adv }; }); else sized.forEach((y, j) => { passDown[y.a] = t.folds[j]; });
         } else sized.forEach((y, j) => { passDown[y.a] = t.folds[j]; });
       }
     }
