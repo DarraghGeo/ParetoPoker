@@ -550,3 +550,52 @@ Reading his range rightly, with no change to how we bet, is worth 3 points and r
 4. The fitted amounts do not fix either. The derived value-by-depth rule points the right way and is not yet right.
 
 **What would fix it, not yet built:** a turn rule under which middle-strong hands check when deep, for both players at once. Then our range and our picture of his are right together. The table above is the target: bet from the top tenth, check from there down to the hands that are behind, bluff from below.
+
+## Descriptive, not predictive: the rule that explains the solution
+
+`play-look.mjs`, and `oneMove` in `src/explain/street.js`. The explanation layer has the solution in front of it. A rule that explains a hand does not have to guess the other player's range or how often he folds, calls and raises: it can read them off. Everything above this section tried to predict those. This section stops.
+
+**The rule: one move ahead, against what he actually does.** For a hand and each action it has:
+
+- **fold:** nothing more won or lost;
+- **call, or check behind:** the hand's equity against his range, of the pot as it will be, less the call;
+- **bet, raise, or check in front:** he folds part of his range (the pot is won), continues with part (equity against that part, of the bigger pot, less the wager), and bets or raises with part (the better of folding and calling it).
+
+Every range and frequency in that is his, from the solution. The hand takes the action that comes out best. The one thing assumed is what reaching the next street is worth: the hand's equity, or (one street further) what the same rule makes of every card that can come, against what he does there.
+
+**The test.** One seat plays by the rule against the solver's own strategy in the other seat; the solver scores what it gives up. Two bet sizes and a raise on every street. A small loss means the rule accounts for the solution.
+
+**Turn and river: solved.** 60 turn spots of the collection, every depth (0.6 to 17.7 pots behind) and pot type (21 single-raised, 20 4-bet, 11 3-bet, 8 squeeze), the ranges as the solver brought them to the turn:
+
+| Rule | Gives up (mean / median / worst tenth / worst), % of the turn pot |
+|---|---|
+| Predictive formulas (above), 16 deep spots | 8.4 / 6.9 / n.a. / 22.5 |
+| One move ahead, the river worth its equity (same 16 spots) | 0.61 / 0.56 / 1.35 / 2.66 |
+| **One move ahead, the river read the same way** (same 16 spots) | **0.09 / 0.04 / 0.19 / 0.81** |
+| The same, all 60 spots | **0.04 / 0.02 / 0.10 / 0.23** |
+
+By depth, on the 60: under 1 pot behind 0.01, 1 to 2.5 pots 0.02, 2.5 to 6 pots 0.05, over 6 pots 0.06. No pot type is above 0.06. The deep pots that were the tail are no longer one.
+
+- **What the further look fixes.** With the river worth its equity, nearly all of the 0.6% was in answering turn bets (0.62 with the rule at those decisions alone, 0.14 at the betting decisions alone). A call on the turn is not worth its equity: he bets the river again, and part of that equity folds. Reading his river play removes it.
+- **The rule and the solver do not take the same action hand by hand** (they agree on 62 to 86% of the range, by decision) and it costs nothing: where they part the hand is close to indifferent. An explanation does not have to reproduce the mix to be right about why.
+
+**What this means for the earlier work.** The predictive formulas lost because they had to guess his range and his answers, and guessed a player who sorts his hands as cleanly as they do. Given his actual play, "fold equity plus equity when called, and what he does next" is enough. Denial, the check game and the price are all inside it as special cases: they are what the rule comes to when his play is replaced by its indifference conditions.
+
+**In the app.** For the hand that is tapped, a sentence from this rule leads the reasons: how often he folds and what the hands he folds had against this one, where the hand stands when called, and whether the bet earns from the folds or the calls; for a call, the price against the equity; for a fold with the price on paper, that equity facing more bets is worth less than its number. The numbers are behind the tap.
+
+**From the flop.** The mixed flops used for the predictive test (two sizes and a raise on every street), the rule on all three streets; the next street read the same way from the flop and the turn (every second card, to save time):
+
+| Rule | Spots | Gives up (mean / median / worst), % of the flop pot | Flop / turn / river |
+|---|---|---|---|
+| Predictive formulas | 15 | 11.3 / 10.0 / 21.2 | 2.4 / 3.5 / 5.4 |
+| One move ahead, the next street worth its equity | 6 | 1.42 / 1.45 / 2.81 | 0.84 / 0.59 / 0.0 |
+| **One move ahead, the next street read the same way** | 7 | **0.34 / 0.34 / 0.57** | 0.18 / 0.17 / 0.0 |
+
+4-bet pots 0.33, squeeze 0.36, the 3-bet pot 0.32. The spot that was worst for the formulas (A♥5♥3♣ in a 3-bet pot: 16.7% and 14.2%) gives up 0.36% and 0.27%.
+
+The flop numbers are on 7 spots and include no single-raised pot (those take long from the flop; the turn spots above include 21 of them, up to 17.7 pots behind). The turn share here (0.17) is above the turn test's 0.01 because only every second river card was looked at.
+
+**Where it stands**
+- Turn and river decisions: accounted for to 0.04% of the pot, on 60 spots of every depth and pot type.
+- Flop decisions: to about 0.2% of the pot, on 7 spots.
+- The rule is one a player would say: what he folds, what I have against what continues, and what he does next.
