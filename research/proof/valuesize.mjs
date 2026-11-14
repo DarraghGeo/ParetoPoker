@@ -40,7 +40,7 @@ for (const s of spots) {
     for (let c = 0; c < fs.COMBOS; c++) {
       if (!(st.f.mine[c] > 0) || Number.isNaN(eq[c])) continue;
       const f = st.featuresOf(c); const p = bets.map((i) => st.sigma(c, i)); const bet = p.reduce((t, x) => t + x, 0);
-      lines.push(JSON.stringify({ spot: s.name, seat: st.f.me, w: +st.f.mine[c].toFixed(4), e: +eq[c].toFixed(4), now: +parts.now[c].toFixed(4), draw: +parts.draw[c].toFixed(4), tags: tagsOf(fs, st.f.board, c, f), ways: st.f.board.length === 3 && f.straightOuts < 4 && f.made < 4 ? runnerStraights(st.f.board, fs.COMBO_CARDS[2 * c], fs.COMBO_CARDS[2 * c + 1]) : 0, bet: +bet.toFixed(4), size: bet > 0.02 ? +(p.reduce((t, x, k) => t + x * sizes[k], 0) / bet).toFixed(4) : null, big: bet > 0.02 ? +(p[p.length - 1] / bet).toFixed(4) : null, small: bet > 0.02 ? +(p[0] / bet).toFixed(4) : null, top: +Math.max(...sizes).toFixed(2), low: +Math.min(...sizes).toFixed(2) }));
+      lines.push(JSON.stringify({ spot: s.name, board: s.board, hand: fs.formatCombo(c), seat: st.f.me, w: +st.f.mine[c].toFixed(4), e: +eq[c].toFixed(4), now: +parts.now[c].toFixed(4), draw: +parts.draw[c].toFixed(4), tags: tagsOf(fs, st.f.board, c, f), ways: st.f.board.length === 3 && f.straightOuts < 4 && f.made < 4 ? runnerStraights(st.f.board, fs.COMBO_CARDS[2 * c], fs.COMBO_CARDS[2 * c + 1]) : 0, bet: +bet.toFixed(4), size: bet > 0.02 ? +(p.reduce((t, x, k) => t + x * sizes[k], 0) / bet).toFixed(4) : null, big: bet > 0.02 ? +(p[p.length - 1] / bet).toFixed(4) : null, small: bet > 0.02 ? +(p[0] / bet).toFixed(4) : null, top: +Math.max(...sizes).toFixed(2), low: +Math.min(...sizes).toFixed(2) }));
     }
   }
   // saved spot by spot, so that a run cut short keeps what it has
