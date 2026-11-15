@@ -114,3 +114,22 @@ Flop (177 to 180 decisions): the same pattern, weaker. Draw +0.15 at the weak en
 - **Yes, they track differently, and the sign flips.** At the weak end and in the middle, the hands that bet are the ones that still change: draw and movement go with betting (+0.5 on the turn) and showdown strength goes against it. At the strong end it reverses: showdown strength and equity against his best hands go with betting, and draw goes against it.
 - **Max is not the bluff measure.** It is the weakest of the movement measures at the weak end (+0.18); how much the hand moves, or its draw, does far more.
 - **One measure works across the whole range: equity against his best third** (+0.51, +0.43, +0.34). It is high for draws among weak hands and for the nuts among strong ones.
+
+## 7. Inside each bar of the strength ladder, which equity follows the betting? (`exp7.py`)
+
+Flop and turn betting decisions with real mixing; inside each kind of hand, the correlation between how often a hand bets and each kind of equity (averaged over decisions; in brackets how often the sign agrees). Most bars are not all one action (58 to 93% of the time), so there is something for a line to explain.
+
+| Bar | Turn: what follows the betting | Flop |
+|---|---|---|
+| Set or better | nothing (all under 0.05) | nothing consistent |
+| Two pair | showdown +0.35 (75%), against his best +0.35; draw -0.22 | too few |
+| Overpair | showdown +0.18 (64%) | against his best +0.26, showdown +0.25 |
+| Top pair | against his best +0.43 (82%), showdown +0.40 (80%); draw -0.19 | against his best +0.50 (87%), showdown +0.40; draw -0.23 |
+| Middle pair | draw +0.30 (78%), what cards to come change +0.32 | +0.23 to +0.27 |
+| Low pair | draw +0.29 (73%), against his best +0.33 | weak (+0.13 to +0.15) |
+| Draws | draw +0.48 (92%), what cards to come change +0.49 (91%) | against his best +0.20 (74%), equity +0.19 |
+| Trash | draw +0.17 (67%); showdown -0.13 | draw +0.22 (77%); showdown -0.19 (72%) |
+
+- **Yes, and the kind of equity changes down the ladder.** From top pair up, the hands that bet are the ones ahead now (showdown, or equity against his best hands), and having a draw goes against betting. From middle pair down, the hands that bet are the ones with more still to come, and showdown goes against betting among the trash.
+- The switch is at the value line: above it, bet what is strongest now; below it, bet what can still change.
+- Sets and better need no line: they bet or trap as a group.
