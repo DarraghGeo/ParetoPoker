@@ -29,3 +29,4 @@ research/charts/out/*.jsonl
 .claude/worktrees/
 research/advantage/out/
 research/value/out/*.log
+research/value/out/*.jsonl
