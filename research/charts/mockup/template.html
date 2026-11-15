@@ -99,6 +99,15 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:v
 button[aria-pressed="true"] span{color:inherit}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips button{font:500 13px/18px var(--mono);padding:6px 9px}
+.big{position:relative;height:150px;margin-top:6px}
+.big .bar{border-radius:2px}
+.big svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.big svg polyline{fill:none;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.ends{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3)}
+.toggles button i{width:14px;height:0;border-top:3px solid;display:inline-block;margin-right:6px;vertical-align:3px}
+.reads{display:grid;grid-template-columns:auto 1fr 1fr;gap:4px 14px;font:400 12px/18px var(--mono);color:var(--ink-2);align-items:baseline}
+.reads b{font-weight:500;color:var(--ink)}
+.reads .hd{color:var(--ink-3);font-size:11px;letter-spacing:.06em;text-transform:uppercase}
 [data-wait]{visibility:hidden}
 </style>
 <main>
@@ -119,6 +128,18 @@ button[aria-pressed="true"] span{color:inherit}
     <p class="tag" style="margin-top:6px">Follow one of the out-of-position hands</p>
     <div class="chips" id="chips"></div>
     <p id="text0"></p>
+  </section>
+
+  <section id="sL">
+    <div class="tag">Lines through the bar · turn betting</div>
+    <h2>Which line follows the betting?</h2>
+    <div class="spot" id="spotL"></div>
+    <div class="row" id="spotsL"></div>
+    <p>The bar is the range of the player to act, weakest on the left. Red from the bottom is how often that part bets. Each line is one measure of the hands in that part, drawn low to high on its own scale. A line that tracks the action rises where the red rises.</p>
+    <div class="row toggles" id="togL"></div>
+    <div><div class="big" id="bigL"></div><div class="ends"><span>weakest</span><span>strongest</span></div></div>
+    <div class="reads" id="readL"></div>
+    <p class="note">The numbers are the correlation between each line and how often the slice bets, in the weaker half and the stronger half of this one range: +1 rises and falls with the betting, 0 unrelated, −1 opposite. The first spot is the clearest one found; the other two are simply the next two in the data.</p>
   </section>
 
   <section id="s1">
@@ -207,6 +228,23 @@ function examples(el, blocks, at) { el.innerHTML = at.map((f) => { const b = blo
   }
   $('chips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { who = +b.dataset.i; draw(); } });
   el.addEventListener('click', (e) => { const b = e.target.closest('button[data-d]'); if (!b || b.disabled) return; path = follow([...path.slice(0, +b.dataset.d), b.dataset.l]); draw(); });
+  draw(); }
+
+// L. lines through the bar
+{ const S = /*LINES*/; let at = 0; const M = [['draw', 'Draw: equity still to come', '#2A3CE0'], ['show', 'Showdown: ahead right now', '#15171B'], ['best', 'Equity against his best hands', '#8A3FBF'], ['eq', 'Equity now', '#6B6F77']]; const on = new Set(['draw', 'show']);
+  const corr = (x, y) => { const n = x.length; if (n < 4) return null; const mx = x.reduce((a, b) => a + b, 0) / n, my = y.reduce((a, b) => a + b, 0) / n; let c = 0, vx = 0, vy = 0; for (let i = 0; i < n; i++) { c += (x[i] - mx) * (y[i] - my); vx += (x[i] - mx) ** 2; vy += (y[i] - my) ** 2; } return vx > 1e-9 && vy > 1e-9 ? c / Math.sqrt(vx * vy) : null; };
+  const fmt = (c) => (c == null ? 'flat' : `${c >= 0 ? '+' : '−'}${Math.abs(c).toFixed(2)}`);
+  $('spotsL').innerHTML = S.map((d, i) => `<button data-i="${i}">${d.board.replace(/ /g, '').replace(/[shdc]/g, (x) => SUIT[x])}</button>`).join('');
+  $('togL').innerHTML = M.map(([k, name, col]) => `<button data-k="${k}"><i style="border-color:${col}"></i>${name}</button>`).join('');
+  function draw() { const d = S[at]; const [pre, a, b] = d.spot.split('-'); const sl = d.slices; const n = sl.length; const bet = sl.map((x) => 1 - x.mix[0]);
+    $('spotL').innerHTML = `<span class="board">${board(d.board)}</span><span>${NAMES[pre] ?? pre}, ${a} against ${b}</span><span>${d.seat ? b : a} to act after a check. Bets 75% with ${pct(d.actions.slice(1).reduce((t, x) => t + x.freq, 0))} of the range.</span>`;
+    const cols = sl.map((x) => `<u><b style="height:${100 * x.mix[0]}%;background:var(--pass)"></b><b style="height:${100 * (1 - x.mix[0])}%;background:var(--agg)"></b></u>`).join(''); let lines = '';
+    for (const [k, , col] of M) { if (!on.has(k)) continue; const v = sl.map((x) => x[k]); const lo = Math.min(...v), hi = Math.max(...v); const pts = v.map((y, i) => `${((i + 0.5) / n) * 100},${100 - (hi > lo ? (y - lo) / (hi - lo) : 0.5) * 96 - 2}`).join(' '); lines += `<polyline points="${pts}" stroke="#fff" stroke-width="5" opacity=".85"/><polyline points="${pts}" stroke="${col}" stroke-width="2.5"/>`; }
+    $('bigL').innerHTML = `<div class="bar">${cols}</div><svg viewBox="0 0 100 100" preserveAspectRatio="none">${lines}</svg>`;
+    const h = Math.floor(n / 2); $('readL').innerHTML = `<span></span><span class="hd">weaker half</span><span class="hd">stronger half</span>` + M.map(([k, name, col]) => `<span style="color:${col === '#15171B' ? 'var(--ink)' : col}"><b style="color:inherit">${name.split(':')[0]}</b></span><span>${fmt(corr(sl.slice(0, h).map((x) => x[k]), bet.slice(0, h)))}</span><span>${fmt(corr(sl.slice(h).map((x) => x[k]), bet.slice(h)))}</span>`).join('');
+    $('spotsL').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', +x.dataset.i === at)); $('togL').querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', on.has(x.dataset.k))); }
+  $('spotsL').addEventListener('click', (e) => { const x = e.target.closest('button'); if (x) { at = +x.dataset.i; draw(); } });
+  $('togL').addEventListener('click', (e) => { const x = e.target.closest('button'); if (!x) return; on.has(x.dataset.k) ? on.delete(x.dataset.k) : on.add(x.dataset.k); draw(); });
   draw(); }
 
 // 1. the line
