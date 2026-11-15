@@ -5,9 +5,9 @@ import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { stamp } from './scripts/stamp.js';
 
 const at = (path) => fileURLToPath(new URL(path, import.meta.url));
-const pages = ['index', 'study'];
+const pages = ['index'];
 /** Pages that moved into the app: their old addresses redirect. */
-const moved = { 'train.html': './#/train', 'play.html': './#/play' };
+const moved = { 'train.html': './#/train', 'play.html': './#/play', 'study.html': './#/study' };
 
 export default defineConfig({
   root: at('web'),

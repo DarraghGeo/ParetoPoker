@@ -18,7 +18,7 @@
   import { spotText } from '../../lib/train/spotText.js';
 
   const game = createTrainGame();
-  let pane = $state(); let settings = $state(false); let history = $state(false);
+  let pane = $state(); let settings = $state(false); let history = $state(false); let studying = $state(false);
   game.onExport = (data) => pane?.handedOver(data);
   const d = $derived(game.spot?.decision ?? null);
   const t = $derived(todayOf(game.prefs));
@@ -28,7 +28,7 @@
   function study(ev) { ev?.preventDefault(); if (!d) return; pane.open(here, d.solve != null ? { solve: d.solve, line: d.line } : null); }
   function studyPast(ev, href) { ev.preventDefault(); history = false; pane.open(href); }
 </script>
-<StudyPane bind:this={pane} back="Train" busy={() => settings || history} onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
+<StudyPane bind:this={pane} bind:studying class="train" back="Train" busy={() => settings || history} onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
   <div class="rule">{#if t.n}<i style="flex:{t.ok};background:var(--ok)"></i><i style="flex:{t.n - t.ok};background:var(--danger)"></i>{/if}</div>
   <main>
     <header>
@@ -41,7 +41,7 @@
         {#if d}<Past history={d.history} who={(a) => (a.seat === d.seat ? 'Hero' : 'Villain')} /><Where decision={d} studyHref={here} onStudy={study} copy={() => spotText(game.spot, game.q, game.config)} view={game.prefs.view} onView={() => nextView(game)} />{/if}
         <Ranges spot={game.spot} view={game.prefs.view} hand={game.q?.hand ?? null} />
       </div>
-      <Ask {game} blocked={() => settings || history} />
+      <Ask {game} blocked={() => settings || history || studying} />
     </section>
   </main>
 </StudyPane>

@@ -1,10 +1,9 @@
 // The spot on screen written out to paste elsewhere: the board, the line, the chips, the choices, the ranges and the
 // betting it was solved with, and the address that opens it in Study.
+import { chips as num, seatName } from '../actions.js';
 import { dealtSpotUrl } from '../links.js';
 import { betLists } from '../setup.js';
 
-const num = (x) => String(Math.round(10 * x) / 10);
-export const seatName = (seat) => (seat === 'oop' ? 'OOP' : 'IP');
 const capital = (word) => word[0].toUpperCase() + word.slice(1);
 
 /** Where hero stands and the chips: first to act or after the line, the pot, the call and what is behind. */

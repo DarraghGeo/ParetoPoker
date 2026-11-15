@@ -3,7 +3,7 @@
   import Cards from '../common/Cards.svelte';
   import Icon from '../common/Icon.svelte';
   import { TYPES } from '../../lib/train/prefs.js';
-  import { seatName } from '../../lib/train/spotText.js';
+  import { seatName } from '../../lib/actions.js';
   let { entry: e, href, onStudy } = $props();
   let open = $state(false);
   const last = $derived(e.line?.[e.line.length - 1]);

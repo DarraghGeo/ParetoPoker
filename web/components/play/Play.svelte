@@ -28,7 +28,7 @@
   /** Study for the decision on screen, a turn or river handed over as solved here. */
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
 </script>
-<StudyPane bind:this={pane} back="Play" onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
+<StudyPane bind:this={pane} class="train play" back="Play" onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
   <div class="rule"></div>
   <main class="table">
     <header>

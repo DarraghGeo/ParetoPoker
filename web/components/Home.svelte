@@ -1,7 +1,7 @@
 <!-- The opening page: the mark and the three ways in. -->
 <script>
   const WAYS = [
-    ['study.html', 'Study', 'Solve a spot, walk the line, and read why each hand plays the way it does.'],
+    ['#/study', 'Study', 'Solve a spot, walk the line, and read why each hand plays the way it does.'],
     ['#/train', 'Train', 'Answer questions on fresh boards: who has the advantage, how big you can go, what a hand can do.'],
     ['#/play', 'Play', 'Play whole hands heads up against the solved villain, flop to river, and swipe to Study for any spot.'],
   ];
