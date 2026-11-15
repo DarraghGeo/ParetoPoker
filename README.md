@@ -52,6 +52,16 @@ The page opens on a choice between the two:
   Every third flop is dealt new; the two after it are each one card away from the flop before, and
   start from its solve (`warmStart` with `warmCards`), which settles in about half the iterations.
   A spot opens in Study through its address, where it is solved the same way, or is copied as text.
+- **Play** (`play.html`): whole hands heads up against the solved villain, flop to river, with the setup's ranges, pot
+  and bet sizes. A hand is dealt whole (both hands and the board); hero's seat is drawn each hand. The flop is solved
+  lite; each later street is solved again for the two ranges as they arrive down the line played, with the setup's own
+  betting, and villain plays his solved strategy for the hand he holds. Solving runs ahead of play: while a street is
+  played, the next street is solved for every way this one can end (the likeliest first), and the next hands' flops
+  behind that (`web/play-worker.js`). Both ranges at the decision on screen are a tap away, and the session's chips
+  won from the flop on are kept for the day.
+- **Study beside Train and Play** (`web/pane.js`): swipe left (or the Study button) opens the spot on screen in Study
+  in the same tab, and back; nothing reloads. A turn or river solved on the page is handed over, so Study shows it at
+  once and solves it finer behind it.
 
 ```bash
 npm install

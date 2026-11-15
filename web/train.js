@@ -1,7 +1,8 @@
 // Train: questions on boards dealt at random. The ranges, pot and bet sizes are the ones set up in Study.
 import { explain, survey } from '../src/explain/river.js';
 import { outline } from '../src/explain/outline.js';
-import { $, COLORS, COPY_ICON, DEFAULTS, copied, copyText, studyUrl as linkToStudy, cardsHtml, cellName, cellOf, esc, pct, strataOf } from './common.js';
+import { studyPane } from './pane.js';
+import { $, COLORS, COPY_ICON, DEFAULTS, copied, copyText, studyUrl as linkToStudy, cardsHtml, cellName, cellOf, esc, mini, pct, strataOf } from './common.js';
 
 const TYPES = { range: 'Range advantage', nuts: 'Nut advantage', size: 'Maximum bet or raise', hand: 'What a hand can do' };
 const STREETS = { flop: 'Flop', turn: 'Turn', river: 'River' };
@@ -82,7 +83,7 @@ function want() {
   worker.postMessage({ type: 'deal', id: game.id, street, config });
 }
 worker.onmessage = ({ data }) => {
-  if (data.type === 'export') { handedOver(data); return; }
+  if (data.type === 'export') { pane.handedOver(data); return; }
   if (!game.busy || data.id !== game.busy.id) return;
   if (data.type === 'progress') { game.progress = data; if (!game.q) renderAsk(); return; }
   game.busy = null;
@@ -312,16 +313,6 @@ function ladder(spot, hand) {
   const bars = (cells, label) => `<div class="row"><div class="strip" role="img" aria-label="${label}">${cells.join('')}</div></div>`;
   return bars(oop ? mine : his, `Out of position, ${oop ? 'hero' : 'villain'}`) + bars(oop ? his : mine, `In position, ${oop ? 'villain' : 'hero'}`);
 }
-function mini(title, hands, kind = '', marked = null) {
-  const cells = new Map(); let combos = 0;
-  for (const h of hands ?? []) { const key = cellOf(h.name); cells.set(key, (cells.get(key) ?? 0) + h.w); combos += h.w; }
-  let html = '';
-  for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) {
-    const key = `${i},${j}`; const held = Math.min(1, (cells.get(key) ?? 0) / (i === j ? 6 : i < j ? 4 : 12));
-    html += `<b${key === marked ? ' class="mark"' : ''} style="grid-column:${j + 1 + (j > 4) + (j > 8)};grid-row:${i + 1 + (i > 4) + (i > 8)}" title="${cellName(i, j)}"><i style="height:${Math.round(100 * held)}%"></i></b>`;
-  }
-  return `<figure class="mini ${kind}"><figcaption><span>${esc(title)}</span><span>${hands ? Math.round(combos) : ''}</span></figcaption><div class="paint" role="img" aria-label="${esc(title)}'s range">${html}</div></figure>`;
-}
 function renderAsk() {
   const el = $('ask'); const q = game.q;
   if (!q) {
@@ -434,62 +425,10 @@ want();
 renderAsk();
 
 
-// ---- Study beside Train: the spot on screen opens in Study in the same tab, in a pane beside this one ----
-// Swipe left (or the Study button) turns to it; swipe right from the left edge, the back bar or the phone's back turns
-// back. Neither page is reloaded: Train keeps its question and Study keeps its walk, and the same spot opened again is
-// not solved again.
-const pager = $('pager'); const frame = $('study-frame'); const studyPane = $('study-pane'); const trainPane = $('train-pane');
-const onStudy = () => pager.classList.contains('on-study');
-function showStudy(on) {
-  pager.classList.toggle('on-study', on);
-  studyPane.inert = !on; trainPane.inert = on;
-}
-function openStudy(href, spot = null) {
-  // a turn or river on screen: Study opens on Train's own solve of it, handed over, and solves finer behind it
-  const solve = spot?.decision.solve;
-  if (solve != null) { const u = new URL(href, location.href); u.searchParams.set('handover', '1'); href = u.href; }
-  const url = new URL(href, location.href).href;
-  if (solve != null && frame.dataset.url !== url) { handover.url = url; handover.data = null; handover.ready = false; handover.line = spot.decision.line; worker.postMessage({ type: 'export', solve, ask: url }); }
-  if (frame.dataset.url !== url) {
-    // a new spot replaces the last one in place, so the back gesture keeps meaning "back to Train"
-    if (frame.dataset.url) frame.contentWindow.location.replace(url); else frame.src = url;
-    frame.dataset.url = url;
-  }
-  if (!onStudy()) { history.pushState({ study: true }, ''); showStudy(true); }
-}
-function closeStudy() { if (history.state?.study) history.back(); else showStudy(false); }
-addEventListener('popstate', () => showStudy(!!history.state?.study));
-document.addEventListener('click', (ev) => {
-  const a = ev.target.closest('a[data-pane]');
-  if (!a || ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button === 1) return; // a modified click still opens a new tab
-  ev.preventDefault(); openStudy(a.getAttribute('href'), a.id === 'study' ? game.spot : null);
-});
-// The handover: Train's worker sends the solve, Study says when it is listening; whichever comes second sends it on.
-const handover = { url: null, data: null, ready: false, line: null };
-function sendHandover() {
-  if (!handover.data || !handover.ready) return;
-  const d = handover.data; handover.data = null;
-  frame.contentWindow.postMessage({ type: 'handover', found: d.found, board: d.board, pot: d.pot, stack: d.stack, oop: d.oop, ip: d.ip, exploit: d.exploit, sums: d.sums, line: handover.line }, location.origin, d.found ? [d.sums.buffer] : []);
-}
-function handedOver(data) { if (data.ask !== handover.url) return; handover.data = data; sendHandover(); }
-addEventListener('message', (ev) => {
-  if (ev.source !== frame.contentWindow || ev.origin !== location.origin || ev.data?.type !== 'study-ready' || ev.data.url !== handover.url) return;
-  handover.ready = true; sendHandover();
-});
-$('to-train').onclick = closeStudy;
-/** A swipe: one finger, mostly sideways, far enough. */
-function swiper(target, ok, done) {
-  let start = null;
-  target.addEventListener('touchstart', (ev) => { const t = ev.touches[0]; start = ev.touches.length === 1 && ok(t, ev) ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
-  target.addEventListener('touchend', (ev) => {
-    if (!start) return; const t = ev.changedTouches[0]; const dx = t.clientX - start.x; const dy = t.clientY - start.y; start = null;
-    if (Math.abs(dx) > 70 && Math.abs(dy) < 40) done(dx);
-  }, { passive: true });
-}
-const busy = () => !$('settings').hidden || !$('history').hidden;
-swiper(trainPane, (t, ev) => !busy() && !ev.target.closest('input, textarea, select'), (dx) => { if (dx < 0) $('study')?.click(); });
-// Study is the same site, so its document takes the edge swipe back; Study's own sideways swipe (between versions of the
-// ranges) leaves the left edge to this one when it sits here.
-frame.addEventListener('load', () => {
-  try { swiper(frame.contentDocument, (t) => t.clientX < 28, (dx) => { if (dx > 0) closeStudy(); }); } catch { /* not readable: the back bar still works */ }
+// ---- Study beside Train (pane.js): the spot on screen, or a past question, opens in Study in the same tab ----
+const pane = studyPane({
+  page: $('train-pane'), worker,
+  // the Study button hands over the turn or river on screen, solved here
+  spotOf: (a) => (a.id === 'study' && game.spot?.decision.solve != null ? { solve: game.spot.decision.solve, line: game.spot.decision.line } : null),
+  busy: () => !$('settings').hidden || !$('history').hidden,
 });
