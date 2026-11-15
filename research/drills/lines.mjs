@@ -18,13 +18,13 @@ function decision(id, dealt, title, context, facing) {
   const quiet = kinds.indexOf(facing ? 'fold' : 'check'); const louds = kinds.map((k, a) => a).filter((a) => a !== quiet && kinds[a] !== 'raise' && kinds[a] !== 'allin');
   const freq = st.actions.map((a) => a.freq); const loud = louds.reduce((b, a) => (freq[a] > freq[b] ? a : b)); const vals = n.edges.map((_, a) => st.closely(a).value);
   const hs = []; for (let c = 0; c < N; c++) if (f.mine[c] > 1e-6 && !Number.isNaN(eq[c]) && !Number.isNaN(vals[quiet][c]) && !Number.isNaN(vals[loud][c])) hs.push(c); hs.sort((x, y) => eq[x] - eq[y]);
-  const total = hs.reduce((t, c) => t + f.mine[c], 0); const slices = Array.from({ length: B }, () => ({ w: 0, loud: 0, costQuiet: 0, costLoud: 0, e: 0, top: null, topW: 0, outs: 0 })); let seen = 0;
+  const total = hs.reduce((t, c) => t + f.mine[c], 0); const slices = Array.from({ length: B }, () => ({ w: 0, loud: 0, costQuiet: 0, costLoud: 0, e: 0, top: null, topW: 0, outs: 0, dTop: null, dW: 0 })); let seen = 0;
   for (const c of hs) {
     const w = f.mine[c]; const s = slices[Math.min(B - 1, Math.floor((B * (seen + w / 2)) / total))]; seen += w; const mine = n.edges.reduce((t, _, a) => t + st.sigma(c, a) * vals[a][c], 0);
     s.w += w; s.e += w * eq[c]; s.loud += w * n.edges.reduce((t, _, a) => t + (a !== quiet ? st.sigma(c, a) : 0), 0); s.costQuiet += w * (mine - vals[quiet][c]); s.costLoud += w * (mine - vals[loud][c]);
-    const x = st.featuresOf(c); s.outs += w * (f.board.length < 5 && x.flushOuts + x.straightOuts >= 8 ? 1 : 0); if (w > s.topW) { s.topW = w; s.top = pretty(fs.formatCombo(c)); }
+    const x = st.featuresOf(c); const drawing = f.board.length < 5 && x.flushOuts + x.straightOuts >= 8; s.outs += w * (drawing ? 1 : 0); if (drawing && w > s.dW) { s.dW = w; s.dTop = pretty(fs.formatCombo(c)); } if (w > s.topW) { s.topW = w; s.top = pretty(fs.formatCombo(c)); }
   }
-  const pot = st.pot; const out = slices.map((s) => (s.w > 0 ? { loud: r3(s.loud / s.w), e: r3(s.e / s.w), q: r3((100 * s.costQuiet) / s.w / pot), l: r3((100 * s.costLoud) / s.w / pot), ex: s.top, draw: r3(s.outs / s.w) } : null));
+  const pot = st.pot; const out = slices.map((s) => (s.w > 0 ? { loud: r3(s.loud / s.w), e: r3(s.e / s.w), q: r3((100 * s.costQuiet) / s.w / pot), l: r3((100 * s.costLoud) / s.w / pot), ex: s.top, draw: r3(s.outs / s.w), dex: s.dTop } : null));
   for (let i = 0; i < B; i++) if (!out[i]) out[i] = out[i - 1] ?? out.find(Boolean);
   return { title, context, facing, board: fs.formatCards(f.board), labels: [n.edges[quiet].label, n.edges[loud].label], share: r3(hs.reduce((t, c) => t + f.mine[c] * n.edges.reduce((u, _, a) => u + (a !== quiet ? st.sigma(c, a) : 0), 0), 0) / total), price: facing ? r3(st.toCall / (st.pot + st.toCall)) : null, slices: out };
 }

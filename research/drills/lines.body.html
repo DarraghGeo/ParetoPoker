@@ -53,8 +53,8 @@ function show(done) {
       notes.push(`${d.facing ? 'Your line' : k === 0 ? 'Your bluff line' : 'Your value line'} is too ${tight ? 'tight' : 'loose'}: ${exAt(d, lo)} to ${exAt(d, hi)} ${tight ? `should ${WORD(d, true)}` : `should ${WORD(d, false)}`}.`); });
     if (!notes.length) notes.push('Your lines are within a few hands of the best ones.');
     if (myShare < solShare - 0.1) notes.push(`You ${d.facing ? 'folded' : 'checked'} too much, which is the expensive direction.`);
-    const draws = d.slices.map((s, i) => [s, i]).filter(([s, i]) => !f(i) && s.loud >= 0.5 && s.draw >= 0.5).map(([s]) => s.ex);
-    if (draws.length) notes.push(`Lines sort by strength, and draws break them: ${draws.slice(0, 3).map(hand).join(', ')} bet from the middle because they still change.`);
+    const draws = d.slices.map((s, i) => [s, i]).filter(([s, i]) => !f(i) && s.loud >= 0.5 && s.draw >= 0.5 && s.dex).map(([s]) => s.dex);
+    if (draws.length) { const named = [...new Set(draws)].slice(0, 3); notes.push(`Lines sort by strength, and draws break them: ${named.map(hand).join(', ')} ${named.length > 1 ? 'bet from the middle because they still change' : 'bets from the middle because it still changes'}.`); }
     res.length = at; res.push(grade === 'part' ? 'bad' : grade);
     after = `<div class="verdict ${grade === 'bad' ? 'bad' : 'good'}" role="status">${icon(grade === 'bad' ? 'cross' : 'tick', 14)}<span>${grade === 'good' ? 'Good lines' : grade === 'part' ? 'Close' : 'Costly'}</span></div>
       <div class="money"><span class="you"><b>${mine.toFixed(2)}%</b>of the pot given up by your lines</span><span><b>${best.c.toFixed(2)}%</b>by the best ${d.facing ? 'line' : 'two lines'}</span></div>
