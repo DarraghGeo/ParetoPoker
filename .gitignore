@@ -24,3 +24,4 @@ research/insight/out/*.log
 research/insight/out/full-*.jsonl
 research/insight/out/*.pkl
 research/insight/out/runouts.*
+research/charts/out/*.pkl

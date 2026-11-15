@@ -1,0 +1,74 @@
+# Charts for study: what a picture can and cannot imply
+
+Four experiments on 8,435 solved decisions (132 flops with their turns and rivers; 4-bet, 3-bet, single-raised and squeeze pots; the hand-by-hand collections of `research/insight`). No people were tested: these measure whether the answer is *in* a picture, in few enough pieces to hold in mind, not whether people learn from it. Run `python3 load.py`, then `exp1.py` to `exp4.py`; results in `out/`.
+
+## 1. Does the picture imply what the range does? (`exp1.py`)
+
+Each chart is reduced to the few numbers a viewer could read off it. A rule three questions deep (about what a person can hold) and a flexible model (the ceiling) then give the solver's answer on flops they have not seen.
+
+| What the viewer has | Bet frequency: simple rule off by / ceiling | Continue frequency facing a bet: simple rule / ceiling |
+|---|---|---|
+| The situation only (street, bet faced, stack, seat) | 16.2 pts / 15.5 | 9.7 / 9.2 |
+| Average equity of each range | 15.8 / 14.3 | 7.0 / 5.2 |
+| Equity curve of own range (five points) | 14.1 / 10.8 | **6.4 / 3.8** |
+| Four-box card, both ranges | 13.5 / **9.0** | 8.3 / 5.5 |
+| Two strips, four landmarks (tops and bottoms) | **13.3** / 10.1 | 8.3 / 5.8 |
+| Best single landmark found by search | 13.0 (who has more hands above 70% equity) | 7.0 (own average equity against his bets) |
+| Everything, flexible model | 7.7 | 3.9 |
+
+- Two aligned ranges beat one equity curve for **betting**; the best single thing to show is the gap in hands above about 70% equity. Marking the very top (90%+) separately added nothing.
+- For **facing a bet** the one-range curve is better: what matters is where the range sits against the price, not his shape.
+- No picture of the two ranges gets a simple rule closer than about 12 points on bet frequency. A picture shows the direction (mostly check, mixed, mostly bet: right 71% of the time, against 63% from the situation alone), not the number.
+- **Bet size cannot be read off any of them** (223 flops: 14 to 15 points of pot off, barely better than knowing nothing).
+
+## 2. Do the hands fall in bands on a strip? (`exp2.py`)
+
+Sort the range by a key, cut it at the best places into k bands, and measure how much of what the hands do the bands account for. Decisions with real mixing only (2,500).
+
+| Decision | Strip by equity, 2 / 3 / 5 bands | Coach's hand types (about 9 groups) | The 13x13 grid (about 30 cells in play) |
+|---|---|---|---|
+| Facing a bet, flop | 69% / 75% / 83% (80% / 86% / 92% with the draw added to equity) | 63% | 73% |
+| Facing a bet, turn | 82% / 88% / 93% | 75% | 80% |
+| Facing a bet, river | 88% / 96% / 98% | 61% | 87% |
+| Betting, river | 51% / 74% / 86% | 47% | 87% |
+| Betting, turn | 28% / 45% / 63% | 53% | 74% |
+| Betting, flop | 23% / 38% / 52% | 38% | 67% |
+
+- **Facing a bet, a strength strip with one or two cut lines says more than the grid does with thirty cells.** This is the strongest support for the idea.
+- **Betting on the river**: three bands (bluff, check, value) carry three quarters.
+- **Betting on the flop and turn does not fall in bands by strength.** Sorting by other keys (beats now, equity plus draw) changes little. The strip alone would mislead here.
+
+## 3. The second axis for flop and turn betting (`exp3.py`)
+
+Hands placed on a two-axis map, the map cut into at most six regions; every pair of eight axes tried (900 decisions).
+
+- One axis, four regions: 47% (flop), 54% (turn).
+- Two axes, six regions: 66% (flop), 79% (turn). Nearly every pair that puts **strength** on one axis and **what the cards to come do to the hand** on the other (its draw, what good cards add, what bad cards cost) scores the same. Outs alone is the weakest second axis.
+- All eight axes, twelve regions: 85% and 92%.
+
+So a map of strength against how much the hand changes does with six regions what the grid does with thirty. No pair is special; "how settled is this hand" is the missing dimension, however it is measured.
+
+## 4. Is there a small vocabulary of shapes? (`exp4.py`)
+
+Each strip as ten steps, weakest to strongest, shaded by how often the step bets.
+
+Betting (5,099 strips), five shapes cover 60% of how strips differ:
+
+| Share | Shape, weakest to strongest (% betting) | A name |
+|---|---|---|
+| 27% | 34 33 31 27 21 20 22 38 66 74 | Top bets, the rest a third |
+| 26% | 82 53 19 9 8 21 59 86 92 91 | Both ends (polarised) |
+| 23% | 10 6 5 4 4 5 8 12 13 13 | Check everything |
+| 14% | 29 33 38 37 41 66 82 86 88 82 | Top half (merged) |
+| 11% | 74 72 66 62 71 77 80 86 92 91 | Bet everything |
+
+Facing a bet (3,336 strips) there is one shape, a line: everything above it continues. Five positions of the line cover 67%.
+
+## What this says about the ideas
+
+- **Two strips**: supported for who has the top and for the direction of betting; supported strongly for defending (a line on a strip). Not enough for flop and turn betting, and silent on size.
+- **Four-box card**: as good as the strips for a flexible reader, no better for a simple one; its fixed cut lines cost it when facing a bet.
+- **New: the line.** Facing a bet the whole answer is where one line falls on your strip. That is one thing to picture.
+- **New: five shapes.** A betting strip is nearly always one of five; a spot can be stored as a name.
+- **New: the settled/unsettled map** for flop and turn betting: strength up the page, how much the hand changes across it.
+- **Not found**: any picture that implies bet size.
