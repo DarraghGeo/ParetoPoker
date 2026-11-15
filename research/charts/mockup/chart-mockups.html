@@ -1,0 +1,184 @@
+<title>Pareto chart mock-ups</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of three studies; each is a spot line, one picture on a fixed frame (strong at the top), and what it says. */
+:root{
+  --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
+  --fold:#D9D7CF;--stay:#7CCDBE;--bet:#F3C46A;--big:#F0896B;--his:#B9BDC9;--guess:#2A3CE0;
+  --s-s:#15171B;--s-h:#C8281F;--s-d:#0B6FC2;--s-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
+  --fold:#3A3C42;--stay:#4FAE9D;--bet:#D9A84A;--big:#D9714F;--his:#5B6070;--guess:#8E9BFF;
+  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
+  --fold:#3A3C42;--stay:#4FAE9D;--bet:#D9A84A;--big:#D9714F;--his:#5B6070;--guess:#8E9BFF;
+  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/23px var(--sans);padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:680px;margin:0 auto;display:flex;flex-direction:column;gap:56px}
+h1{font:600 26px/32px var(--sans);margin:0;text-wrap:balance;letter-spacing:-.01em}
+h2{font:600 19px/26px var(--sans);margin:0;text-wrap:balance}
+p{margin:0;max-width:62ch;color:var(--ink-2)}
+.lede{display:flex;flex-direction:column;gap:12px}
+.tag{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+section{display:flex;flex-direction:column;gap:18px;border-top:1px solid var(--line-strong);padding-top:22px}
+.spot{font:400 13px/20px var(--mono);color:var(--ink-2);display:flex;flex-wrap:wrap;gap:4px 14px;align-items:baseline}
+.board{font:500 20px/24px var(--mono);letter-spacing:.02em;color:var(--ink)}
+.s{color:var(--s-s)}.h{color:var(--s-h)}.d{color:var(--s-d)}.c{color:var(--s-c)}
+.fig{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+.frame{display:grid;grid-template-columns:auto auto auto;gap:0 8px;align-items:stretch}
+.cap{font:500 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);text-align:center;padding-bottom:6px}
+.strip{position:relative;width:64px;height:320px;display:flex;flex-direction:column;gap:1px;cursor:default}
+.strip.pick{cursor:pointer;outline:1px dashed var(--line-strong);outline-offset:3px}
+.strip i{flex:1;display:flex;min-height:0}
+.strip i b{display:block;height:100%}
+.mark{position:absolute;left:-6px;right:-6px;height:0;border-top:2px solid var(--ink);pointer-events:none}
+.mark.thin{border-top:1px dashed var(--ink-2)}
+.mark.guess{border-top:2px solid var(--guess)}
+.mark span{position:absolute;top:-9px;font:500 11px/16px var(--mono);white-space:nowrap;background:var(--bg);padding:0 4px;color:var(--ink)}
+.mark.r span{left:100%;margin-left:2px}.mark.l span{right:100%;margin-right:2px}
+.mark.guess span{color:var(--guess)}
+.axis{display:flex;flex-direction:column;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3);text-align:right;height:320px}
+.ex{position:relative;height:320px;min-width:74px;font:400 12px/14px var(--mono);color:var(--ink-2)}
+.ex > span{position:absolute;left:0;transform:translateY(-50%);white-space:nowrap}
+.says{flex:1 1 220px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.says p{font-size:15px}
+.says strong{color:var(--ink);font-weight:600}
+.key{display:flex;flex-wrap:wrap;gap:6px 14px;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.key i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
+.ask{display:flex;flex-direction:column;gap:10px;background:var(--surface);padding:14px 16px;border-radius:4px}
+.ask p{color:var(--ink);font-weight:500}
+.row{display:flex;flex-wrap:wrap;gap:8px}
+button{font:500 13px/18px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:3px;padding:7px 12px;cursor:pointer}
+button:focus-visible,.strip.pick:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.shapes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.shape{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;border:1px solid var(--line);border-radius:4px;background:var(--bg);font:400 11px/14px var(--sans);color:var(--ink-2);text-align:center;cursor:pointer;min-width:0}
+.shape .mini{width:18px;height:60px;display:flex;flex-direction:column;gap:1px}
+.shape .mini b{flex:1;display:block}
+.shape[data-on="1"]{border-color:var(--ink);color:var(--ink)}
+.shape[data-right="1"]{border-color:var(--stay);box-shadow:inset 0 0 0 1px var(--stay)}
+.count{display:flex;gap:18px;font:400 13px/18px var(--mono);color:var(--ink-2)}
+.count b{font:600 22px/26px var(--sans);color:var(--ink);display:block;font-variant-numeric:tabular-nums}
+.map{display:grid;grid-template-columns:auto repeat(2,minmax(0,1fr));gap:6px;width:100%;max-width:440px}
+.map .hd{font:500 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);align-self:end;text-align:center}
+.map .rw{font:500 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3);writing-mode:vertical-rl;transform:rotate(180deg);text-align:center}
+.cell{position:relative;min-height:96px;border:1px solid var(--line-strong);border-radius:4px;padding:8px 10px;display:flex;flex-direction:column;justify-content:space-between;overflow:hidden;background:var(--bg)}
+.cell .fill{position:absolute;left:0;bottom:0;top:0;background:var(--bet);opacity:.55}
+.cell > *:not(.fill){position:relative}
+.cell .verb{font:600 15px/20px var(--sans);color:var(--ink)}
+.cell .hands{font:400 12px/16px var(--mono);color:var(--ink-2)}
+.cell .n{font:400 11px/14px var(--mono);color:var(--ink-3)}
+.cell.none{border-style:dashed;justify-content:center;align-items:center;color:var(--ink-3);font:400 12px/16px var(--mono)}
+.note{font-size:13px;line-height:20px;color:var(--ink-3);max-width:68ch}
+[data-wait]{visibility:hidden}
+</style>
+<main>
+  <div class="lede">
+    <div class="tag">Mock-up · three real solved spots</div>
+    <h1>Three pictures on one frame</h1>
+    <p>Every picture uses the same frame: your range as a single strip, strongest hands at the top. The answer is one thing you can see: a line, a gap, a shape. Each asks you to guess before it shows the solution.</p>
+  </div>
+
+  <section id="s1">
+    <div class="tag">1 · Facing a bet</div>
+    <h2>The line: everything above it continues</h2>
+    <div class="spot" id="spot1"></div>
+    <div class="ask" id="ask1"><p>Tap the strip where you think calling stops.</p></div>
+    <div class="fig">
+      <div class="frame"><div></div><div class="cap">Your range</div><div></div>
+        <div class="axis"><span>strong</span><span>weak</span></div><div class="strip pick" id="strip1" tabindex="0" role="button" aria-label="Place your line"></div><div class="ex" id="ex1"></div></div>
+      <div class="says" id="says1" data-wait>
+        <div class="key"><span><i style="background:var(--stay)"></i>call</span><span><i style="background:var(--fold)"></i>fold</span></div>
+        <p id="text1"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="s2">
+    <div class="tag">2 · Betting on the river</div>
+    <h2>Two strips: who owns the top, and one of five shapes</h2>
+    <div class="spot" id="spot2"></div>
+    <div class="ask" id="ask2"><p>His range is beside yours. Which shape does your betting take?</p><div class="shapes" id="shapes"></div></div>
+    <div class="fig">
+      <div class="frame"><div></div><div style="display:flex;gap:26px"><div class="cap" style="width:64px">You</div><div class="cap" style="width:64px">Him</div></div><div></div>
+        <div class="axis"><span>strong</span><span>weak</span></div><div style="display:flex;gap:26px"><div class="strip" id="strip2"></div><div class="strip" id="strip2h"></div></div><div class="ex" id="ex2"></div></div>
+      <div class="says" id="says2">
+        <div class="count" id="count2"></div>
+        <div data-wait id="more2" style="display:flex;flex-direction:column;gap:12px">
+          <div class="key"><span><i style="background:var(--bet)"></i>bet</span><span><i style="background:var(--stay)"></i>check</span><span><i style="background:var(--his)"></i>his hands</span></div>
+          <p id="text2"></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="s3">
+    <div class="tag">3 · Betting on the flop</div>
+    <h2>The map: strength, and how much the hand still changes</h2>
+    <div class="spot" id="spot3"></div>
+    <p>On the flop and turn, betting does not fall in bands by strength. A second question sorts it: is the hand settled, or will the next card move it a lot?</p>
+    <div class="map" id="map"></div>
+    <div class="key"><span><i style="background:var(--bet);opacity:.55"></i>fill = how often it bets</span></div>
+    <p id="text3"></p>
+  </section>
+
+  <p class="note">These are mock-ups on real solutions, not finished designs. The strips are cut into 40 equal slices of the range; the map uses fixed cuts (70% and 40% equity; more or less movement than the middle hand). In the experiments the line carried 69 to 88% of what hands do facing a bet, three bands carried 74% of river betting, and a six-region map carried 66% of flop betting when its cuts were fitted to each spot; with the fixed cuts drawn here this flop reaches 46%. No picture tested implied bet size.</p>
+</main>
+<script>
+const D = {"flop":{"spot":"SRP-CO-BU","board":"Jc 2h Tc","pot":6.5,"toCall":0,"seat":"OOP","actions":[{"label":"X","kind":"check","freq":0.65},{"label":"B33","kind":"bet","freq":0.34},{"label":"B75","kind":"bet","freq":0.004},{"label":"B125","kind":"bet","freq":0.005}],"mine":[{"e":0.878,"mix":[0.734,0.223,0.013,0.031],"ex":"J\u2665J\u2660"},{"e":0.808,"mix":[0.308,0.657,0.015,0.02],"ex":"J\u2666T\u2665"},{"e":0.788,"mix":[0.085,0.902,0.01,0.003],"ex":"A\u2663A\u2660"},{"e":0.768,"mix":[0.192,0.802,0.005,0.001],"ex":"A\u2665A\u2660"},{"e":0.748,"mix":[0.248,0.746,0.005,0.001],"ex":"Q\u2665Q\u2660"},{"e":0.732,"mix":[0.523,0.474,0.002,0.001],"ex":"K\u2663J\u2665"},{"e":0.712,"mix":[0.579,0.419,0.001,0.0],"ex":"Q\u2663J\u2666"},{"e":0.704,"mix":[0.698,0.301,0.0,0.0],"ex":"K\u2666J\u2666"},{"e":0.685,"mix":[0.781,0.219,0.0,0.0],"ex":"Q\u2660J\u2660"},{"e":0.662,"mix":[0.791,0.206,0.002,0.001],"ex":"K\u2663T\u2665"},{"e":0.657,"mix":[0.827,0.172,0.0,0.0],"ex":"J\u26609\u2660"},{"e":0.647,"mix":[0.871,0.119,0.005,0.005],"ex":"Q\u2663T\u2665"},{"e":0.633,"mix":[0.84,0.156,0.002,0.002],"ex":"K\u2660T\u2665"},{"e":0.626,"mix":[0.888,0.105,0.002,0.005],"ex":"Q\u2660T\u2665"},{"e":0.59,"mix":[0.78,0.191,0.008,0.021],"ex":"T\u26659\u2665"},{"e":0.537,"mix":[0.854,0.146,0.0,0.0],"ex":"9\u26639\u2665"},{"e":0.499,"mix":[0.507,0.482,0.007,0.004],"ex":"9\u26669\u2660"},{"e":0.485,"mix":[0.453,0.535,0.006,0.006],"ex":"A\u2663K\u2666"},{"e":0.475,"mix":[0.483,0.506,0.005,0.006],"ex":"K\u2663Q\u2666"},{"e":0.466,"mix":[0.438,0.543,0.006,0.013],"ex":"A\u2663Q\u2665"},{"e":0.46,"mix":[0.539,0.442,0.008,0.011],"ex":"A\u2665K\u2660"},{"e":0.452,"mix":[0.414,0.582,0.003,0.001],"ex":"A\u2666K\u2666"},{"e":0.446,"mix":[0.671,0.32,0.005,0.004],"ex":"8\u26658\u2660"},{"e":0.432,"mix":[0.504,0.482,0.007,0.006],"ex":"A\u2665Q\u2666"},{"e":0.394,"mix":[0.622,0.37,0.003,0.004],"ex":"7\u26637\u2665"},{"e":0.353,"mix":[0.524,0.466,0.004,0.007],"ex":"9\u26608\u2660"},{"e":0.321,"mix":[0.736,0.239,0.011,0.015],"ex":"K\u26659\u2665"},{"e":0.306,"mix":[0.597,0.396,0.005,0.002],"ex":"5\u26635\u2660"},{"e":0.292,"mix":[0.604,0.36,0.013,0.023],"ex":"K\u26609\u2660"},{"e":0.283,"mix":[0.551,0.428,0.01,0.012],"ex":"A\u26638\u2660"},{"e":0.274,"mix":[0.97,0.03,0.0,0.0],"ex":"A\u26668\u2663"},{"e":0.262,"mix":[0.776,0.207,0.008,0.009],"ex":"A\u26669\u2665"},{"e":0.251,"mix":[0.973,0.026,0.0,0.0],"ex":"4\u26654\u2660"},{"e":0.246,"mix":[0.719,0.269,0.003,0.009],"ex":"A\u26668\u2665"},{"e":0.234,"mix":[0.752,0.247,0.0,0.0],"ex":"A\u26654\u2665"},{"e":0.214,"mix":[0.909,0.091,0.0,0.0],"ex":"A\u26667\u2666"},{"e":0.207,"mix":[0.944,0.056,0.0,0.0],"ex":"A\u26605\u2665"},{"e":0.194,"mix":[0.637,0.363,0.0,0.0],"ex":"A\u26603\u2660"},{"e":0.17,"mix":[0.797,0.203,0.0,0.0],"ex":"K\u26668\u2666"},{"e":0.139,"mix":[0.835,0.164,0.0,0.0],"ex":"K\u26603\u2660"}],"his":[{"e":0.891,"mix":null,"ex":"T\u2665T\u2660"},{"e":0.86,"mix":null,"ex":"J\u2665T\u2665"},{"e":0.806,"mix":null,"ex":"J\u2660T\u2660"},{"e":0.744,"mix":null,"ex":"A\u2665J\u2665"},{"e":0.727,"mix":null,"ex":"A\u2665J\u2660"},{"e":0.723,"mix":null,"ex":"A\u2660J\u2660"},{"e":0.707,"mix":null,"ex":"K\u2665J\u2660"},{"e":0.697,"mix":null,"ex":"Q\u2665J\u2665"},{"e":0.679,"mix":null,"ex":"Q\u2666J\u2666"},{"e":0.647,"mix":null,"ex":"A\u2665T\u2665"},{"e":0.632,"mix":null,"ex":"A\u2660T\u2660"},{"e":0.629,"mix":null,"ex":"A\u2666T\u2666"},{"e":0.613,"mix":null,"ex":"K\u2660T\u2660"},{"e":0.594,"mix":null,"ex":"A\u26639\u2663"},{"e":0.562,"mix":null,"ex":"K\u26639\u2663"},{"e":0.539,"mix":null,"ex":"A\u2663Q\u2665"},{"e":0.529,"mix":null,"ex":"9\u26639\u2665"},{"e":0.526,"mix":null,"ex":"9\u26639\u2660"},{"e":0.515,"mix":null,"ex":"9\u26659\u2660"},{"e":0.502,"mix":null,"ex":"9\u26669\u2665"},{"e":0.499,"mix":null,"ex":"9\u26669\u2660"},{"e":0.497,"mix":null,"ex":"A\u2666Q\u2665"},{"e":0.496,"mix":null,"ex":"A\u2660Q\u2666"},{"e":0.493,"mix":null,"ex":"8\u26638\u2665"},{"e":0.481,"mix":null,"ex":"8\u26638\u2666"},{"e":0.469,"mix":null,"ex":"K\u2660Q\u2660"},{"e":0.468,"mix":null,"ex":"8\u26658\u2660"},{"e":0.464,"mix":null,"ex":"7\u26637\u2665"},{"e":0.462,"mix":null,"ex":"7\u26637\u2660"},{"e":0.436,"mix":null,"ex":"6\u26636\u2665"},{"e":0.435,"mix":null,"ex":"7\u26657\u2660"},{"e":0.425,"mix":null,"ex":"7\u26667\u2660"},{"e":0.408,"mix":null,"ex":"5\u26635\u2660"},{"e":0.393,"mix":null,"ex":"5\u26655\u2660"},{"e":0.378,"mix":null,"ex":"A\u26659\u2665"},{"e":0.358,"mix":null,"ex":"K\u26659\u2665"},{"e":0.339,"mix":null,"ex":"A\u26609\u2660"},{"e":0.309,"mix":null,"ex":"A\u26654\u2665"},{"e":0.272,"mix":null,"ex":"A\u26604\u2660"},{"e":0.175,"mix":null,"ex":"A\u26664\u2666"}],"top70":[0.2,0.18],"top50":[0.407,0.504],"eq":[0.475,0.531],"profile":[20,16,26,37,48,54,15,18,46,68],"shape":"Top bets, rest a third","map":[{"share":0.2,"bet":0.579,"ex":["QJo","KJo","AJo"]},{"share":0,"bet":0,"ex":[]},{"share":0.182,"bet":0.145,"ex":["QTo","KTo","ATo"]},{"share":0.228,"bet":0.486,"ex":["KQo","AQo","AKo"]},{"share":0.121,"bet":0.049,"ex":["A5o","A8o","A9o"]},{"share":0.27,"bet":0.339,"ex":["44","55","66"]}]},"face":{"spot":"SRP-SB-UTG","board":"3s Qc Ts 5s Js","pot":10.5,"toCall":4.5,"seat":"IP","actions":[{"label":"F","kind":"fold","freq":0.472},{"label":"C","kind":"call","freq":0.528}],"mine":[{"e":0.81,"mix":[0.0,1.0],"ex":"9\u26639\u2660"},{"e":0.804,"mix":[0.0,1.0],"ex":"9\u26659\u2660"},{"e":0.693,"mix":[0.0,1.0],"ex":"9\u26669\u2660"},{"e":0.565,"mix":[0.0,1.0],"ex":"8\u26658\u2660"},{"e":0.49,"mix":[0.0,1.0],"ex":"8\u26668\u2660"},{"e":0.415,"mix":[0.0,1.0],"ex":"A\u2663K\u2665"},{"e":0.39,"mix":[0.0,1.0],"ex":"J\u2663J\u2665"},{"e":0.389,"mix":[0.0,1.0],"ex":"J\u2663J\u2666"},{"e":0.346,"mix":[0.002,0.998],"ex":"J\u2665T\u2665"},{"e":0.344,"mix":[0.001,0.999],"ex":"J\u2666T\u2666"},{"e":0.337,"mix":[0.001,0.999],"ex":"Q\u2665J\u2665"},{"e":0.308,"mix":[0.082,0.918],"ex":"A\u2663Q\u2665"},{"e":0.305,"mix":[0.01,0.99],"ex":"K\u2665Q\u2665"},{"e":0.305,"mix":[0.009,0.991],"ex":"K\u2665Q\u2666"},{"e":0.305,"mix":[0.009,0.991],"ex":"K\u2666Q\u2666"},{"e":0.305,"mix":[0.251,0.749],"ex":"K\u2663Q\u2666"},{"e":0.304,"mix":[0.645,0.355],"ex":"K\u2666T\u2666"},{"e":0.304,"mix":[0.655,0.345],"ex":"K\u2665T\u2666"},{"e":0.303,"mix":[0.73,0.271],"ex":"A\u2665T\u2666"},{"e":0.303,"mix":[0.73,0.271],"ex":"A\u2666T\u2665"},{"e":0.302,"mix":[0.587,0.413],"ex":"9\u26669\u2665"},{"e":0.302,"mix":[0.579,0.421],"ex":"9\u26639\u2665"},{"e":0.302,"mix":[0.71,0.29],"ex":"K\u2665T\u2663"},{"e":0.301,"mix":[0.772,0.228],"ex":"A\u2665T\u2663"},{"e":0.3,"mix":[0.2,0.8],"ex":"Q\u26659\u2665"},{"e":0.3,"mix":[0.132,0.868],"ex":"Q\u26669\u2666"},{"e":0.3,"mix":[0.963,0.037],"ex":"A\u2663T\u2665"},{"e":0.299,"mix":[0.743,0.257],"ex":"A\u2663T\u2666"},{"e":0.299,"mix":[0.676,0.324],"ex":"A\u2666J\u2665"},{"e":0.298,"mix":[0.477,0.523],"ex":"A\u2665J\u2663"},{"e":0.296,"mix":[0.778,0.222],"ex":"A\u2663J\u2665"},{"e":0.197,"mix":[1.0,0.0],"ex":"8\u26638\u2665"},{"e":0.197,"mix":[1.0,0.0],"ex":"8\u26638\u2666"},{"e":0.145,"mix":[1.0,0.0],"ex":"8\u26668\u2665"},{"e":0.091,"mix":[1.0,0.0],"ex":"7\u26637\u2666"},{"e":0.069,"mix":[1.0,0.0],"ex":"7\u26667\u2665"},{"e":0.008,"mix":[1.0,0.0],"ex":"A\u26659\u2665"},{"e":0.007,"mix":[1.0,0.0],"ex":"A\u26639\u2663"},{"e":0.006,"mix":[1.0,0.0],"ex":"A\u26638\u2663"},{"e":0.005,"mix":[1.0,0.0],"ex":"A\u26668\u2666"}],"his":[{"e":1.0,"mix":null,"ex":"A\u2660Q\u2665"},{"e":1.0,"mix":null,"ex":"A\u2660Q\u2666"},{"e":1.0,"mix":null,"ex":"A\u2660Q\u2666"},{"e":1.0,"mix":null,"ex":"A\u2660Q\u2660"},{"e":1.0,"mix":null,"ex":"K\u2663Q\u2660"},{"e":1.0,"mix":null,"ex":"K\u2665Q\u2660"},{"e":1.0,"mix":null,"ex":"K\u2666Q\u2660"},{"e":1.0,"mix":null,"ex":"K\u2666Q\u2660"},{"e":1.0,"mix":null,"ex":"9\u26639\u2660"},{"e":1.0,"mix":null,"ex":"9\u26639\u2660"},{"e":1.0,"mix":null,"ex":"9\u26639\u2660"},{"e":1.0,"mix":null,"ex":"9\u26659\u2660"},{"e":1.0,"mix":null,"ex":"9\u26659\u2660"},{"e":0.997,"mix":null,"ex":"9\u26669\u2660"},{"e":0.997,"mix":null,"ex":"9\u26669\u2660"},{"e":0.941,"mix":null,"ex":"8\u26658\u2660"},{"e":0.941,"mix":null,"ex":"8\u26658\u2660"},{"e":0.941,"mix":null,"ex":"8\u26668\u2660"},{"e":0.941,"mix":null,"ex":"8\u26668\u2660"},{"e":0.94,"mix":null,"ex":"8\u26638\u2660"},{"e":0.892,"mix":null,"ex":"7\u26657\u2660"},{"e":0.892,"mix":null,"ex":"7\u26667\u2660"},{"e":0.889,"mix":null,"ex":"7\u26637\u2660"},{"e":0.854,"mix":null,"ex":"J\u2663J\u2665"},{"e":0.825,"mix":null,"ex":"J\u2663J\u2666"},{"e":0.77,"mix":null,"ex":"T\u2663T\u2665"},{"e":0.765,"mix":null,"ex":"T\u2666T\u2665"},{"e":0.72,"mix":null,"ex":"A\u2665Q\u2665"},{"e":0.685,"mix":null,"ex":"A\u2666Q\u2666"},{"e":0.237,"mix":null,"ex":"9\u26669\u2665"},{"e":0.237,"mix":null,"ex":"9\u26669\u2665"},{"e":0.165,"mix":null,"ex":"8\u26668\u2665"},{"e":0.163,"mix":null,"ex":"8\u26638\u2665"},{"e":0.163,"mix":null,"ex":"8\u26638\u2666"},{"e":0.121,"mix":null,"ex":"7\u26667\u2665"},{"e":0.12,"mix":null,"ex":"7\u26637\u2665"},{"e":0.12,"mix":null,"ex":"7\u26637\u2666"},{"e":0.114,"mix":null,"ex":"6\u26666\u2665"},{"e":0.112,"mix":null,"ex":"6\u26636\u2666"},{"e":0.088,"mix":null,"ex":"4\u26634\u2666"}],"top70":[0.053,0.681],"top50":[0.101,0.714],"eq":[0.302,0.705],"profile":[0,0,22,49,32,32,90,98,100,100],"shape":"Top half","price":0.3,"priceRank":0.642,"cont":0.528},"river":{"spot":"SRP-SB-BB","board":"Ad 8h 5d 6h Kd","pot":6,"toCall":0,"seat":"OOP","actions":[{"label":"X","kind":"check","freq":0.587},{"label":"B75","kind":"bet","freq":0.413}],"mine":[{"e":1.0,"mix":[0.329,0.671],"ex":"8\u26667\u2666"},{"e":0.996,"mix":[0.421,0.579],"ex":"K\u2665K\u2660"},{"e":0.988,"mix":[0.999,0.001],"ex":"K\u2663K\u2660"},{"e":0.961,"mix":[0.851,0.149],"ex":"K\u26636\u2663"},{"e":0.937,"mix":[0.105,0.895],"ex":"6\u26605\u2660"},{"e":0.926,"mix":[0.331,0.669],"ex":"A\u26657\u2660"},{"e":0.912,"mix":[0.548,0.452],"ex":"A\u26657\u2666"},{"e":0.897,"mix":[0.378,0.622],"ex":"A\u26607\u2665"},{"e":0.87,"mix":[0.027,0.973],"ex":"A\u26604\u2665"},{"e":0.869,"mix":[0.009,0.991],"ex":"A\u26654\u2660"},{"e":0.868,"mix":[0.001,0.999],"ex":"A\u26652\u2665"},{"e":0.852,"mix":[0.155,0.845],"ex":"K\u2660Q\u2666"},{"e":0.781,"mix":[0.489,0.511],"ex":"K\u2660Q\u2665"},{"e":0.766,"mix":[0.001,0.999],"ex":"K\u2660Q\u2660"},{"e":0.738,"mix":[0.576,0.424],"ex":"K\u2660J\u2665"},{"e":0.726,"mix":[0.004,0.996],"ex":"K\u2660J\u2660"},{"e":0.7,"mix":[0.676,0.324],"ex":"K\u2663J\u2660"},{"e":0.686,"mix":[0.639,0.361],"ex":"K\u2660T\u2663"},{"e":0.665,"mix":[1.0,0.0],"ex":"K\u26609\u2663"},{"e":0.65,"mix":[0.999,0.001],"ex":"K\u26603\u2660"},{"e":0.57,"mix":[1.0,0.0],"ex":"Q\u2666Q\u2665"},{"e":0.556,"mix":[1.0,0.0],"ex":"T\u2665T\u2660"},{"e":0.547,"mix":[1.0,0.0],"ex":"Q\u2665Q\u2660"},{"e":0.525,"mix":[1.0,0.0],"ex":"J\u2663J\u2660"},{"e":0.506,"mix":[1.0,0.0],"ex":"Q\u2663Q\u2660"},{"e":0.481,"mix":[1.0,0.0],"ex":"9\u26608\u2660"},{"e":0.433,"mix":[1.0,0.0],"ex":"7\u26657\u2660"},{"e":0.387,"mix":[1.0,0.0],"ex":"7\u26637\u2665"},{"e":0.339,"mix":[0.648,0.352],"ex":"Q\u26606\u2660"},{"e":0.306,"mix":[0.985,0.015],"ex":"J\u26605\u2660"},{"e":0.26,"mix":[0.972,0.028],"ex":"4\u26634\u2660"},{"e":0.22,"mix":[0.841,0.159],"ex":"3\u26633\u2660"},{"e":0.147,"mix":[0.812,0.188],"ex":"Q\u2665J\u2660"},{"e":0.123,"mix":[0.87,0.13],"ex":"Q\u2660J\u2663"},{"e":0.101,"mix":[0.285,0.715],"ex":"Q\u2665T\u2660"},{"e":0.086,"mix":[0.726,0.274],"ex":"Q\u2660T\u2663"},{"e":0.077,"mix":[0.43,0.57],"ex":"Q\u26609\u2663"},{"e":0.057,"mix":[0.002,0.998],"ex":"J\u2665T\u2660"},{"e":0.028,"mix":[0.252,0.748],"ex":"J\u2660T\u2660"},{"e":0.014,"mix":[0.107,0.893],"ex":"J\u2663T\u2663"}],"his":[{"e":0.953,"mix":null,"ex":"K\u26608\u2660"},{"e":0.94,"mix":null,"ex":"K\u26605\u2660"},{"e":0.894,"mix":null,"ex":"K\u26635\u2663"},{"e":0.857,"mix":null,"ex":"A\u26659\u2660"},{"e":0.842,"mix":null,"ex":"A\u26607\u2660"},{"e":0.802,"mix":null,"ex":"A\u26604\u2660"},{"e":0.8,"mix":null,"ex":"A\u26634\u2663"},{"e":0.785,"mix":null,"ex":"A\u26632\u2663"},{"e":0.674,"mix":null,"ex":"K\u2665Q\u2666"},{"e":0.66,"mix":null,"ex":"K\u2663Q\u2665"},{"e":0.641,"mix":null,"ex":"K\u2663Q\u2660"},{"e":0.624,"mix":null,"ex":"K\u2660J\u2665"},{"e":0.607,"mix":null,"ex":"K\u2663J\u2660"},{"e":0.586,"mix":null,"ex":"K\u2660T\u2660"},{"e":0.58,"mix":null,"ex":"K\u2663T\u2663"},{"e":0.569,"mix":null,"ex":"K\u26609\u2660"},{"e":0.555,"mix":null,"ex":"K\u26603\u2660"},{"e":0.393,"mix":null,"ex":"T\u26658\u2660"},{"e":0.382,"mix":null,"ex":"J\u26608\u2660"},{"e":0.378,"mix":null,"ex":"T\u26608\u2660"},{"e":0.374,"mix":null,"ex":"Q\u26638\u2663"},{"e":0.37,"mix":null,"ex":"9\u26658\u2663"},{"e":0.363,"mix":null,"ex":"9\u26608\u2666"},{"e":0.327,"mix":null,"ex":"7\u26637\u2660"},{"e":0.29,"mix":null,"ex":"Q\u26606\u2660"},{"e":0.275,"mix":null,"ex":"Q\u26655\u2665"},{"e":0.265,"mix":null,"ex":"9\u26605\u2660"},{"e":0.259,"mix":null,"ex":"5\u26634\u2663"},{"e":0.25,"mix":null,"ex":"Q\u26605\u2660"},{"e":0.246,"mix":null,"ex":"4\u26634\u2660"},{"e":0.221,"mix":null,"ex":"3\u26653\u2660"},{"e":0.184,"mix":null,"ex":"2\u26632\u2665"},{"e":0.149,"mix":null,"ex":"Q\u2665J\u2660"},{"e":0.133,"mix":null,"ex":"Q\u2660J\u2665"},{"e":0.119,"mix":null,"ex":"Q\u2660J\u2663"},{"e":0.1,"mix":null,"ex":"Q\u2660T\u2660"},{"e":0.086,"mix":null,"ex":"Q\u2663T\u2663"},{"e":0.063,"mix":null,"ex":"Q\u26602\u2660"},{"e":0.026,"mix":null,"ex":"J\u2660T\u2663"},{"e":0.002,"mix":null,"ex":"J\u26609\u2660"}],"top70":[0.401,0.196],"top50":[0.618,0.423],"eq":[0.562,0.438],"profile":[81,33,15,0,0,14,77,91,69,35],"shape":"Both ends"}};
+const $ = (id) => document.getElementById(id);
+const SUIT = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const board = (t) => t.split(' ').map((c) => `<span class="${c[1]}">${c[0]}${SUIT[c[1]]}</span>`).join(' ');
+const hand = (t) => t.replace(/([♠♥♦♣])/g, (s) => `<span class="${{ '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' }[s]}">${s}</span>`);
+const NAMES = { '4BP': '4-bet pot', '3BP': '3-bet pot', SRP: 'Single-raised pot' };
+const spotLine = (d, what) => { const [pre, a, b] = d.spot.split('-'); return `<span class="board">${board(d.board)}</span><span>${NAMES[pre] ?? pre}, ${a} against ${b}</span><span>${what}</span>`; };
+const pct = (x) => `${Math.round(100 * x)}%`;
+const ten = (x) => { const n = Math.round(10 * x); return n <= 0 ? 'almost none' : n >= 10 ? 'nearly all' : n === 5 ? 'half' : `${n} in 10`; };
+const COLORS = { fold: 'var(--fold)', check: 'var(--stay)', call: 'var(--stay)', bet: 'var(--bet)', raise: 'var(--big)', allin: 'var(--big)' };
+function drawStrip(el, blocks, actions, shown) {
+  el.querySelectorAll('i').forEach((n) => n.remove());
+  for (const b of blocks) { const i = document.createElement('i'); if (!shown || !b.mix) i.innerHTML = `<b style="width:100%;background:var(--his)"></b>`; else i.innerHTML = b.mix.map((p, k) => `<b style="width:${100 * p}%;background:${COLORS[actions[k].kind]}"></b>`).join(''); el.append(i); }
+}
+function mark(el, share, text, cls) { const m = document.createElement('div'); m.className = `mark ${cls}`; m.style.top = `${100 * share}%`; m.innerHTML = `<span>${text}</span>`; el.append(m); return m; }
+function examples(el, blocks, at) { el.innerHTML = at.map((f) => { const b = blocks[Math.min(blocks.length - 1, Math.floor(f * blocks.length))]; return `<span style="top:${100 * f}%">${hand(b.ex)}</span>`; }).join(''); }
+
+// 1. the line
+{ const d = D.face; const bet = Math.round(100 * d.toCall / (d.pot - d.toCall));
+  $('spot1').innerHTML = spotLine(d, `You are in position. He bets ${bet}% of the pot.`);
+  const s = $('strip1'); drawStrip(s, d.mine, d.actions, false); examples($('ex1'), d.mine, [0.03, 0.25, 0.82, 0.97]);
+  const reveal = (g) => { if (s.dataset.done) return; s.dataset.done = 1; s.classList.remove('pick'); s.removeAttribute('tabindex'); drawStrip(s, d.mine, d.actions, true);
+    mark(s, g, `you ${pct(g)}`, 'guess l'); mark(s, d.cont, `line ${pct(d.cont)}`, 'r'); mark(s, d.priceRank, `price ${pct(d.priceRank)}`, 'thin r');
+    const off = Math.abs(g - d.cont); $('ask1').querySelector('p').textContent = off <= 0.06 ? 'Close: within a few hands of the line.' : g < d.cont ? `Too tight: you stopped ${Math.round(100 * off)} points of range early.` : `Too loose: you kept ${Math.round(100 * off)} points of range too many.`;
+    $('text1').innerHTML = `You continue with the top <strong>${ten(d.cont)}</strong> of your range and fold what is under the line. The dashed mark is the price: ${ten(d.priceRank)} of your hands have the equity a call needs (${pct(d.price)}). The line sits <strong>above</strong> it, because the hands just over the price are beaten too often by what he bets.`;
+    $('says1').removeAttribute('data-wait'); };
+  s.addEventListener('click', (e) => { const r = s.getBoundingClientRect(); reveal(Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))); });
+  s.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); reveal(0.5); } }); }
+
+// 2. two strips and the five shapes
+{ const d = D.river; const SH = { 'Check everything': [10, 6, 5, 4, 4, 5, 8, 12, 13, 13], 'Top bets, rest a third': [34, 33, 31, 27, 21, 20, 22, 38, 66, 74], 'Both ends': [82, 53, 19, 9, 8, 21, 59, 86, 92, 91], 'Top half': [29, 33, 38, 37, 41, 66, 82, 86, 88, 82], 'Bet everything': [74, 72, 66, 62, 71, 77, 80, 86, 92, 91] };
+  const SHORT = { 'Check everything': 'Check all', 'Top bets, rest a third': 'Top, some rest', 'Both ends': 'Both ends', 'Top half': 'Top half', 'Bet everything': 'Bet all' };
+  $('spot2').innerHTML = spotLine(d, 'You are first to act on the river.');
+  drawStrip($('strip2'), d.mine, d.actions, false); drawStrip($('strip2h'), d.his, d.actions, false);
+  mark($('strip2'), d.top70[0], '70%', 'thin l'); mark($('strip2h'), d.top70[1], '70%', 'thin r');
+  $('count2').innerHTML = `<div><b>${pct(d.top70[0])}</b>of your hands beat 70% of his</div><div><b>${pct(d.top70[1])}</b>of his beat 70% of yours</div>`;
+  $('shapes').innerHTML = Object.entries(SH).map(([n, p]) => `<button class="shape" data-name="${n}"><span class="mini">${[...p].reverse().map((v) => `<b style="background:color-mix(in srgb, var(--bet) ${v}%, var(--stay))"></b>`).join('')}</span>${SHORT[n]}</button>`).join('');
+  $('shapes').addEventListener('click', (e) => { const b = e.target.closest('.shape'); if (!b || $('shapes').dataset.done) return; $('shapes').dataset.done = 1; b.dataset.on = 1; $('shapes').querySelector(`[data-name="${d.shape}"]`).dataset.right = 1;
+    drawStrip($('strip2'), d.mine, d.actions, true); examples($('ex2'), d.mine, [0.03, 0.25, 0.5, 0.75, 0.97]);
+    $('ask2').querySelector('p').textContent = b.dataset.name === d.shape ? 'Right: both ends.' : `It is "${SHORT[d.shape]}": the top and the bottom bet, the middle checks.`;
+    const bet = d.actions.filter((a) => a.kind !== 'check').reduce((t, a) => t + a.freq, 0);
+    $('text2').innerHTML = `Your 70% mark sits twice as far down the strip as his: <strong>you own the top</strong>. So you can bet the top and the hands that cannot win a showdown, and check the middle, which wins often enough without betting. You bet <strong>${ten(bet)}</strong> of the range. The picture gives the direction and the shape, not the exact number and not the size.`;
+    $('more2').removeAttribute('data-wait'); }); }
+
+// 3. the map
+{ const d = D.flop; $('spot3').innerHTML = spotLine(d, 'You are first to act on the flop.');
+  const verb = (x) => (x >= 0.7 ? 'Bets' : x >= 0.4 ? 'Bets about half' : x >= 0.2 ? 'Mostly checks' : 'Checks');
+  const rows = ['Strong', 'Middle', 'Weak']; let html = `<div></div><div class="hd">Settled</div><div class="hd">Still changes</div>`;
+  rows.forEach((r, i) => { html += `<div class="rw">${r}</div>`; for (const j of [0, 1]) { const c = d.map[2 * i + j]; html += c.share < 0.01 ? `<div class="cell none">no hands</div>` : `<div class="cell"><div class="fill" style="width:${100 * c.bet}%"></div><div class="verb">${verb(c.bet)}</div><div><div class="hands">${c.ex.join(' ')}</div><div class="n">${pct(c.share)} of range · bets ${pct(c.bet)}</div></div></div>`; } });
+  $('map').innerHTML = html;
+  $('text3').innerHTML = `Strength alone would fool you here: second pair almost never bets, while the overcards with a straight draw beside it bet about half the time. The second question explains it. A settled hand of middle strength wants a cheap showdown. A hand that still changes (overcards with a draw, small pairs that can make a set) gains from betting now: it can win the pot at once or improve.`; }
+</script>
