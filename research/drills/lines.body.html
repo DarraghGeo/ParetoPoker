@@ -1,0 +1,90 @@
+<style>
+/* the place-the-lines drill: the strip, two handles to drag, and the plan tinted behind them */
+.plan{position:relative;height:84px;margin:22px 0 4px;touch-action:none;user-select:none;-webkit-user-select:none;cursor:ew-resize}
+.plan .cols{position:absolute;inset:0;display:flex}
+.plan .cols i{flex:1 1 0;display:block;background:var(--surface);box-shadow:inset -1px 0 0 var(--bg)}
+.plan .zone{position:absolute;top:0;bottom:0;opacity:.38;pointer-events:none}
+.plan.shown .zone{display:none}
+.plan .handle{position:absolute;top:-10px;bottom:-10px;width:28px;margin-left:-14px;border:0;padding:0;background:none;cursor:ew-resize;z-index:3;border-radius:0}
+.plan .handle::before{content:"";position:absolute;left:13px;top:0;bottom:0;width:2px;background:var(--accent)}
+.plan .handle::after{content:"";position:absolute;left:7px;top:-4px;width:14px;height:14px;border-radius:50%;background:var(--accent)}
+.plan .handle u{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;font:500 11px/14px var(--mono);color:var(--accent);text-decoration:none;white-space:nowrap}
+.plan.shown .handle{pointer-events:none}
+.plan .best{position:absolute;top:-4px;bottom:-4px;width:0;border-left:2px dashed var(--ink);z-index:2;pointer-events:none}
+.plan .best u{position:absolute;top:100%;left:50%;transform:translateX(-50%);margin-top:2px;font:400 11px/14px var(--mono);color:var(--ink);text-decoration:none;white-space:nowrap}
+.at{display:flex;justify-content:space-between;gap:12px;font:400 12px/16px var(--mono);color:var(--ink-3);min-height:16px}
+.at b{font-weight:500;color:var(--ink)}
+.at span:last-child{text-align:right}
+.money{display:flex;gap:24px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.money b{display:block;font:500 22px/26px var(--mono);color:var(--ink)}
+.money .you b{color:var(--accent)}
+.ask .primary{align-self:stretch}
+.done2{display:flex;flex-direction:column;gap:14px;max-width:52ch}
+.done2 .big{font:500 34px/38px var(--mono)}
+</style>
+<div id="app"></div>
+<script>
+const D = /*DATA*/;
+const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' }; const SUITOF = { '♠': 's', '♥': 'h', '♦': 'd', '♣': 'c' };
+const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join('');
+const hand = (t) => t.replace(/([2-9TJQKA])([♠♥♦♣])/g, (m, r, s) => `<span class="s-${SUITOF[s]}">${r}${s}</span>`);
+const PATHS = { tick: 'M3.5 8.5l3 3 6-7', cross: 'M4 4l8 8M12 4l-8 8', settings: 'M2 4h8M13 4h1M2 8h2M7 8h7M2 12h6M11 12h3M10 4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0M4 8a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0M8 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0', back: 'M10 3L5 8l5 5' };
+const icon = (n, size = 16) => `<svg viewBox="0 0 16 16" width="${size}" height="${size}" aria-hidden="true"><path d="${PATHS[n]}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const MARK = `<svg class="mark" viewBox="0 0 512 512" width="26" height="26" aria-hidden="true"><rect width="512" height="512" rx="72" fill="#15171B"/><rect x="96" y="150" width="68" height="212" fill="#7FCDBB"/><rect x="180" y="150" width="68" height="212" fill="#F4C261"/><rect x="180" y="150" width="68" height="90" fill="#7FCDBB"/><rect x="264" y="150" width="68" height="212" fill="#F4C261"/><rect x="348" y="150" width="68" height="212" fill="#F08A6B"/><rect x="348" y="150" width="68" height="60" fill="#F4C261"/></svg>`;
+const app = document.getElementById('app'); const B = 60; let at = 0; const res = [];
+const COL = (d, loud) => (d.facing ? (loud ? '--act-check' : '--act-fold') : (loud ? '--act-big' : '--act-check'));
+const WORD = (d, loud) => (d.facing ? (loud ? 'continue' : 'fold') : (loud ? 'bet' : 'check'));
+/** Which slices take the louder action under a set of lines: facing a bet, right of the one line; betting, outside the two. */
+const loudAt = (d, L) => (i) => (d.facing ? i >= L[0] : i < L[0] || i >= L[1]);
+const cost = (d, L) => { const f = loudAt(d, L); return d.slices.reduce((t, s, i) => t + (f(i) ? s.l : s.q), 0) / B; };
+function bestOf(d) { let best = null; if (d.facing) { for (let a = 0; a <= B; a++) { const c = cost(d, [a]); if (!best || c < best.c) best = { c, L: [a] }; } return best; } for (let a = 0; a <= B; a++) for (let b = a; b <= B; b++) { const c = cost(d, [a, b]); if (!best || c < best.c) best = { c, L: [a, b] }; } return best; }
+const exAt = (d, x) => hand(d.slices[Math.min(B - 1, Math.max(0, x))].ex);
+
+function show(done) {
+  const d = D[at]; if (!d) return finish(); const L = show.L ??= d.facing ? [30] : [10, 48]; const best = bestOf(d); const mine = cost(d, L); const good = res.filter((r) => r === 'good').length;
+  const names = d.facing ? ['fold / continue'] : ['bluffs end', 'value starts']; const f = loudAt(d, L);
+  const zones = d.facing ? [[0, L[0], false], [L[0], B, true]] : [[0, L[0], true], [L[0], L[1], false], [L[1], B, true]];
+  const cols = d.slices.map((s) => `<i${done ? ` style="background:var(${COL(d, s.loud >= 0.5)})"` : ''}></i>`).join('');
+  const hist = d.title.startsWith('River') ? `<div class="past"><div><span class="street">Turn</span><span><i>BB</i> X</span><span><i>BU</i> X</span></div>${d.facing ? `<div><span class="street">River</span><span><i>BB</i> ${d.context.match(/bets (\d+)/) ? 'B' + d.context.match(/bets (\d+)/)[1] : ''}</span></div>` : ''}</div>` : `<div class="past"><div><span class="street">Turn</span><span><i>BB</i> X</span></div></div>`;
+  const stands = d.facing ? 'Facing a bet' : d.title.includes('checked') ? 'Checked to you' : 'First to act';
+  let after = '';
+  if (done) { const gap = mine - best.c; const grade = gap <= 0.15 ? 'good' : gap <= 0.5 ? 'part' : 'bad'; const solShare = d.slices.filter((s) => s.loud >= 0.5).length / B; const myShare = d.slices.filter((_, i) => f(i)).length / B; const notes = [];
+    L.forEach((x, k) => { const b = best.L[k]; if (Math.abs(x - b) < 3) return; const tight = d.facing ? x > b : k === 0 ? x < b : x > b; const lo = Math.min(x, b), hi = Math.max(x, b) - 1;
+      notes.push(`${d.facing ? 'Your line' : k === 0 ? 'Your bluff line' : 'Your value line'} is too ${tight ? 'tight' : 'loose'}: ${exAt(d, lo)} to ${exAt(d, hi)} ${tight ? `should ${WORD(d, true)}` : `should ${WORD(d, false)}`}.`); });
+    if (!notes.length) notes.push('Your lines are within a few hands of the best ones.');
+    if (myShare < solShare - 0.1) notes.push(`You ${d.facing ? 'folded' : 'checked'} too much, which is the expensive direction.`);
+    const draws = d.slices.map((s, i) => [s, i]).filter(([s, i]) => !f(i) && s.loud >= 0.5 && s.draw >= 0.5).map(([s]) => s.ex);
+    if (draws.length) notes.push(`Lines sort by strength, and draws break them: ${draws.slice(0, 3).map(hand).join(', ')} bet from the middle because they still change.`);
+    res.length = at; res.push(grade === 'part' ? 'bad' : grade);
+    after = `<div class="verdict ${grade === 'bad' ? 'bad' : 'good'}" role="status">${icon(grade === 'bad' ? 'cross' : 'tick', 14)}<span>${grade === 'good' ? 'Good lines' : grade === 'part' ? 'Close' : 'Costly'}</span></div>
+      <div class="money"><span class="you"><b>${mine.toFixed(2)}%</b>of the pot given up by your lines</span><span><b>${best.c.toFixed(2)}%</b>by the best ${d.facing ? 'line' : 'two lines'}</span></div>
+      ${notes.slice(0, 2).map((n, k) => `<p class="${k ? 'more' : 'fact'}">${n}</p>`).join('')}
+      <p class="hint">Colours show what each part of the range mostly does. Mixing inside a part is ignored: it is worth nothing.</p>
+      <button type="button" class="primary" id="next">${at + 1 < D.length ? 'Next' : 'Done'}</button>`; }
+  const rail = res.length ? `<i style="flex:${res.filter((r) => r === 'good').length};background:var(--ok)"></i><i style="flex:${res.filter((r) => r !== 'good').length};background:var(--danger)"></i>` : '';
+  app.className = 'train';
+  app.innerHTML = `<div class="rule">${rail}</div><main><header><a class="logo">${MARK}</a><button type="button" class="icon" aria-label="All drills">${icon('back')}</button><div class="board">${cards(d.board)}</div><span class="grow"></span><span class="score"><b>${res.filter((r) => r === 'good').length}</b>/${res.length}</span><button type="button" class="icon" aria-label="Settings">${icon('settings')}</button></header>
+    <section class="t-stage"><div class="left">${hist}<div class="where"><span class="who">Hero ${d.facing || d.title.includes('checked') ? 'BU' : 'BB'}</span><span class="stands">${stands}</span><span class="grow"></span><span class="chips">Single-raised pot</span></div>
+      <div><div class="plan${done ? ' shown' : ''}" id="plan"><div class="cols">${cols}</div>${zones.map(([a, b, loud]) => `<div class="zone" style="left:${(100 * a) / B}%;width:${(100 * (b - a)) / B}%;background:var(${COL(d, loud)})"></div>`).join('')}${done ? best.L.map((x, k) => `<div class="best" style="left:${(100 * x) / B}%"><u>best</u></div>`).join('') : ''}${L.map((x, k) => `<button type="button" class="handle" data-k="${k}" style="left:${(100 * x) / B}%" aria-label="${names[k]}"><u>${done ? 'you' : ''}</u></button>`).join('')}</div>
+      <div class="ends" style="margin-top:${done ? 18 : 6}px"><span>weakest</span><span>strongest</span></div></div>
+      ${done ? `<div class="keyrow"><span><i class="sw" style="background:var(${COL(d, false)})"></i>${WORD(d, false)}</span><span><i class="sw" style="background:var(${COL(d, true)})"></i>${WORD(d, true)}</span></div>` : `<div class="at">${d.facing ? `<span>fold up to <b>${exAt(d, L[0] - 1)}</b></span><span>continue from <b>${exAt(d, L[0])}</b></span>` : `<span>bluff up to <b>${L[0] > 0 ? exAt(d, L[0] - 1) : 'nothing'}</b></span><span>value from <b>${L[1] < B ? exAt(d, L[1]) : 'nothing'}</b></span>`}</div>`}</div>
+    <div class="ask"><div class="kind">Where are the lines? · ${at + 1} of ${D.length}</div><p class="text">${d.facing ? 'Drag the line. Fold everything left of it, continue with everything right.' : 'Drag the two lines. Bet left of the first as a bluff, check the middle, bet right of the second for value.'}</p>
+      ${done ? after : `<p class="hint">${d.facing ? `A call needs ${Math.round(100 * d.price)}% equity.` : 'Put the lines together to check everything; push them to the ends to bet nothing as a bluff.'}</p><button type="button" class="primary" id="check">Check my lines</button>`}</div></section></main>`;
+  if (done) { document.getElementById('next').onclick = () => { at++; show.L = null; show(false); window.scrollTo(0, 0); }; return; }
+  document.getElementById('check').onclick = () => show(true);
+  const plan = document.getElementById('plan'); let held = null;
+  const where = (e) => { const r = plan.getBoundingClientRect(); return Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * B); };
+  plan.onpointerdown = (e) => { const x = where(e); held = L.length === 1 ? 0 : Math.abs(x - L[0]) <= Math.abs(x - L[1]) ? 0 : 1; plan.setPointerCapture(e.pointerId); move(e); };
+  const move = (e) => { if (held == null) return; let x = where(e); if (L.length === 2) x = held === 0 ? Math.min(x, L[1]) : Math.max(x, L[0]); if (x === L[held]) return; L[held] = x; const keep = held; show(false); document.getElementById('plan').setPointerCapture(e.pointerId); held = keep; rebind(); };
+  const rebind = () => { const pl = document.getElementById('plan'); pl.onpointermove = (e) => { if (held == null) return; let x = (() => { const r = pl.getBoundingClientRect(); return Math.round(Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)) * B); })(); if (L.length === 2) x = held === 0 ? Math.min(x, L[1]) : Math.max(x, L[0]); if (x !== L[held]) { L[held] = x; paint(); } }; pl.onpointerup = pl.onpointercancel = () => { held = null; }; };
+  /** Repaint the lines, zones and the hands at them without rebuilding the screen, so a drag keeps its pointer. */
+  const paint = () => { const pl = document.getElementById('plan'); pl.querySelectorAll('.handle').forEach((h, k) => { h.style.left = `${(100 * L[k]) / B}%`; });
+    const zs = d.facing ? [[0, L[0]], [L[0], B]] : [[0, L[0]], [L[0], L[1]], [L[1], B]]; pl.querySelectorAll('.zone').forEach((z, k) => { z.style.left = `${(100 * zs[k][0]) / B}%`; z.style.width = `${(100 * (zs[k][1] - zs[k][0])) / B}%`; });
+    document.querySelector('.at').innerHTML = d.facing ? `<span>fold up to <b>${exAt(d, L[0] - 1)}</b></span><span>continue from <b>${exAt(d, L[0])}</b></span>` : `<span>bluff up to <b>${L[0] > 0 ? exAt(d, L[0] - 1) : 'nothing'}</b></span><span>value from <b>${L[1] < B ? exAt(d, L[1]) : 'nothing'}</b></span>`; };
+  plan.onpointerdown = (e) => { const x = where(e); held = L.length === 1 ? 0 : Math.abs(x - L[0]) <= Math.abs(x - L[1]) ? 0 : 1; plan.setPointerCapture(e.pointerId); if (L.length === 2) L[held] = held === 0 ? Math.min(x, L[1]) : Math.max(x, L[0]); else L[0] = x; paint(); };
+  rebind();
+  plan.querySelectorAll('.handle').forEach((h) => { h.onkeydown = (e) => { const k = +h.dataset.k; const step = e.key === 'ArrowLeft' ? -1 : e.key === 'ArrowRight' ? 1 : 0; if (!step) return; let x = Math.min(B, Math.max(0, L[k] + step)); if (L.length === 2) x = k === 0 ? Math.min(x, L[1]) : Math.max(x, L[0]); L[k] = x; paint(); e.preventDefault(); }; });
+}
+function finish() { const good = res.filter((r) => r === 'good').length; app.className = 'train'; app.innerHTML = `<div class="rule"><i style="flex:${good};background:var(--ok)"></i><i style="flex:${res.length - good};background:var(--danger)"></i></div><main><header><a class="logo">${MARK}</a><div class="board"><span class="title" style="font:500 22px/28px var(--mono)">Where are the lines?</span></div></header><div class="done2"><div class="big">${good}/${res.length}</div><p class="lede" style="margin:0;font:400 15px/23px var(--sans);color:var(--ink-2)">The score is in money, not in right and wrong: what your lines give up against the best lines a player could hold in mind.</p><p class="hint" style="font:400 13px/18px var(--sans);color:var(--ink-3)">Three well-placed bands give up about 0.7% of the pot on average across 61 solved spots. The 169 cells of the grid give up 0.8%.</p><button type="button" class="primary" id="again" style="align-self:flex-start;min-width:120px;padding:9px 14px">Go again</button></div></main>`; document.getElementById('again').onclick = () => { at = 0; res.length = 0; show.L = null; show(false); }; }
+show(false);
+</script>
