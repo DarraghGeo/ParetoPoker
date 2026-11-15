@@ -482,7 +482,7 @@ body.paged{overflow:hidden;height:100dvh}
 .opt .shape{flex:none;display:flex;align-items:flex-end;width:100%;max-width:72px;height:26px;background:var(--act-check)}
 .opt .hand span{flex:none}
 .shape b{flex:1;display:block;background:var(--act-big)}
-.minis.solo{grid-template-columns:minmax(0,360px)}
+.minis.solo{grid-template-columns:minmax(0,min(360px,40dvh))}
 .blk{display:flex;flex-direction:column;gap:6px}
 .blk>b{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .blk>b em{font-style:normal;color:var(--accent)}
@@ -506,3 +506,16 @@ body.paged{overflow:hidden;height:100dvh}
 .drills .choose .what{font:400 13px/18px var(--sans);color:var(--ink-2);text-wrap:pretty}
 .drills .choose .n{font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
 .drills .choose .n.played{color:var(--ink)}
+
+/* ---- Train: everything of an answer on one screen ---- */
+.opts.done .opt:not(.right):not(.wrong){display:none}
+.ask .rest summary{cursor:pointer;font:500 13px/18px var(--sans);color:var(--ink-2);list-style:none;width:max-content;border-bottom:1px solid var(--line-strong)}
+.ask .rest summary::-webkit-details-marker{display:none}
+.ask .rest[open] summary{margin-bottom:10px}
+.ask .rest p + p{margin-top:10px}
+.ask .minis.shown{max-width:min(100%,46dvh)}
+.ask .minis.shown.solo{grid-template-columns:minmax(0,min(240px,30dvh))}
+@media (max-width:899px){
+  .ask #next{position:sticky;bottom:max(12px,env(safe-area-inset-bottom,0px));align-self:stretch;z-index:2;box-shadow:0 0 0 12px var(--bg),0 -20px 16px 0 var(--bg)}
+  .train main{padding-bottom:28px}
+}

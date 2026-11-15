@@ -25,7 +25,10 @@ function sidesOf(p) {
   const why = { SRP: ['An opening range: pairs, big cards and suited hands, wider the later the seat.', 'A calling range has a hole at the top: its best hands 3-bet, so what is left is suited and connected.'], '3BP': ['The opener called a 3-bet: its very best hands 4-bet, so this is the strong middle of what it opened.', 'A 3-betting range is the top of the deck and a few suited bluffs, with the middle left out.'] }[p.action];
   return [first, second].map((seat, k) => ({ seat, label: told[k], line: told[2], why: why[k], held: weightsOf(seat === p.oop ? p.ranges.oop : p.ranges.ip) }));
 }
-const POOL = PRESETS.filter((p) => ['SRP', '3BP'].includes(p.action)).map((p) => ({ preset: p, sides: sidesOf(p) }));
+const combosOf = (held) => { let n = 0; for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) n += (held.get(cellName(i, j)) ?? 0) * cellSize(i, j); return n; };
+/** A range of fewer combinations than this is too thin to learn from a chart: pairings with one are left out. */
+const THIN = 40;
+const POOL = PRESETS.filter((p) => ['SRP', '3BP'].includes(p.action)).map((p) => ({ preset: p, sides: sidesOf(p) })).filter((x) => x.sides.every((s) => combosOf(s.held) >= THIN));
 
 /** A range as the chart draws it: one entry a chart cell that is held. */
 export function chartHands(held) {
@@ -37,7 +40,6 @@ export function chartHands(held) {
   }
   return hands;
 }
-const combosOf = (held) => { let n = 0; for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) n += (held.get(cellName(i, j)) ?? 0) * cellSize(i, j); return n; };
 const asked = (q, type) => ({ ...q, type, street: 'preflop', chosen: [], done: false, ok: null });
 
 function whoseQuestion() {

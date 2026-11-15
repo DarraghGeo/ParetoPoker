@@ -1,5 +1,6 @@
 <!-- What sits above the question: the two ranges side by side, their equity curves, or the ladder of both on one scale;
-     for a question on the ranges themselves (`show`), the charts it names, some only once it is answered. -->
+     for a question on the ranges themselves (`show`), the chart it asks about (one shown only once it is answered sits
+     with the answer, in Ask). -->
 <script>
   import RangeChart from '../common/RangeChart.svelte';
   import Curve from '../common/Curve.svelte';
@@ -10,7 +11,7 @@
   const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');
 </script>
 {#if show}
-  {#if !show.after || done}<div class="minis" class:solo={show.charts.length === 1}>{#each show.charts as c}<RangeChart title={c.title} hands={c.hands} villain={!!c.villain} marked={c.marked ? cellOf(c.marked) : null} />{/each}</div>{/if}
+  {#if !show.after}<div class="minis" class:solo={show.charts.length === 1}>{#each show.charts as c}<RangeChart title={c.title} hands={c.hands} villain={!!c.villain} marked={c.marked ? cellOf(c.marked) : null} />{/each}</div>{/if}
 {:else if !spot || view === 'grid'}
   <div class="minis">
     <RangeChart title={spot ? `Hero ${seatName(spot.decision.seat)}` : 'Hero'} hands={spot?.hero ?? null} marked={hand ? cellOf(hand) : null} />
