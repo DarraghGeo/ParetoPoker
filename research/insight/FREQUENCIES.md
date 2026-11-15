@@ -599,3 +599,30 @@ The flop numbers are on 7 spots and include no single-raised pot (those take lon
 - Turn and river decisions: accounted for to 0.04% of the pot, on 60 spots of every depth and pot type.
 - Flop decisions: to about 0.2% of the pot, on 7 spots.
 - The rule is one a player would say: what he folds, what I have against what continues, and what he does next.
+
+
+## Why, and what would change it
+
+The explanations now answer two questions at every decision, for the range and for the hand: why this, and what would have made it something else.
+
+**The range.** A lead line in words (you bet about half your range), then: what a bet meets (what he folds, calls and raises with, each kind named with a hand from it, and whether that is more or less folding than the size needs), who holds the strong hands, which of our hands bet and which check, what he does when checked to. Facing a bet: what he is betting, how much of the range has the price, why more or fewer continue than have it, and how the folding compares with what would make a bet with nothing pay.
+
+**What would change it, measured.** The street is solved again with one thing changed: his strongest fifth of hands out of his range, ours out of ours, no raise for him, no bet for him after a check. The same street solved again unchanged comes back 0.4 to 1.0 points from the solution on screen (worst 10), so a move under 7 points is said to be none. Facing a bet the hands rarely move the folding; what is said then is that the price sets it, with how much of what continues would fold to a quarter of the pot more.
+
+| Change (66 decisions: 20 flop, 46 turn) | Flop: bet moves by | Turn: bet moves by | Ever the other way |
+|---|---|---|---|
+| His strongest fifth removed | +23 points (up in 60%) | +36 (up in 96%) | never |
+| Our strongest fifth removed | -12 (down in 50%) | -17 | never on the flop |
+| He may not raise | +16 (up in 55%) | +12 (up in 59%) | never |
+| He may not bet when checked to | +7 (up in 40%) | +7, mixed | not on the flop |
+| Half or twice the stack | no consistent direction | no consistent direction | both ways |
+
+An earlier attempt to say these from a rule without solving (who would bet if he could not raise, counted one move ahead) predicted +37 points where the solve gave +11, and was dropped.
+
+**Where the street is too large to solve again** (most flops outside 4-bet pots: a single-raised flop needs 1.4 to 2.9 GB), the answer is read off the solution hand by hand: each bet is worth one thing when he folds and another when he does not, so each hand has a share of folds at which betting and checking are worth the same. Said: how much of the betting needs no folds at all, how much would stop with ten points fewer folds, how much of the checking would start with ten more. This holds his other replies as they are; it is what the solution says about our side, not a new equilibrium.
+
+**The hand.** Its move with his hands named (what folds, what calls and where the hand stands against it, what raises), what the bet earns from, the share of folds at which it would change (from the solution's own values), what it does on the next street after a call, which bet it could still call, the twin that differs by one suit, and for a check why a bet would be worse (it would need more folds than he gives; it would fold out what it beats; he bets worse himself when checked to).
+
+**Checks run** (`explain-check.mjs`, `test/range.test.js`): 295 range, 2,326 hand and 147 what-would-change explanations generated over 4-bet, 3-bet and single-raised pots, flop to river, with no failure and no wording fault; the one-move count sides with the solution's own values in 88 to 94% of flop and turn hands and 99 to 100% on the river; 23 unit tests.
+
+**Not done.** A flop solved again in single-raised and most 3-bet pots (size). The bulk check from the flop covers 4-bet and 3-bet pots only; single-raised pots were checked from the turn. A change of bet size as a solved lever (said from the solution's values instead).

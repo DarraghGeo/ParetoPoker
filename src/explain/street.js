@@ -576,7 +576,13 @@ export function explainStreet(s, m, T) {
           numbers.push(`After a check he bets ${pts(pushes)} of the time${ePush != null ? ` (this hand has ${pts(ePush)} against those hands)` : ''}${eCall != null ? ` and checks the rest (${pts(eCall)} against those)` : ''}.`);
           // what would change it: what the best bet would need
           if (other != null && mv.actions[other].parts.length) { const fn = foldsNeeded(other, top);
-            if (fn && fn.need > fn.folds + 0.03 && fn.need < 1) { text += ` To bet it, he would have to fold ${inTen(fn.need)}; he folds ${inTen(fn.need) === inTen(fn.folds) ? 'a little less than that' : inTen(fn.folds)}.`; numbers.push(`${label(other)} would be worth what checking is if he folded ${pts(fn.need)}; he folds ${pts(fn.folds)}.`); } }
+            const ob = mv.actions[other]; const cw = ob.parts.filter((q) => q.kind === 'call'); const cs = cw.reduce((t, q) => t + q.share, 0); const ec = cs > 0 ? cw.reduce((t, q) => t + q.share * (q.equity ?? 0), 0) / cs : null; const gcb = cw.length ? (cw[0].groups ?? []) : [];
+            if (fn && fn.need > fn.folds + 0.03 && fn.need < 1) { text += ` To bet it, he would have to fold ${inTen(fn.need)}; he folds ${inTen(fn.need) === inTen(fn.folds) ? 'a little less than that' : inTen(fn.folds)}.`; numbers.push(`${label(other)} would be worth what checking is if he folded ${pts(fn.need)}; he folds ${pts(fn.folds)}.`); }
+            else if (exact != null && Math.abs(exact) < 0.5) text += ' A bet would do just as well, which is why it sometimes is one.';
+            else if (fn && fn.need >= 1) text += ' A bet would lose even if he folded far more than he does: called or raised, it gives back more than the folds bring.';
+            else if (ec != null && ec < 0.5 && m.equity >= 0.3) text += ` A bet would fold out the hands it beats and be called by ${gcb.length ? sayGroups(gcb) : 'better ones'}: it would turn a hand that wins its share of showdowns into a bluff.`;
+            else if (ec != null && ec >= 0.5 && pushes >= 0.3) text += ' It is ahead of what would call a bet, but the check earns more: he bets worse hands himself when checked to.';
+            else if (ec != null && ec >= 0.5) text += ' It is ahead of what would call a bet, but not by enough to pay for the raises a bet would meet.'; }
         } else {
           const best = other == null || (exact != null ? exact >= -0.3 : x.value >= mv.actions[other].value); const act = label(top);
           const seen = new Set(); const foldPart = folds < 0.03 ? 'He hardly ever folds' : `He ${often(folds, 'folds')}${gf.length ? `: ${sayGroups(gf, 2, 0.12, seen)}` : ''}`;
@@ -587,7 +593,7 @@ export function explainStreet(s, m, T) {
           text = `${best ? `${act.charAt(0).toUpperCase()}${act.slice(1)} comes out best. ` : ''}${foldPart}${best ? '' : ` to ${act}`}.${denial}${callPart}${pushPart}${earn}`;
           numbers.push(`He folds ${pts(folds)}${eFold != null ? ` (those hands had ${pts(1 - eFold)} equity against this one)` : ''}, calls ${pts(sum((p) => p.kind === 'call'))}${eCall != null ? ` (this hand has ${pts(eCall)} against those)` : ''}${pushes >= 0.005 ? `, raises ${pts(pushes)}` : ''}.`);
           // what would change it: how much he would have to fold for the bet to be worth what the quiet action is
-          if (other != null) { const fn = foldsNeeded(top, other); const need = fn ? fn.need : null;
+          if (other != null && !((eCall ?? 0) >= 0.5 && folds < 0.5)) { const fn = foldsNeeded(top, other); const need = fn ? fn.need : null;
             if (need != null && need <= 0.02) text += ' It does not need him to fold at all: it would still be a bet if he never did.';
             else if (need != null && need < 1) { text += best ? (inTen(need) === inTen(fn.folds) ? ` It needs him to fold ${inTen(need)}, and that is just about what he does: which is why it is close.` : ` It stays a bet as long as he folds more than ${inTen(need)}; he folds ${inTen(fn.folds)}.`) : (inTen(need) === inTen(fn.folds) ? ` To beat ${label(other)} it would need him to fold ${inTen(need)}, a little more than he does.` : ` To beat ${label(other)} it would need him to fold ${inTen(need)}; he folds ${inTen(fn.folds)}.`); numbers.push(`It is worth what ${label(other)} is when he folds ${pts(need)}.`); } }
           // and what comes next, if he calls
@@ -913,7 +919,7 @@ export function firstOrder(s) {
     if (r.stop >= 0.1) said.push(`If he folded ${fewer} instead of ${inTen(r.folds)}, ${r.stop >= 0.9 ? 'almost all' : howMuch(r.stop)} of your bets would be better checked.`); else said.push(`Even if he folded ${fewer} instead of ${inTen(r.folds)}, your bets would stay bets.`); }
   if (r.bet <= 0.95 && r.start != null) said.push(r.start >= 0.1 ? `If he folded ${extra}, ${r.start >= 0.9 ? 'almost all' : howMuch(r.start)} of your checks would be better bet.` : `Your checks are not close: they would stay checks even if he folded ${extra}.`);
   if (!said.length) return null; const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
-  return { ...r, said: { id: 'change', text: `What would change it. ${said.map(cap).join(' ')}`, detail: `Counted hand by hand from the solution, for ${name(node.edges[main])}, keeping everything else he does as it is: he folds ${pts(r.folds)} now.${r.free != null ? ` ${pts(r.free)} of the betting is worth more than checking even with no folds; ${pts(r.stop)} of it stops being so with ten points fewer folds.` : ''} The street is too large to solve again here.` } };
+  return { ...r, said: { id: 'change', text: `What would change it. ${said.map(cap).join(' ')}`, detail: `Counted hand by hand from the solution, for ${name(node.edges[main])}, keeping everything else he does as it is: he folds ${pts(r.folds)} now.${r.free != null ? ` ${pts(r.free)} of the betting is worth more than checking even with no folds; ${pts(r.stop)} of it stops being so with ten points fewer folds.` : ''} The street is too large to solve again here. Where streets could be solved again (66 decisions measured), taking his strongest fifth of hands out raised the betting or left it and never lowered it, and taking yours out lowered it or left it.` } };
 }
 
 /**

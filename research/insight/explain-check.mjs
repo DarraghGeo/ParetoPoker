@@ -12,14 +12,14 @@ let a = (+seed * 2654435761) >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>>
 const pool = PRESETS.filter((p) => p.action !== 'Limped' && (!process.env.ONLY || process.env.ONLY.split(',').includes(p.action)));
 // the tree as the app builds it (web/worker.js spotOf), and the same settings as the app holds them
 const APP = { bets: [[0.33, 0.75], [0.75], [0.75]], raises: [3], maxRaises: 1, allIn: false };
-const TREE = { betSizes: APP.bets, raiseSizes: APP.raises.map((times) => ({ times })), maxRaises: 1 + APP.maxRaises, allowAllIn: APP.allIn };
+const TREE = { betSizes: process.env.ROOT === 'turn' ? APP.bets.slice(-2) : APP.bets, raiseSizes: APP.raises.map((times) => ({ times })), maxRaises: 1 + APP.maxRaises, allowAllIn: APP.allIn };
 const file = new URL('./out/explain-samples.txt', import.meta.url); writeFileSync(file, ''); const say = (t) => appendFileSync(file, t + '\n');
 const problems = []; const flag = (where, what) => { problems.push(`${where}: ${what}`); };
 const BAD = [/undefined/, /\bNaN\b/, /\bnull\b/, /  /, /\bof of\b/, /\bon on\b/, /\(\)/, /\b(\w+) \1\b/i, /\. \./, /,\./, /: \./, /\bInfinity\b/, / \./, /\bwith \.|\bwith and\b/];
 const lint = (where, text) => { for (const re of BAD) if (re.test(text) && !/that that|had had/.test(text)) flag(where, `wording "${re}" in: ${text}`); if (/^[a-z]/.test(text)) flag(where, `starts lower case: ${text}`); if (!/[.!?]$/.test(text.trim())) flag(where, `no full stop: ${text}`); };
 let hands = 0, ranges = 0, changes = 0; const times = []; const gaps = []; const agree = [];
 for (let done = 0; done < +count;) {
-  const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); } const board = b.join('');
+  const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < (process.env.ROOT === 'turn' ? 4 : 3)) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); } const board = b.join('');
   let spot; try { spot = fs.defineSpot({ board, pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; } if (spot.estimate.bytes > +(process.env.MAXMB ?? 900) * 2 ** 20) continue;
   const run = fs.createRun(spot, { workers: 4 }); let ex = 9; while (ex > 0.3 && run.completed < 800) { run.step(10); ex = run.exploitabilityPercent(); } const solution = run.snapshot(); const nodes = treeOf(fs, spot); done++;
   say(`\n################ ${p.action} ${p.oop} v ${p.ip}  ${board}  (stack ${p.stack}, pot ${p.pot})`);
