@@ -77,7 +77,7 @@ test('what would change it, solved again: the street as it is comes back as the 
 
 test('saying the changes: the biggest first, small ones said to be none, and no awkward extremes', () => {
   const a = sayChanges({ facing: false, base: 0.5, hisLess: 0.9, myLess: 0.02, noRaise: 0.52, noStab: 0.3 });
-  assert.ok(a.text.indexOf('strongest fifth of hands out of his range') < a.text.indexOf('could not bet when checked to')); assert.match(a.text, /hardly bet at all/); assert.match(a.text, /much the same if he could not raise/); assert.ok(!/only almost/.test(a.text));
+  assert.ok(a.text.indexOf('strongest hands out of his range') < a.text.indexOf('could not bet when checked to')); assert.match(a.text, /hardly bet at all/); assert.match(a.text, /much the same if he could not raise/); assert.ok(!/only almost/.test(a.text));
   const none = sayChanges({ facing: false, base: 0.5, hisLess: 0.52, myLess: 0.48 }); assert.match(none.text, /Nothing tried moves it/);
   const f = sayChanges({ facing: true, base: 0.4, hisLess: 0.41, myLess: 0.42, close: 0.5 }); assert.match(f.text, /set by the price/); assert.match(f.text, /A bigger bet would/);
   assert.equal(sayChanges(null), null); assert.equal(sayChanges({ facing: false, base: null }), null);

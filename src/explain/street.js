@@ -632,14 +632,14 @@ export function explainStreet(s, m, T) {
   }
   // ---- why this hand: where it sits in your range, and what that part of the range does ----
   if (m.bands && m.band >= 0) {
-    const NAME = ['the weakest fifth', 'the second-weakest fifth', 'the middle fifth', 'the second-strongest fifth', 'the strongest fifth'];
-    const doing = facing ? 'continues' : 'bets';
+    const NAME = ['your weakest hands', 'your weaker hands', 'the hands in the middle of your range', 'your stronger hands', 'your strongest hands']; const capital = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+    const doing = facing ? 'continue' : 'bet';
     const mine = m.bands[m.band]; const role = made.find((c) => c.kind === 'role');
-    let text = `It sits in ${NAME[m.band]} of your range here, which ${often(mine.move, doing)}.`; let numbers = `As a group that fifth ${doing} ${pts(mine.move)} of the time.`;
+    let text = `It is among ${NAME[m.band]} here, which ${often(mine.move, doing)}.`; let numbers = `As a group those hands ${doing} ${pts(mine.move)} of the time.`;
     if (role) {
       const other = m.bands[role.other];
-      text += ` ${NAME[role.other].replace(/^t/, 'T')} ${often(other.move, doing)}.`;
-      numbers += ` ${NAME[role.other].replace(/^t/, 'T')} ${doing} ${pts(other.move)}. Those hands beat ${pts(other.eq)} of ${facing ? 'what he bets' : 'his range'} on average and this one ${pts(m.equity)}.`;
+      text += ` ${capital(NAME[role.other])} ${often(other.move, doing)}.`;
+      numbers += ` ${capital(NAME[role.other])} ${doing} ${pts(other.move)}. Those hands beat ${pts(other.eq)} of ${facing ? 'what he bets' : 'his range'} on average and this one ${pts(m.equity)}.`;
       // what separates the two groups is how much of his range each beats
       const weakSide = role.band < role.other; const own = m.actions.reduce((t, x) => t + ((facing ? x.kind !== 'fold' : !['check', 'call', 'fold'].includes(x.kind)) ? x.sigma : 0), 0);
       const along = role.more ? own >= 0.25 : own <= 0.75;
@@ -797,8 +797,8 @@ export function rangeMoves(s, what = {}) {
   return { hands, values, kinds, share, lean, pot };
 }
 /** How much of something, in words a coach would use. */
-const FRACTIONS = [[0.1, 'a tenth'], [0.2, 'a fifth'], [0.25, 'a quarter'], [1 / 3, 'a third'], [0.4, 'two fifths'], [0.5, 'half'], [0.6, 'three fifths'], [2 / 3, 'two thirds'], [0.75, 'three quarters'], [0.8, 'four fifths'], [0.9, 'nine tenths']];
-const howMuch = (x) => (x >= 0.955 ? 'nearly all' : x <= 0.05 ? 'almost none' : `about ${FRACTIONS.reduce((b, f) => (Math.abs(f[0] - x) < Math.abs(b[0] - x) ? f : b))[1]}`);
+const FRACTIONS = [[0.25, 'a quarter'], [1 / 3, 'a third'], [0.5, 'half'], [2 / 3, 'two thirds'], [0.75, 'three quarters']];
+const howMuch = (x) => (x >= 0.955 ? 'nearly all' : x <= 0.05 ? 'almost none' : x < 0.19 ? 'a small part' : x > 0.82 ? 'most' : `about ${FRACTIONS.reduce((b, f) => (Math.abs(f[0] - x) < Math.abs(b[0] - x) ? f : b))[1]}`);
 /** "about four times in ten": how often, for setting one frequency beside another. */
 const inTen = (x) => { const n = Math.round(10 * x); return n <= 0 ? 'almost never' : n >= 10 ? 'almost always' : `about ${['', 'once', 'twice', 'three times', 'four times', 'five times', 'six times', 'seven times', 'eight times', 'nine times'][n]} in ten`; };
 
@@ -919,7 +919,7 @@ export function firstOrder(s) {
     if (r.stop >= 0.1) said.push(`If he folded ${fewer} instead of ${inTen(r.folds)}, ${r.stop >= 0.9 ? 'almost all' : howMuch(r.stop)} of your bets would be better checked.`); else said.push(`Even if he folded ${fewer} instead of ${inTen(r.folds)}, your bets would stay bets.`); }
   if (r.bet <= 0.95 && r.start != null) said.push(r.start >= 0.1 ? `If he folded ${extra}, ${r.start >= 0.9 ? 'almost all' : howMuch(r.start)} of your checks would be better bet.` : `Your checks are not close: they would stay checks even if he folded ${extra}.`);
   if (!said.length) return null; const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1);
-  return { ...r, said: { id: 'change', text: `What would change it. ${said.map(cap).join(' ')}`, detail: `Counted hand by hand from the solution, for ${name(node.edges[main])}, keeping everything else he does as it is: he folds ${pts(r.folds)} now.${r.free != null ? ` ${pts(r.free)} of the betting is worth more than checking even with no folds; ${pts(r.stop)} of it stops being so with ten points fewer folds.` : ''} The street is too large to solve again here. Where streets could be solved again (66 decisions measured), taking his strongest fifth of hands out raised the betting or left it and never lowered it, and taking yours out lowered it or left it.` } };
+  return { ...r, said: { id: 'change', text: `What would change it. ${said.map(cap).join(' ')}`, detail: `Counted hand by hand from the solution, for ${name(node.edges[main])}, keeping everything else he does as it is: he folds ${pts(r.folds)} now.${r.free != null ? ` ${pts(r.free)} of the betting is worth more than checking even with no folds; ${pts(r.stop)} of it stops being so with ten points fewer folds.` : ''} The street is too large to solve again here. Where streets could be solved again (66 decisions measured), taking his strongest hands out raised the betting or left it and never lowered it, and taking yours out lowered it or left it.` } };
 }
 
 /**
@@ -928,20 +928,20 @@ export function firstOrder(s) {
  * A move under seven points is said to be none: the two solves are not exact to more than that.
  */
 export function sayChanges(r) {
-  if (!r || r.base == null) return null; const verb = r.facing ? 'fold' : 'bet'; const said = []; const numbers = [`Solved again as it is, your range ${verb}s ${pts(r.base)} of the time.`]; const big = 0.07;
+  if (!r || r.base == null) return null; const verb = r.facing ? 'fold' : 'bet'; const said = []; const numbers = [`Solved again as it is, your range ${verb}s ${pts(r.base)} of the time. The strongest hands are the top 20% of a range by equity.`]; const big = 0.07;
   const items = [['hisLess', r.hisLess], ['myLess', r.myLess], ['noRaise', r.noRaise], ['noStab', r.noStab]].filter((x) => x[1] != null).map(([id, to]) => ({ id, to, d: to - r.base })).sort((x, y) => Math.abs(y.d) - Math.abs(x.d));
-  const much = (x) => howMuch(x); const only = (x) => (x <= 0.05 ? 'hardly bet at all' : `bet only ${much(x)}`); const foldOnly = (x) => (x <= 0.05 ? 'hardly fold at all' : `fold only ${much(x)}`); const NAME = { hisLess: 'without his strongest fifth of hands', myLess: 'without your own strongest fifth', noRaise: 'if he could not raise', noStab: 'if he could not bet when checked to' };
+  const much = (x) => { const t = howMuch(x); return /^(most|a small part|nearly all|almost none)$/.test(t) ? `${t} of it` : t; }; const only = (x) => (x <= 0.05 ? 'hardly bet at all' : `bet only ${much(x)}`); const foldOnly = (x) => (x <= 0.05 ? 'hardly fold at all' : `fold only ${much(x)}`); const NAME = { hisLess: 'without his strongest hands', myLess: 'without your own strongest hands', noRaise: 'if he could not raise', noStab: 'if he could not bet when checked to' };
   for (const it of items) {
     numbers.push(`${NAME[it.id].charAt(0).toUpperCase()}${NAME[it.id].slice(1)}: ${pts(it.to)}.`); const up = it.d > 0;
     if (Math.abs(it.d) < big) continue;
     if (!r.facing) {
-      if (it.id === 'hisLess') said.push(up ? `Take the strongest fifth of hands out of his range and you would bet ${much(it.to)} of yours instead of ${much(r.base)}: it is those hands of his that hold you back.` : `Take the strongest fifth out of his range and you would bet less (${much(it.to)}): much of your betting is aimed at those hands.`);
-      if (it.id === 'myLess') said.push(up ? `Without your own strongest fifth you would bet more (${much(it.to)}): those hands are doing your checking.` : `Without your own strongest fifth you would ${only(it.to)}: the rest of the betting leans on those hands being there.`);
+      if (it.id === 'hisLess') said.push(up ? `Take the strongest hands out of his range and you would bet ${howMuch(it.to)} of yours instead of ${howMuch(r.base)}: it is those hands of his that hold you back.` : `Take the strongest hands out of his range and you would bet less (${much(it.to)}): much of your betting is aimed at those hands.`);
+      if (it.id === 'myLess') said.push(up ? `Without your own strongest hands you would bet more (${much(it.to)}): those hands are doing your checking.` : `Without your own strongest hands you would ${only(it.to)}: the rest of the betting leans on those hands being there.`);
       if (it.id === 'noRaise') said.push(up ? `If he could not raise you would bet ${much(it.to)}: his raises keep part of your range quiet.` : `If he could not raise you would bet less (${much(it.to)}): some of your bets are there to be raised.`);
       if (it.id === 'noStab') said.push(up ? `If he could not bet when checked to you would bet ${much(it.to)}: the chance that he bets is part of what makes your checks worth making.` : `If he could not bet when checked to you would bet less (${much(it.to)}): some of your bets are made so as not to face his.`);
     } else {
-      if (it.id === 'hisLess') said.push(up ? `Take the strongest fifth out of what he holds and you would fold more (${much(it.to)}).` : `Take the strongest fifth out of his range and you would ${foldOnly(it.to)} instead of ${much(r.base)}: it is those hands you are folding to.`);
-      if (it.id === 'myLess') said.push(up ? `Without your own strongest fifth you would fold ${much(it.to)}: the hands below them are only good enough to continue with those above them in the range.` : `Without your own strongest fifth you would fold less (${much(it.to)}): the rest would have to do the defending.`);
+      if (it.id === 'hisLess') said.push(up ? `Take the strongest hands out of what he holds and you would fold more (${much(it.to)}).` : `Take the strongest hands out of his range and you would ${foldOnly(it.to)} instead of ${much(r.base)}: it is those hands you are folding to.`);
+      if (it.id === 'myLess') said.push(up ? `Without your own strongest hands you would fold ${much(it.to)}: the hands below them are only good enough to continue with those above them in the range.` : `Without your own strongest hands you would fold less (${much(it.to)}): the rest would have to do the defending.`);
     }
   }
   const quiet = items.filter((it) => Math.abs(it.d) < big).map((it) => NAME[it.id]);

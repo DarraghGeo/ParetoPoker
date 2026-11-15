@@ -1,5 +1,5 @@
 // What would change what a range does at a decision. Not argued: the street is played again with one thing changed, and
-// solved. His strongest fifth of hands out of his range; our strongest fifth out of ours; no raise for him on this
+// solved. His strongest hands (the top 20% by equity) out of his range; ours out of ours; no raise for him on this
 // street; no bet for him when checked to. The same street solved again unchanged is what each is set beside.
 import { treeOf, equityVs } from '../solver/flopsolve.js';
 import { study, sayChanges, firstOrder } from './street.js';
