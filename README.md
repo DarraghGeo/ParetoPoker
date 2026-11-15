@@ -57,11 +57,15 @@ The page opens on a choice between the two:
   lite; each later street is solved again for the two ranges as they arrive down the line played, with the setup's own
   betting, and villain plays his solved strategy for the hand he holds. Solving runs ahead of play: while a street is
   played, the next street is solved for every way this one can end (the likeliest first), and the next hands' flops
-  behind that (`web/play-worker.js`). Both ranges at the decision on screen are a tap away, and the session's chips
+  behind that (`web/workers/play/`). Both ranges at the decision on screen are a tap away, and the session's chips
   won from the flop on are kept for the day.
-- **Study beside Train and Play** (`web/pane.js`): swipe left (or the Study button) opens the spot on screen in Study
+- **Study beside Train and Play** (`web/components/common/StudyPane.svelte`): swipe left (or the Study button) opens the spot on screen in Study
   in the same tab, and back; nothing reloads. A turn or river solved on the page is handed over, so Study shows it at
   once and solves it finer behind it.
+
+The app is Svelte, built by Vite: `web/index.html` mounts `web/components/App.svelte` (Home, Train, Play); the logic the
+components show lives in `web/lib/` (plain modules), the solving in `web/workers/` and `web/solver/`. Study is still
+its own page (`web/study.html`, `web/app.js`) until it is rewritten as components.
 
 ```bash
 npm install

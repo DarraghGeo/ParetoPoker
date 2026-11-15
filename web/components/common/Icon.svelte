@@ -1,0 +1,13 @@
+<!-- The small line icons the pages use, drawn in the current colour. -->
+<script>
+  let { name, size = 16 } = $props();
+  const PATHS = {
+    tick: 'M3.5 8.5l3 3 6-7', cross: 'M4 4l8 8M12 4l-8 8', copy: 'M5.5 5.5v-3h8v8h-3M2.5 5.5h8v8h-8z',
+    study: 'M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5', chevron: 'M4 6l4 4 4-4',
+    curve: 'M2 13c3 0 3-4 6-5s3-5 6-5', ladder: 'M2 5.5h6M10.5 5.5H14M2 10.5h2.5M7 10.5h7',
+    grid: 'M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11',
+    ranges: 'M2.5 2.5h4.5v11H2.5zM9 2.5h4.5v11H9zM2.5 9h4.5M9 6.5h4.5',
+    settings: 'M2 4h8M13 4h1M2 8h2M7 8h7M2 12h6M11 12h3M10 4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0M4 8a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0M8 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0',
+  };
+</script>
+<svg viewBox="0 0 16 16" width={size} height={size} aria-hidden="true"><path d={PATHS[name]} fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>

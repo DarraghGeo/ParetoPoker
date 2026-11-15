@@ -12,41 +12,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Pareto">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-<script>
-// Installed or not, the page keeps itself current: a worker that always asks the network first, a check for a newer
-// build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
-// a study in progress is never thrown away).
-if ('serviceWorker' in navigator) {
-  const here = '19c3329b52'; const opening = !/(study|train|play)\.html/.test(location.pathname);
-  navigator.serviceWorker.register('sw.js').then((reg) => {
-    const check = async () => {
-      try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
-    };
-    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') check(); });
-    addEventListener('pageshow', (ev) => { if (ev.persisted) check(); });
-  }).catch(() => {});
-}
-</script>
-  <link rel="stylesheet" crossorigin href="./assets/style-XF1DVGY-.css">
+<script>window.PARETO_BUILD = '5c916aa77d';</script>
+  <script type="module" crossorigin src="./assets/index-C-Qj13dg.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/style-C9TFIC7Q.js">
+  <link rel="stylesheet" crossorigin href="./assets/style-DHduA6hB.css">
 </head>
 <body>
-<div class="rule"></div>
-<main class="home">
-  <h1><svg class="mark" viewBox="0 0 512 512" width="44" height="44" aria-hidden="true"><rect width="512" height="512" rx="72" fill="#15171B"/><rect x="96" y="150" width="68" height="212" fill="#7FCDBB"/><rect x="180" y="150" width="68" height="212" fill="#F4C261"/><rect x="180" y="150" width="68" height="90" fill="#7FCDBB"/><rect x="264" y="150" width="68" height="212" fill="#F4C261"/><rect x="348" y="150" width="68" height="212" fill="#F08A6B"/><rect x="348" y="150" width="68" height="60" fill="#F4C261"/></svg><span>Pareto</span></h1>
-  <nav class="choose" aria-label="Study, train or play">
-    <a href="study.html">
-      <span class="kind">Study</span>
-      <span class="what">Solve a spot, walk the line, and read why each hand plays the way it does.</span>
-    </a>
-    <a href="train.html">
-      <span class="kind">Train</span>
-      <span class="what">Answer questions on fresh boards: who has the advantage, how big you can go, what a hand can do.</span>
-    </a>
-    <a href="play.html">
-      <span class="kind">Play</span>
-      <span class="what">Play whole hands heads up against the solved villain, flop to river, and swipe to Study for any spot.</span>
-    </a>
-  </nav>
-</main>
+<div id="app"></div>
 </body>
 </html>

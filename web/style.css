@@ -420,10 +420,14 @@ header .board{min-width:0;flex:0 1 auto}
 
 /* Train with Study beside it: two panes the width of the window, one shown; each keeps its own scroll and state */
 body.train{overflow:hidden;height:100dvh}
-.pager{display:flex;width:200vw;height:100dvh}
-@media (prefers-reduced-motion:no-preference){.pager{transition:transform .28s ease}}
-.pager.on-study{transform:translateX(-100vw)}
-.pane{width:100vw;height:100dvh;flex:none;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
+/* the panes lie over each other inside a box the width of the window, so the page never grows wider than it (a wider
+   page lets a phone widen its layout, and things fixed to its right edge, the drawers, end up off screen) */
+.pager{position:relative;width:100%;height:100dvh;overflow:hidden}
+.pane{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media (prefers-reduced-motion:no-preference){.pane{transition:transform .28s ease}}
+.study-pane{transform:translateX(100%)}
+.pager.on-study .pane:not(.study-pane){transform:translateX(-100%)}
+.pager.on-study .study-pane{transform:none}
 .study-pane{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
 .study-pane iframe{flex:1;width:100%;border:0;display:block}
 .back-bar{display:flex;align-items:center;height:36px;padding:0 max(12px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);flex:none}
@@ -452,7 +456,7 @@ body.train{overflow:hidden;height:100dvh}
 .p-board span{font:500 30px/34px var(--mono);padding:2px 3px}
 .p-board .slot{width:26px;height:34px;padding:0;border:1px dashed var(--line-strong);border-radius:3px}
 .pot{font:500 15px/20px var(--mono);color:var(--ink);display:flex;gap:8px;align-items:baseline}
-.felt .trail{align-self:stretch;padding:0}
+.felt .past{align-self:stretch;padding:0}
 .ranges{gap:16px}
 .moves{display:flex;flex-direction:column;gap:12px;min-height:96px}
 .moves .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}
