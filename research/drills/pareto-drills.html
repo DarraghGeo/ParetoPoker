@@ -2,146 +2,611 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
 <style>
-/* Layout: a menu of drills in three groups; each drill is one card worked top to bottom: question, answer, reason, next. */
+/* Layout: one quiet screen. Mode and setup at the top edge, the range in the middle, the explanation beside it. */
 :root{
-  --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
-  --ok:#1C8A78;--miss:#C93A24;--oop:#2A3CE0;--ip:#D9792B;--idle:#E3E1D9;--card:#FFFFFF;--pass:#58B787;--agg:#DD4B39;--fold:#CFCDC4;--cell:#2A3CE0;
-  --s-s:#15171B;--s-h:#C8281F;--s-d:#0B6FC2;--s-c:#17803F;
-  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
+  --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;
+  --accent:#2A3CE0;--accent-ink:#FFFFFF;--danger:#C93A24;--ok:#1C8A78;
+  --act-fold:#CFCDC4;--act-check:#7CCDBE;--act-small:#F3C46A;--act-big:#F0896B;--act-allin:#B97BAE;
+  --suit-s:#15171B;--suit-h:#C8281F;--suit-d:#0B6FC2;--suit-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--float:0 12px 40px rgba(0,0,0,.22);
+  color-scheme:light;
 }
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
-  --ok:#4FBFA9;--miss:#F0766C;--oop:#8E9BFF;--ip:#E69A55;--idle:#33353B;--card:#17181B;--pass:#3F9C6E;--agg:#D2513F;--fold:#4A4C53;--cell:#8E9BFF;
-  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
-  --ok:#4FBFA9;--miss:#F0766C;--oop:#8E9BFF;--ip:#E69A55;--idle:#33353B;--card:#17181B;--pass:#3F9C6E;--agg:#D2513F;--fold:#4A4C53;--cell:#8E9BFF;
-  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}
 *{box-sizing:border-box}
-body{background:var(--bg);color:var(--ink);font:400 15px/23px var(--sans);padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
-h1{font:600 24px/30px var(--sans);margin:0;letter-spacing:-.01em}
-p{margin:0;color:var(--ink-2);max-width:60ch}
-.tag{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.group{display:flex;flex-direction:column;gap:8px}
-.group h2{font:600 15px/20px var(--sans);margin:6px 0 0;display:flex;gap:8px;align-items:baseline}
-.group h2 small{font:400 12px/16px var(--mono);color:var(--ink-3)}
-.item{display:flex;justify-content:space-between;align-items:center;gap:12px;width:100%;text-align:left;background:var(--card);border:1px solid var(--line-strong);border-radius:8px;padding:12px 14px;cursor:pointer;color:var(--ink);font:500 15px/20px var(--sans)}
-.item small{display:block;font:400 13px/18px var(--sans);color:var(--ink-2)}
-.item .st{font:500 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
-.item .st.done{color:var(--ok)}
-.screen{background:var(--card);border:1px solid var(--line-strong);border-radius:10px;padding:16px 16px 20px;display:flex;flex-direction:column;gap:14px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
-.back{border:0;background:none;padding:4px 0;font:500 13px/18px var(--mono);color:var(--ink-2);cursor:pointer}
-.dots{display:flex;gap:5px}.dots i{width:16px;height:4px;border-radius:2px;background:var(--idle)}.dots i.on{background:var(--ink)}.dots i.good{background:var(--ok)}.dots i.bad{background:var(--miss)}
-.board{font:500 24px/28px var(--mono);letter-spacing:.02em}
-.s{color:var(--s-s)}.h{color:var(--s-h)}.d{color:var(--s-d)}.c{color:var(--s-c)}
-.ctx{font:400 13px/20px var(--mono);color:var(--ink-2)}.ctx b{color:var(--ink);font-weight:500}
-.q{font:600 18px/24px var(--sans)}
-.hero{font:500 34px/40px var(--mono)}
-.opts{display:grid;grid-template-columns:repeat(var(--n,3),minmax(0,1fr));gap:8px}
-.opts.col{grid-template-columns:1fr}
-.opts button{font:500 14px/20px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:6px;padding:11px 8px;cursor:pointer;text-align:center}
-.opts.col button{text-align:left;padding:10px 12px}
-.opts button small{display:block;font:400 11px/14px var(--mono);color:var(--ink-3)}
-button:focus-visible,.tap:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
-.opts button[data-res="right"]{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
-.opts button[data-res="wrong"]{border-color:var(--miss);box-shadow:inset 0 0 0 1px var(--miss)}
-.go{font:500 14px/20px var(--sans);background:var(--ink);color:var(--bg);border:1px solid var(--ink);border-radius:6px;padding:11px;cursor:pointer}
-.after{display:flex;flex-direction:column;gap:14px;border-top:1px solid var(--line);padding-top:14px}
-.verdict{font:600 16px/22px var(--sans)}.verdict.good{color:var(--ok)}.verdict.bad{color:var(--miss)}
-.why{font-size:15px;color:var(--ink)}.soft{font-size:14px;color:var(--ink-2)}
-.rule{font:400 13px/19px var(--sans);color:var(--ink-2);background:var(--surface);padding:10px 12px;border-radius:6px}.rule b{color:var(--ink);font-weight:600}
-.grid{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);max-width:340px}
-.grid i{aspect-ratio:1;background:var(--card);position:relative;display:block}
-.grid i b{position:absolute;inset:0;background:var(--cell)}
-.gl{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3);max-width:340px}
-.split{display:flex;height:26px;border-radius:3px;overflow:hidden;font:500 12px/26px var(--mono);color:#fff}
-.split span{display:block;padding:0 8px;white-space:nowrap;overflow:hidden}.split span:last-child{text-align:right}
-.count{display:flex;flex-direction:column;gap:6px}.count.dim{opacity:.55}
-.count .name{font:600 14px/20px var(--sans);display:flex;justify-content:space-between;gap:8px}.count .name small{font:400 11px/20px var(--mono);color:var(--ink-3)}
-.rowc{display:grid;grid-template-columns:34px 1fr 40px;gap:8px;align-items:center;font:400 12px/16px var(--mono);color:var(--ink-2)}
-.rowc .m{height:12px;background:var(--idle);border-radius:2px;overflow:hidden}.rowc .m i{display:block;height:100%}
-.rowc span:last-child{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
-.exs{font:400 12px/17px var(--mono);color:var(--ink-3);padding-left:42px}
-.bar{position:relative;height:60px;display:flex;border-radius:3px;background:var(--idle)}
-.bar u{flex:1 1 0;display:flex;flex-direction:column;min-width:0;text-decoration:none}.bar u b{display:block;width:100%}
-.bar.tap{cursor:pointer;outline:1px dashed var(--line-strong);outline-offset:3px}
-.vline{position:absolute;top:-4px;bottom:-4px;width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.4)}
-.vline.g{background:var(--accent);box-shadow:none}
-.vline span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font:500 10px/13px var(--mono);color:var(--ink-2);white-space:nowrap}
-.vline.dn span{bottom:auto;top:100%}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 13px/18px var(--sans)}
+.rule{display:flex;height:2px;background:var(--line)}.rule i{display:block;height:2px}
+main{max-width:1120px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 64px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:40px}
+@media (min-width:900px){main{padding-left:40px;padding-right:40px}}
+header{display:flex;align-items:center;gap:12px}
+.grow{flex:1}
+button{font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);border-radius:3px;padding:5px 10px;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:3px 0 0 3px;margin-left:0}.seg button:last-child{border-radius:0 3px 3px 0}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);position:relative}
+.icon{padding:6px;display:flex;border-color:transparent;color:var(--ink-2)}
+.state{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:40px}
+@media (min-width:900px){.stage{grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:64px}}
+.left{display:flex;flex-direction:column;gap:20px;min-width:0}
+.board{display:flex;gap:6px;width:max-content}
+.board button{font:500 28px/28px var(--mono);border:0;padding:2px 3px;border-radius:3px;background:none}
+.board button:hover{background:var(--surface)}
+.s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
+.line{display:flex;gap:8px;align-items:center;min-height:30px;min-width:0}
+.line .trail,.line .acts,.line .tools{display:flex;align-items:center;gap:4px}
+.line .trail{flex:0 1 auto;min-width:0;max-width:45%;overflow-x:auto;scrollbar-width:none}
+.line .acts{flex:1 1 0;min-width:0;overflow-x:auto;scrollbar-width:none}
+.line .tools{flex:none;gap:0}
+.line .trail::-webkit-scrollbar,.line .acts::-webkit-scrollbar{display:none}
+.line .trail > *,.line .acts > *{flex:none}
+.line .crumb{border-color:transparent;padding:5px 4px;color:var(--ink-3);font-family:var(--mono);font-size:12px}
+.line .sep{color:var(--line-strong);font-family:var(--mono)}
+.line .act{font-family:var(--mono);font-size:12px;color:var(--ink);display:flex;align-items:center;gap:6px}
+.line .who{font:400 11px/14px var(--mono);letter-spacing:.08em;color:var(--ink-3);margin-right:2px}
+.sw{width:8px;height:8px;display:inline-block}
+.range{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 8px repeat(4,minmax(0,1fr)) 8px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 8px repeat(4,auto) 8px repeat(4,auto);gap:2px}
+.cell{position:relative;aspect-ratio:1;background:var(--surface);border:0;border-radius:0;padding:0;overflow:hidden;cursor:pointer;min-width:0}
+.cell.out{cursor:default}
+.cell .fill{position:absolute;left:0;right:0;bottom:0;display:flex}
+.cell .fill i{display:block;height:100%}
+.cell span{position:absolute;left:3px;top:2px;font:400 10px/12px var(--mono);color:var(--ink);pointer-events:none}
+.cell.out span{color:var(--ink-3);opacity:.5}
+/* the frame of the picked cell is drawn over the action colours, not under them */
+.cell[aria-pressed="true"]{z-index:1}
+.cell[aria-pressed="true"]::after{content:"";position:absolute;inset:0;border:2px solid var(--ink);pointer-events:none}
+@media (max-width:600px){.cell span{display:none}.range{grid-template-columns:repeat(5,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 5px repeat(4,auto) 5px repeat(4,auto)}}
+.combos{display:flex;flex-wrap:nowrap;gap:4px;min-height:40px;overflow-x:auto;scrollbar-width:none}
+.combos::-webkit-scrollbar,.why::-webkit-scrollbar,.drawer::-webkit-scrollbar,.editor::-webkit-scrollbar{display:none}
+.combos button{flex:none}
+.drawer,.editor,.why{scrollbar-width:none}
+.combos button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
+.combos button[aria-pressed="true"]{border-color:var(--ink)}
+.bar{display:flex;gap:2px;height:6px;width:100%}.bar i{display:block;height:100%}
+.why{display:flex;flex-direction:column;gap:16px;min-width:0;max-width:52ch}
+.why h2{font:500 28px/28px var(--mono);margin:0;display:flex;gap:8px}
+.why .mix{display:flex;flex-direction:column;gap:6px}
+.why .mix .bar{height:8px}
+.why .nums{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.why .nums span{display:inline-flex;align-items:center;gap:6px}
+.why p{margin:0;font:400 15px/23px var(--sans);text-wrap:pretty}
+.why .lead{font-weight:500}
+.why p:not(.lead){color:var(--ink-2)}
+
+.curve svg{display:block;width:100%;height:auto;touch-action:none}
+.curve .axis{stroke:var(--line-strong);stroke-width:1}.curve .gridl{stroke:var(--line);stroke-width:1}
+/* Both ranges in ink: the player to act at full strength, the other faded */
+.curve .act{fill:none;stroke:var(--ink);stroke-width:1.75}.curve .wait{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28}
+/* The chart area keeps one height whatever it shows, so the strategy below it never moves */
+.box{aspect-ratio:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+.versions{display:flex;align-items:center;gap:2px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.versions button:disabled{opacity:.25;cursor:default}
+/* Going between versions: the whole stage slides out one way and the other version slides in */
+.stage{transition:transform .18s ease,opacity .18s ease}
+.stage.out-left{transform:translateX(-48px);opacity:0}.stage.out-right{transform:translateX(48px);opacity:0}
+.stage.in-left{transform:translateX(-48px);opacity:0;transition:none}.stage.in-right{transform:translateX(48px);opacity:0;transition:none}
+@media (prefers-reduced-motion:reduce){.stage{transition:none}}
+/* The editor: a sheet over the page. Nothing is solved in here; Save solves. */
+.editor{position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(840px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:22px}
+.editor:focus{outline:none}
+.ed-head{display:flex;align-items:center;gap:12px}
+.ed-head .count{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.ed-body{display:grid;grid-template-columns:minmax(0,270px) minmax(0,1fr);gap:28px;align-items:center}
+@media (max-width:700px){.ed-body{grid-template-columns:minmax(0,1fr);gap:18px}.editor{padding:16px}}
+#e-paint b span{display:none}
+.sliders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 32px}
+@media (max-width:600px){.sliders{gap:12px 20px}.ed-body #e-paint{width:100%;max-width:230px;margin:0 auto}}
+.sliders label{display:flex;flex-direction:column;gap:0;min-width:0;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.sliders output{font:500 14px/20px var(--mono);color:var(--ink);letter-spacing:0}
+.sliders input{appearance:none;-webkit-appearance:none;width:100%;height:28px;margin:0;background:transparent;cursor:ew-resize}
+.sliders input::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:var(--line-strong)}
+.sliders input::-moz-range-track{height:3px;border-radius:2px;background:var(--line-strong)}
+.sliders input::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--bg);border:2px solid var(--ink);margin-top:-9px}
+.sliders input::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink)}
+.curve .ghost{fill:none;stroke:var(--ink);stroke-width:1;stroke-dasharray:2 4;opacity:.45}
+.curve .ceiling{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:1 4}
+.rows{display:flex;flex-direction:column;gap:3px}
+.rows .row{position:relative}
+.rows .name{position:absolute;top:4px;white-space:nowrap;pointer-events:none}
+.rows .strip{height:22px;margin:0}
+.rows{margin:10px 0}
+.rows .name{font:400 11px/14px var(--mono);color:var(--ink-3)}
+.rows .name .short{display:none}
+@media (max-width:600px){.rows .name .long{display:none}.rows .name .short{display:inline}}
+.curve .dot{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
+.curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
+/* One column per hand, all the same width, edge to edge; a dot under the strip marks the hand picked */
+.strip{display:flex;height:72px;gap:0;align-items:stretch;margin:10px 0}
+.strip button{flex:1 1 0;position:relative;min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column;justify-content:flex-end;background:var(--surface)}
+.strip button b{display:flex;flex-direction:column-reverse;width:100%;min-height:2px}
+.strip button i{display:block;width:100%}
+.curve .grab{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:ns-resize}
+#dist svg{touch-action:none}
+/* the equity chart is wider than tall, in the middle of the square the grid takes */
+#dist:not([hidden]){flex:1;min-height:0;display:flex;align-items:center}
+#dist svg{flex:1 1 auto;min-width:0;width:100%;height:auto;aspect-ratio:560/350}
+.strip button[aria-pressed="true"]{z-index:2}
+.strip button[aria-pressed="true"]::before,.strip button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;transform:translateX(-50%);border:5px solid transparent;pointer-events:none}
+.strip button[aria-pressed="true"]::before{top:-9px;border-top:7px solid var(--ink);border-bottom:0}
+.strip button[aria-pressed="true"]::after{bottom:-9px;border-bottom:7px solid var(--ink);border-top:0}
+.strip span{flex:1 1 0;min-width:0}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:10}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(360px,100%);background:var(--bg);box-shadow:var(--float);z-index:11;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px 20px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+.drawer label{display:flex;flex-direction:column;gap:4px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:1}
+.drawer .spot-only{display:flex;flex-direction:column;gap:16px}
+.drawer input,.drawer textarea{font:500 13px/18px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:3px;padding:7px 8px;width:100%;resize:vertical;letter-spacing:0;text-transform:none}
+.drawer .row{display:flex;gap:12px}
+.drawer .check{justify-content:flex-start}
+.drawer .check input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);padding:0;position:relative;cursor:pointer;margin-top:8px}
+.drawer .check input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--ink-3);transition:transform .12s}
+.drawer .check input:checked{background:var(--ink);border-color:var(--ink)}
+.drawer .check input:checked::after{transform:translateX(14px);background:var(--bg)}
+.drawer:focus{outline:none}
+/* Typing into a field must not make a phone zoom the page: its text is 16px there */
+@media (max-width:600px){.drawer input,.drawer textarea{font-size:16px}}
+.painter{display:flex;flex-direction:column;gap:10px}
+.painter .head{display:flex;align-items:center;gap:12px}
+.painter .seg button{padding:3px 9px;font:400 11px/14px var(--mono);letter-spacing:.08em}
+.painter .count{font:400 12px/16px var(--mono);color:var(--ink-3);flex:1}
+.painter .clear{border-color:transparent;padding:3px 0;color:var(--ink-3);font:400 12px/16px var(--sans)}
+.paint{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 5px repeat(4,auto) 5px repeat(4,auto);gap:2px;touch-action:none;user-select:none;-webkit-user-select:none}
+.paint b{position:relative;aspect-ratio:1;background:var(--surface);font:400 8px/10px var(--mono);color:var(--ink-3);padding:2px;overflow:hidden;cursor:crosshair}
+.paint b i{position:absolute;left:0;right:0;bottom:0;background:var(--ink)}
+.paint b span{position:relative;pointer-events:none}
+.paint b.on span{color:var(--bg)}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:8px 12px}
+.error{margin:0;color:var(--danger);font:400 12px/16px var(--mono);min-height:16px}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:in .16s ease-out}@keyframes in{from{transform:translateX(16px);opacity:0}}}
+
+/* Screens with room (a tablet on its side, a laptop, a monitor): everything fits the window, and
+   nothing scrolls but the explanation, inside its own box. The chart area is as big as the height allows. */
+@media (min-width:900px) and (min-height:520px){
+  html,body{height:100%;overflow:hidden}
+  main{--side:min(560px,calc(100dvh - 318px));height:100dvh;padding-top:14px;padding-bottom:14px;gap:18px;max-width:calc(var(--side) + 56px + 600px + 80px)}
+  .stage{flex:1;min-height:0;grid-template-columns:var(--side) minmax(0,1fr);gap:56px;justify-content:start}
+  .left{gap:12px;width:var(--side)}
+  .line .act{padding-left:8px;padding-right:8px}
+  .box{width:var(--side);height:var(--side);aspect-ratio:auto}
+  .stripbox{height:132px;flex:none}
+  .rows{height:132px;gap:2px}
+  .rows .row{flex:1 1 0;min-height:0;max-height:24px}
+  .rows .strip{height:100%}
+  .rows .name{top:50%;transform:translateY(-50%)}
+  .why{overflow-y:auto;min-height:0;max-height:100%;padding-bottom:24px;max-width:none}
+}
+
+/* flop and turn spots: the cards dealt, and choosing one */
+.board .dealt{opacity:.75}
+.pop{position:fixed;z-index:9;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:10px;width:min(430px,calc(100vw - 24px))}
+.pop:not([hidden]){flex:none;display:flex;flex-direction:column;gap:4px}
+.state{border:0;background:none;padding:0;cursor:default}
+.state[data-busy]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}
+.line .crumb.card{font-family:var(--sans);font-size:13px;color:var(--ink)}
+.deal:not([hidden]){flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.deal div{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
+.deal button{padding:0;aspect-ratio:3/4;font:500 12px/1 var(--sans);border:1px solid var(--line);background:var(--surface);border-radius:var(--r)}
+.deal button:disabled{opacity:.2}
+.deal button[aria-pressed="true"]{border-color:var(--ink)}
+.drawer.sub .spot-only{display:none}
+@media (max-width:600px){.deal button{font-size:10px}}
+
+/* a solve in progress: what, how far, and Stop */
+.loader:not([hidden]){position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(250,250,247,.72);padding:16px}
+.loader .card{width:min(440px,100%);background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.loader .title{font:500 16px/22px var(--sans);display:flex;align-items:baseline;gap:10px}
+.loader .title span{font:500 16px/22px var(--mono);display:flex;gap:6px}
+.loader .track{height:6px;border-radius:3px;background:var(--surface);overflow:hidden}
+.loader .track i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .3s ease}
+.loader .meta{display:flex;align-items:center;gap:12px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+
+.theirs{width:190px;padding:10px}
+.theirs .paint b{cursor:default;padding:0}
+.drawer .link{align-self:flex-start;border:0;padding:0;color:var(--accent);font:500 13px/18px var(--sans)}
+.drawer.sub .link{display:none}
+
+.why p.quiet{color:var(--ink-3);font-size:13px;line-height:19px}
+
+/* ---- the way in: Study or Train ---- */
+a{color:var(--accent)}
+a.icon{border:1px solid transparent;border-radius:3px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padding-top:40px;padding-bottom:40px}
+.home h1{margin:0;font:500 28px/28px var(--mono)}
+.choose{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:600px){.choose{grid-template-columns:minmax(0,1fr)}}
+.choose a{display:flex;flex-direction:column;gap:10px;padding:20px;border:1px solid var(--line-strong);border-radius:3px;color:var(--ink);text-decoration:none;min-height:150px}
+.choose a:hover{background:var(--surface);border-color:var(--ink)}
+.choose .kind{font:500 20px/24px var(--sans)}
+.choose .what{font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
+
+/* ---- Train: the two ranges, then a question ---- */
+.board span{font:500 28px/28px var(--mono);padding:2px 3px}
+.score{font:400 13px/18px var(--mono);color:var(--ink-3);padding:5px 10px}
+.score b{font-weight:500;color:var(--ink)}
+.t-stage{display:grid;grid-template-columns:minmax(0,1fr);gap:32px}
+.t-stage .left{gap:14px}
+.where{display:flex;align-items:center;gap:12px;min-height:30px;font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
+.where .who{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.where .stands{color:var(--ink);font:500 13px/18px var(--sans);overflow:hidden;text-overflow:ellipsis;min-width:0}
+.minis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.mini{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mini figcaption{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.mini .paint{touch-action:auto;gap:1px}
+.mini .paint b{cursor:default;padding:0}
+/* hero in ink, villain faded: the same as the two curves */
+.mini.villain .paint b i{opacity:.28}
+.mini .paint b.mark{outline:2px solid var(--accent);outline-offset:0;z-index:1;overflow:visible}
+.train #dist:not([hidden]){flex:none}
+.train main{gap:20px}
+.ask{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:52ch}
+.ask .kind{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ask h2{font:500 28px/28px var(--mono);margin:0;display:flex;gap:8px}
+.ask p{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
+.ask .text,.ask .lead{font:500 20px/26px var(--sans);color:var(--ink)}
+.ask .hint{font:400 13px/18px var(--sans);color:var(--ink-3)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.opt{display:flex;align-items:center;gap:8px;padding:11px 12px;font:500 14px/20px var(--sans);color:var(--ink);text-align:left}
+.opt span{flex:1}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.opt:disabled{cursor:default;color:var(--ink-3)}
+.opt.right{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok);color:var(--ok)}
+.opt.wrong{border-color:var(--danger);box-shadow:inset 0 0 0 1px var(--danger);color:var(--danger)}
+.opt svg{flex:none}
+.verdict{display:flex;align-items:center;gap:8px;font:500 15px/23px var(--sans)}
+.verdict.good{color:var(--ok)}.verdict.bad{color:var(--danger)}
+.ask .primary{align-self:flex-start;min-width:104px;padding:9px 14px}
+.ask .primary:disabled{opacity:.35;cursor:default}
+.track{height:6px;border-radius:3px;background:var(--surface);overflow:hidden;max-width:320px}
+.track i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s ease}
+@media (prefers-reduced-motion:no-preference){
+  .verdict{animation:land .2s ease-out}
+  .opts.missed{animation:shake .28s ease-in-out}
+  @keyframes land{from{transform:translateY(4px);opacity:0}}
+  @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+}
+@media (min-width:900px){
+  .t-stage{grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:56px;flex:1;min-height:0}
+  .train main{max-width:1200px}
+  .ask{padding-top:44px;overflow-y:auto;scrollbar-width:none}
+}
+/* settings and the last questions */
+.train .drawer{gap:6px}
+.drawer h3{margin:14px 0 4px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.drawer h3:first-child{margin-top:0}
+.choice{display:flex;align-items:center;gap:4px;margin-left:-8px}
+/* the box is drawn, not the browser's: a square that fills with ink */
+.tick{border:0;padding:8px;display:flex}
+.tick i{width:18px;height:18px;border:1px solid var(--line-strong);border-radius:3px;display:grid;place-items:center;color:transparent;background:var(--bg)}
+.tick[aria-checked="true"] i{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.choice .name{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;border:0;padding:8px 0;text-align:left;color:var(--ink);font:500 14px/20px var(--sans)}
+.choice .name svg{color:var(--ink-3);transition:transform .12s}
+.choice .name[aria-expanded="true"] svg{transform:rotate(180deg)}
+.days{list-style:none;margin:0 0 8px 30px;padding:0;display:flex;flex-direction:column;gap:6px;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.days li{display:grid;grid-template-columns:86px minmax(0,1fr) 44px 36px;gap:10px;align-items:center}
+.days li span:nth-child(n+3){text-align:right}
+.days .bar{height:4px}
+.days .none{display:block;color:var(--ink-3)}
+.drawer .note{margin:18px 0 0;font:400 13px/20px var(--sans);color:var(--ink-3);text-wrap:pretty}
+.total{display:flex;align-items:baseline;gap:12px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.total .big{font:400 28px/28px var(--mono)}.total .big b{font-weight:500;color:var(--ink)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.log li{border-top:1px solid var(--line)}
+.past{width:100%;display:flex;align-items:flex-start;gap:10px;border:0;border-radius:0;padding:10px 0;text-align:left;color:var(--ink)}
+.past .mark{display:flex;padding-top:2px}
+.good .mark{color:var(--ok)}.bad .mark{color:var(--danger)}
+.past .q{display:flex;flex-direction:column;gap:2px;min-width:0}
+.past .q b{font:500 13px/18px var(--mono)}
+.past .spot{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.log dl{margin:0 0 14px 24px;display:flex;flex-direction:column;gap:2px}
+.log dt{margin-top:8px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.log dd{margin:0;font:500 13px/18px var(--mono);color:var(--ink)}
+.log dd p{margin:0 0 8px;font:400 14px/21px var(--sans);color:var(--ink-2);text-wrap:pretty}
+.log dd .soon{color:var(--ink-3)}
+
+/* a spot too big to solve whole: the button offers the lite solve, in red */
+.primary.lite{background:var(--danger);border-color:var(--danger)}
+.error.fit{min-height:auto;flex:none;font-family:var(--sans);font-size:13px;line-height:18px;text-wrap:pretty}
+.error.fit:empty{display:none}
+
+.where a.icon{display:flex;padding:6px;color:var(--ink-2)}
+.where .icon + .icon{margin-left:-12px}
+/* a narrow screen: the seat is over the range already, and the line needs the room */
+@media (max-width:600px){.where .who{display:none}}
+.icon.done{color:var(--ok)}.icon.failed{color:var(--danger)}
+
+/* the explanation's two faces, and the analytical one */
+.why .tabs{align-self:flex-start}
+.why .tabs button{padding:3px 10px;font:400 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.spread svg{display:block;width:100%;height:auto}
+.spread .axis{stroke:var(--line-strong);stroke-width:1}.spread .gridl{stroke:var(--line);stroke-width:1}
+.spread .now{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 4}
+.spread .act{fill:none;stroke:var(--ink);stroke-width:1.75}.spread .wait{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28}
+.spread .cap,.spread .ends{display:flex;justify-content:space-between;gap:12px;font:400 11px/16px var(--mono);color:var(--ink-3);margin-top:6px}
+.spread .ends span{display:flex;gap:6px;font-size:13px}
+.types{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.types li{display:grid;grid-template-columns:16px minmax(0,1.4fr) 40px minmax(0,2fr);gap:10px;align-items:center;font:400 13px/18px var(--sans);color:var(--ink-3)}
+.types li.has{color:var(--ink);font-weight:500}
+.types .mark{font:500 13px/18px var(--mono);text-align:center}
+.types li.has .mark{color:var(--ok)}
+.types .share{font:400 12px/18px var(--mono);text-align:right}
+.types .bar{height:10px;display:flex}
+
+.types.all li{color:var(--ink-2);grid-template-columns:0 minmax(0,1.4fr) 40px minmax(0,2fr);gap:10px 10px}
+.types.all .mark{display:none}
+.types.all li{grid-template-columns:minmax(0,1.4fr) 40px minmax(0,2fr)}
+.facts{border-collapse:collapse;width:100%;font:400 13px/20px var(--sans)}
+.facts th,.facts td{text-align:left;padding:3px 0;border-bottom:1px solid var(--line)}
+.facts thead th{font:400 11px/16px var(--mono);letter-spacing:.08em;color:var(--ink-3)}
+.facts tbody th{font-weight:400;color:var(--ink-2)}
+.facts td{font-family:var(--mono);font-size:12px;width:22%}
+
+/* the mark: home on every page, and beside the name on the opening one */
+.logo{display:flex;flex:none;border-radius:5px}
+.logo .mark,.home h1 .mark{display:block;border-radius:5px}
+.home h1{display:flex;align-items:center;gap:14px}
+
+/* the hands that carry one name */
+.types li[data-tag]{cursor:pointer}
+.types li[data-tag]:hover .tname{text-decoration:underline;text-underline-offset:3px}
+.group{gap:14px}
+.group:focus{outline:none}
+.g-head{display:flex;flex-direction:column;gap:2px}
+.g-head h3{margin:0;font:500 20px/24px var(--sans);text-transform:none;letter-spacing:0;color:var(--ink)}
+.g-head span{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.group .mix .bar{height:8px}
+.g-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:4px}
+.g-list button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
+.g-list button[aria-pressed="true"]{border-color:var(--ink)}
+.g-list button span:first-child{display:flex;gap:3px}
+
+/* phones: the top bar must fit the screen, so the board gives way before anything else is pushed off the edge */
+header{min-width:0}
+header .board{min-width:0;flex:0 1 auto}
+@media (max-width:600px){
+  header{gap:6px}
+  .board{gap:2px}
+  .board button{font-size:clamp(17px,5.6vw,24px);line-height:28px;padding:2px 1px}
+  header .icon{padding:6px 5px}
+  .logo .mark{width:24px;height:24px}
+}
+
+/* where the turn and the river will go */
+.board .slot{width:1.15em;height:30px;border:1px dashed var(--line-strong);border-radius:3px;padding:0;background:none;align-self:center;margin-left:3px;font-size:22px}
+.board .slot[data-later]{opacity:.5}
+.board .slot:hover{border-color:var(--ink-3);background:var(--surface)}
+.board button{touch-action:manipulation}
+
+.g-list .spark{display:block;width:100%;height:24px;margin-top:2px;background:var(--surface)}
+.g-list .spark polyline{fill:none;stroke:var(--ink);stroke-width:1.2;vector-effect:non-scaling-stroke}
+.g-list .spark .mid{stroke:var(--line-strong);stroke-width:1;vector-effect:non-scaling-stroke}
+.g-list .spark .now{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 2;vector-effect:non-scaling-stroke}
+/* the streets before the one asked about: who did what */
+.past{display:flex;flex-direction:column;gap:4px;font:400 12px/16px var(--mono);color:var(--ink)}
+.past:empty{display:none}
+.past div{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
+.past .street{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);min-width:38px}
+.past i{font-style:normal;color:var(--ink-3)}
+/* the ladder: both ranges on one scale, out of position above, in position below; the range not to act is drawn plain */
+.ladder{gap:4px}
+.ladder .row{display:flex;flex-direction:column;gap:3px}
+.ladder .strip{height:30px}
+/* a flat grey, not ink seen through: see-through columns that overlap by a hair draw dark lines */
+.ladder .strip .other{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+@media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}}
+/* Train's ladder: hero in ink, villain faded, the hand asked about marked */
+.train .ladder{margin:0}
+.train .ladder .strip{height:44px}
+.ladder .strip .hero{background:var(--ink)}
+.ladder .strip .mark{background:var(--accent);position:relative;z-index:1;box-shadow:0 0 0 1px var(--accent)}
+.ladder .strip .mark::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);border:5px solid transparent;border-top:7px solid var(--accent);border-bottom:0}
+@media (min-width:900px) and (min-height:520px){.train .ladder{height:160px}}
+/* a thumb slid along the action chart picks hands: sideways is the chart's, up and down still scrolls the page */
+#strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+/* under the cards to pick from: the street dealt at random */
+.deal button.random{aspect-ratio:auto;width:100%;margin-top:6px;padding:9px 12px;font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);border-radius:3px}
+.deal button.random:hover{border-color:var(--ink);color:var(--ink)}
+/* ranges by position and preflop action: three rows of choices, in setup and in a menu off the top bar */
+.presets{display:flex;flex-direction:column;gap:8px}
+.presets .line{display:flex;align-items:center;gap:10px}
+.presets .line > span{flex:none;width:46px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.presets .seg{flex-wrap:wrap;row-gap:4px}
+.presets .seg button{padding:4px 7px;font:400 11px/14px var(--mono);letter-spacing:.02em}
+.presets .said{margin:2px 0 0;font:400 12px/17px var(--sans);color:var(--ink-3);text-wrap:pretty}
+.seatpick{width:min(340px,calc(100vw - 24px));padding:14px}
+.presets .seg button.far{color:var(--ink-3);opacity:.55}
+
+/* a sentence with numbers behind it: they open under it on a tap */
+.why p[data-more]{cursor:pointer}
+.why p[data-more] .t::after{content:' \22EF';color:var(--ink-3)}
+.why p[data-more].open .t::after{content:''}
+.why p small{display:none;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-3)}
+.why p.open small{display:block}
+
+/* Train with Study beside it: two panes the width of the window, one shown; each keeps its own scroll and state */
+body.paged{overflow:hidden;height:100dvh}
+/* the panes lie over each other inside a box the width of the window, so the page never grows wider than it (a wider
+   page lets a phone widen its layout, and things fixed to its right edge, the drawers, end up off screen) */
+.pager{position:relative;width:100%;height:100dvh;overflow:hidden}
+.pane{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media (prefers-reduced-motion:no-preference){.pane{transition:transform .28s ease}}
+.study-pane{transform:translateX(100%)}
+.pager.on-study .pane:not(.study-pane){transform:translateX(-100%)}
+.pager.on-study .study-pane{transform:none}
+.study-pane{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.study-pane .study{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto}
+@media (min-width:900px) and (min-height:520px){.study-pane main{height:100%}}
+.drawer>form{display:contents}
+.back-bar{display:flex;align-items:center;height:36px;padding:0 max(12px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);flex:none}
+.back-bar button{border:0;background:none;color:var(--ink-2);font:500 13px/18px var(--sans);padding:6px 4px;cursor:pointer}
+
+/* Play: a heads-up table kept plain. Villain above, the board and pot between, you below with your actions; the same
+   type, ink and suit colours as the rest. The seat to act is marked with the accent rule. */
+.table{max-width:560px;gap:22px;min-height:100dvh}
+.play header .session{font:400 13px/18px var(--mono);color:var(--ink-2)}
+.play header .session.down{color:var(--danger)}
+.seat{display:grid;grid-template-columns:1fr auto;grid-template-areas:"who hole" "stack hole" "last hole";align-items:center;gap:2px 16px;padding:12px 0 12px 14px;border-left:2px solid var(--line)}
+.seat.acting{border-left-color:var(--accent)}
+.seat:empty{border-left-color:transparent}
+.seat .who{grid-area:who;display:flex;gap:8px;align-items:baseline}
+.seat .name{font:500 15px/20px var(--sans);color:var(--ink)}
+.seat .pos,.pot span{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.seat .stack{grid-area:stack;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.seat .last{grid-area:last;font:500 13px/18px var(--mono);color:var(--ink-2);min-height:18px}
+.seat .hole{grid-area:hole;display:flex;gap:4px}
+.seat .hole span{font:500 24px/28px var(--mono);padding:2px 3px}
+.seat .hole.big span{font-size:34px;line-height:38px}
+.seat .back{display:block;width:24px;height:32px;border-radius:3px;background:repeating-linear-gradient(135deg,var(--surface) 0 4px,var(--line) 4px 5px);border:1px solid var(--line-strong)}
+.felt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
+.p-board{display:flex;gap:6px;align-items:center;min-height:40px}
+.p-board span{font:500 30px/34px var(--mono);padding:2px 3px}
+.p-board .slot{width:26px;height:34px;padding:0;border:1px dashed var(--line-strong);border-radius:3px}
+.pot{font:500 15px/20px var(--mono);color:var(--ink);display:flex;gap:8px;align-items:baseline}
+.felt .past{align-self:stretch;padding:0}
+.ranges{gap:16px}
+.moves{display:flex;flex-direction:column;gap:12px;min-height:96px}
+.moves .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}
+.moves .act{padding:12px 10px;font:500 14px/18px var(--sans);color:var(--ink);border-color:var(--line-strong)}
+.moves .act.k-fold{color:var(--ink-3)}
+.moves .act:disabled{opacity:.4;cursor:default}
+.moves .lead{margin:0;font:500 20px/26px var(--sans);color:var(--ink)}
+.moves .note{margin:0;font:400 13px/18px var(--sans);color:var(--ink-3)}
+.moves .result{margin:0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font:400 15px/22px var(--sans);color:var(--ink-2)}
+.moves .result b{font:500 24px/28px var(--mono);color:var(--ok)}
+.moves .result.down b{color:var(--danger)}
+.moves .result span{flex-basis:100%;font:400 13px/18px var(--sans);color:var(--ink-3)}
+.moves .primary{align-self:flex-start;min-width:120px;padding:10px 14px}
+
+/* ---- the mock-up's own additions, in the app's idiom: mono labels, hairlines, hero in ink and villain faded ---- */
+body{padding:0}
+main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main.home{min-height:0;justify-content:flex-start;gap:18px}
+.home .lede{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);max-width:52ch;text-wrap:pretty}
+.home h3{margin:14px 0 0;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.home .choose{gap:8px}
+.home .choose a{min-height:0;padding:14px 16px;gap:4px;flex-direction:row;align-items:center;cursor:pointer}
+.home .choose a>span:first-child{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.home .choose .kind{font:500 16px/22px var(--sans)}
+.home .choose .what{font:400 13px/18px var(--sans)}
+.home .choose .n{font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
+.home .choose .n.done{color:var(--ok)}
+.home .note{margin:10px 0 0;font:400 13px/20px var(--sans);color:var(--ink-3);text-wrap:pretty;max-width:60ch}
+.train main{gap:20px}
+.t-stage{gap:24px}
+.ask h2.plain{letter-spacing:.02em}
+.ask .sub{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.left .mini.solo{max-width:360px}
+.cmp{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.cmp li{display:grid;grid-template-columns:36px minmax(0,1fr) 40px;gap:10px;align-items:center}
+.cmp li span:last-child{text-align:right;color:var(--ink)}
+.cmp .bar{height:4px;display:flex;background:var(--line)}
+.cmp .bar i{display:block;height:4px;background:var(--ink)}
+.cmp .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.cmp li .ex{grid-column:2/4;color:var(--ink-3);text-align:left}
+.blk{display:flex;flex-direction:column;gap:6px}
+.blk>b{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
+.blk>b em{font-style:normal;color:var(--accent)}
+.blk.dim{opacity:.5}
+.eq{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font:500 12px/16px var(--mono);color:var(--ink)}
+.eq .bar{height:4px;display:flex}.eq .bar i{display:block;height:4px;background:var(--ink)}.eq .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.eq .v{color:var(--ink-3)}
+.strip.mock{position:relative;height:72px;margin:6px 0 0}
+.strip.mock button{cursor:default}
+.strip.mock.tap,.strip.mock.tap button{cursor:pointer}
+.strip.mock .pin{position:absolute;top:-6px;bottom:-6px;width:0;border-left:2px solid var(--ink);z-index:3;pointer-events:none}
+.strip.mock .pin.you{border-color:var(--accent)}
+.strip.mock .pin.thin{border-left:1px dashed var(--ink-2)}
+.strip.mock .pin u{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font:400 11px/14px var(--mono);color:var(--ink);text-decoration:none;white-space:nowrap}
+.strip.mock .pin.you u{color:var(--accent);bottom:auto;top:100%}
+.strip.mock .pin.thin u{color:var(--ink-3)}
+.strip.mock .pin:not(.you):not(.thin) u{font-weight:500}
 .ends{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3);margin-top:16px}
-.key{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2)}.key i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
-.shapes{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
-.shapes button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 2px;font:400 11px/14px var(--sans)}
-.mini{display:flex;width:100%;max-width:54px;height:26px;background:var(--pass);align-items:flex-end}.mini b{flex:1;background:var(--agg);display:block}
-.counts{display:flex;gap:20px}.counts div{font:400 12px/17px var(--mono);color:var(--ink-2)}.counts b{display:block;font:600 24px/28px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
-.pairrow{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;font:400 13px/18px var(--mono);align-items:center;color:var(--ink-2)}.pairrow b{font-weight:500;color:var(--ink)}
-.meter{height:8px;background:var(--idle);border-radius:2px;overflow:hidden;display:flex}.meter i{display:block;height:100%}
-.note{font-size:13px;line-height:20px;color:var(--ink-3)}
+.keyrow{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2);align-items:center}
+.keyrow .sw{margin-right:6px}
+.opts.shapes{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.opts.shapes .opt{flex-direction:column;padding:8px 2px;font:400 11px/14px var(--sans);text-align:center;gap:6px}
+.opts.shapes .opt svg{position:absolute;display:none}
+.shape{display:flex;width:100%;max-width:56px;height:26px;background:var(--act-check);align-items:flex-end}
+.shape b{flex:1;background:var(--act-big);display:block}
+.opts.one{grid-template-columns:minmax(0,1fr)}
+.tally{display:flex;gap:24px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.tally b{display:block;font:500 22px/26px var(--mono);color:var(--ink)}
+.twin{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:center;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.twin .bar{height:4px;display:flex;background:var(--line)}.twin .bar i{display:block;height:4px}
+.twin b{font:500 13px/18px var(--mono);color:var(--ink)}
+.backlink{border:0;padding:0;font:400 12px/16px var(--mono);color:var(--ink-3)}
 </style>
-<main id="app"></main>
+<div id="app"></div>
 <script>
 const D = {"grids":[{"label":"UTG opens: the opening range","g":[[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],[1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.48,0.32,0.68,0,0,0],[1.0,1.0,1.0,1.0,1.0,1.0,0,0,0,0,0,0,0],[1.0,1.0,0.41,1.0,1.0,0,0,0,0,0,0,0,0],[1.0,0.57,0,0,1.0,0.57,0,0,0,0,0,0,0],[0,0,0,0,0,1.0,0,0,0,0,0,0,0],[0,0,0,0,0,0,1.0,0.05,0,0,0,0,0],[0,0,0,0,0,0,0,1.0,0.07,0,0,0,0],[0,0,0,0,0,0,0,0,0.36,0.39,0,0,0],[0,0,0,0,0,0,0,0,0,0.44,0.24,0,0],[0,0,0,0,0,0,0,0,0,0,0.07,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0]]},{"label":"BU opens: the opening range","g":[[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0],[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.96,0],[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.39,0,0],[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0,0,0,0],[1.0,1.0,1.0,1.0,1.0,1.0,1.0,1.0,0.72,0,0,0,0],[1.0,0.89,0,0.12,0.49,0,1.0,1.0,1.0,0,0,0,0],[1.0,0.43,0,0,0,0,0,1.0,1.0,0.93,0,0,0],[1.0,0,0,0,0,0,0,0,1.0,1.0,0,0,0],[1.0,0,0,0,0,0,0,0,0,1.0,0.9,0,0],[1.0,0,0,0,0,0,0,0,0,0,1.0,0,0],[1.0,0,0,0,0,0,0,0,0,0,0,1.0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0.85]]},{"label":"BB calls a BU open","g":[[0,0,0,0.08,1.0,1.0,1.0,1.0,1.0,0.71,1.0,1.0,1.0],[0,0,0,1.0,1.0,1.0,1.0,0.91,0.65,0.97,1.0,0.34,0.82],[0,0.76,0,0.77,0.68,1.0,0.75,1.0,0.88,0.99,1.0,0.83,1.0],[0.72,0.28,0.69,0,0.2,0,0.67,0.01,0.79,0.67,0.55,0,0],[0.72,0.29,0.81,0.77,0,0.39,0.87,0.52,0.25,0,0,0,0],[1.0,0.52,0.2,0.73,0.69,0.28,1.0,1.0,0.83,0,0,0,0],[0.83,0,0,0,0,0.1,0.74,1.0,1.0,1.0,0,0,0],[0.61,0,0,0,0,0,0,0.66,0.82,1.0,1.0,0,0],[0,0,0,0,0,0,0,0,0.91,0.94,1.0,0.99,0],[0.43,0,0,0,0,0,0,0,0,0.81,0.94,1.0,0.68],[0.1,0,0,0,0,0,0,0,0,0,1.0,1.0,0.25],[0,0,0,0,0,0,0,0,0,0,0,1.0,0],[0,0,0,0,0,0,0,0,0,0,0,0,1.0]]},{"label":"SB 3-bets a BU open","g":[[1.0,1.0,1.0,1.0,0.88,0.88,0.95,0.98,0.11,0.98,0.96,0.6,0],[1.0,1.0,1.0,0.93,0.95,0.96,0,0,0,0,0,0,0],[0.98,0.98,1.0,0.94,0.96,0,0,0,0,0,0,0,0],[0.98,1.0,0.11,1.0,0.96,0.66,0,0,0,0,0,0,0],[0.99,0.39,0,0,0.99,0.65,0,0,0,0,0,0,0],[0,0,0,0,0,0.95,0,0,0,0,0,0,0],[0,0,0,0,0,0,0.95,0,0,0,0,0,0],[0,0,0,0,0,0,0,0.94,0,0,0,0,0],[0,0,0,0,0,0,0,0,0.92,0,0,0,0],[0,0,0,0,0,0,0,0,0,0.28,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0,0,0,0,0]]}],"inout":{"who":"BB","line":"BU opens, BB calls","hands":[["K7s",0.91],["AKo",0],["T8s",0.87],["Q9o",0.2],["55",0.81],["A5s",0.71],["J7o",0]]},"cards":{"names":["BB","BU"],"line":"BU opens, BB calls","share":{"2":[0.06,0.024],"3":[0.076,0.054],"4":[0.11,0.063],"5":[0.131,0.082],"6":[0.121,0.095],"7":[0.127,0.106],"8":[0.14,0.122],"9":[0.188,0.174],"T":[0.169,0.187],"J":[0.164,0.189],"Q":[0.187,0.198],"K":[0.163,0.234],"A":[0.253,0.335]}},"adv":[{"pre":"SRP","names":["BB","BU"],"board":"Ac Td Th","street":3,"eq":[0.426,0.574],"sides":[{"tp":0.283,"pair":0.412,"big":0.093,"exTp":["A9o","A8o","AJo","A7o"],"exBig":["QTo","JTo","T9o","ATo"]},{"tp":0.382,"pair":0.524,"big":0.112,"exTp":["AKo","AQo","AJo","A9o"],"exBig":["KTo","QTo","JTo","T9o"]}],"hist":[],"cur":"Flop dealt","bettor":null,"answer":1},{"pre":"3BP","names":["SB","BU"],"board":"5h 5d 9d","street":3,"eq":[0.499,0.5],"sides":[{"tp":0.232,"pair":0.321,"big":0.027,"exTp":["AA","KK","QQ","JJ"],"exBig":["99","A5s","55"]},{"tp":0.16,"pair":0.419,"big":0.073,"exTp":["99","T9s","A9s","A5s"],"exBig":["99","A5s","65s","55"]}],"hist":[],"cur":"Flop dealt","bettor":null,"answer":"close"},{"pre":"SRP","names":["SB","UTG"],"board":"Js 4h 2s","street":3,"eq":[0.541,0.459],"sides":[{"tp":0.202,"pair":0.653,"big":0.042,"exTp":["AJs","JJ","JTs","KJs"],"exBig":["JJ","44"]},{"tp":0.255,"pair":0.42,"big":0.015,"exTp":["AJo","KJo","AA","KK"],"exBig":["JJ","44"]}],"hist":[],"cur":"Flop dealt","bettor":null,"answer":0},{"pre":"SRP","names":["SB","UTG"],"board":"3s Qc Ts Ah","street":4,"eq":[0.434,0.566],"sides":[{"tp":0.458,"pair":0.981,"big":0.286,"exTp":["AJs","AQo","AQs","ATs"],"exBig":["AQo","AQs","ATs","TT"]},{"tp":0.618,"pair":0.917,"big":0.311,"exTp":["KJo","AKo","AJo","AA"],"exBig":["KJo","AA","KJs","A3s"]}],"hist":["OOP checked, IP bet, OOP called"],"cur":"OOP to act","bettor":null,"answer":1},{"pre":"SRP","names":["SB","UTG"],"board":"3s Qc Ts Ah 5h","street":5,"eq":[0.621,0.379],"sides":[{"tp":0.707,"pair":0.991,"big":0.342,"exTp":["AJs","ATs","AQo","AQs"],"exBig":["ATs","AQo","AQs","55"]},{"tp":0.332,"pair":0.986,"big":0.086,"exTp":["AJo","AKo","A9s","ATo"],"exBig":["ATo","A5s","ATs","55"]}],"hist":["checked through","checked through"],"cur":"OOP bets","bettor":0,"answer":0},{"pre":"4BP","names":["SB","BU"],"board":"2s Jh Js 5c 9h","street":5,"eq":[0.616,0.384],"sides":[{"tp":0.299,"pair":0.545,"big":0.295,"exTp":["99","AJs","QJs","JTs"],"exBig":["99","AJs","QJs","JTs"]},{"tp":0.308,"pair":0.341,"big":0.097,"exTp":["KK","AJo","AA","55"],"exBig":["AJo","55","QJs","JJ"]}],"hist":["OOP checked, IP bet, OOP called","checked through"],"cur":"OOP to act","bettor":null,"answer":0}],"turn":{"pre":"SRP","names":["BB","BU"],"flop":"9s 7s 3d","eq":0.4813,"turns":[{"card":"Ah","eq":0.4497},{"card":"6c","eq":0.4939},{"card":"2s","eq":0.4908},{"card":"Kd","eq":0.4607}]},"river":{"spot":"SRP-SB-BB","board":"Ad 8h 5d 6h Kd","actions":[{"label":"X","kind":"check","freq":0.587},{"label":"B75","kind":"bet","freq":0.413}],"top70":[0.401,0.196],"shape":"Both ends","profile":[81,33,15,0,0,14,77,91,69,35],"bar":[[0.107,0.893],[0.252,0.748],[0.002,0.998],[0.43,0.57],[0.726,0.274],[0.285,0.715],[0.87,0.13],[0.812,0.188],[0.841,0.159],[0.972,0.028],[0.985,0.015],[0.648,0.352],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[0.999,0.001],[1.0,0.0],[0.639,0.361],[0.676,0.324],[0.004,0.996],[0.576,0.424],[0.001,0.999],[0.489,0.511],[0.155,0.845],[0.001,0.999],[0.009,0.991],[0.027,0.973],[0.378,0.622],[0.548,0.452],[0.331,0.669],[0.105,0.895],[0.851,0.149],[0.999,0.001],[0.421,0.579],[0.329,0.671]]},"face":{"spot":"SRP-SB-UTG","board":"3s Qc Ts 5s Js","pot":10.5,"toCall":4.5,"cont":0.528,"price":0.3,"priceRank":0.642,"bar":[[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[1.0,0.0],[0.778,0.222],[0.477,0.523],[0.676,0.324],[0.743,0.257],[0.963,0.037],[0.132,0.868],[0.2,0.8],[0.772,0.228],[0.71,0.29],[0.579,0.421],[0.587,0.413],[0.73,0.271],[0.73,0.271],[0.655,0.345],[0.645,0.355],[0.251,0.749],[0.009,0.991],[0.009,0.991],[0.01,0.99],[0.082,0.918],[0.001,0.999],[0.001,0.999],[0.002,0.998],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0],[0.0,1.0]]}};
-const SUIT = { s: '♠', h: '♥', d: '♦', c: '♣' }; const NAMES = { SRP: 'Single-raised pot', '3BP': '3-bet pot', '4BP': '4-bet pot', Squeeze: 'Squeezed pot' }; const STREET = { 3: 'flop', 4: 'turn', 5: 'river' };
-const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="${c[1]}">${c[0]}${SUIT[c[1]]}</span>`).join(' '); const pct = (x) => `${Math.round(100 * x)}%`;
+const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' }; const NAMES = { SRP: 'Single-raised pot', '3BP': '3-bet pot', '4BP': '4-bet pot', Squeeze: 'Squeezed pot' };
+const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join(''); const pct = (x) => `${Math.round(100 * x)}%`;
+const PATHS = { tick: 'M3.5 8.5l3 3 6-7', cross: 'M4 4l8 8M12 4l-8 8', settings: 'M2 4h8M13 4h1M2 8h2M7 8h7M2 12h6M11 12h3M10 4a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0M4 8a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0M8 12a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0 -3 0', back: 'M10 3L5 8l5 5', study: 'M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5' };
+const icon = (n, size = 16) => `<svg viewBox="0 0 16 16" width="${size}" height="${size}" aria-hidden="true"><path d="${PATHS[n]}" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const MARK = (s) => `<svg class="mark" viewBox="0 0 512 512" width="${s}" height="${s}" aria-hidden="true"><rect width="512" height="512" rx="72" fill="#15171B"/><rect x="96" y="150" width="68" height="212" fill="#7FCDBB"/><rect x="180" y="150" width="68" height="212" fill="#F4C261"/><rect x="180" y="150" width="68" height="90" fill="#7FCDBB"/><rect x="264" y="150" width="68" height="212" fill="#F4C261"/><rect x="348" y="150" width="68" height="212" fill="#F08A6B"/><rect x="348" y="150" width="68" height="60" fill="#F4C261"/></svg>`;
+const place = (k) => k + 1 + (k > 4) + (k > 8); const RANKS = 'AKQJT98765432';
+const cellOf = (h) => { const a = RANKS.indexOf(h[0]), b = RANKS.indexOf(h[1]); return h.length === 2 ? [a, a] : h[2] === 's' ? [Math.min(a, b), Math.max(a, b)] : [Math.max(a, b), Math.min(a, b)]; };
+const mini = (title, g, { villain = false, mark = null, solo = false } = {}) => { let n = 0; const cells = g.map((row, i) => row.map((w, j) => { n += w * (i === j ? 6 : j > i ? 4 : 12); return `<b${mark && mark[0] === i && mark[1] === j ? ' class="mark"' : ''} style="grid-column:${place(j)};grid-row:${place(i)}"><i style="height:${Math.round(100 * w)}%"></i></b>`; }).join('')).join('');
+  return `<figure class="mini${villain ? ' villain' : ''}${solo ? ' solo' : ''}"><figcaption><span>${title}</span><span>${Math.round(n)}</span></figcaption><div class="paint" role="img">${cells}</div></figure>`; };
+const past = (rows) => `<div class="past">${rows.map(([st, acts]) => `<div><span class="street">${st}</span>${acts.map(([who, what]) => `<span><i>${who}</i> ${what}</span>`).join('')}</div>`).join('')}</div>`;
+const where = (who, stands, extra = '') => `<div class="where"><span class="who">${who}</span><span class="stands">${stands}</span><span class="grow"></span>${extra}</div>`;
+const strip = (rows, cols, cls = '') => `<div class="strip mock ${cls}">${rows.map((m) => `<button type="button" tabindex="-1"><b style="height:100%">${m.map((p, a) => [p, a]).reverse().map(([p, a]) => `<i style="height:${100 * p}%;background:var(${cols[a]})"></i>`).join('')}</b></button>`).join('')}</div>`;
+const cmp = (names, vals, ex, scale = 1) => `<ul class="cmp">${[0, 1].map((i) => `<li><span>${names[i]}</span><span class="bar"><i class="${i ? 'v' : ''}" style="width:${Math.min(100, 100 * scale * vals[i])}%"></i></span><span>${pct(vals[i])}</span></li>${ex && ex[i]?.length ? `<li><span></span><span class="ex">${ex[i].join(' ')}</span></li>` : ''}`).join('')}</ul>`;
+const eqbar = (names, eq, dp = 0) => `<div class="eq"><span>${names[0]} ${(100 * eq[0]).toFixed(dp)}%</span><span class="bar"><i style="width:${100 * eq[0]}%"></i><i class="v" style="width:${100 * eq[1]}%"></i></span><span class="v">${(100 * eq[1]).toFixed(dp)}% ${names[1]}</span></div>`;
+const fact = (t) => `<p class="fact">${t}</p>`; const hint = (t) => `<p class="hint">${t}</p>`;
 const app = document.getElementById('app'); const done = {};
-const grid = (g) => `<div class="grid">${g.flat().map((w) => `<i>${w > 0 ? `<b style="opacity:${0.25 + 0.75 * w}"></b>` : ''}</i>`).join('')}</div><div class="gl"><span>AA top left · suited above the diagonal</span><span>22</span></div>`;
-const bar = (rows, cols, cls = '') => `<div class="bar ${cls}">${rows.map((m) => `<u>${m.map((p, a) => `<b style="height:${100 * p}%;background:${cols[a]}"></b>`).join('')}</u>`).join('')}</div>`;
-const choice = (opts, n, col) => `<div class="opts${col ? ' col' : ''}" style="--n:${n ?? opts.length}">${opts.map(([v, label, sub]) => `<button data-v="${v}">${label}${sub ? `<small>${sub}</small>` : ''}</button>`).join('')}</div>`;
 
-// ---------- the drills: each a list of questions { head, ask, input, answer, after(given) }
 const DRILLS = [];
-// 1. ranges
-DRILLS.push({ id: 'whose', group: 0, name: 'Whose range is this?', sub: 'See a range, name the position and action', items: [2, 0, 3].map((k) => ({ head: grid(D.grids[k].g), ask: 'Whose range is this?', input: choice(D.grids.map((g, i) => [i, g.label]), 1, true), answer: String(k),
-  after: () => `<p class="why">${['The tightest open: big pairs, big aces and suited broadways, almost nothing offsuit below AJ.', 'The widest open: every pair, most suited hands and a wide band of offsuit broadways.', 'A calling range has a hole at the top: the best hands 3-bet, so AA, KK and AK are missing. What is left is suited and connected.', 'A 3-betting range is the top of the deck plus a few suited bluffs, with the middle left out.'][k]}</p><div class="rule">In the app this would cycle through all 49 preset ranges, coming back sooner to the ones you miss.</div>` })) });
-DRILLS.push({ id: 'inout', group: 0, name: 'In or out?', sub: 'See a position and a hand, say if it is in the range', items: D.inout.hands.slice(0, 5).map(([h, w]) => ({ head: `<div class="ctx">${D.inout.line}. <b>${D.inout.who}'s range.</b></div><div class="hero">${h}</div>`, ask: `Is it in ${D.inout.who}'s range?`, input: choice([['a', 'Always', 'or nearly'], ['s', 'Sometimes'], ['n', 'Never']]), answer: w >= 0.85 ? 'a' : w <= 0.05 ? 'n' : 's',
-  after: () => `<p class="why">${D.inout.who} calls with ${h} ${w >= 0.85 ? `nearly always (${pct(w)})` : w <= 0.05 ? 'never' : `${pct(w)} of the time`}.${h === 'AKo' ? ' It is too strong to call: it 3-bets.' : h === 'J7o' ? ' Offsuit and unconnected: it folds.' : w > 0.05 && w < 0.85 ? ' The rest of the time it 3-bets or folds.' : ''}</p>` })) });
-// 2. range advantage
-const C = D.cards; DRILLS.push({ id: 'card', group: 1, name: 'Whose card is it?', sub: 'One rank, two ranges: who holds more of it', items: ['K', '5', '9', 'A'].map((r) => { const [a, b] = C.share[r]; const ans = Math.abs(a - b) < 0.025 ? 'close' : a > b ? '0' : '1'; return { head: `<div class="ctx">${C.line}.</div><div class="hero">${r}</div>`, ask: 'Who has more hands with this rank in them, as a share of the range?', input: choice([['0', C.names[0]], ['close', 'Close'], ['1', C.names[1]]]), answer: ans,
-  after: () => `${[0, 1].map((i) => `<div class="rowc"><span>${C.names[i]}</span><div class="m"><i style="width:${250 * C.share[r][i]}%;background:var(--${i ? 'ip' : 'oop'})"></i></div><span>${pct(C.share[r][i])}</span></div>`).join('')}<p class="why">${ans === 'close' ? 'About the same share of each range. Nines sit where the two ranges overlap: both hold plenty of suited and connected nines.' : `${C.names[+ans]} has more of them.`} ${ans === 'close' ? '' : 'AKQJT'.includes(r) ? 'The opener holds more of the high cards: the caller 3-bets some of its best ones and the opener starts with more offsuit broadways.' : 'The caller holds more of the low and middle cards: it defends wide with suited and connected hands the opener folds.'}</p><div class="rule">When this rank is the top card on the board, this is who has more top pair.</div>` }; }) });
+// ---- 1. ranges
+DRILLS.push({ id: 'whose', group: 0, kind: 'Ranges', name: 'Whose range is this?', what: 'See a range, name the position and the action.', items: [2, 0, 3].map((k) => ({ left: () => mini('Range', D.grids[k].g, { solo: true }), text: 'Whose range is this?', one: true, options: D.grids.map((g, i) => [String(i), g.label]), answer: String(k),
+  after: () => fact(['The tightest open: big pairs, big aces and suited broadways, almost nothing offsuit below AJ.', 'The widest open: every pair, most suited hands and a wide band of offsuit broadways.', 'A calling range has a hole at the top: the best hands 3-bet, so AA, KK and AK are missing. What is left is suited and connected.', 'A 3-betting range is the top of the deck plus a few suited bluffs, with the middle left out.'][k]) + hint('All 49 preset ranges take turns here. The ones you miss come back sooner.') })) });
+DRILLS.push({ id: 'inout', group: 0, kind: 'Ranges', name: 'In or out?', what: 'See a position and a hand, say whether it is in the range.', items: D.inout.hands.slice(0, 5).map(([h, w]) => ({ left: (g) => past([['Pre', [['BU', 'raises'], ['BB', 'calls']]]]) + (g != null ? mini('BB calls a BU open', D.grids[2].g, { solo: true, mark: cellOf(h) }) : ''), plain: h, text: `Is it in BB's range?`, options: [['a', 'Always or nearly'], ['s', 'Sometimes'], ['n', 'Never']], answer: w >= 0.85 ? 'a' : w <= 0.05 ? 'n' : 's',
+  after: () => fact(`BB calls with ${h} ${w >= 0.85 ? `nearly always (${pct(w)})` : w <= 0.05 ? 'never' : `${pct(w)} of the time`}.${h === 'AKo' ? ' It is too strong to call: it 3-bets.' : w > 0.05 && w < 0.85 ? ' The rest of the time it 3-bets or folds.' : ''}`) })) });
+// ---- 2. range advantage
+const C = D.cards; const WORD = { A: 'an ace', K: 'a king', 9: 'a nine', 5: 'a five' };
+DRILLS.push({ id: 'card', group: 1, kind: 'Range advantage', name: 'Whose card is it?', what: 'One rank, two ranges: who holds more of it.', items: ['K', '5', '9', 'A'].map((r) => { const [a, b] = C.share[r]; const ans = Math.abs(a - b) < 0.025 ? 'close' : a > b ? '0' : '1'; return { left: (g) => past([['Pre', [['BU', 'raises'], ['BB', 'calls']]]]) + (g != null ? `<div class="minis">${mini('BB', D.grids[2].g)}${mini('BU', D.grids[1].g, { villain: true })}</div>` : ''), plain: r, text: `Who has more hands with ${WORD[r]} in them, as a share of the range?`, options: [['0', 'BB'], ['close', 'Close'], ['1', 'BU']], answer: ans,
+  after: () => cmp(C.names, C.share[r], null, 2.5) + fact(`${ans === 'close' ? 'About the same share of each range. Nines sit where the two ranges overlap.' : `${C.names[+ans]} has more of them.`} ${ans === 'close' ? '' : 'AK'.includes(r) ? 'The opener holds more of the high cards: the caller 3-bets some of its best ones, and the opener starts with more offsuit broadways.' : 'The caller holds more of the low and middle cards: it defends with suited and connected hands the opener folds.'}`) + hint('When this rank is the top card on the board, this is who has more top pair.') }; }) });
 const reason = (q) => { const [a, b] = q.sides; const w = q.answer; const N = q.names; const sg = Math.sign(q.eq[0] - 0.5); const d = (k) => Math.sign(a[k] - b[k]); const v = (k, i) => pct(q.sides[i][k]);
-  if (w === 'close') return { key: null, text: `It is close: ${pct(q.eq[0])} against ${pct(q.eq[1])}. ${a.tp > b.tp ? N[0] : N[1]} has more top pair or better, but ${a.pair > b.pair ? N[0] : N[1]} has more pairs and more of the biggest hands. They cancel.` };
+  if (w === 'close') return { key: null, text: `It is close. ${a.tp > b.tp ? N[0] : N[1]} has more top pair or better, but ${a.pair > b.pair ? N[0] : N[1]} has more pairs and more of the biggest hands. They cancel.` };
   const W = N[w], L = N[1 - w];
   if (q.bettor != null) return { key: d('big') === sg ? 'big' : 'tp', text: `${N[q.bettor]} bet. A river bet is made of strong hands and bluffs, so after a bet the bettor nearly always has the advantage. The count agrees: ${v('big', w)} of ${W}'s range is two pair or better, against ${v('big', 1 - w)}.` };
   if (q.street === 5 && d('tp') !== sg && d('big') === sg) return { key: 'big', text: `Top pair is not the bar on the river. Top pair or better is level, but ${v('big', w)} of ${W}'s range is two pair or better, against ${v('big', 1 - w)} of ${L}'s.` };
   if (d('tp') === sg) return { key: 'tp', text: `${W} has more top pair or better on this board: ${v('tp', w)} of the range, against ${v('tp', 1 - w)} of ${L}'s.` };
-  return { key: 'pair', text: `The exception. ${L} has more top pair or better (${v('tp', 1 - w)} against ${v('tp', w)}), but ${W} has far more pairs of any kind: ${v('pair', w)} against ${v('pair', 1 - w)}. On a low board those pairs are worth a lot.` }; };
-const RULE = { 3: '<b>Flop:</b> who has more top pair or better, as a share of the range.', 4: '<b>Turn:</b> the same count, then lean towards whoever has been betting.', 5: '<b>River:</b> the bar rises to two pair or better, and whoever bet usually has it.' };
-DRILLS.push({ id: 'adv', group: 1, name: 'Who has the range advantage?', sub: 'A board and the action so far', items: D.adv.map((q) => { const tell = (t) => t.replace(/OOP/g, q.names[0]).replace(/IP/g, q.names[1]); const hist = q.hist.map((h, i) => `${['Flop', 'Turn'][i]}: ${tell(h)}.`).join(' '); const cur = q.street === 3 ? '' : `${q.street === 4 ? 'Turn' : 'River'}: ${tell(q.cur)}.`;
-  return { head: `<div class="board">${cards(q.board)}</div><div class="ctx">${NAMES[q.pre]}. <b>${q.names[0]}</b> out of position, <b>${q.names[1]}</b> in position.${hist || cur ? `<br>${hist} ${cur}` : ''}</div>`, ask: 'Who has the range advantage?', input: choice([['0', q.names[0], 'out of position'], ['close', 'Close', 'within 2 points'], ['1', q.names[1], 'in position']]), answer: String(q.answer),
-    after: () => { const r = reason(q); const row = (k, name, ex) => `<div class="count${r.key && r.key !== k ? ' dim' : ''}"><div class="name">${name}${r.key === k ? '<small>this decides it</small>' : ''}</div>${[0, 1].map((i) => `<div class="rowc"><span>${q.names[i]}</span><div class="m"><i style="width:${100 * q.sides[i][k]}%;background:var(--${i ? 'ip' : 'oop'})"></i></div><span>${pct(q.sides[i][k])}</span></div>${ex && r.key === k && q.sides[i][ex].length ? `<div class="exs">${q.sides[i][ex].join(' ')}</div>` : ''}`).join('')}</div>`;
-      return `<div class="split"><span style="width:${100 * q.eq[0]}%;background:var(--oop)">${q.names[0]} ${pct(q.eq[0])}</span><span style="width:${100 * q.eq[1]}%;background:var(--ip)">${pct(q.eq[1])} ${q.names[1]}</span></div><p class="why">${r.text}</p>${row('tp', 'Top pair or better', 'exTp')}${q.street === 5 || r.key === 'big' ? row('big', 'Two pair or better', 'exBig') : ''}${row('pair', 'Any pair or better', null)}<div class="rule">${RULE[q.street]}</div>`; } }; }) });
-const T = D.turn; DRILLS.push({ id: 'moved', group: 1, name: 'Did the card move it?', sub: 'A turn card lands: who does it help', items: T.turns.map((t) => { const d = t.eq - T.eq; const ans = Math.abs(d) < 0.008 ? 'same' : d > 0 ? '0' : '1'; const r = t.card[0]; return { head: `<div class="board">${cards(T.flop)} <span style="color:var(--ink-3)">→</span> ${cards(t.card)}</div><div class="ctx">${NAMES[T.pre]}, ${T.names[0]} against ${T.names[1]}. On the flop ${T.names[1]} was slightly ahead (${pct(1 - T.eq)} to ${pct(T.eq)}). No betting yet.</div>`, ask: 'Who does this card help?', input: choice([['0', T.names[0]], ['same', 'No one', 'under a point'], ['1', T.names[1]]]), answer: ans,
-  after: () => `<div class="split"><span style="width:${100 * t.eq}%;background:var(--oop)">${T.names[0]} ${(100 * t.eq).toFixed(1)}%</span><span style="width:${100 * (1 - t.eq)}%;background:var(--ip)">${(100 * (1 - t.eq)).toFixed(1)}% ${T.names[1]}</span></div><p class="why">${ans === 'same' ? 'It barely moves.' : `It moves ${Math.abs(100 * d).toFixed(1)} points towards ${T.names[+ans]}.`} ${'AK'.includes(r) ? `A high card is the opener's card: ${T.names[1]} has more hands with ${r === 'A' ? 'an ace' : 'a king'} in them, so more of its range just made top pair.` : r === '6' ? `A middle card that connects with the board is the caller's card: ${T.names[0]} has more of the sixes, eights and tens that make straights and two pair here.` : `The third spade helps the caller a little: its range has more suited hands, so more flushes.`}</p><div class="rule">Ask the "whose card is it?" question of the new card.</div>` }; }) });
-// 3. actions
-const RV = D.river; const SH = { 'Check everything': [10, 6, 5, 4, 4, 5, 8, 12, 13, 13], 'Top, some rest': [34, 33, 31, 27, 21, 20, 22, 38, 66, 74], 'Both ends': [82, 53, 19, 9, 8, 21, 59, 86, 92, 91], 'Top half': [29, 33, 38, 37, 41, 66, 82, 86, 88, 82], 'Bet everything': [74, 72, 66, 62, 71, 77, 80, 86, 92, 91] };
-const rbet = RV.actions.filter((a) => a.kind !== 'check').reduce((t, a) => t + a.freq, 0); const rhead = `<div class="board">${cards(RV.board)}</div><div class="ctx">Single-raised pot, SB against BB. You are SB, first to act on the river.</div><div class="counts"><div><b>${pct(RV.top70[0])}</b>of your hands beat 70% of his</div><div><b>${pct(RV.top70[1])}</b>of his beat 70% of yours</div></div>`;
-const rafter = `<div>${bar(RV.bar, ['var(--pass)', 'var(--agg)'])}<div class="ends" style="margin-top:4px"><span>your weakest</span><span>your strongest</span></div></div><div class="key"><span><i style="background:var(--pass)"></i>check</span><span><i style="background:var(--agg)"></i>bet 75%</span></div>`;
-DRILLS.push({ id: 'range', group: 2, name: 'How does the range bet?', sub: 'How often, and in what shape', items: [
-  { head: rhead, ask: 'How much of your range bets?', input: choice([['a', 'Under 20%'], ['b', '20 to 45%'], ['c', '45 to 70%'], ['d', 'Over 70%']], 2), answer: 'b', after: () => `${rafter}<p class="why">You bet ${pct(rbet)} of the range. You have twice his share of strong hands, so you can bet. But most of your range is middling hands that win often enough by checking.</p>` },
-  { head: rhead, ask: 'Which shape does the betting take?', input: `<div class="opts shapes">${Object.entries(SH).map(([n, p]) => `<button data-v="${n}"><span class="mini">${p.map((v) => `<b style="height:${v}%"></b>`).join('')}</span>${n}</button>`).join('')}</div>`, answer: 'Both ends', after: () => `${rafter}<p class="why">Both ends. The strongest hands bet for value and the weakest bet as bluffs, because they cannot win a showdown. The middle checks.</p><div class="rule">A betting range is nearly always one of these five shapes. Name the shape and you have most of the answer.</div>` }] });
+  return { key: 'pair', text: `The exception. ${L} has more top pair or better, but ${W} has far more pairs of any kind: ${v('pair', w)} against ${v('pair', 1 - w)}. On a low board those pairs are worth a lot.` }; };
+const RULE = { 3: 'Flop: who has more top pair or better, as a share of the range.', 4: 'Turn: the same count, then lean towards whoever has been betting.', 5: 'River: the bar rises to two pair or better, and whoever bet usually has it.' };
+const hist = (q) => { const t = (x) => x.replace('checked through', `${q.names[0]}|checks ${q.names[1]}|checks`).replace('OOP checked, IP bet, OOP called', `${q.names[0]}|checks ${q.names[1]}|bets ${q.names[0]}|calls`).replace('OOP bet, IP called', `${q.names[0]}|bets ${q.names[1]}|calls`); const rows = [['Pre', [[NAMES[q.pre], '']]]]; q.hist.forEach((h, i) => rows.push([['Flop', 'Turn'][i], t(h).split(' ').map((p) => p.split('|'))])); if (q.street > 3 && /bets|checks/.test(q.cur)) rows.push([q.street === 4 ? 'Turn' : 'River', q.cur.replace('OOP checks, IP bets', `${q.names[0]}|checks ${q.names[1]}|bets`).replace('OOP bets', `${q.names[0]}|bets`).replace('OOP checks', `${q.names[0]}|checks`).split(' ').map((p) => p.split('|'))]); return past(rows); };
+DRILLS.push({ id: 'adv', group: 1, kind: 'Range advantage', name: 'Who has the range advantage?', what: 'A board and the action so far.', items: D.adv.map((q) => ({ board: q.board, left: () => hist(q) + where('', `${q.names[0]} out of position · ${q.names[1]} in position`), text: 'Who has the range advantage?', options: [['0', q.names[0]], ['close', 'Close'], ['1', q.names[1]]], answer: String(q.answer),
+  after: () => { const r = reason(q); const blk = (k, name, ex) => `<div class="blk${r.key && r.key !== k ? ' dim' : ''}"><b><span>${name}</span>${r.key === k ? '<em>decides it</em>' : ''}</b>${cmp(q.names, [q.sides[0][k], q.sides[1][k]], ex && r.key === k ? [q.sides[0][ex], q.sides[1][ex]] : null)}</div>`; return eqbar(q.names, q.eq) + fact(r.text) + blk('tp', 'Top pair or better', 'exTp') + (q.street === 5 || r.key === 'big' ? blk('big', 'Two pair or better', 'exBig') : '') + blk('pair', 'Any pair or better') + hint(RULE[q.street]); } })) });
+const T = D.turn; DRILLS.push({ id: 'moved', group: 1, kind: 'Range advantage', name: 'Did the card move it?', what: 'A turn card lands: who does it help.', items: T.turns.map((t) => { const d = t.eq - T.eq; const ans = Math.abs(d) < 0.008 ? 'same' : d > 0 ? '0' : '1'; const r = t.card[0]; return { board: `${T.flop} ${t.card}`, left: () => past([['Pre', [['BU', 'raises'], ['BB', 'calls']]], ['Flop', [['BB', `${pct(T.eq)}`], ['BU', `${pct(1 - T.eq)}`]]]]) + where('No betting yet', `The turn is ${cards(t.card)}`), text: 'Who does this card help?', options: [['0', 'BB'], ['same', 'No one'], ['1', 'BU']], answer: ans,
+  after: () => eqbar(T.names, [t.eq, 1 - t.eq], 1) + fact(`${ans === 'same' ? 'It barely moves.' : `It moves ${Math.abs(100 * d).toFixed(1)} points towards ${T.names[+ans]}.`} ${'AK'.includes(r) ? `A high card is the opener's card: BU has more hands with ${WORD[r]} in them, so more of its range just made top pair.` : r === '6' ? `A middle card that connects with the board is the caller's card: BB has more of the hands that make straights and two pair here.` : `The third spade helps the caller a little: its range has more suited hands.`}`) + hint('Ask "whose card is it?" of the new card.') }; }) });
+// ---- 3. actions
+const RV = D.river; const SH = { 'Check all': [10, 6, 5, 4, 4, 5, 8, 12, 13, 13], 'Top, some rest': [34, 33, 31, 27, 21, 20, 22, 38, 66, 74], 'Both ends': [82, 53, 19, 9, 8, 21, 59, 86, 92, 91], 'Top half': [29, 33, 38, 37, 41, 66, 82, 86, 88, 82], 'Bet all': [74, 72, 66, 62, 71, 77, 80, 86, 92, 91] };
+const rbet = RV.actions.filter((a) => a.kind !== 'check').reduce((t, a) => t + a.freq, 0); const rleft = (g) => past([['Flop', [['SB', 'checks'], ['BB', 'checks']]], ['Turn', [['SB', 'checks'], ['BB', 'checks']]]]) + where('Hero SB', 'First to act', '<span class="chips">Pot 6</span><span class="chips">Behind 97</span>') + `<div class="tally"><span><b>${pct(RV.top70[0])}</b>of your hands beat 70% of his</span><span><b>${pct(RV.top70[1])}</b>of his beat 70% of yours</span></div>` + (g != null ? `<div>${strip(RV.bar, ['--act-check', '--act-big'])}<div class="ends" style="margin-top:6px"><span>weakest</span><span>strongest</span></div></div><div class="keyrow"><span><i class="sw" style="background:var(--act-check)"></i>X</span><span><i class="sw" style="background:var(--act-big)"></i>B75</span></div>` : '');
+DRILLS.push({ id: 'range', group: 2, kind: 'Actions', name: 'How does the range bet?', what: 'How often, and in what shape.', items: [
+  { board: RV.board, left: rleft, text: 'How much of your range bets?', options: [['a', 'Under 20%'], ['b', '20 to 45%'], ['c', '45 to 70%'], ['d', 'Over 70%']], answer: 'b', after: () => fact(`You bet ${pct(rbet)} of the range. You have twice his share of strong hands, so you can bet. But most of your range is middling hands that win often enough by checking.`) },
+  { board: RV.board, left: rleft, text: 'Which shape does the betting take?', shapes: SH, options: Object.keys(SH).map((n) => [n, n]), answer: 'Both ends', after: () => fact('Both ends. The strongest hands bet for value and the weakest bet as bluffs, because they cannot win a showdown. The middle checks.') + hint('A betting range is nearly always one of these five shapes.') }] });
 const F = D.face; const fb = Math.round(100 * F.toCall / (F.pot - F.toCall));
-DRILLS.push({ id: 'line', group: 2, name: 'Where is the line?', sub: 'Facing a bet: how much of your range continues', items: [{ head: `<div class="board">${cards(F.board)}</div><div class="ctx">Single-raised pot, SB against UTG. You are UTG. River: SB bets ${fb}% of the pot.</div>`, ask: 'Tap the bar where calling starts.', tap: true,
-  input: `<div>${bar(F.bar.map(() => [1]), ['var(--idle)'], 'tap')}<div class="ends"><span>your weakest</span><span>your strongest</span></div></div>`, answer: 1 - F.cont,
-  after: (g) => `<div>${`<div class="bar" style="position:relative">${F.bar.map((m) => `<u>${m.map((p, a) => `<b style="height:${100 * p}%;background:${['var(--fold)', 'var(--pass)'][a]}"></b>`).join('')}</u>`).join('')}<div class="vline g dn" style="left:${100 * g}%"><span>you</span></div><div class="vline" style="left:${100 * (1 - F.cont)}%"><span>line</span></div><div class="vline dn" style="left:${100 * (1 - F.priceRank)}%;opacity:.7"><span>price</span></div></div>`}<div class="ends"><span>your weakest</span><span>your strongest</span></div></div><div class="key"><span><i style="background:var(--fold)"></i>fold</span><span><i style="background:var(--pass)"></i>call</span></div><p class="why">You continue with the top ${pct(F.cont)} of your range. ${pct(F.priceRank)} of your hands have the ${pct(F.price)} equity a call needs, but the line sits above the price: the hands just over it are beaten too often by what he bets.</p><div class="rule">Facing a bet, the whole answer is one line on your range.</div>` }] });
-DRILLS.push({ id: 'hand', group: 2, name: 'What does this hand do?', sub: 'One hand, then its twin', items: [
-  { head: `<div class="board">${cards('Ad8h5d7d')}</div><div class="ctx">Single-raised pot, SB against BB. Flop checked through; SB checks the turn. You are BB.</div><div class="hero">${cards('Td9s')}</div><div class="ctx">37% equity</div>`, ask: 'What does it do, and why?', input: choice([['x1', 'Check: it wins often enough at showdown'], ['b1', 'Bet: it wins nothing unless it improves'], ['b2', 'Bet: worse hands will call']], 1, true), answer: 'b1', after: () => `<p class="why"><b>It always bets.</b> Every bit of its 37% comes from cards still to come. Checked down, it wins nothing. He folds about half the time, and when called it can still get there.</p>` },
-  { head: `<div class="board">${cards('Ad8h5d7d')}</div><div class="ctx">Same spot.</div><div class="hero">${cards('3h3s')}</div><div class="ctx">36% equity: the same as ${'T♦9♠'}</div>`, ask: 'What does it do?', input: choice([['x', 'Check'], ['b', 'Bet 75%']]), answer: 'x', after: () => `<p class="why"><b>It never bets.</b> Nearly all of its 36% is showdown: it is ahead of his missed hands now and has almost nothing to improve to.</p><div class="pairrow"><b>${cards('Td9s')}</b><div class="meter"><i style="width:0%;background:var(--ink)"></i><i style="width:37%;background:var(--accent)"></i></div><span>bets</span><b>${cards('3h3s')}</b><div class="meter"><i style="width:34%;background:var(--ink)"></i><i style="width:2%;background:var(--accent)"></i></div><span>checks</span></div><div class="key"><span><i style="background:var(--ink)"></i>wins now</span><span><i style="background:var(--accent)"></i>wins if it improves</span></div><div class="rule">Same equity, opposite play. Among weak hands, what is still to come decides who bets.</div>` }] });
+DRILLS.push({ id: 'line', group: 2, kind: 'Actions', name: 'Where is the line?', what: 'Facing a bet: how much of your range continues.', items: [{ board: F.board, tap: true, answer: 1 - F.cont, text: 'Tap the strip where calling starts.',
+  left: (g) => past([['Flop', [['SB', 'checks'], ['UTG', 'checks']]], ['Turn', [['SB', 'checks'], ['UTG', 'checks']]], ['River', [['SB', `B${fb}`]]]]) + where('Hero UTG', `Facing B${fb}`) + (g == null ? `<div>${strip(F.bar.map(() => [0]), ['--surface'], 'tap')}<div class="ends" style="margin-top:6px"><span>weakest</span><span>strongest</span></div></div>` : `<div><div class="strip mock">${F.bar.map((m) => `<button type="button" tabindex="-1"><b style="height:100%"><i style="height:${100 * m[1]}%;background:var(--act-check)"></i><i style="height:${100 * m[0]}%;background:var(--act-fold)"></i></b></button>`).join('')}<span class="pin you" style="left:${100 * g}%"><u>you</u></span><span class="pin" style="left:${100 * (1 - F.cont)}%"><u>line</u></span><span class="pin thin" style="left:${100 * (1 - F.priceRank)}%"><u>price</u></span></div><div class="ends"><span>weakest</span><span>strongest</span></div></div><div class="keyrow"><span><i class="sw" style="background:var(--act-fold)"></i>F</span><span><i class="sw" style="background:var(--act-check)"></i>C</span></div>`),
+  after: () => fact(`You continue with the top ${pct(F.cont)} of your range. ${pct(F.priceRank)} of your hands have the ${pct(F.price)} equity a call needs, but the line sits above the price: the hands just over it are beaten too often by what he bets.`) + hint('Facing a bet, the whole answer is one line on your range.') }] });
+const hleft = () => past([['Flop', [['SB', 'checks'], ['BB', 'checks']]], ['Turn', [['SB', 'checks']]]]) + where('Hero BB', 'Checked to you', '<span class="chips">Pot 6</span><span class="chips">Behind 97</span>');
+DRILLS.push({ id: 'hand', group: 2, kind: 'Actions', name: 'What does this hand do?', what: 'One hand, then its twin.', items: [
+  { board: 'Ad 8h 5d 7d', left: hleft, hand: 'Td9s', sub: '37% equity', one: true, text: 'What does it do, and why?', options: [['x1', 'Check: it wins often enough at showdown', '--act-check'], ['b1', 'Bet: it wins nothing unless it improves', '--act-big'], ['b2', 'Bet: worse hands will call', '--act-big']], answer: 'b1', after: () => fact('It always bets. Every bit of its 37% comes from cards still to come. Checked down, it wins nothing. He folds about half the time, and when called it can still get there.') },
+  { board: 'Ad 8h 5d 7d', left: hleft, hand: '3h3s', sub: '36% equity, the same as T♦9♠', text: 'What does it do?', options: [['x', 'X', '--act-check'], ['b', 'B75', '--act-big']], answer: 'x', after: () => fact('It never bets. Nearly all of its 36% is showdown: it is ahead of his missed hands now and has almost nothing to improve to.') + `<div class="twin"><b>${cards('Td9s')}</b><span class="bar"><i style="width:0%;background:var(--ink)"></i><i style="width:37%;background:var(--accent)"></i></span><span>bets</span><b>${cards('3h3s')}</b><span class="bar"><i style="width:34%;background:var(--ink)"></i><i style="width:2%;background:var(--accent)"></i></span><span>checks</span></div><div class="keyrow"><span><i class="sw" style="background:var(--ink)"></i>wins now</span><span><i class="sw" style="background:var(--accent)"></i>wins if it improves</span></div>` + hint('Same equity, opposite play. Among weak hands, what is still to come decides who bets.') }] });
 
-// ---------- the shell
-const GROUPS = [['Ranges', 'know what each position holds'], ['Range advantage', 'who is ahead on this board'], ['Actions', 'what the range and the hand do']];
-function menu() { app.innerHTML = `<div><div class="tag">Mock-up · every drill, real spots</div><h1>Pareto drills</h1></div><p>Three things to learn, in order: the ranges, who has the advantage, and what to do about it. Each drill asks first and explains after.</p>` + GROUPS.map(([g, sub], i) => `<div class="group"><h2>${i + 1}. ${g}<small>${sub}</small></h2>${DRILLS.filter((d) => d.group === i).map((d) => `<button class="item" data-id="${d.id}"><span>${d.name}<small>${d.sub}</small></span><span class="st${done[d.id] ? ' done' : ''}">${done[d.id] ?? `${d.items.length} ›`}</span></button>`).join('')}</div>`).join('') + `<p class="note">Every range, equity, count and action bar is real: the app's preset ranges and solved spots. The explanation sentences are written for the mock-up. Each drill shows only a handful of questions; in the app they would be drawn fresh and missed ones would come back.</p>`;
-  app.querySelectorAll('.item').forEach((b) => { b.onclick = () => run(DRILLS.find((d) => d.id === b.dataset.id)); }); window.scrollTo(0, 0); }
-function run(d) { let at = 0; const res = [];
-  const show = (given) => { const it = d.items[at]; const dots = d.items.map((_, i) => `<i class="${i < res.length ? (res[i] ? 'good' : 'bad') : i === at ? 'on' : ''}"></i>`).join('');
-    let html = `<div class="top"><button class="back">‹ Drills</button><span class="dots">${dots}</span></div><div class="tag">${d.name}</div>${it.head}<div class="q">${it.ask}</div>${given != null && it.tap ? '' : it.input}`;
-    if (given != null) { const ok = res[res.length - 1]; html += `<div class="after"><div class="verdict ${ok ? 'good' : 'bad'}">${it.tap ? (ok ? 'Close: within a few hands of the line.' : given > it.answer ? 'Too tight: the line is further left.' : 'Too loose: the line is further right.') : ok ? 'Right.' : 'Not this time.'}</div>${it.after(given)}<button class="go">${at + 1 < d.items.length ? 'Next' : 'Done'}</button></div>`; }
-    app.innerHTML = `<section class="screen">${html}</section>`; app.querySelector('.back').onclick = menu;
-    if (given != null) { app.querySelectorAll('.opts button').forEach((b) => { b.disabled = true; if (b.dataset.v === it.answer) b.dataset.res = 'right'; else if (b.dataset.v === given) b.dataset.res = 'wrong'; }); app.querySelector('.go').onclick = () => { at++; if (at < d.items.length) { show(null); window.scrollTo(0, 0); } else { done[d.id] = `${res.filter(Boolean).length} of ${res.length} ✓`; menu(); } }; }
-    else if (it.tap) { const t = app.querySelector('.tap'); t.onclick = (e) => { const r = t.getBoundingClientRect(); const g = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); res.push(Math.abs(g - it.answer) <= 0.07); show(g); }; }
-    else app.querySelector('.opts').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; res.push(b.dataset.v === it.answer); show(b.dataset.v); }; };
+// ---- the shell
+const GROUPS = ['1 · Ranges', '2 · Range advantage', '3 · Actions'];
+function menu() { app.className = ''; app.innerHTML = `<div class="rule"></div><main class="home"><h1>${MARK(44)}<span>Train</span></h1><p class="lede">Three things to learn, in order: the ranges, who has the advantage, and what to do about it. Each drill asks first and explains after.</p>` + GROUPS.map((g, i) => `<h3>${g}</h3><nav class="choose">${DRILLS.filter((d) => d.group === i).map((d) => `<a data-id="${d.id}" role="button" tabindex="0"><span><span class="kind">${d.name}</span><span class="what">${d.what}</span></span><span class="n${done[d.id] ? ' done' : ''}">${done[d.id] ?? d.items.length}</span></a>`).join('')}</nav>`).join('') + `<p class="note">A mock-up in the app's own styles. Every range, equity, count and strip is real: the preset ranges and solved spots. The explanation sentences are written for the mock-up, and each drill shows only a few questions.</p></main>`;
+  app.querySelectorAll('.choose a').forEach((b) => { b.onclick = () => run(DRILLS.find((d) => d.id === b.dataset.id)); }); window.scrollTo(0, 0); }
+function run(d) { let at = 0; const res = []; app.className = 'train';
+  const show = (given) => { const it = d.items[at]; const ok = given != null ? res[res.length - 1] : null; const good = res.filter(Boolean).length;
+    const opts = it.tap ? '' : `<div class="opts${it.one ? ' one' : ''}${it.shapes ? ' shapes' : ''}${given != null && !ok ? ' missed' : ''}" role="group" aria-label="Answers">${it.options.map(([v, label, col]) => { const mark = given == null ? '' : v === it.answer ? 'right' : v === given ? 'wrong' : ''; return `<button type="button" class="opt ${mark}" data-v="${v}" aria-pressed="${v === given}"${given != null ? ' disabled' : ''}>${it.shapes ? `<span class="shape">${it.shapes[v].map((x) => `<b style="height:${x}%"></b>`).join('')}</span>` : ''}${col ? `<i class="sw" style="background:var(${col})"></i>` : ''}<span>${label}</span>${mark ? icon(mark === 'right' ? 'tick' : 'cross', 14) : ''}</button>`; }).join('')}</div>`;
+    const verdict = given == null ? '' : `<div class="verdict ${ok ? 'good' : 'bad'}" role="status">${icon(ok ? 'tick' : 'cross', 14)}<span>${it.tap ? (ok ? 'Close: within a few hands of the line' : given > it.answer ? 'Too tight: the line is further left' : 'Too loose: the line is further right') : ok ? 'Correct' : 'Not this time'}</span></div>${it.after(given)}<button type="button" class="primary" id="next">${at + 1 < d.items.length ? 'Next' : 'Done'}</button>`;
+    app.innerHTML = `<div class="rule">${res.length ? `<i style="flex:${good};background:var(--ok)"></i><i style="flex:${res.length - good};background:var(--danger)"></i>` : ''}</div><main><header><a class="logo" role="button" tabindex="0" aria-label="All drills">${MARK(26)}</a><div class="board">${it.board ? cards(it.board) : ''}</div><span class="grow"></span><span class="score"><b>${good}</b>/${res.length}</span><button type="button" class="icon" aria-label="Settings">${icon('settings')}</button></header>
+      <section class="t-stage"><div class="left">${it.left ? it.left(given) : ''}</div><div class="ask" aria-live="polite"><div class="kind">${d.kind} · ${at + 1} of ${d.items.length}</div>${it.hand ? `<h2>${cards(it.hand)}</h2>` : it.plain ? `<h2 class="plain">${it.plain}</h2>` : ''}${it.sub ? `<div class="sub">${it.sub}</div>` : ''}<p class="text">${it.text}</p>${opts}${verdict}</div></section></main>`;
+    app.querySelector('.logo').onclick = menu;
+    if (given != null) app.querySelector('#next').onclick = () => { at++; if (at < d.items.length) { show(null); window.scrollTo(0, 0); } else { done[d.id] = `${res.filter(Boolean).length}/${res.length}`; menu(); } };
+    else if (it.tap) { const t = app.querySelector('.strip.tap'); t.onclick = (e) => { const r = t.getBoundingClientRect(); const g = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)); res.push(Math.abs(g - it.answer) <= 0.07); show(g); }; }
+    else app.querySelector('.opts').onclick = (e) => { const b = e.target.closest('.opt'); if (!b) return; res.push(b.dataset.v === it.answer); show(b.dataset.v); }; };
   show(null); window.scrollTo(0, 0); }
 menu();
 </script>

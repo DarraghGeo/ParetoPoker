@@ -32,4 +32,5 @@ D['adv'] = json.load(open('../advantage/mockup/questions.json')); D['turn'] = js
 c = json.load(open('../charts/mockup/data.json')); D['river'] = {k: c['river'][k] for k in ('spot', 'board', 'actions', 'top70', 'shape', 'profile')}; D['river']['bar'] = [b['mix'] for b in reversed(c['river']['mine'])]
 D['face'] = {k: c['face'][k] for k in ('spot', 'board', 'pot', 'toCall', 'cont', 'price', 'priceRank')}; D['face']['bar'] = [b['mix'] for b in reversed(c['face']['mine'])]
 print({k: (len(v) if isinstance(v, list) else list(v)[:6]) for k, v in D.items()}); print(D['inout']['hands']); print({r: v for r, v in D['cards']['share'].items()})
-open('pareto-drills.html', 'w').write(open('drills.template.html').read().replace('/*DATA*/', json.dumps(D, separators=(',', ':')))) if __import__('os').path.exists('drills.template.html') else None
+css = open('../../web/style.css').read()
+open('pareto-drills.html', 'w').write(open('hifi.head.html').read().replace('/*APPCSS*/', css) + open('hifi.body.html').read().replace('/*DATA*/', json.dumps(D, separators=(',', ':'))))

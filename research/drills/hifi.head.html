@@ -1,0 +1,64 @@
+<title>Pareto drills</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/*APPCSS*/
+/* ---- the mock-up's own additions, in the app's idiom: mono labels, hairlines, hero in ink and villain faded ---- */
+body{padding:0}
+main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main.home{min-height:0;justify-content:flex-start;gap:18px}
+.home .lede{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);max-width:52ch;text-wrap:pretty}
+.home h3{margin:14px 0 0;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.home .choose{gap:8px}
+.home .choose a{min-height:0;padding:14px 16px;gap:4px;flex-direction:row;align-items:center;cursor:pointer}
+.home .choose a>span:first-child{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.home .choose .kind{font:500 16px/22px var(--sans)}
+.home .choose .what{font:400 13px/18px var(--sans)}
+.home .choose .n{font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
+.home .choose .n.done{color:var(--ok)}
+.home .note{margin:10px 0 0;font:400 13px/20px var(--sans);color:var(--ink-3);text-wrap:pretty;max-width:60ch}
+.train main{gap:20px}
+.t-stage{gap:24px}
+.ask h2.plain{letter-spacing:.02em}
+.ask .sub{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.left .mini.solo{max-width:360px}
+.cmp{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.cmp li{display:grid;grid-template-columns:36px minmax(0,1fr) 40px;gap:10px;align-items:center}
+.cmp li span:last-child{text-align:right;color:var(--ink)}
+.cmp .bar{height:4px;display:flex;background:var(--line)}
+.cmp .bar i{display:block;height:4px;background:var(--ink)}
+.cmp .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.cmp li .ex{grid-column:2/4;color:var(--ink-3);text-align:left}
+.blk{display:flex;flex-direction:column;gap:6px}
+.blk>b{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
+.blk>b em{font-style:normal;color:var(--accent)}
+.blk.dim{opacity:.5}
+.eq{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font:500 12px/16px var(--mono);color:var(--ink)}
+.eq .bar{height:4px;display:flex}.eq .bar i{display:block;height:4px;background:var(--ink)}.eq .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.eq .v{color:var(--ink-3)}
+.strip.mock{position:relative;height:72px;margin:6px 0 0}
+.strip.mock button{cursor:default}
+.strip.mock.tap,.strip.mock.tap button{cursor:pointer}
+.strip.mock .pin{position:absolute;top:-6px;bottom:-6px;width:0;border-left:2px solid var(--ink);z-index:3;pointer-events:none}
+.strip.mock .pin.you{border-color:var(--accent)}
+.strip.mock .pin.thin{border-left:1px dashed var(--ink-2)}
+.strip.mock .pin u{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font:400 11px/14px var(--mono);color:var(--ink);text-decoration:none;white-space:nowrap}
+.strip.mock .pin.you u{color:var(--accent);bottom:auto;top:100%}
+.strip.mock .pin.thin u{color:var(--ink-3)}
+.strip.mock .pin:not(.you):not(.thin) u{font-weight:500}
+.ends{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3);margin-top:16px}
+.keyrow{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2);align-items:center}
+.keyrow .sw{margin-right:6px}
+.opts.shapes{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.opts.shapes .opt{flex-direction:column;padding:8px 2px;font:400 11px/14px var(--sans);text-align:center;gap:6px}
+.opts.shapes .opt svg{position:absolute;display:none}
+.shape{display:flex;width:100%;max-width:56px;height:26px;background:var(--act-check);align-items:flex-end}
+.shape b{flex:1;background:var(--act-big);display:block}
+.opts.one{grid-template-columns:minmax(0,1fr)}
+.tally{display:flex;gap:24px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.tally b{display:block;font:500 22px/26px var(--mono);color:var(--ink)}
+.twin{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:center;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.twin .bar{height:4px;display:flex;background:var(--line)}.twin .bar i{display:block;height:4px}
+.twin b{font:500 13px/18px var(--mono);color:var(--ink)}
+.backlink{border:0;padding:0;font:400 12px/16px var(--mono);color:var(--ink-3)}
+</style>
