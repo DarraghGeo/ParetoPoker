@@ -2,6 +2,7 @@
 import { ask } from './questions.js';
 import { RANGE_TYPES, rangeAsk } from './ranges.js';
 import { spotOf } from './spot.js';
+import { stash, unstash } from './stash.js';
 
 /** Boards kept solved ahead of the one on screen; times round a board, with other hands, when nothing waits behind it. */
 const AHEAD = 3; const ROUNDS = 4;
@@ -22,12 +23,23 @@ export function want(game) {
   game.worker.postMessage({ type: 'deal', id: game.busy.id, street: game.busy.street, config: snapshot(game.config) });
 }
 
+/** A board as the queue holds it, from what the worker dealt (kept with it, so it can be stashed for the next visit). */
+export const boardOf = (dealt) => ({ street: dealt.street, spots: dealt.decisions.map(spotOf), at: 0, round: 0, got: 0, dealt });
+
 /** A board dealt: its positions join the queue (a flop a card away from the last goes in anywhere, so the two do not always follow). */
 function dealt(game, data) {
   game.failed = 0; game.error = '';
   if (!data.decisions.length) return;
-  const board = { street: data.street, spots: data.decisions.map(spotOf), at: 0, round: 0, got: 0 };
-  game.boards.splice(data.near ? Math.floor(Math.random() * (game.boards.length + 1)) : game.boards.length, 0, board);
+  game.boards.splice(data.near ? Math.floor(Math.random() * (game.boards.length + 1)) : game.boards.length, 0, boardOf(data));
+  stash(game);
+}
+
+/** The boards kept from the last visit join the queue ahead of any dealt since; the first question is asked if none is up. */
+export async function resume(game) {
+  const kept = await unstash(game.config);
+  if (!kept.length) return;
+  game.boards.unshift(...kept.map(boardOf));
+  if (!game.q) advance(game); else want(game);
 }
 
 /** A message from the worker: progress, a board dealt, an error, or a solve for Study. */
@@ -67,6 +79,7 @@ export function advance(game) {
     if (q || (game.board && goesRound(game, game.board))) continue;
     game.board = game.boards.shift() ?? null;
     if (!game.board) break;
+    stash(game);
   }
   q ??= rangeAsk(game.prefs);
   if (!q || q.street === 'preflop') game.spot = null;

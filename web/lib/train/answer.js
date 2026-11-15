@@ -3,6 +3,7 @@ import { dayKey } from '../days.js';
 import { advance, want } from './flow.js';
 import { record, savePrefs, setDrill, toggle, VIEWS } from './prefs.js';
 import { isRight, namesOf } from './questions.js';
+import { stash } from './stash.js';
 
 /** Grade the answer and record it with its spot, for the day's score and the last questions. */
 export function grade(game) {
@@ -26,7 +27,7 @@ export function startDrill(game, drill) { setDrill(game.prefs, drill); game.turn
 export function setChoice(game, group, key) {
   if (!toggle(game.prefs, group, key)) return;
   if (group === 'types') { if (game.q && !game.q.done && !game.prefs.types[game.q.type]) advance(game); return; }
-  game.boards = game.boards.filter((b) => game.prefs.streets[b.street]);
+  game.boards = game.boards.filter((b) => game.prefs.streets[b.street]); stash(game);
   if (game.busy && !game.prefs.streets[game.busy.street]) { game.busy = null; game.progress = null; }
   if (game.board && !game.prefs.streets[game.board.street] && !game.q?.done) { game.board = null; advance(game); return; }
   want(game);
