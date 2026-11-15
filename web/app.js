@@ -18,7 +18,7 @@ const state = {
   // flop and turn reasons, as the worker has worked them out: `${node}|${dealt}|${combo}`
   told: new Map(), asked: new Set(),
   // the analytical look at a hand, likewise, and which of the two the panel shows
-  looked: new Map(), tab: 'why',
+  looked: new Map(), ranged: new Map(), tab: 'why',
 };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config);
   // an earlier visit saved one raise size as `raise`
@@ -64,7 +64,7 @@ worker.onmessage = ({ data }) => {
     state.sub = null; turnTo(state.versions.length - 1);
   }
   if (data.type === 'solved') {
-    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.looked.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.looked.clear(); state.ranged.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
     if (data.provisional) { state.status = `Train's solve, ${data.exploit.toFixed(2)}%; refining`; $('state').dataset.busy = '1'; }
     // the finer solve of a street shown from Train's: stay where the walk has got to since
     if (state.refining && !data.provisional && !state.open) version().pos = { node: state.node, dealt: [...state.dealt] };
@@ -104,6 +104,7 @@ worker.onmessage = ({ data }) => {
   }
   if (data.type === 'decision') show(data.decision);
   if (data.type === 'looked') { state.looked.set(`${data.id}|${state.dealt.join(' ')}|${data.combo ?? null}`, data.look ?? { types: [], spread: null }); renderWhy(); }
+  if (data.type === 'ranged') { state.ranged.set(`${data.id}|${state.dealt.join(' ')}`, data.said ?? { line: '', reasons: [] }); if (!state.hand) renderWhy(); }
   if (data.type === 'told') { state.told.set(`${data.id}|${state.dealt.join(' ')}|${data.combo}`, data.told ?? { line: '', reasons: [], silent: data.error ?? '' }); renderWhy(); }
 };
 // ---- a solve that takes a while says so: what is being solved, how far along, and a way to stop ----
@@ -493,18 +494,26 @@ function renderWhy() {
     + (state.tab === 'look' ? lookHtml(row, strata) : (told.line ? said(told.line, told.detail, 'lead') : '') + reasons.map((r) => said(r.text, r.detail, r.quiet ? 'quiet' : '')).join(''));
 }
 /** No hand picked: the range to act, what it does, and the two ranges set side by side. */
+const said1 = (r) => said(r.text, r.detail, r.quiet ? 'quiet' : '');
 function rangeWhy() {
   const s = state.survey; const d = state.decision;
   if (!s || !d) { $('why').innerHTML = ''; return; }
   const strata = strataOf(d.actions); const p = state.spot;
   const first = !(state.nodes?.[state.node]?.round > 0) && state.nodes?.[state.node]?.parent < 0;
   let body = '';
+  // what the range does here and why, from the worker: asked for once a decision
+  let said = '';
+  if (state.tab !== 'look') {
+    const key = `${state.node}|${state.dealt.join(' ')}`; const got = state.ranged.get(key);
+    if (got) said = (got.line ? `<p class="lead">${esc(got.line)}</p>` : '') + got.reasons.map((r) => said1(r)).join('');
+    else { said = '<p class="quiet">Working out the reasons\u2026</p>'; if (!state.asked.has(`range|${key}`) && !state.scrub) { state.asked.add(`range|${key}`); worker.postMessage({ type: 'range', job: state.job, id: state.node, dealt: state.dealt }); } }
+  }
   if (state.tab === 'look') body = lookHtml(null, strata);
   else if (p?.facts) {
-    body = (p.sentences ?? []).map((t, i) => `<p${i ? '' : ' class="lead"'}>${esc(t)}</p>`).join('')
+    body = said + (said ? '' : (p.sentences ?? []).map((t, i) => `<p${i ? '' : ' class="lead"'}>${esc(t)}</p>`).join(''))
       + `<table class="facts"><thead><tr><th></th><th>OOP</th><th>IP</th></tr></thead><tbody>${p.facts.map(([k, a, b]) => `<tr><th>${esc(k)}</th><td>${esc(a)}</td><td>${esc(b)}</td></tr>`).join('')}</tbody></table>`
       + (first ? '' : '<p class="quiet">The two ranges as the spot starts.</p>');
-  }
+  } else body = said;
   $('why').innerHTML = `<h2>${d.seat === 'oop' ? 'OOP' : 'IP'} range</h2>`
     + `<div class="mix"><span class="bar">${bar(s.mix, strata)}</span><div class="nums">${d.actions.map((a, k) => (s.mix[k] > 0.004 ? `<span><i class="sw" style="background:var(${COLORS[strata[k]]})"></i>${esc(a.label)} ${pct(s.mix[k])}</span>` : '')).join('')}</div></div>`
     + `<div class="seg tabs" role="tablist"><button type="button" role="tab" data-tab="why" aria-pressed="${state.tab === 'why'}">Range</button><button type="button" role="tab" data-tab="look" aria-pressed="${state.tab === 'look'}">Analysis</button></div>`

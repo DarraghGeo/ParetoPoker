@@ -316,6 +316,65 @@ const pts = (x) => `${Math.round(100 * x)}%`;
 const pot = (x) => (Math.abs(x) >= 3 ? `${Math.round(Math.abs(x))}%` : `${(Math.round(Math.abs(x) * 10) / 10).toFixed(1)}%`);
 const floorHalf = (x) => Math.floor(x * 2) / 2;
 
+const RANKS_WORD = ['a deuce', 'a three', 'a four', 'a five', 'a six', 'a seven', 'an eight', 'a nine', 'a ten', 'a jack', 'a queen', 'a king', 'an ace'];
+const SUIT_WORD = ['a spade', 'a heart', 'a diamond', 'a club'];
+/** What a coach would call a hand, as a kind of hand. */
+function kindOf(fs, board, combo, x) {
+  if (x.made >= 6) return 'full houses'; if (x.made === 5) return 'flushes'; if (x.made === 4) return 'straights';
+  if (x.made === 3 && x.own > 0) return x.pocket ? 'sets' : 'trips'; if (x.own >= 2 || (x.made === 2 && x.own >= 1 && x.boardMade === 0)) return 'two pair';
+  const fd = x.flushOuts >= 8; const sd = x.straightOuts >= 8; const gut = x.straightOuts >= 4 && !sd;
+  if (x.own === 1) { const base = x.pair === 'overpair' ? 'overpairs' : x.pair === 'top pair' ? 'top pair' : x.pair === 'underpair' ? 'small pocket pairs' : x.pair === 'bottom pair' ? 'bottom pair' : x.pocket ? 'pocket pairs under the top card' : 'middle pair'; return fd || sd ? `${base === 'top pair' || base === 'overpairs' ? 'top pair' : 'a pair'} with a draw` : base; }
+  if (fd && (sd || gut)) return 'combo draws'; if (fd) return 'flush draws'; if (sd) return 'open-ended straight draws'; if (gut) return 'gutshots';
+  const top = Math.max(...board.map((c) => fs.rankOf(c))); const lo = Math.min(fs.rankOf(fs.COMBO_CARDS[2 * combo]), fs.rankOf(fs.COMBO_CARDS[2 * combo + 1]));
+  return x.high === 12 ? 'ace high' : board.length < 5 && lo > top ? 'overcards' : x.high === 11 ? 'king high' : 'low unpaired hands';
+}
+/** A range as a coach would describe it: its kinds of hand, biggest first, each with the hand that is most of it. `skip`: cards that cannot be in it. */
+export function groupsOf(fs, board, range, skip = []) {
+  const by = new Map(); let all = 0;
+  for (let v = 0; v < fs.COMBOS; v++) {
+    const w = range[v]; if (!(w > 1e-9)) continue; const a = fs.COMBO_CARDS[2 * v], b = fs.COMBO_CARDS[2 * v + 1]; if (skip.includes(a) || skip.includes(b) || board.includes(a) || board.includes(b)) continue;
+    const name = kindOf(fs, board, v, features(fs, board, v)); let g = by.get(name); if (!g) by.set(name, g = { name, weight: 0, top: -1, topW: 0 }); g.weight += w; all += w; if (w > g.topW) { g.topW = w; g.top = v; }
+  }
+  return [...by.values()].sort((x, y) => y.weight - x.weight).map((g) => ({ name: g.name, share: all > 0 ? g.weight / all : 0, example: pretty(fs.formatCombo(g.top)) }));
+}
+/** "top pair (K♥Q♥) and flush draws (J♠T♠)": the main kinds of a range, each with its example. */
+const sayGroups = (groups, n = 2, floor = 0.12) => { const g = groups.filter((x, i) => i === 0 || x.share >= floor).slice(0, n); return listOf(g.map((x) => `${x.name} (${x.example})`)); };
+/** Cards named the way a player would: "a diamond, a queen or an ace". Null when no short description fits. */
+function sayCards(fs, good, all) {
+  if (!good.length) return null; const isGood = new Set(good); const cands = [];
+  for (let su = 0; su < 4; su++) { const of = all.filter((c) => fs.suitOf(c) === su); const hit = of.filter((c) => isGood.has(c)); if (of.length && hit.length / of.length >= 0.75 && hit.length >= 2) cands.push({ name: SUIT_WORD[su], cards: hit }); }
+  for (let r = 0; r < 13; r++) { const of = all.filter((c) => fs.rankOf(c) === r); const hit = of.filter((c) => isGood.has(c)); if (of.length && hit.length / of.length >= 0.75 && hit.length >= 2) cands.push({ name: RANKS_WORD[r], cards: hit }); }
+  cands.sort((x, y) => y.cards.length - x.cards.length); const picked = []; const covered = new Set();
+  for (const k of cands) { const fresh = k.cards.filter((c) => !covered.has(c)); if (fresh.length < 2 && picked.length) continue; picked.push(k.name); k.cards.forEach((c) => covered.add(c)); if (covered.size >= 0.7 * good.length || picked.length >= 3) break; }
+  if (!picked.length || covered.size < 0.6 * good.length) return null;
+  return picked.length === 1 ? picked[0] : `${picked.slice(0, -1).join(', ')} or ${picked[picked.length - 1]}`;
+}
+/**
+ * The street after a call (or a check behind), for one hand: on each card that can come, how often he bets, and whether
+ * the hand can call that bet on its price. Read from the solution: his range after this line, his strategy on that card.
+ */
+export function nextStreet(s, c, edgeIndex) {
+  const { fs, f } = s; if (!s.solution || f.board.length >= 5) return null; const child = f.nodes[f.node.edges[edgeIndex].child]; if (!child || child.kind !== 'chance') return null;
+  const N = fs.COMBOS; const A = fs.COMBO_CARDS[2 * c]; const B = fs.COMBO_CARDS[2 * c + 1]; const mask = new Float64Array(N); mask[c] = 1; const root = child.edges[0].child; const cards = []; const all = [];
+  for (let card = 0; card < 52; card++) {
+    if (f.board.includes(card) || card === A || card === B) continue; all.push(card);
+    let st; try { st = study(fs, s.solution, f.nodes, root, [...(s.dealt ?? []), card]); } catch { st = null; } if (!st) continue;
+    // where he may bet: at once if he is first, else after our check
+    let at = st; if (st.f.me === f.me) { const x = st.f.node.edges.findIndex((e) => e.kind === 'check'); if (x < 0 || f.nodes[st.f.node.edges[x].child].kind !== 'decision') continue; try { at = study(fs, s.solution, f.nodes, st.f.node.edges[x].child, [...(s.dealt ?? []), card]); } catch { at = null; } if (!at) continue; }
+    const bets = at.f.node.edges.map((e, i) => (e.kind === 'bet' || e.kind === 'allin' ? i : -1)).filter((i) => i >= 0); if (!bets.length) { cards.push({ card, bets: 0, can: true }); continue; }
+    const range = new Float64Array(N); let total = 0, bet = 0, add = 0;
+    for (let v = 0; v < N; v++) { const w = at.f.mine[v]; if (!(w > 0)) continue; const x = fs.COMBO_CARDS[2 * v], y = fs.COMBO_CARDS[2 * v + 1]; if (x === A || x === B || y === A || y === B) continue; total += w; for (const i of bets) { const p = at.sigma(v, i); if (p > 0) { range[v] += w * p; bet += w * p; add += w * p * (f.nodes[at.f.node.edges[i].child].invested[at.f.me] - at.f.node.invested[at.f.me]); } } }
+    if (!(total > 0)) continue; const freq = bet / total; if (freq < 0.01) { cards.push({ card, bets: freq, can: true }); continue; }
+    const size = add / bet; const e = equityVs(fs, at.f.board, mask, range)[c]; const price = size / (at.f.node.pot + 2 * size); cards.push({ card, bets: freq, can: !Number.isNaN(e) && e >= price, equity: e, price });
+  }
+  if (!cards.length) return null;
+  const bets = cards.reduce((t, k) => t + k.bets, 0) / cards.length; const weight = cards.reduce((t, k) => t + k.bets, 0); const can = weight > 0 ? cards.reduce((t, k) => t + (k.can ? k.bets : 0), 0) / weight : 1;
+  const good = cards.filter((k) => k.can).map((k) => k.card);
+  const allCards = cards.map((k) => k.card); const bad = cards.filter((k) => !k.can).map((k) => k.card); const share = good.length / cards.length;
+  const named = share >= 0.9 ? 'on almost any card' : share <= 0.08 ? 'on almost no card' : share > 0.6 ? (sayCards(fs, bad, allCards) ? `unless ${sayCards(fs, bad, allCards)} comes` : null) : (sayCards(fs, good, allCards) ? `when ${sayCards(fs, good, allCards)} comes` : null);
+  return { bets, can, good: good.length, of: cards.length, named: named ?? `on about ${good.length} of the ${cards.length} cards`, street: f.board.length === 3 ? 'turn' : 'river' };
+}
+
 /**
  * One move ahead, against what he actually does (research/insight/FREQUENCIES.md: this rule, with the next street read the
  * same way, gives up about a twentieth of a percent of the pot on turns and rivers against the solver's own play).
@@ -333,11 +392,11 @@ export function oneMove(s, c) {
   const actions = node.edges.map((edge, a) => {
     const child = f.nodes[edge.child]; const to = child.invested ? child.invested[f.me] : me; const paid = to - me; const out = { kind: edge.kind, label: edge.label, sigma: s.sigma(c, a), paid, parts: [], value: 0 };
     if (edge.kind === 'fold') return out;
-    if (child.kind !== 'decision') { const e = eqVs(f.his); const total = pot + (Math.max(to, him) - me) + (Math.max(to, him) - him); out.equity = e; out.value = e == null ? 0 : e * total - paid; out.price = paid > 0 ? paid / total : 0; return out; }
+    if (child.kind !== 'decision') { out.his = groupsOf(fs, f.board, f.his, [A, B]); const e = eqVs(f.his); const total = pot + (Math.max(to, him) - me) + (Math.max(to, him) - him); out.equity = e; out.value = e == null ? 0 : e * total - paid; out.price = paid > 0 ? paid / total : 0; return out; }
     const s2 = study(fs, s.solution, f.nodes, edge.child, s.dealt ?? []); if (!s2) return out;
     child.edges.forEach((reply, b) => {
       const r = new Float64Array(N); for (let v = 0; v < N; v++) if (f.his[v] > 0) r[v] = f.his[v] * s2.sigma(v, b); const share = live(r) / all; if (share <= 0.0005) return;
-      const after = f.nodes[reply.child]; const hisTo = after.invested ? after.invested[1 - f.me] : him; const e = reply.kind === 'fold' ? eqVs(r) : eqVs(r); const part = { kind: reply.kind, label: reply.label, share, equity: e };
+      const after = f.nodes[reply.child]; const hisTo = after.invested ? after.invested[1 - f.me] : him; const e = eqVs(r); const part = { kind: reply.kind, label: reply.label, share, equity: e, groups: groupsOf(fs, f.board, r, [A, B]) };
       if (reply.kind === 'fold') part.value = pot;
       else if (reply.kind === 'check' || reply.kind === 'call') { const I = Math.max(to, hisTo); part.value = (e ?? 0) * (pot + (I - me) + (I - him)) - paid; }
       else { const callValue = (e ?? 0) * (pot + (hisTo - me) + (hisTo - him)) - (hisTo - me); part.calls = callValue > -paid; part.value = Math.max(-paid, callValue); }
@@ -455,28 +514,47 @@ export function explainStreet(s, m, T) {
       }
     }
   }
-  // ---- one move ahead: why the action it takes comes out best, against what he actually does ----
+  // ---- one move ahead: why the action it takes comes out best, against what he actually does, with his hands named ----
   {
     const mv = oneMove(s, m.combo); const top = taken[0];
     if (mv && top != null) {
-      const x = mv.actions[top]; const sum = (pick) => x.parts.filter(pick).reduce((t, p) => t + p.share, 0); const avg = (pick) => { const ps = x.parts.filter((p) => pick(p) && p.equity != null); const w = ps.reduce((t, p) => t + p.share, 0); return w > 0 ? ps.reduce((t, p) => t + p.share * p.equity, 0) / w : null; };
+      const x = mv.actions[top]; const parts = (pick) => x.parts.filter(pick); const sum = (pick) => parts(pick).reduce((t, p) => t + p.share, 0);
+      const avg = (pick) => { const ps = parts((p) => pick(p) && p.equity != null); const w = ps.reduce((t, p) => t + p.share, 0); return w > 0 ? ps.reduce((t, p) => t + p.share * p.equity, 0) / w : null; };
+      const merged = (pick) => { const by = new Map(); for (const pt of parts(pick)) for (const g of pt.groups ?? []) { const k = by.get(g.name) ?? { name: g.name, share: 0, example: g.example, best: 0 }; k.share += pt.share * g.share; if (pt.share * g.share > k.best) { k.best = pt.share * g.share; k.example = g.example; } by.set(g.name, k); } const all = [...by.values()].reduce((t, g) => t + g.share, 0) || 1; return [...by.values()].map((g) => ({ ...g, share: g.share / all })).sort((a, b) => b.share - a.share); };
       const had = (e) => (e < 0.2 ? 'almost nothing' : e < 0.35 ? 'some equity' : e < 0.5 ? 'a good deal of equity' : 'the better of it');
       const stand = (e) => (e >= 0.6 ? 'well ahead' : e >= 0.5 ? 'ahead' : e >= 0.4 ? 'a little behind' : e >= 0.25 ? 'behind' : 'far behind'); const against = (e) => (e >= 0.5 ? `${stand(e)} of` : stand(e));
       const sort = (y) => (['check', 'call', 'fold'].includes(y.kind) ? y.kind : 'wager');
-      const other = mv.actions.map((y, i) => i).filter((i) => i !== top && sort(mv.actions[i]) !== sort(x) && mv.actions[i].kind !== 'fold').sort((i, j) => mv.actions[j].value - mv.actions[i].value)[0]; const worthOf = (v) => (v < 0 ? `${pot(v)} of the pot less than nothing` : `${pot(v)} of the pot`); const versus = other != null ? ` Counted one move ahead, ${label(top)} is worth ${worthOf(x.value)} and ${label(other)} ${worthOf(mv.actions[other].value)}.` : ''; const best = other == null || x.value >= mv.actions[other].value;
-      if (x.kind === 'fold') { const call = mv.actions.find((y) => y.kind === 'call'); if (call && call.equity != null) reasons.push({ id: 'move', text: call.equity < call.price ? `It does not have the price to call: it is ${against(call.equity)} the hands that bet.` : river ? `It has the price on paper, and folds all the same: the cards it holds make his bets stronger than they look.` : `It has the raw equity to call, but not once the bets still to come are counted: equity that has to face another bet is worth less than its number.`, detail: `A call needs ${pts(call.price)} and the hand has ${pts(call.equity)} against the range that bet.` }); }
-      else if (x.kind === 'call' && x.equity != null) reasons.push({ id: 'move', text: x.equity >= x.price ? (x.equity >= 0.5 ? `It calls: it is ${against(x.equity)} the hands that bet.` : `It has the price to call: it is ${against(x.equity)} the hands that bet, and the price asks for less.`) : `On equity alone it is short of the price, and calls for what the cards to come can still bring.`, detail: `A call needs ${pts(x.price)} and the hand has ${pts(x.equity)} against the range that bet.${versus}` });
-      else if (x.kind === 'check' && !x.parts.length && x.equity != null) reasons.push({ id: 'move', text: `Checking keeps what the hand has: it sees the next card or the showdown with its equity intact.`, detail: `${pts(x.equity)} equity against his range here.${versus}` });
+      const other = mv.actions.map((y, i) => i).filter((i) => i !== top && sort(mv.actions[i]) !== sort(x) && mv.actions[i].kind !== 'fold').sort((i, j) => mv.actions[j].value - mv.actions[i].value)[0];
+      const worthOf = (v) => (v < 0 ? `${pot(v)} of the pot less than nothing` : `${pot(v)} of the pot`); const versus = other != null ? ` Counted one move ahead, ${label(top)} is worth ${worthOf(x.value)} and ${label(other)} ${worthOf(mv.actions[other].value)}.` : '';
+      // the street after a call: how often he bets again, and on which cards this hand can go on
+      const later = (a) => { const nx = river ? null : nextStreet(s, m.combo, a); if (!nx || nx.bets < 0.1) return null; const cards = nx.named;
+        return { text: `He ${often(nx.bets, 'bets')} the ${nx.street} again, and this hand can call ${cards}.`, quit: `he ${often(nx.bets, 'bets')} the ${nx.street} again, and this hand could keep calling only ${cards}`, detail: ` On the ${nx.street} he bets ${pts(nx.bets)} of the time on average; this hand has the price to call ${pts(nx.can)} of those bets.`, nx }; };
+      if (x.kind === 'fold') {
+        const ci = mv.actions.findIndex((y) => y.kind === 'call'); const call = mv.actions[ci];
+        if (call && call.equity != null) {
+          const his = call.his?.length ? ` He is betting ${sayGroups(call.his)}.` : ''; const nx = call.equity >= call.price ? later(ci) : null;
+          const text = call.equity < call.price ? `It does not have the price to call: it is ${against(call.equity)} the hands that bet.${his}` : river ? `It has the price on paper, and folds all the same: the cards it holds make his bets stronger than they look.${his}` : nx && nx.nx.can <= 0.6 ? `It has the price for this bet, but not for the next: ${nx.quit}.${his}` : m.actions[top].sigma < 0.85 ? `It is close. It has the price on paper and the solution calls with it part of the time; equity that has to face another bet is worth a little less than its number.${his}` : `It has the raw equity to call, but equity that has to face another bet is worth less than its number.${his}`;
+          reasons.push({ id: 'move', text, detail: `A call needs ${pts(call.price)} and the hand has ${pts(call.equity)} against the range that bet.${nx ? nx.detail : ''}` });
+        }
+      } else if (x.kind === 'call' && x.equity != null) {
+        const his = x.his?.length ? ` He is betting ${sayGroups(x.his)}.` : ''; const nx = later(top);
+        const first = x.equity >= 0.5 ? `It calls: it is ${against(x.equity)} the hands that bet.` : x.equity >= x.price ? `It has the price to call: it is ${against(x.equity)} the hands that bet, and the price asks for less.` : 'On equity alone it is short of the price, and calls for what the cards to come can still bring.';
+        reasons.push({ id: 'move', text: `${first}${his}${nx ? ` ${nx.text}` : ''}`, detail: `A call needs ${pts(x.price)} and the hand has ${pts(x.equity)} against the range that bet.${nx ? nx.detail : ''}${versus}` });
+      } else if (x.kind === 'check' && !x.parts.length && x.equity != null) reasons.push({ id: 'move', text: 'Checking keeps what the hand has: it sees the next card or the showdown with its equity intact.', detail: `${pts(x.equity)} equity against his range here.${versus}` });
       else if (x.parts.length) {
-        const folds = sum((p) => p.kind === 'fold'); const eFold = avg((p) => p.kind === 'fold'); const eCall = avg((p) => p.kind === 'call' || p.kind === 'check'); const pushes = sum((p) => !['fold', 'call', 'check'].includes(p.kind)); const ePush = avg((p) => !['fold', 'call', 'check'].includes(p.kind));
-        let text; const numbers = [];
+        const isFold = (p) => p.kind === 'fold'; const isCall = (p) => p.kind === 'call' || p.kind === 'check'; const isPush = (p) => !isFold(p) && !isCall(p);
+        const folds = sum(isFold); const eFold = avg(isFold); const eCall = avg(isCall); const pushes = sum(isPush); const ePush = avg(isPush); const gf = merged(isFold); const gc = merged(isCall); const gp = merged(isPush); let text; const numbers = [];
         if (x.kind === 'check') {
-          text = pushes >= 0.5 ? `It checks expecting a bet: he ${often(pushes, 'bets')} when checked to, and against those hands it is ${stand(ePush ?? 0)}.` : `It checks, and he ${often(1 - pushes, 'checks')} behind: against those hands it is ${stand(eCall ?? 0)}.`;
+          text = pushes >= 0.5 ? `It checks expecting a bet: he ${often(pushes, 'bets')} when checked to${gp.length ? `, with ${sayGroups(gp)}` : ''}, and against those hands it is ${stand(ePush ?? 0)}.` : `It checks, and he ${often(1 - pushes, 'checks')} behind${gc.length ? ` with ${sayGroups(gc)}` : ''}: against those hands it is ${stand(eCall ?? 0)}.${pushes >= 0.15 && gp.length ? ` When he does bet it is ${sayGroups(gp)}.` : ''}`;
           numbers.push(`After a check he bets ${pts(pushes)} of the time${ePush != null ? ` (this hand has ${pts(ePush)} against those hands)` : ''}${eCall != null ? ` and checks the rest (${pts(eCall)} against those)` : ''}.`);
         } else {
-          const denial = !river && eFold != null && eFold < 0.8;
-          text = `${best ? `${label(top)} comes out best. ` : ''}He ${often(folds, 'folds')}${best ? '' : ` to ${label(top)}`}${folds >= 0.05 && eFold != null ? (river ? '' : `, and the hands he folds had ${had(1 - eFold)} against this one`) : ''}. When he calls it is ${stand(eCall ?? 0)}.`;
-          if (denial && (eCall ?? 0) < 0.5 && folds >= 0.2) text += ' The bet earns from the folds, not from the calls.'; else if ((eCall ?? 0) >= 0.5 && folds < 0.5) text += ' The bet earns from the calls.';
+          const best = other == null || x.value >= mv.actions[other].value; const act = label(top);
+          const foldPart = folds < 0.03 ? 'He hardly ever folds' : `He ${often(folds, 'folds')}${gf.length ? `: ${sayGroups(gf)}` : ''}`;
+          const denial = folds >= 0.05 && eFold != null && !river ? ` Those hands had ${had(1 - eFold)} against this one${1 - eFold >= 0.2 ? ', which the bet takes away' : ''}.` : '';
+          const callPart = gc.length ? ` He calls with ${sayGroups(gc)}; against those this hand is ${stand(eCall ?? 0)}.` : '';
+          const pushPart = pushes >= 0.08 && gp.length ? ` He raises with ${sayGroups(gp)}.` : '';
+          const earn = (eCall ?? 0) < 0.5 && folds >= 0.2 ? ' The bet earns from the folds, not from the calls.' : (eCall ?? 0) >= 0.5 && folds < 0.5 ? ' The bet earns from the calls.' : '';
+          text = `${best ? `${act.charAt(0).toUpperCase()}${act.slice(1)} comes out best. ` : ''}${foldPart}${best ? '' : ` to ${act}`}.${denial}${callPart}${pushPart}${earn}`;
           numbers.push(`He folds ${pts(folds)}${eFold != null ? ` (those hands had ${pts(1 - eFold)} equity against this one)` : ''}, calls ${pts(sum((p) => p.kind === 'call'))}${eCall != null ? ` (this hand has ${pts(eCall)} against those)` : ''}${pushes >= 0.005 ? `, raises ${pts(pushes)}` : ''}.`);
         }
         reasons.push({ id: 'move', text, detail: numbers.join(' ') + versus });
@@ -683,3 +761,69 @@ export function analysis(s, c) {
   if (cards) { curves = {}; for (const h of b.hands) { const list = []; for (const k of cards) if (!Number.isNaN(k.eq[h])) list.push(Math.round(k.eq[h] * 100) / 100); curves[h] = list.sort((x, y) => x - y); } }
   return { name: one ? fs.formatCombo(c) : null, types, spread, curves };
 }
+
+/**
+ * The range as a whole at a decision: what it does, and why, read from the solution and said the way a coach would,
+ * with hands for examples. Returns { line, reasons: [{ id, text, detail }] }.
+ *   to act:  how much bets, who holds the strong hands, what he does to the bet, which hands bet and which check,
+ *            and what he does when checked to;
+ *   facing:  what he is betting, how much of the range goes on, and which hands fold, call and raise.
+ */
+export function explainRange(s) {
+  const { fs, f } = s; if (!s.solution) return null; const N = fs.COMBOS; const node = f.node; const facing = s.toCall > 0; const river = f.board.length === 5; const reasons = [];
+  const W = f.mine.reduce((t, w) => t + (w > 0 ? w : 0), 0); if (!(W > 0)) return null;
+  const kinds = node.edges.map((e) => e.kind); const freq = s.actions.map((a) => a.freq); const by = (pick) => { const r = new Float64Array(N); for (let c = 0; c < N; c++) if (f.mine[c] > 0) { let p = 0; node.edges.forEach((e, a) => { if (pick(e.kind, a)) p += s.sigma(c, a); }); r[c] = f.mine[c] * p; } return r; };
+  const share = (pick) => freq.reduce((t, x, a) => t + (pick(kinds[a], a) ? x : 0), 0); const wager = (k) => !['check', 'call', 'fold'].includes(k);
+  // who holds the strong hands: 65% equity or better against the other range
+  const eMine = s.equity(); const eHis = equityVs(fs, f.board, f.his, f.mine); const strongOf = (range, e) => { let t = 0, w = 0; const r = new Float64Array(N); for (let c = 0; c < N; c++) if (range[c] > 0 && !Number.isNaN(e[c])) { w += range[c]; if (e[c] >= 0.65) { t += range[c]; r[c] = range[c]; } } return { share: w > 0 ? t / w : 0, range: r }; };
+  const mine = strongOf(f.mine, eMine); const his = strongOf(f.his, eHis); const ahead = (() => { let t = 0, w = 0; for (let c = 0; c < N; c++) if (f.mine[c] > 0 && !Number.isNaN(eMine[c])) { t += f.mine[c] * eMine[c]; w += f.mine[c]; } return w > 0 ? t / w : 0.5; })();
+  const strength = () => {
+    const d = mine.share - his.share; const g1 = groupsOf(fs, f.board, mine.range); const g2 = groupsOf(fs, f.board, his.range);
+    const text = d >= 0.07 ? `You hold more of the strong hands: ${g1.length ? sayGroups(g1) : 'the best of them'}. He has fewer.` : d <= -0.07 ? `He holds more of the strong hands here: ${g2.length ? sayGroups(g2) : 'the best of them'}.` : `Neither of you holds clearly more of the strong hands${ahead >= 0.54 ? ', though your range is ahead overall' : ahead <= 0.46 ? ', though his range is ahead overall' : ''}.`;
+    return { id: 'strong', text, detail: `Hands with 65% equity or more: ${pts(mine.share)} of your range, ${pts(his.share)} of his. Your range has ${pts(ahead)} equity.` };
+  };
+  let line;
+  if (!facing) {
+    const bet = share(wager); const bets = node.edges.map((e, a) => (wager(e.kind) ? a : -1)).filter((a) => a >= 0); const main = bets.length ? bets.reduce((b, a) => (freq[a] > freq[b] ? a : b)) : -1; const small = bets.length > 1 && main === bets[0]; const big = bets.length > 1 && main === bets[bets.length - 1];
+    line = bet >= 0.8 ? `You bet almost your whole range here${small ? ', mostly the small size' : big ? ', mostly the big size' : ''}.` : bet <= 0.2 ? 'You check almost your whole range here.' : bet >= 0.6 ? `You bet most of your range here${small ? ', mostly small' : big ? ', mostly big' : ''}, and check the rest.` : bet <= 0.4 ? 'You check most of your range here, and bet the rest.' : 'You bet about half your range here and check the other half.';
+    reasons.push(strength());
+    // what he does to the bet the range makes most
+    if (main >= 0 && f.nodes[node.edges[main].child].kind === 'decision') {
+      const s2 = study(fs, s.solution, f.nodes, node.edges[main].child, s.dealt ?? []);
+      if (s2) {
+        const reply = (pick) => { const r = new Float64Array(N); let t = 0, w = 0; for (let v = 0; v < N; v++) if (s2.f.mine[v] > 0) { let p = 0; s2.f.node.edges.forEach((e, b) => { if (pick(e.kind)) p += s2.sigma(v, b); }); r[v] = s2.f.mine[v] * p; t += r[v]; w += s2.f.mine[v]; } return { share: w > 0 ? t / w : 0, groups: groupsOf(fs, f.board, r) }; };
+        const fo = reply((k) => k === 'fold'); const ra = reply((k) => wager(k)); const ca = reply((k) => k === 'call'); const size = (f.nodes[node.edges[main].child].invested[f.me] - node.invested[f.me]) / node.pot; const price = size / (1 + size);
+        let text = `Against ${name(node.edges[main])} he ${often(fo.share, 'folds')}${fo.groups.length && fo.share >= 0.05 ? `: ${sayGroups(fo.groups)}` : ''}.`;
+        if (ca.groups.length) text += ` He calls with ${sayGroups(ca.groups)}.`;
+        if (ra.share >= 0.08 && ra.groups.length) text += ` He raises ${ra.share >= 0.2 ? 'a lot' : 'now and then'}, with ${sayGroups(ra.groups)}${ra.share >= 0.15 && bet <= 0.5 ? ': that is what keeps your middling hands checking' : ''}.`;
+        if (fo.share >= price + 0.07 && bet >= 0.5 && ra.share < 0.2) text += ' That is more folding than the bet needs to show a profit with any hand, which is why so much of the range can bet.'; else if (fo.share <= price - 0.07 && bet <= 0.5) text += ' That is too little folding for a bluff to pay by itself, so the bets need something behind them.';
+        reasons.push({ id: 'answer', text, detail: `To ${name(node.edges[main])} he folds ${pts(fo.share)}, calls ${pts(ca.share)} and raises ${pts(ra.share)}. A bet of that size breaks even as a pure bluff when he folds ${pts(price)}.` });
+      }
+    }
+    // which hands bet, which check
+    if (bet > 0.08 && bet < 0.92) { const gb = groupsOf(fs, f.board, by((k) => wager(k))); const gx = groupsOf(fs, f.board, by((k) => k === 'check')); if (gb.length && gx.length) reasons.push({ id: 'which', text: `The bets are mostly ${sayGroups(gb, 3)}. The checks are mostly ${sayGroups(gx, 3)}.`, detail: `Bets: ${gb.slice(0, 4).map((g) => `${g.name} ${pts(g.share)}`).join(', ')}. Checks: ${gx.slice(0, 4).map((g) => `${g.name} ${pts(g.share)}`).join(', ')}.` }); }
+    // what he does when checked to
+    const xi = kinds.indexOf('check');
+    if (xi >= 0 && f.nodes[node.edges[xi].child].kind === 'decision' && freq[xi] >= 0.15) {
+      const s3 = study(fs, s.solution, f.nodes, node.edges[xi].child, s.dealt ?? []);
+      if (s3) { const stab = s3.actions.reduce((t, a) => t + (wager(a.kind) ? a.freq : 0), 0); const r = new Float64Array(N); for (let v = 0; v < N; v++) if (s3.f.mine[v] > 0) { let p = 0; s3.f.node.edges.forEach((e, b) => { if (wager(e.kind)) p += s3.sigma(v, b); }); r[v] = s3.f.mine[v] * p; } const g = groupsOf(fs, f.board, r);
+        reasons.push({ id: 'after', text: stab >= 0.6 ? `When you check he ${often(stab, 'bets')}${g.length ? `, with ${sayGroups(g)}` : ''}: a check is not a free card, and the hands you check have to be ready for it.` : stab <= 0.3 ? `When you check he ${often(1 - stab, 'checks')} back, so a check usually sees the next card for nothing.` : `When you check he bets about ${stab >= 0.45 ? 'half' : 'a third of'} the time${g.length ? `, with ${sayGroups(g)}` : ''}.`, detail: `After your check he bets ${pts(stab)} of the time.` }); }
+    }
+  } else {
+    const fold = share((k) => k === 'fold'); const raise = share(wager); const price = s.toCall / (s.pot + s.toCall); const gHis = groupsOf(fs, f.board, f.his);
+    line = fold <= 0.15 ? 'You continue with almost your whole range against this bet.' : fold >= 0.7 ? 'You fold most of your range to this bet.' : `You continue with about ${fold <= 0.4 ? 'two thirds' : fold <= 0.55 ? 'half' : 'a third'} of your range against this bet${raise >= 0.12 ? ', and raise some of it' : ''}.`;
+    if (gHis.length) reasons.push({ id: 'his', text: `He is betting ${sayGroups(gHis, 3)}.`, detail: gHis.slice(0, 5).map((g) => `${g.name} ${pts(g.share)}`).join(', ') + '.' });
+    reasons.push(strength());
+    const gf = groupsOf(fs, f.board, by((k) => k === 'fold')); const gc = groupsOf(fs, f.board, by((k) => k === 'call')); const gr = groupsOf(fs, f.board, by((k) => wager(k)));
+    let text = ''; if (fold >= 0.05 && gf.length) text += `You fold ${sayGroups(gf)}. `; if (gc.length) text += `You call with ${sayGroups(gc, 3)}. `; if (raise >= 0.05 && gr.length) text += `The raises are ${sayGroups(gr)}.`;
+    if (text) reasons.push({ id: 'which', text: text.trim(), detail: `Fold ${pts(fold)}, call ${pts(share((k) => k === 'call'))}, raise ${pts(raise)}. The call needs ${pts(price)} equity.` });
+    const need = price; const folded = fold; const alpha = s.toCall / s.pot;
+    if (folded >= alpha + 0.08) reasons.push({ id: 'over', text: 'You fold more than the price alone would say. His bet is strong enough here that defending wider would cost more than it saves.', detail: `You fold ${pts(folded)}; his bet breaks even as a pure bluff at ${pts(alpha)}.` });
+    else if (folded <= alpha - 0.08) reasons.push({ id: 'under', text: 'You fold less than the price alone would say: your range has too much against what he is betting to give up.', detail: `You fold ${pts(folded)}; his bet breaks even as a pure bluff at ${pts(alpha)}.` });
+    void need;
+  }
+  const cap = (t) => t.charAt(0).toUpperCase() + t.slice(1); for (const r of reasons) r.text = cap(r.text);
+  return { line, reasons };
+}
+/** An action in words, for the range sentences. */
+function name(edge) { const n = /\d+/.exec(edge.label)?.[0]; return edge.kind === 'allin' ? 'an all-in' : edge.kind === 'raise' ? 'a raise' : n ? `the ${n}% bet` : 'a bet'; }

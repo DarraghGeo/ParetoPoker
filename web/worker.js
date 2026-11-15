@@ -2,7 +2,7 @@
 import * as fs from 'poker-flopsolve';
 import { decisionAt, equityVs, treeOf } from '../src/solver/flopsolve.js';
 import { KNOBS, describe, isNeutral, reshape } from '../src/warp/reshape.js';
-import { study, measure, tolerance, explainStreet, analysis, RARE } from '../src/explain/street.js';
+import { study, measure, tolerance, explainStreet, explainRange, analysis, RARE } from '../src/explain/street.js';
 
 let solution = null;
 let nodes = null;
@@ -172,6 +172,13 @@ self.onmessage = async ({ data }) => {
     } catch (error) {
       self.postMessage({ type: 'looked', job: data.job, id: data.id, combo: data.combo, look: null, error: String(error?.message ?? error) });
     }
+  } else if (data.type === 'range' && solution) {
+    // The range as a whole at a decision: what it does and why
+    try {
+      const dealt = fs.parseCards((data.dealt ?? []).join(' ')); const key = `${data.id}|${dealt.join(',')}`;
+      let st = studies.get(key); if (!st) studies.set(key, st = study(fs, solution, nodes, data.id, dealt));
+      self.postMessage({ type: 'ranged', job: data.job, id: data.id, said: explainRange(st) });
+    } catch (error) { self.postMessage({ type: 'ranged', job: data.job, id: data.id, said: null, error: String(error?.message ?? error) }); }
   } else if (data.type === 'explain' && solution) {
     // One hand at a flop or turn decision. The decision is studied once; other hands at it then answer at once
     try {
