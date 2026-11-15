@@ -18,8 +18,11 @@ export function cardTotals(fs, range, skip = () => false) {
   return { all, perCard };
 }
 
-/** How much of a range each hand can face: all of it but what shares a card with the hand (its own combination counted back once). */
-export function facingOf(fs, range) {
-  const { all, perCard } = cardTotals(fs, range);
+/**
+ * How much of a range each hand can face: all of it but what shares a card with the hand (its own combination counted
+ * back once). `skip` leaves combinations out of the range first.
+ */
+export function facingOf(fs, range, skip) {
+  const { all, perCard } = cardTotals(fs, range, skip);
   return (combo) => all - perCard[firstCard(fs, combo)] - perCard[secondCard(fs, combo)] + range[combo];
 }
