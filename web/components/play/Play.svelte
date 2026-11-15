@@ -10,9 +10,9 @@
   import Seat from './Seat.svelte';
   import { cellOf } from '../../lib/cards.js';
   import { studyUrl } from '../../lib/links.js';
-  import { PlayGame } from '../../lib/play/game.svelte.js';
+  import { createPlayGame } from '../../lib/play/game.svelte.js';
 
-  const game = new PlayGame();
+  const game = createPlayGame();
   let pane = $state(); let showRanges = $state(false); let ranges = $state.raw(null);
   game.onExport = (data) => pane?.handedOver(data);
   const st = $derived(game.state);

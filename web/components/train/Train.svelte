@@ -12,11 +12,12 @@
   import Settings from './Settings.svelte';
   import Where from './Where.svelte';
   import { dealtSpotUrl } from '../../lib/links.js';
-  import { TrainGame } from '../../lib/train/game.svelte.js';
+  import { createTrainGame } from '../../lib/train/game.svelte.js';
+  import { nextView } from '../../lib/train/answer.js';
   import { todayOf } from '../../lib/train/prefs.js';
   import { spotText } from '../../lib/train/spotText.js';
 
-  const game = new TrainGame();
+  const game = createTrainGame();
   let pane = $state(); let settings = $state(false); let history = $state(false);
   game.onExport = (data) => pane?.handedOver(data);
   const d = $derived(game.spot?.decision ?? null);
@@ -37,7 +38,7 @@
     </header>
     <section class="t-stage">
       <div class="left">
-        {#if d}<Past history={d.history} who={(a) => (a.seat === d.seat ? 'Hero' : 'Villain')} /><Where decision={d} studyHref={here} onStudy={study} copy={() => spotText(game.spot, game.q, game.config)} view={game.prefs.view} onView={() => game.nextView()} />{/if}
+        {#if d}<Past history={d.history} who={(a) => (a.seat === d.seat ? 'Hero' : 'Villain')} /><Where decision={d} studyHref={here} onStudy={study} copy={() => spotText(game.spot, game.q, game.config)} view={game.prefs.view} onView={() => nextView(game)} />{/if}
         <Ranges spot={game.spot} view={game.prefs.view} hand={game.q?.hand ?? null} />
       </div>
       <Ask {game} blocked={() => settings || history} />
