@@ -3,6 +3,8 @@
 import { explain } from '../../../src/explain/river.js';
 import { pct } from '../cards.js';
 import { NUTS } from './spot.js';
+import { advantageWhy } from './advantage.js';
+import { defendQuestion, freqQuestion, shapeQuestion, twinQuestion } from './shape.js';
 
 const AGGRESSIVE = new Set(['bet', 'raise', 'allin']);
 /** How often a hand has to take an action for it to count as one it takes; under LOW it does not. Hands between are not asked about. */
@@ -21,7 +23,8 @@ const mixText = (actions, mix) => actions.map((a, k) => (mix[k] > 0.004 ? `${a.l
 function rangeQuestion(spot) {
   const right = whose(spot.mine.equity - spot.his.equity, 0.02, 0.04);
   if (right == null) return null;
-  return { text: 'Who has the range advantage?', options: SIDES, right: [right], why: [`Hero's range has ${pct(spot.mine.equity)}% equity, villain's ${pct(spot.his.equity)}%.${right === 2 ? ' Under two points apart is neither\'s.' : ''}`] };
+  const counted = advantageWhy(spot, right);
+  return { text: 'Who has the range advantage?', options: SIDES, right: [right], bars: counted.bars, why: [`Hero's range has ${pct(spot.mine.equity)}% equity, villain's ${pct(spot.his.equity)}%.${right === 2 ? ' Under two points apart is neither\'s.' : ''}`, ...counted.lines] };
 }
 
 function nutsQuestion(spot) {
@@ -72,7 +75,7 @@ function handQuestion(spot) {
   return { text: 'What actions can it take?', hand: hand.name, multi: true, options: d.actions.map((a, k) => ({ label: a.label, action: k })), right: d.actions.map((a, k) => k).filter((k) => hand.strategy[k] >= TAKES), why };
 }
 
-const BUILD = { range: rangeQuestion, nuts: nutsQuestion, size: sizeQuestion, hand: handQuestion };
+const BUILD = { range: rangeQuestion, nuts: nutsQuestion, freq: freqQuestion, shape: shapeQuestion, defend: defendQuestion, size: sizeQuestion, hand: handQuestion, twin: twinQuestion };
 
 /** The next question on a position this time round the board, of the kinds and streets chosen; null when it has none left. */
 export function ask(spot, round, prefs) {

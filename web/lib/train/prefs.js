@@ -1,9 +1,11 @@
-// What Train keeps between visits: the kinds of question and the streets chosen, the view above the question, each day's
+// What Train keeps between visits: the kinds of question (in three groups) and the streets chosen, the view above the question, each day's
 // results by question type and street, and the last thirty questions.
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
 
-export const TYPES = { range: 'Range advantage', nuts: 'Nut advantage', size: 'Maximum bet or raise', hand: 'What a hand can do' };
+export const TYPES = { whose: 'Whose range is this', inout: 'In or out of a range', card: 'Whose card is it', range: 'Range advantage', nuts: 'Nut advantage', freq: 'How much the range bets', shape: 'The shape of the betting', defend: 'How much continues against a bet', size: 'Maximum bet or raise', hand: 'What a hand can do', twin: 'Which of two hands bets' };
+/** The kinds of question as settings lists them: what the ranges are, who is ahead, and what to do. */
+export const TYPE_GROUPS = [['Ranges', ['whose', 'inout']], ['Range advantage', ['card', 'range', 'nuts']], ['Actions', ['freq', 'shape', 'defend', 'size', 'hand', 'twin']]];
 export const STREETS = { flop: 'Flop', turn: 'Turn', river: 'River' };
 /** What sits above the question: the two ranges side by side, their equity curves, or the ladder of both on one scale. */
 export const VIEWS = ['grid', 'curve', 'ladder'];
@@ -22,7 +24,7 @@ function choices(defaults, saved, fallback) {
 export function loadPrefs() {
   const saved = load(KEY, {});
   return {
-    types: choices({ range: true, nuts: true, size: true, hand: true }, saved.types, 'range'),
+    types: choices(Object.fromEntries(Object.keys(TYPES).map((key) => [key, true])), saved.types, 'range'),
     streets: choices({ flop: false, turn: false, river: true }, saved.streets, 'river'),
     view: VIEWS.includes(saved.view) ? saved.view : 'grid',
     days: saved.days && typeof saved.days === 'object' ? saved.days : {},

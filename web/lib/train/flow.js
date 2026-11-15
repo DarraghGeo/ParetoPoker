@@ -1,14 +1,22 @@
 // How Train's game moves on: boards asked for and dealt (several kept ahead), and the next question found on them.
 import { ask } from './questions.js';
+import { RANGE_TYPES, rangeAsk } from './ranges.js';
 import { spotOf } from './spot.js';
 
 /** Boards kept solved ahead of the one on screen; times round a board, with other hands, when nothing waits behind it. */
 const AHEAD = 3; const ROUNDS = 4;
 const snapshot = (value) => JSON.parse(JSON.stringify(value));
+/** Whether any kind of question that needs a solved spot is on. */
+const solving = (prefs) => Object.keys(prefs.types).some((t) => prefs.types[t] && !RANGE_TYPES.includes(t));
+/** Whether the next question is one on the ranges: every third when both sorts are on, every one when only they are. */
+function rangesTurn(game) {
+  if (!RANGE_TYPES.some((t) => game.prefs.types[t])) return false;
+  return !solving(game.prefs) || ++game.turn % 3 === 0;
+}
 
 /** Ask the worker for another board, on a street chosen at random, unless enough wait. */
 export function want(game) {
-  if (game.busy || game.boards.length >= AHEAD || game.failed >= 3) return;
+  if (game.busy || game.boards.length >= AHEAD || game.failed >= 3 || !solving(game.prefs)) return;
   const streets = Object.keys(game.prefs.streets).filter((s) => game.prefs.streets[s]);
   game.busy = { id: ++game.id, street: streets[Math.floor(Math.random() * streets.length)] }; game.progress = null;
   game.worker.postMessage({ type: 'deal', id: game.busy.id, street: game.busy.street, config: snapshot(game.config) });
@@ -50,14 +58,17 @@ function goesRound(game, b) {
   return true;
 }
 
-/** On to the next question: the rest of this position, the board's other positions, then the next board. */
+/** On to the next question: one on the ranges when it is their turn, else the rest of this position, the board's other
+ *  positions, then the next board; and one on the ranges while nothing is solved yet. */
 export function advance(game) {
-  let q = null;
-  while (!q) {
+  let q = rangesTurn(game) ? rangeAsk(game.prefs) : null;
+  while (!q && solving(game.prefs)) {
     if (game.board) q = nextOnBoard(game, game.board);
     if (q || (game.board && goesRound(game, game.board))) continue;
     game.board = game.boards.shift() ?? null;
-    if (!game.board) { game.spot = null; break; }
+    if (!game.board) break;
   }
+  q ??= rangeAsk(game.prefs);
+  if (!q || q.street === 'preflop') game.spot = null;
   game.q = q; want(game);
 }

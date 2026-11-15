@@ -11,7 +11,7 @@ class TrainState {
   progress = $state.raw(null);
   error = $state('');
   failed = $state(0);
-  config = savedSetup(); boards = []; board = null; busy = null; id = 0; onExport = () => {};
+  config = savedSetup(); boards = []; board = null; busy = null; id = 0; turn = 0; onExport = () => {};
 }
 
 /** A game with its worker, asking for its first board. */

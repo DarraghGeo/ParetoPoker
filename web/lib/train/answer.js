@@ -7,9 +7,9 @@ import { isRight, namesOf } from './questions.js';
 /** Grade the answer and record it with its spot, for the day's score and the last questions. */
 export function grade(game) {
   const q = game.q; if (!q || q.done || !q.chosen.length) return;
-  const ok = isRight(q); const d = game.spot.decision;
+  const ok = isRight(q); const d = game.spot?.decision ?? null;
   game.q = { ...q, done: true, ok };
-  record(game.prefs, { t: Date.now(), day: dayKey(), type: q.type, street: q.street, ok, board: d.boardText, seat: d.seat, line: d.line, history: d.history, hand: q.hand ?? null, text: q.text, mine: namesOf(q, q.chosen), right: namesOf(q, q.right), why: q.why, explained: q.street === 'river' });
+  record(game.prefs, { t: Date.now(), day: dayKey(), type: q.type, street: q.street, ok, board: d?.boardText ?? '', seat: d?.seat ?? null, line: d?.line ?? [], history: d?.history ?? [], hand: q.hand ?? null, about: q.plain ?? null, context: q.context ?? null, text: q.text, mine: namesOf(q, q.chosen), right: namesOf(q, q.right), why: q.why, explained: q.street === 'river' || q.type !== 'hand' });
 }
 
 /** Pick an answer: one for a single-answer question (graded at once), any number for one that asks for every one that applies. */

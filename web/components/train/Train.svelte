@@ -39,7 +39,7 @@
     <section class="t-stage">
       <div class="left">
         {#if d}<Past history={d.history} who={(a) => (a.seat === d.seat ? 'Hero' : 'Villain')} /><Where decision={d} studyHref={here} onStudy={study} copy={() => spotText(game.spot, game.q, game.config)} view={game.prefs.view} onView={() => nextView(game)} />{/if}
-        <Ranges spot={game.spot} view={game.prefs.view} hand={game.q?.hand ?? null} />
+        <Ranges spot={game.spot} view={game.prefs.view} hand={game.q?.hand ?? null} show={game.q?.show ?? null} done={!!game.q?.done} />
       </div>
       <Ask {game} blocked={() => settings || history || studying} />
     </section>

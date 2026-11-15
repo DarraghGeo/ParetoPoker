@@ -471,3 +471,24 @@ body.paged{overflow:hidden;height:100dvh}
 .moves .result.down b{color:var(--danger)}
 .moves .result span{flex-basis:100%;font:400 13px/18px var(--sans);color:var(--ink-3)}
 .moves .primary{align-self:flex-start;min-width:120px;padding:10px 14px}
+
+/* ---- Train: the drills on the ranges, and the counts behind an answer ---- */
+.ask .sub{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.ask .more{font:400 14px/21px var(--sans);color:var(--ink-2)}
+.opts.wide{grid-template-columns:minmax(0,1fr)}
+.opt .hand{font:500 16px/20px var(--mono);display:inline-flex;gap:3px}
+.opts.shapes{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}
+.opts.shapes .opt{flex-direction:column;align-items:flex-start;gap:8px;font:500 13px/18px var(--sans)}
+.opt .shape{flex:none;display:flex;align-items:flex-end;width:100%;max-width:72px;height:26px;background:var(--act-check)}
+.opt .hand span{flex:none}
+.shape b{flex:1;display:block;background:var(--act-big)}
+.minis.solo{grid-template-columns:minmax(0,360px)}
+.blk{display:flex;flex-direction:column;gap:6px}
+.blk>b{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.blk>b em{font-style:normal;color:var(--accent)}
+.cmp{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.cmp li{display:grid;grid-template-columns:56px minmax(0,1fr) 40px;gap:10px;align-items:center}
+.cmp li span:last-child{text-align:right;color:var(--ink)}
+.cmp .bar{height:4px;display:flex;background:var(--line)}
+.cmp .bar i{display:block;height:4px;background:var(--ink)}
+.cmp .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}

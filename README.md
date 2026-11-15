@@ -33,8 +33,12 @@ The page opens on a choice between the two:
   choice sets both ranges, the pot and the stack.
   A spot too big to solve whole in a browser (most flops with several sizes, raises and all-in) is
   offered as Solve (Lite): the first street's betting as given, one bet size on the later ones.
-- **Train** (`train.html`): questions on boards dealt at random, with the ranges, pot and bet sizes set up in
-  Study. Who has the range advantage, who has the nut advantage (hands with 90% equity or more),
+- **Train**: questions in three groups, each chosen in settings. *Ranges* (whose range a chart is, whether a hand is
+  in a range) and *whose card is it* use the preset ranges, need no solve, and fill the wait for one. *Range advantage*
+  and *Actions* (how much of the range bets and in which of five shapes, how much continues against a bet, the biggest
+  size, what a hand can do, which of two hands of the same equity bets) are asked on boards dealt at random, with the ranges, pot and bet sizes set up in
+  Study. Every answer is followed at once by the whole of why; range advantage shows what each range has made (top pair
+  or better, two pair or better, any pair) as bars. Who has the range advantage, who has the nut advantage (hands with 90% equity or more),
   the biggest bet or raise the range takes, and what a given hand can do. The two ranges sit side
   by side, hero in ink and villain faded, or as the two equity curves. Settings choose the kinds
   of question and the streets; each shows its last five days played. The day's score opens the
