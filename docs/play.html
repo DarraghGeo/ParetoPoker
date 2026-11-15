@@ -8,7 +8,6 @@
 <title>Pareto: Play</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="style.css?v=d4d352d14f">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#FAFAF7">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,7 +19,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = 'd4d352d14f'; const opening = !/(study|train|play)\.html/.test(location.pathname);
+  const here = '19c3329b52'; const opening = !/(study|train|play)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
@@ -30,6 +29,10 @@ if ('serviceWorker' in navigator) {
   }).catch(() => {});
 }
 </script>
+  <script type="module" crossorigin src="./assets/play-CgS45aQE.js"></script>
+  <link rel="modulepreload" crossorigin href="./assets/common-wcTlG9Y-.js">
+  <link rel="modulepreload" crossorigin href="./assets/pane-C25gIuwf.js">
+  <link rel="stylesheet" crossorigin href="./assets/style-XF1DVGY-.css">
 </head>
 <body class="train play">
 <!-- Play and Study side by side: swipe or the Study button turns to Study for the decision on screen, and back; neither is reloaded -->
@@ -60,6 +63,5 @@ if ('serviceWorker' in navigator) {
   <iframe id="study-frame" title="Study this spot"></iframe>
 </div>
 </div>
-<script type="module" src="play.js?v=d4d352d14f"></script>
 </body>
 </html>

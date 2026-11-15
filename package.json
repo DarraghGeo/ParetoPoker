@@ -7,7 +7,7 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "test:research": "node --test research/test/*.test.js",
-    "build": "node scripts/build.mjs",
+    "build": "vite build",
     "build:solver": "cargo build --release --manifest-path research/solver-bridge/Cargo.toml"
   },
   "repository": {
@@ -28,6 +28,8 @@
     "node": ">=22.13.0"
   },
   "devDependencies": {
-    "esbuild": "^0.28.2"
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "svelte": "^5.57.3",
+    "vite": "^8.3.8"
   }
 }
