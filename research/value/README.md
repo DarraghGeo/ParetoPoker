@@ -49,3 +49,25 @@ Loss is a percentage of the pot, per seat, against an opponent who plays the sol
 5. On the turn, add the draw question; on the river, drop hand names for strength against his range.
 
 Limits: turn spots with starting ranges, not ranges after flop betting; no flop decisions; an opponent who does not adapt.
+
+## Can the lines be derived at the table? (`SET=derived`, 40 spots)
+
+The simplest derivation a player could do, from two inputs: the bet size, and where each hand stands against his range.
+
+- **Facing a bet of s pots:** continue with the top 1/(1+s) of the range (57% against a 75% bet).
+- **Betting s pots:** he continues with the top 1/(1+s) of his range, so a value bet must beat half of that: hands with 1 - 1/(2(1+s)) equity or more (71% for a 75% bet). Add s/(1+s) of a bluff for each value bet, from the bottom of the range. Check the rest.
+
+| What the player plays | Turn | River |
+|---|---|---|
+| The range's frequencies only (from above) | 5.86 | 9.09 |
+| **The derivation, both when betting and when facing a bet** | **0.90** | **2.03** |
+| The derivation when betting, the solution when facing a bet | 0.44 | 1.44 |
+| The solution when betting, the derivation when facing a bet | 0.40 | 0.85 |
+| The derivation with no bluffs | 0.70 | 2.06 |
+| Value from 60% equity / from 80% | 1.31 / 0.77 | 2.55 / 1.79 |
+| Continuing with ten points more than the price asks | 1.08 | 2.56 |
+| The best three bands (needs the solution) | 0.69 | 0.75 |
+
+- The derivation gets most of the way from knowing nothing about which hands (5.9 and 9.1) to the best lines (0.7 and 0.75): it gives up 0.9 on the turn and 2.0 on the river.
+- On the turn it is nearly as good as the best three bands. On the river it leaves 1.3 points that the two inputs do not explain, mostly in when to bet.
+- Erring towards a tighter value line (80%) costs less than a looser one (60%). Leaving the bluffs out costs nothing against an opponent who does not adapt.

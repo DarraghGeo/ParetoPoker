@@ -71,7 +71,38 @@ const ERRORS = {
   'one bet size only (the commonest)': oneSize,
   '3 bands by strength, and one size': (H) => { const P = oneSize(H); return bestBands({ ...H, P }, H.byE, 3); },
 };
-const SET = process.env.SET === 'errors' ? ERRORS : SUMMARIES; const FILE = process.env.SET === 'errors' ? './out/errors.jsonl' : './out/worth.jsonl';
+/**
+ * The lines as a player could derive them at the table, from the bet size and where each hand stands against his range.
+ *   Facing a bet of s pots: continue with the top 1/(1+s) of the range (so that a bluff does not pay), by calling.
+ *   Betting s pots: he continues with the top 1/(1+s) of his range, so a value bet must beat half of that: the hands
+ *   with equity of 1 - 1/(2(1+s)) or more (71% for a 75% bet). Bluffs: s/(1+s) of a bluff for each value bet, from the
+ *   bottom of the range. Everything else checks. `valueAt` overrides the value line; `bluffs` scales the bluffs.
+ */
+function derived(H, { valueAt = null, bluffs = 1, top = null } = {}) {
+  const tot = H.w.reduce((t, x) => t + x, 0); const out = H.P.map((p) => p.map(() => 0)); const kinds = H.kinds;
+  if (kinds.includes('fold')) {
+    const keep = (top ?? 1 / (1 + H.faced)) * tot; let seen = 0; const call = kinds.indexOf('call'); const fold = kinds.indexOf('fold');
+    for (let j = H.byE.length - 1; j >= 0; j--) { const i = H.byE[j]; out[i][seen < keep ? call : fold] = 1; seen += H.w[i]; }
+    return out;
+  }
+  const check = kinds.indexOf('check'); const bet = H.betAt;
+  if (bet < 0) return H.P.map((p) => p.map((_, a) => (a === check ? 1 : 0)));
+  const line = valueAt ?? 1 - 1 / (2 * (1 + H.betSize)); let value = 0; for (let i = 0; i < H.ids.length; i++) if (H.e[i] >= line) value += H.w[i];
+  let room = bluffs * value * (H.betSize / (1 + H.betSize));
+  for (const i of H.byE) { if (H.e[i] >= line) out[i][bet] = 1; else if (room > 0) { out[i][bet] = 1; room -= H.w[i]; } else out[i][check] = 1; }
+  return out;
+}
+const DERIVED = {
+  'derived: price and half of what calls': (H) => derived(H),
+  'derived, no bluffs': (H) => derived(H, { bluffs: 0 }),
+  'derived, value from 60% equity': (H) => derived(H, { valueAt: 0.6 }),
+  'derived, value from 80% equity': (H) => derived(H, { valueAt: 0.8 }),
+  'derived, continuing with ten points more than the price asks': (H) => (H.kinds.includes('fold') ? derived(H, { top: Math.min(1, 1 / (1 + H.faced) + 0.1) }) : derived(H)),
+  'derived when betting, the solution when facing a bet': (H) => (H.kinds.includes('fold') ? H.P : derived(H)),
+  'the solution when betting, derived when facing a bet': (H) => (H.kinds.includes('fold') ? derived(H) : H.P),
+  '3 bands by strength (for reference)': (H) => bestBands(H, H.byE, 3),
+};
+const SETS = { errors: [ERRORS, './out/errors.jsonl'], derived: [DERIVED, './out/derived.jsonl'] }; const [SET, FILE] = SETS[process.env.SET] ?? [SUMMARIES, './out/worth.jsonl'];
 const [count = '12', seed = '21'] = process.argv.slice(2);
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
 const pool = PRESETS.filter((p) => p.action !== 'Limped'); const out = new URL(FILE, import.meta.url); writeFileSync(out, '', { flag: 'a' });
@@ -92,6 +123,9 @@ for (let done = 0; done < +count;) {
       const k = n.edges.length; const feats = ids.map((c) => st.featuresOf(c));
       const H = { ids, k, kinds: n.edges.map((x) => x.kind), w: ids.map((c) => f.mine[c]), e: ids.map((c) => eq[c]), P: ids.map((c) => Array.from({ length: k }, (_, a) => st.sigma(c, a))), cls: ids.map(classOf), type: feats.map(typeOf), outs: feats.map((x) => (f.board.length < 5 ? x.flushOuts + x.straightOuts : 0)) };
       H.byE = ids.map((_, i) => i).sort((x, y) => H.e[x] - H.e[y]);
+      // the bet a player would make here (the biggest plain bet on offer) and its size in pots; the bet he faces, in pots of the pot before it
+      const me = seatOf(n); const sizes = n.edges.map((x, a) => (x.kind === 'bet' ? (nodes[x.child].invested[me] - n.invested[me]) / n.pot : -1)); H.betSize = Math.max(...sizes); H.betAt = H.betSize > 0 ? sizes.indexOf(H.betSize) : -1;
+      H.faced = st.toCall > 0 ? st.toCall / (st.pot - st.toCall) : 0;
       seen.push({ node: n.id, seat: seatOf(n), round: n.round, bindex: n.round === 0 ? 0 : spot.resolveBoard([...board, dealt[0]]).board, H });
     }
   }
