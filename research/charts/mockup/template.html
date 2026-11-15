@@ -75,14 +75,43 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:v
 .cell .n{font:400 11px/14px var(--mono);color:var(--ink-3)}
 .cell.none{border-style:dashed;justify-content:center;align-items:center;color:var(--ink-3);font:400 12px/16px var(--mono)}
 .note{font-size:13px;line-height:20px;color:var(--ink-3);max-width:68ch}
+
+.ladder{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
+.rung{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
+.rung .cards{font:500 15px/20px var(--mono);min-height:20px;white-space:nowrap}
+.rung .left{font:400 11px/14px var(--mono);color:var(--ink-3);text-align:center}
+.rung .strip{width:56px;height:auto;cursor:default;gap:0;overflow:hidden}
+.rung .strip i{flex:1 1 0;min-height:0;box-shadow:inset 0 -1px 0 var(--bg)}
+button[aria-pressed="true"] span{color:inherit}
+.rung .acts{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:34px}
+.rung .acts button{padding:5px 8px;font:500 12px/16px var(--mono)}
+.rung .acts button[disabled]{opacity:.45;cursor:default}
+.rung .then{font:400 11px/14px var(--mono);color:var(--ink-3);text-align:center;min-height:28px}
+.dot{position:absolute;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);pointer-events:none}
+.ladder svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.ladder svg line{stroke:var(--ink);stroke-width:2;stroke-dasharray:1 5;stroke-linecap:round}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button{font:500 13px/18px var(--mono);padding:6px 9px}
 [data-wait]{visibility:hidden}
 </style>
 <main>
   <div class="lede">
     <div class="tag">Mock-up · three real solved spots</div>
-    <h1>Three pictures on one frame</h1>
-    <p>Every picture uses the same frame: your range as a single strip, strongest hands at the top. The answer is one thing you can see: a line, a gap, a shape. Each asks you to guess before it shows the solution.</p>
+    <h1>Range pictures on one frame</h1>
+    <p>Every picture uses the same frame: your range as a single strip, strongest hands at the top. The ladder comes first: the strip repeated street by street as the hand unfolds. The three below it are the single-decision pictures from before.</p>
   </div>
+
+
+  <section id="s0">
+    <div class="tag">The ladder · a range as the hand unfolds</div>
+    <h2>One strip per street: what is left, what it does, and where your hand now stands</h2>
+    <div class="spot" id="spot0"></div>
+    <p>Each rung is the part of your range that is still in the hand, strongest at the top. It gets shorter as hands leave. Pick your flop bet to walk a line, and pick a hand to follow it up and down the range.</p>
+    <div class="chips" id="chips"></div>
+    <div class="ladder" id="ladder"></div>
+    <div class="key"><span><i style="background:var(--stay)"></i>check</span><span><i style="background:var(--bet)"></i>bet 33%</span><span><i style="background:var(--big)"></i>bet 75%</span><span>faded = not the line you took</span></div>
+    <p id="text0"></p>
+  </section>
 
   <section id="s1">
     <div class="tag">1 · Facing a bet</div>
@@ -146,6 +175,31 @@ function drawStrip(el, blocks, actions, shown) {
 }
 function mark(el, share, text, cls) { const m = document.createElement('div'); m.className = `mark ${cls}`; m.style.top = `${100 * share}%`; m.innerHTML = `<span>${text}</span>`; el.append(m); return m; }
 function examples(el, blocks, at) { el.innerHTML = at.map((f) => { const b = blocks[Math.min(blocks.length - 1, Math.floor(f * blocks.length))]; return `<span style="top:${100 * f}%">${hand(b.ex)}</span>`; }).join(''); }
+
+
+// 0. the ladder
+{ const L = /*LADDER*/; const el = $('ladder'); let pick = ['B33', 'X']; let who = L.hands.length - 1; const PX = 300;
+  const colour = (a) => (a.kind === 'check' ? 'var(--stay)' : a.label === 'B33' ? 'var(--bet)' : 'var(--big)'); const act = (l) => (l === 'X' ? 'check' : `bet ${l.slice(1)}%`);
+  $('spot0').innerHTML = spotLine({ spot: L.spot, board: L.flop }, 'You are out of position, first to act on every street.');
+  const where = (x) => (x <= 0.1 ? 'at the very top' : x <= 0.33 ? 'in the top third' : x <= 0.66 ? 'in the middle' : x <= 0.9 ? 'in the bottom third' : 'at the very bottom');
+  $('chips').innerHTML = L.hands.map((h, i) => `<button data-i="${i}">${hand(h)}</button>`).join('');
+  function draw() {
+    const keys = ['', pick[0], `${pick[0]}/${pick[1]}`]; const boards = [L.flop, `${L.flop} ${L.run[0]}`, `${L.flop} ${L.run[0]} ${L.run[1]}`]; let html = ''; const said = [];
+    keys.forEach((k, r) => { const n = L.nodes[k]; const chosen = pick[r]; const his = L.his[[...pick.slice(0, r), chosen].filter(Boolean).join('/')];
+      const rows = n.blocks.map((b) => (b ? `<i>${b.mix.map((p, a) => `<b style="width:${100 * p}%;background:${colour(n.actions[a])};opacity:${chosen && n.actions[a].label !== chosen ? 0.3 : 1}"></b>`).join('')}</i>` : '')).join('');
+      const opts = n.actions.filter((a) => a.freq >= 0.08); const btns = r === 2 ? opts.map((a) => `<button disabled>${a.label} ${pct(a.freq)}</button>`).join('') : opts.map((a) => `<button data-r="${r}" data-l="${a.label}" aria-pressed="${a.label === chosen}" ${opts.length < 2 ? 'disabled' : ''}>${a.label} ${pct(a.freq)}</button>`).join('');
+      html += `<div class="rung"><div class="cards">${r === 0 ? board(L.flop) : board(L.run[r - 1])}</div><div class="left">${r === 0 ? 'whole range' : `${pct(n.left)} of it left`}</div><div class="strip" data-r="${r}" style="height:${Math.max(40, PX * n.left)}px">${rows}</div><div class="acts">${btns}</div><div class="then">${his && r < 2 ? `you ${act(chosen)}, he ${his.does}` : ''}</div></div>`;
+      const h = n.hands[who]; if (h) { const top = n.actions.reduce((b, a, i) => (h.mix[i] > h.mix[b] ? i : b), 0); said.push(`On the ${n.street} it sits <strong>${where(h.at)}</strong> of what you hold and ${h.mix[top] >= 0.8 ? '' : 'mostly '}${n.actions[top].kind === 'check' ? 'checks' : `bets ${n.actions[top].label.slice(1)}%`}.`); } else said.push(`By the ${n.street} it has almost always left this line.`); });
+    el.innerHTML = html + '<svg></svg>'; 
+    const box = el.getBoundingClientRect(); const pts = [];
+    keys.forEach((k, r) => { const h = L.nodes[k].hands[who]; const s = el.querySelector(`.strip[data-r="${r}"]`); if (!h) { pts.push(null); return; } const d = document.createElement('div'); d.className = 'dot'; d.style.top = `${100 * h.at}%`; s.append(d); const q = s.getBoundingClientRect(); pts.push([q.left + q.width / 2 - box.left, q.top + q.height * h.at - box.top]); });
+    el.querySelector('svg').innerHTML = pts.slice(1).map((p, i) => (p && pts[i] ? `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${p[0]}" y2="${p[1]}"/>` : '')).join('');
+    $('chips').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.i === who));
+    $('text0').innerHTML = `<strong>${hand(L.hands[who])}</strong>. ${said.join(' ')} The ${board(L.run[0])} is the card that reorders this range: watch which hands jump.`;
+  }
+  $('chips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { who = +b.dataset.i; draw(); } });
+  el.addEventListener('click', (e) => { const b = e.target.closest('button[data-r]'); if (!b || b.disabled) return; pick[+b.dataset.r] = b.dataset.l; if (!L.nodes[`${pick[0]}/${pick[1]}`]) pick[1] = 'X'; draw(); });
+  draw(); window.addEventListener('resize', draw); }
 
 // 1. the line
 { const d = D.face; const bet = Math.round(100 * d.toCall / (d.pot - d.toCall));

@@ -72,3 +72,22 @@ Facing a bet (3,336 strips) there is one shape, a line: everything above it cont
 - **New: five shapes.** A betting strip is nearly always one of five; a spot can be stored as a name.
 - **New: the settled/unsettled map** for flop and turn betting: strength up the page, how much the hand changes across it.
 - **Not found**: any picture that implies bet size.
+
+## 5. A line on the strip: equity on the next card (`nextcard.mjs`, `exp5.py`)
+
+The strip is sorted by equity now. A line beside it would show each hand's equity on the next card: its best card, its average, its median. 60 turn spots (93 betting and 44 defending decisions with mixing) and 14 flop spots (16 and 7; 3-bet and 4-bet pots only).
+
+| | Turn betting | Turn facing a bet | Flop betting |
+|---|---|---|---|
+| Five strength bands alone | 64% | 87% | 56% |
+| Mean line, distance from the strip: tracks what the bands miss | +0.01 (no) | +0.09 | -0.02 (no) |
+| Max line: tracks what the bands miss | +0.04 | +0.14 | +0.05 |
+| Median line: tracks what the bands miss | **-0.17**, same sign in 88% of decisions | **-0.30**, same sign in 95% | -0.09, same sign in 81% |
+| Share of next cards that make the hand strong (70%+) | +0.11, same sign in 90% | +0.14, 89% | +0.10, 81% |
+| Six regions on strength and the line (best line) | 76% (spread of next cards) | 96% | 66% |
+| Six regions on strength alone | 66% | 87% | 58% |
+
+- **Mean: no.** A hand's average equity over the next cards is its equity now, so the line lies on the strip and says nothing.
+- **Max: barely.** Nearly every hand has some very good card.
+- **Median: a little, and consistently.** Where the median dips below the strip (the hand is behind on most cards and far ahead on a few: a draw) the hand bets and continues more than its strength says. The link is weak (0.1 to 0.3) but points the same way in 81 to 95% of decisions.
+- As a second axis any of these lifts six regions by 8 to 10 points, the same as the settled/unsettled map. They are one idea measured different ways.
