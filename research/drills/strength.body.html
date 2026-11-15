@@ -1,0 +1,72 @@
+<style>
+/* the strength ladder: both ranges back to back on the board's own scale of hands, the range to act coloured by what it does */
+.sl{position:relative;display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.sl .row{display:grid;grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);align-items:center;gap:8px;height:30px;border:0;border-radius:0;padding:0;background:none;width:100%;color:var(--ink);cursor:pointer}
+.sl .row[aria-pressed="true"] .name{color:var(--accent)}
+.sl .name{font:500 12px/14px var(--sans);text-align:center;color:var(--ink);white-space:nowrap}
+.sl .side{display:flex;align-items:center;gap:6px;height:100%;min-width:0}
+.sl .side.me{justify-content:flex-end}
+.sl .side b{font:400 11px/14px var(--mono);color:var(--ink-3);flex:none;min-width:24px}
+.sl .side.me b{text-align:right}
+.sl .bar{display:flex;height:22px;min-width:1px}
+.sl .bar i{display:block;height:100%}
+.sl .him .bar{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.sl .none .bar{background:none;border-left:1px solid var(--line-strong);min-width:0;width:0!important}
+.sl .cut{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--ink);pointer-events:none;z-index:2}
+.sl .cut span{position:absolute;right:0;bottom:3px;font:500 11px/14px var(--mono);color:var(--ink);background:var(--bg);padding:0 0 0 6px}
+.heads{display:grid;grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);gap:8px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.heads span:first-child{text-align:right}.heads span:nth-child(2){text-align:center}
+.detail{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px;min-height:76px}
+.detail .t{font:500 15px/20px var(--sans)}
+.detail p{margin:0;font:400 13px/19px var(--sans);color:var(--ink-2)}
+.detail p b{font:500 13px/19px var(--mono);color:var(--ink)}
+.reads{display:flex;flex-direction:column;gap:8px;max-width:56ch}
+.reads p{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
+.reads p b{color:var(--ink);font-weight:500}
+.tally{display:flex;gap:20px;flex-wrap:wrap}
+main.one{max-width:560px}
+</style>
+<div id="app"></div>
+<script>
+const D = /*DATA*/;
+const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join(''); const pct = (x) => `${Math.round(100 * x)}%`;
+const MARK = `<svg class="mark" viewBox="0 0 512 512" width="26" height="26" aria-hidden="true"><rect width="512" height="512" rx="72" fill="#15171B"/><rect x="96" y="150" width="68" height="212" fill="#7FCDBB"/><rect x="180" y="150" width="68" height="212" fill="#F4C261"/><rect x="180" y="150" width="68" height="90" fill="#7FCDBB"/><rect x="264" y="150" width="68" height="212" fill="#F4C261"/><rect x="348" y="150" width="68" height="212" fill="#F08A6B"/><rect x="348" y="150" width="68" height="60" fill="#F4C261"/></svg>`;
+const COL = { fold: '--act-fold', check: '--act-check', call: '--act-check', bet: '--act-big', raise: '--act-allin', allin: '--act-allin' };
+const WORD = { fold: 'folds', check: 'checks', call: 'calls', bet: 'bets', raise: 'raises', allin: 'goes all-in' };
+const app = document.getElementById('app'); let at = 0; let picked = null; const ROW = 33;
+function show() {
+  const d = D[at]; const rows = d.levels.map((name, i) => ({ name, i, me: d.mine[i], him: d.his[i] })).filter((r) => r.me.share > 0.001 || r.him.share > 0.001); const most = Math.max(...rows.flatMap((r) => [r.me.share, r.him.share]));
+  // the line: for a bet, value must beat four fifths of his range; facing one, a call needs the price against what he bets
+  const t = d.facing ? d.price : 0.8; let cum = 0; let y = rows.length * ROW; let above = [0, 0];
+  for (let k = rows.length - 1; k >= 0; k--) { const s = rows[k].him.share; if (cum + s >= t) { const frac = s > 0 ? (t - cum) / s : 0; y = k * ROW + (ROW - 3) * (1 - frac); above = [rows.slice(0, k).reduce((u, r) => u + r.me.share, 0) + rows[k].me.share * (1 - frac), 1 - t]; break; } cum += s; }
+  const bar = (r) => { const m = r.me; if (!(m.share > 0.001)) return `<span class="side me none"><span class="bar"></span></span>`; return `<span class="side me"><b>${pct(m.share)}</b><span class="bar" style="width:${Math.max(2, (100 * m.share) / most)}%">${m.mix.map((p, a) => `<i style="width:${100 * p}%;background:var(${COL[d.actions[a].kind]})"></i>`).join('')}</span></span>`; };
+  const his = (r) => (r.him.share > 0.001 ? `<span class="side him"><span class="bar" style="width:${Math.max(2, (100 * r.him.share) / most)}%"></span><b>${pct(r.him.share)}</b></span>` : `<span class="side him none"><span class="bar"></span></span>`);
+  const ladder = rows.map((r) => `<button type="button" class="row" data-i="${r.i}" aria-pressed="${picked === r.i}">${bar(r)}<span class="name">${r.name}</span>${his(r)}</button>`).join('');
+  const pk = picked != null ? rows.find((r) => r.i === picked) : null;
+  const does = (m) => d.actions.map((a, k) => [a, m.mix[k]]).filter(([, p]) => p >= 0.05).sort((x, y) => y[1] - x[1]).map(([a, p]) => `${WORD[a.kind]} ${pct(p)}`).join(', ');
+  const detail = pk ? `<div class="t">${pk.name}</div>${pk.me.share > 0.001 ? `<p>You, ${pct(pk.me.share)} of your range: <b>${pk.me.hands.join(' ')}</b>. It ${does(pk.me)}.${pk.me.draws >= 0.15 ? ` ${pct(pk.me.draws)} of it also has a draw.` : ''}</p>` : '<p>You have none.</p>'}${pk.him.share > 0.001 ? `<p>Him, ${pct(pk.him.share)} of his range: <b>${pk.him.hands.join(' ')}</b>.</p>` : '<p>He has none.</p>'}` : `<div class="t">Tap a level</div><p>See which hands sit there in each range, and what yours do.</p>`;
+  const ratio = d.bet / (1 + d.bet); const trash = rows.find((r) => r.name === 'Trash'); const draws = rows.find((r) => r.name === 'Draws');
+  const reads = d.facing
+    ? [`<b>The line is the price.</b> A call has to beat ${pct(d.price)} of the hands he bets. Count up from the bottom of his side to ${pct(d.price)}: your hands level with that or above continue.`, `Above the line you have <b>${pct(above[0])}</b> of your range. The top of it, where you beat nearly everything he bets, raises.`]
+    : [`<b>The line is value.</b> A bet of ${pct(d.bet)} of the pot should beat four fifths of his range. Count down from the top of his side to a fifth: your hands level with that or above bet for value.`, `Above the line you have <b>${pct(above[0])}</b> of your range and he has ${pct(above[1])} of his. Bluffs come from the bottom of your side: about ${pct(ratio * above[0])} of your range${draws && draws.me.share > 0.01 ? ', draws first, then trash' : ', from the trash'}.`];
+  const legend = d.actions.filter((a) => a.freq >= 0.01).map((a) => `<span><i class="sw" style="background:var(${COL[a.kind]})"></i>${a.label} ${pct(a.freq)}</span>`).join('');
+  app.className = 'train';
+  app.innerHTML = `<div class="rule"></div><main class="one"><header><a class="logo">${MARK}</a><div class="board">${cards(d.board)}</div><span class="grow"></span></header>
+    <div class="seg" role="tablist">${D.map((x, k) => `<button type="button" role="tab" data-k="${k}" aria-selected="${k === at}">${x.title}</button>`).join('')}</div>
+    <div class="left"><div class="past">${d.history.map(([st, acts]) => `<div><span class="street">${st}</span>${acts.map(([w, l]) => `<span><i>${w}</i> ${l}</span>`).join('')}</div>`).join('')}</div>
+      <div class="where"><span class="who">Hero ${d.who}</span><span class="stands">${d.stands}</span><span class="grow"></span><span class="chips">Single-raised pot</span></div>
+      <div class="tally"><span><b>${pct(d.equity[0])}</b>your equity</span><span><b>${pct(d.equity[1])}</b>his</span><span><b>${pct(above[0])}</b>of your range above the line</span></div>
+      <div><div class="heads"><span>You (${d.who})</span><span>Strongest</span><span>Him</span></div>
+        <div class="sl">${ladder}<div class="cut" style="top:${y}px"><span>${d.facing ? `price: beats ${pct(d.price)} of his bets` : 'value: beats 80% of his range'}</span></div></div>
+        <div class="heads" style="margin-top:4px"><span></span><span>Weakest</span><span></span></div></div>
+      <div class="keyrow">${legend}<span><i class="sw" style="background:color-mix(in srgb,var(--ink) 28%,var(--bg))"></i>his range</span></div>
+      <div class="detail">${detail}</div>
+      <div class="reads">${reads.map((r) => `<p>${r}</p>`).join('')}</div>
+      <p class="hint" style="margin:0;font:400 13px/18px var(--sans);color:var(--ink-3);max-width:56ch">A mock-up on a real solved spot. Bar length is the share of the range at that level; colours are what your range does there. The line is placed by counting his range, as a player would; it is not read off the solution.</p>
+    </div></main>`;
+  app.querySelectorAll('.seg button').forEach((b) => { b.onclick = () => { at = +b.dataset.k; picked = null; show(); window.scrollTo(0, 0); }; });
+  app.querySelectorAll('.sl .row').forEach((b) => { b.onclick = () => { picked = picked === +b.dataset.i ? null : +b.dataset.i; show(); }; });
+}
+show();
+</script>

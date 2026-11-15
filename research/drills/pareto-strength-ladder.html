@@ -1,0 +1,657 @@
+<title>Pareto strength ladder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one quiet screen. Mode and setup at the top edge, the range in the middle, the explanation beside it. */
+:root{
+  --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;
+  --accent:#2A3CE0;--accent-ink:#FFFFFF;--danger:#C93A24;--ok:#1C8A78;
+  --act-fold:#CFCDC4;--act-check:#7CCDBE;--act-small:#F3C46A;--act-big:#F0896B;--act-allin:#B97BAE;
+  --suit-s:#15171B;--suit-h:#C8281F;--suit-d:#0B6FC2;--suit-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;--float:0 12px 40px rgba(0,0,0,.22);
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 13px/18px var(--sans)}
+.rule{display:flex;height:2px;background:var(--line)}.rule i{display:block;height:2px}
+main{max-width:1120px;margin:0 auto;padding:16px max(16px,env(safe-area-inset-right,0px)) 64px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:40px}
+@media (min-width:900px){main{padding-left:40px;padding-right:40px}}
+header{display:flex;align-items:center;gap:12px}
+.grow{flex:1}
+button{font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);border-radius:3px;padding:5px 10px;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.seg{display:flex}.seg button{border-radius:0;margin-left:-1px}.seg button:first-child{border-radius:3px 0 0 3px;margin-left:0}.seg button:last-child{border-radius:0 3px 3px 0}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);position:relative}
+.icon{padding:6px;display:flex;border-color:transparent;color:var(--ink-2)}
+.state{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.stage{display:grid;grid-template-columns:minmax(0,1fr);gap:40px}
+@media (min-width:900px){.stage{grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:64px}}
+.left{display:flex;flex-direction:column;gap:20px;min-width:0}
+.board{display:flex;gap:6px;width:max-content}
+.board button{font:500 28px/28px var(--mono);border:0;padding:2px 3px;border-radius:3px;background:none}
+.board button:hover{background:var(--surface)}
+.s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
+.line{display:flex;gap:8px;align-items:center;min-height:30px;min-width:0}
+.line .trail,.line .acts,.line .tools{display:flex;align-items:center;gap:4px}
+.line .trail{flex:0 1 auto;min-width:0;max-width:45%;overflow-x:auto;scrollbar-width:none}
+.line .acts{flex:1 1 0;min-width:0;overflow-x:auto;scrollbar-width:none}
+.line .tools{flex:none;gap:0}
+.line .trail::-webkit-scrollbar,.line .acts::-webkit-scrollbar{display:none}
+.line .trail > *,.line .acts > *{flex:none}
+.line .crumb{border-color:transparent;padding:5px 4px;color:var(--ink-3);font-family:var(--mono);font-size:12px}
+.line .sep{color:var(--line-strong);font-family:var(--mono)}
+.line .act{font-family:var(--mono);font-size:12px;color:var(--ink);display:flex;align-items:center;gap:6px}
+.line .who{font:400 11px/14px var(--mono);letter-spacing:.08em;color:var(--ink-3);margin-right:2px}
+.sw{width:8px;height:8px;display:inline-block}
+.range{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 8px repeat(4,minmax(0,1fr)) 8px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 8px repeat(4,auto) 8px repeat(4,auto);gap:2px}
+.cell{position:relative;aspect-ratio:1;background:var(--surface);border:0;border-radius:0;padding:0;overflow:hidden;cursor:pointer;min-width:0}
+.cell.out{cursor:default}
+.cell .fill{position:absolute;left:0;right:0;bottom:0;display:flex}
+.cell .fill i{display:block;height:100%}
+.cell span{position:absolute;left:3px;top:2px;font:400 10px/12px var(--mono);color:var(--ink);pointer-events:none}
+.cell.out span{color:var(--ink-3);opacity:.5}
+/* the frame of the picked cell is drawn over the action colours, not under them */
+.cell[aria-pressed="true"]{z-index:1}
+.cell[aria-pressed="true"]::after{content:"";position:absolute;inset:0;border:2px solid var(--ink);pointer-events:none}
+@media (max-width:600px){.cell span{display:none}.range{grid-template-columns:repeat(5,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 5px repeat(4,auto) 5px repeat(4,auto)}}
+.combos{display:flex;flex-wrap:nowrap;gap:4px;min-height:40px;overflow-x:auto;scrollbar-width:none}
+.combos::-webkit-scrollbar,.why::-webkit-scrollbar,.drawer::-webkit-scrollbar,.editor::-webkit-scrollbar{display:none}
+.combos button{flex:none}
+.drawer,.editor,.why{scrollbar-width:none}
+.combos button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
+.combos button[aria-pressed="true"]{border-color:var(--ink)}
+.bar{display:flex;gap:2px;height:6px;width:100%}.bar i{display:block;height:100%}
+.why{display:flex;flex-direction:column;gap:16px;min-width:0;max-width:52ch}
+.why h2{font:500 28px/28px var(--mono);margin:0;display:flex;gap:8px}
+.why .mix{display:flex;flex-direction:column;gap:6px}
+.why .mix .bar{height:8px}
+.why .nums{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.why .nums span{display:inline-flex;align-items:center;gap:6px}
+.why p{margin:0;font:400 15px/23px var(--sans);text-wrap:pretty}
+.why .lead{font-weight:500}
+.why p:not(.lead){color:var(--ink-2)}
+
+.curve svg{display:block;width:100%;height:auto;touch-action:none}
+.curve .axis{stroke:var(--line-strong);stroke-width:1}.curve .gridl{stroke:var(--line);stroke-width:1}
+/* Both ranges in ink: the player to act at full strength, the other faded */
+.curve .act{fill:none;stroke:var(--ink);stroke-width:1.75}.curve .wait{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28}
+/* The chart area keeps one height whatever it shows, so the strategy below it never moves */
+.box{aspect-ratio:1;display:flex;flex-direction:column;gap:12px;min-width:0}
+.versions{display:flex;align-items:center;gap:2px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.versions button:disabled{opacity:.25;cursor:default}
+/* Going between versions: the whole stage slides out one way and the other version slides in */
+.stage{transition:transform .18s ease,opacity .18s ease}
+.stage.out-left{transform:translateX(-48px);opacity:0}.stage.out-right{transform:translateX(48px);opacity:0}
+.stage.in-left{transform:translateX(-48px);opacity:0;transition:none}.stage.in-right{transform:translateX(48px);opacity:0;transition:none}
+@media (prefers-reduced-motion:reduce){.stage{transition:none}}
+/* The editor: a sheet over the page. Nothing is solved in here; Save solves. */
+.editor{position:fixed;z-index:12;left:50%;top:50%;transform:translate(-50%,-50%);width:min(840px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:20px;display:flex;flex-direction:column;gap:22px}
+.editor:focus{outline:none}
+.ed-head{display:flex;align-items:center;gap:12px}
+.ed-head .count{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.ed-body{display:grid;grid-template-columns:minmax(0,270px) minmax(0,1fr);gap:28px;align-items:center}
+@media (max-width:700px){.ed-body{grid-template-columns:minmax(0,1fr);gap:18px}.editor{padding:16px}}
+#e-paint b span{display:none}
+.sliders{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 32px}
+@media (max-width:600px){.sliders{gap:12px 20px}.ed-body #e-paint{width:100%;max-width:230px;margin:0 auto}}
+.sliders label{display:flex;flex-direction:column;gap:0;min-width:0;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.sliders output{font:500 14px/20px var(--mono);color:var(--ink);letter-spacing:0}
+.sliders input{appearance:none;-webkit-appearance:none;width:100%;height:28px;margin:0;background:transparent;cursor:ew-resize}
+.sliders input::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:var(--line-strong)}
+.sliders input::-moz-range-track{height:3px;border-radius:2px;background:var(--line-strong)}
+.sliders input::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--bg);border:2px solid var(--ink);margin-top:-9px}
+.sliders input::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:var(--bg);border:1.5px solid var(--ink)}
+.curve .ghost{fill:none;stroke:var(--ink);stroke-width:1;stroke-dasharray:2 4;opacity:.45}
+.curve .ceiling{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:1 4}
+.rows{display:flex;flex-direction:column;gap:3px}
+.rows .row{position:relative}
+.rows .name{position:absolute;top:4px;white-space:nowrap;pointer-events:none}
+.rows .strip{height:22px;margin:0}
+.rows{margin:10px 0}
+.rows .name{font:400 11px/14px var(--mono);color:var(--ink-3)}
+.rows .name .short{display:none}
+@media (max-width:600px){.rows .name .long{display:none}.rows .name .short{display:inline}}
+.curve .dot{fill:var(--bg);stroke:var(--ink);stroke-width:1.5}
+.curve .knob{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:grab}
+/* One column per hand, all the same width, edge to edge; a dot under the strip marks the hand picked */
+.strip{display:flex;height:72px;gap:0;align-items:stretch;margin:10px 0}
+.strip button{flex:1 1 0;position:relative;min-width:0;padding:0;border:0;border-radius:0;display:flex;flex-direction:column;justify-content:flex-end;background:var(--surface)}
+.strip button b{display:flex;flex-direction:column-reverse;width:100%;min-height:2px}
+.strip button i{display:block;width:100%}
+.curve .grab{fill:var(--bg);stroke:var(--ink);stroke-width:1.5;cursor:ns-resize}
+#dist svg{touch-action:none}
+/* the equity chart is wider than tall, in the middle of the square the grid takes */
+#dist:not([hidden]){flex:1;min-height:0;display:flex;align-items:center}
+#dist svg{flex:1 1 auto;min-width:0;width:100%;height:auto;aspect-ratio:560/350}
+.strip button[aria-pressed="true"]{z-index:2}
+.strip button[aria-pressed="true"]::before,.strip button[aria-pressed="true"]::after{content:"";position:absolute;left:50%;transform:translateX(-50%);border:5px solid transparent;pointer-events:none}
+.strip button[aria-pressed="true"]::before{top:-9px;border-top:7px solid var(--ink);border-bottom:0}
+.strip button[aria-pressed="true"]::after{bottom:-9px;border-bottom:7px solid var(--ink);border-top:0}
+.strip span{flex:1 1 0;min-width:0}
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.18);z-index:10}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(360px,100%);background:var(--bg);box-shadow:var(--float);z-index:11;padding:24px max(20px,env(safe-area-inset-right,0px)) 24px 20px;display:flex;flex-direction:column;gap:16px;overflow:auto}
+.drawer label{display:flex;flex-direction:column;gap:4px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);flex:1}
+.drawer .spot-only{display:flex;flex-direction:column;gap:16px}
+.drawer input,.drawer textarea{font:500 13px/18px var(--mono);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:3px;padding:7px 8px;width:100%;resize:vertical;letter-spacing:0;text-transform:none}
+.drawer .row{display:flex;gap:12px}
+.drawer .check{justify-content:flex-start}
+.drawer .check input{appearance:none;-webkit-appearance:none;width:34px;height:20px;border-radius:10px;border:1px solid var(--line-strong);background:var(--surface);padding:0;position:relative;cursor:pointer;margin-top:8px}
+.drawer .check input::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:var(--ink-3);transition:transform .12s}
+.drawer .check input:checked{background:var(--ink);border-color:var(--ink)}
+.drawer .check input:checked::after{transform:translateX(14px);background:var(--bg)}
+.drawer:focus{outline:none}
+/* Typing into a field must not make a phone zoom the page: its text is 16px there */
+@media (max-width:600px){.drawer input,.drawer textarea{font-size:16px}}
+.painter{display:flex;flex-direction:column;gap:10px}
+.painter .head{display:flex;align-items:center;gap:12px}
+.painter .seg button{padding:3px 9px;font:400 11px/14px var(--mono);letter-spacing:.08em}
+.painter .count{font:400 12px/16px var(--mono);color:var(--ink-3);flex:1}
+.painter .clear{border-color:transparent;padding:3px 0;color:var(--ink-3);font:400 12px/16px var(--sans)}
+.paint{display:grid;grid-template-columns:repeat(5,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr)) 5px repeat(4,minmax(0,1fr));grid-template-rows:repeat(5,auto) 5px repeat(4,auto) 5px repeat(4,auto);gap:2px;touch-action:none;user-select:none;-webkit-user-select:none}
+.paint b{position:relative;aspect-ratio:1;background:var(--surface);font:400 8px/10px var(--mono);color:var(--ink-3);padding:2px;overflow:hidden;cursor:crosshair}
+.paint b i{position:absolute;left:0;right:0;bottom:0;background:var(--ink)}
+.paint b span{position:relative;pointer-events:none}
+.paint b.on span{color:var(--bg)}
+.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);padding:8px 12px}
+.error{margin:0;color:var(--danger);font:400 12px/16px var(--mono);min-height:16px}
+@media (prefers-reduced-motion:no-preference){.drawer{animation:in .16s ease-out}@keyframes in{from{transform:translateX(16px);opacity:0}}}
+
+/* Screens with room (a tablet on its side, a laptop, a monitor): everything fits the window, and
+   nothing scrolls but the explanation, inside its own box. The chart area is as big as the height allows. */
+@media (min-width:900px) and (min-height:520px){
+  html,body{height:100%;overflow:hidden}
+  main{--side:min(560px,calc(100dvh - 318px));height:100dvh;padding-top:14px;padding-bottom:14px;gap:18px;max-width:calc(var(--side) + 56px + 600px + 80px)}
+  .stage{flex:1;min-height:0;grid-template-columns:var(--side) minmax(0,1fr);gap:56px;justify-content:start}
+  .left{gap:12px;width:var(--side)}
+  .line .act{padding-left:8px;padding-right:8px}
+  .box{width:var(--side);height:var(--side);aspect-ratio:auto}
+  .stripbox{height:132px;flex:none}
+  .rows{height:132px;gap:2px}
+  .rows .row{flex:1 1 0;min-height:0;max-height:24px}
+  .rows .strip{height:100%}
+  .rows .name{top:50%;transform:translateY(-50%)}
+  .why{overflow-y:auto;min-height:0;max-height:100%;padding-bottom:24px;max-width:none}
+}
+
+/* flop and turn spots: the cards dealt, and choosing one */
+.board .dealt{opacity:.75}
+.pop{position:fixed;z-index:9;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:10px;width:min(430px,calc(100vw - 24px))}
+.pop:not([hidden]){flex:none;display:flex;flex-direction:column;gap:4px}
+.state{border:0;background:none;padding:0;cursor:default}
+.state[data-busy]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:4px}
+.line .crumb.card{font-family:var(--sans);font-size:13px;color:var(--ink)}
+.deal:not([hidden]){flex:1;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.deal div{display:grid;grid-template-columns:repeat(13,1fr);gap:3px}
+.deal button{padding:0;aspect-ratio:3/4;font:500 12px/1 var(--sans);border:1px solid var(--line);background:var(--surface);border-radius:var(--r)}
+.deal button:disabled{opacity:.2}
+.deal button[aria-pressed="true"]{border-color:var(--ink)}
+.drawer.sub .spot-only{display:none}
+@media (max-width:600px){.deal button{font-size:10px}}
+
+/* a solve in progress: what, how far, and Stop */
+.loader:not([hidden]){position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:rgba(250,250,247,.72);padding:16px}
+.loader .card{width:min(440px,100%);background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:22px;display:flex;flex-direction:column;gap:14px}
+.loader .title{font:500 16px/22px var(--sans);display:flex;align-items:baseline;gap:10px}
+.loader .title span{font:500 16px/22px var(--mono);display:flex;gap:6px}
+.loader .track{height:6px;border-radius:3px;background:var(--surface);overflow:hidden}
+.loader .track i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px;transition:width .3s ease}
+.loader .meta{display:flex;align-items:center;gap:12px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+
+.theirs{width:190px;padding:10px}
+.theirs .paint b{cursor:default;padding:0}
+.drawer .link{align-self:flex-start;border:0;padding:0;color:var(--accent);font:500 13px/18px var(--sans)}
+.drawer.sub .link{display:none}
+
+.why p.quiet{color:var(--ink-3);font-size:13px;line-height:19px}
+
+/* ---- the way in: Study or Train ---- */
+a{color:var(--accent)}
+a.icon{border:1px solid transparent;border-radius:3px}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padding-top:40px;padding-bottom:40px}
+.home h1{margin:0;font:500 28px/28px var(--mono)}
+.choose{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media (max-width:600px){.choose{grid-template-columns:minmax(0,1fr)}}
+.choose a{display:flex;flex-direction:column;gap:10px;padding:20px;border:1px solid var(--line-strong);border-radius:3px;color:var(--ink);text-decoration:none;min-height:150px}
+.choose a:hover{background:var(--surface);border-color:var(--ink)}
+.choose .kind{font:500 20px/24px var(--sans)}
+.choose .what{font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
+
+/* ---- Train: the two ranges, then a question ---- */
+.board span{font:500 28px/28px var(--mono);padding:2px 3px}
+.score{font:400 13px/18px var(--mono);color:var(--ink-3);padding:5px 10px}
+.score b{font-weight:500;color:var(--ink)}
+.t-stage{display:grid;grid-template-columns:minmax(0,1fr);gap:32px}
+.t-stage .left{gap:14px}
+.where{display:flex;align-items:center;gap:12px;min-height:30px;font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
+.where .who{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.where .stands{color:var(--ink);font:500 13px/18px var(--sans);overflow:hidden;text-overflow:ellipsis;min-width:0}
+.minis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.mini{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
+.mini figcaption{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.mini .paint{touch-action:auto;gap:1px}
+.mini .paint b{cursor:default;padding:0}
+/* hero in ink, villain faded: the same as the two curves */
+.mini.villain .paint b i{opacity:.28}
+.mini .paint b.mark{outline:2px solid var(--accent);outline-offset:0;z-index:1;overflow:visible}
+.train #dist:not([hidden]){flex:none}
+.train main{gap:20px}
+.ask{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:52ch}
+.ask .kind{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.ask h2{font:500 28px/28px var(--mono);margin:0;display:flex;gap:8px}
+.ask p{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
+.ask .text,.ask .lead{font:500 20px/26px var(--sans);color:var(--ink)}
+.ask .hint{font:400 13px/18px var(--sans);color:var(--ink-3)}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px}
+.opt{display:flex;align-items:center;gap:8px;padding:11px 12px;font:500 14px/20px var(--sans);color:var(--ink);text-align:left}
+.opt span{flex:1}
+.opt:hover:not(:disabled){border-color:var(--ink)}
+.opt[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.opt:disabled{cursor:default;color:var(--ink-3)}
+.opt.right{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok);color:var(--ok)}
+.opt.wrong{border-color:var(--danger);box-shadow:inset 0 0 0 1px var(--danger);color:var(--danger)}
+.opt svg{flex:none}
+.verdict{display:flex;align-items:center;gap:8px;font:500 15px/23px var(--sans)}
+.verdict.good{color:var(--ok)}.verdict.bad{color:var(--danger)}
+.ask .primary{align-self:flex-start;min-width:104px;padding:9px 14px}
+.ask .primary:disabled{opacity:.35;cursor:default}
+.track{height:6px;border-radius:3px;background:var(--surface);overflow:hidden;max-width:320px}
+.track i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s ease}
+@media (prefers-reduced-motion:no-preference){
+  .verdict{animation:land .2s ease-out}
+  .opts.missed{animation:shake .28s ease-in-out}
+  @keyframes land{from{transform:translateY(4px);opacity:0}}
+  @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+}
+@media (min-width:900px){
+  .t-stage{grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:56px;flex:1;min-height:0}
+  .train main{max-width:1200px}
+  .ask{padding-top:44px;overflow-y:auto;scrollbar-width:none}
+}
+/* settings and the last questions */
+.train .drawer{gap:6px}
+.drawer h3{margin:14px 0 4px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.drawer h3:first-child{margin-top:0}
+.choice{display:flex;align-items:center;gap:4px;margin-left:-8px}
+/* the box is drawn, not the browser's: a square that fills with ink */
+.tick{border:0;padding:8px;display:flex}
+.tick i{width:18px;height:18px;border:1px solid var(--line-strong);border-radius:3px;display:grid;place-items:center;color:transparent;background:var(--bg)}
+.tick[aria-checked="true"] i{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.choice .name{flex:1;display:flex;align-items:center;justify-content:space-between;gap:8px;border:0;padding:8px 0;text-align:left;color:var(--ink);font:500 14px/20px var(--sans)}
+.choice .name svg{color:var(--ink-3);transition:transform .12s}
+.choice .name[aria-expanded="true"] svg{transform:rotate(180deg)}
+.days{list-style:none;margin:0 0 8px 30px;padding:0;display:flex;flex-direction:column;gap:6px;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.days li{display:grid;grid-template-columns:86px minmax(0,1fr) 44px 36px;gap:10px;align-items:center}
+.days li span:nth-child(n+3){text-align:right}
+.days .bar{height:4px}
+.days .none{display:block;color:var(--ink-3)}
+.drawer .note{margin:18px 0 0;font:400 13px/20px var(--sans);color:var(--ink-3);text-wrap:pretty}
+.total{display:flex;align-items:baseline;gap:12px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.total .big{font:400 28px/28px var(--mono)}.total .big b{font-weight:500;color:var(--ink)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.log li{border-top:1px solid var(--line)}
+.past{width:100%;display:flex;align-items:flex-start;gap:10px;border:0;border-radius:0;padding:10px 0;text-align:left;color:var(--ink)}
+.past .mark{display:flex;padding-top:2px}
+.good .mark{color:var(--ok)}.bad .mark{color:var(--danger)}
+.past .q{display:flex;flex-direction:column;gap:2px;min-width:0}
+.past .q b{font:500 13px/18px var(--mono)}
+.past .spot{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.log dl{margin:0 0 14px 24px;display:flex;flex-direction:column;gap:2px}
+.log dt{margin-top:8px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.log dd{margin:0;font:500 13px/18px var(--mono);color:var(--ink)}
+.log dd p{margin:0 0 8px;font:400 14px/21px var(--sans);color:var(--ink-2);text-wrap:pretty}
+.log dd .soon{color:var(--ink-3)}
+
+/* a spot too big to solve whole: the button offers the lite solve, in red */
+.primary.lite{background:var(--danger);border-color:var(--danger)}
+.error.fit{min-height:auto;flex:none;font-family:var(--sans);font-size:13px;line-height:18px;text-wrap:pretty}
+.error.fit:empty{display:none}
+
+.where a.icon{display:flex;padding:6px;color:var(--ink-2)}
+.where .icon + .icon{margin-left:-12px}
+/* a narrow screen: the seat is over the range already, and the line needs the room */
+@media (max-width:600px){.where .who{display:none}}
+.icon.done{color:var(--ok)}.icon.failed{color:var(--danger)}
+
+/* the explanation's two faces, and the analytical one */
+.why .tabs{align-self:flex-start}
+.why .tabs button{padding:3px 10px;font:400 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase}
+.spread svg{display:block;width:100%;height:auto}
+.spread .axis{stroke:var(--line-strong);stroke-width:1}.spread .gridl{stroke:var(--line);stroke-width:1}
+.spread .now{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 4}
+.spread .act{fill:none;stroke:var(--ink);stroke-width:1.75}.spread .wait{fill:none;stroke:var(--ink);stroke-width:1.5;opacity:.28}
+.spread .cap,.spread .ends{display:flex;justify-content:space-between;gap:12px;font:400 11px/16px var(--mono);color:var(--ink-3);margin-top:6px}
+.spread .ends span{display:flex;gap:6px;font-size:13px}
+.types{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.types li{display:grid;grid-template-columns:16px minmax(0,1.4fr) 40px minmax(0,2fr);gap:10px;align-items:center;font:400 13px/18px var(--sans);color:var(--ink-3)}
+.types li.has{color:var(--ink);font-weight:500}
+.types .mark{font:500 13px/18px var(--mono);text-align:center}
+.types li.has .mark{color:var(--ok)}
+.types .share{font:400 12px/18px var(--mono);text-align:right}
+.types .bar{height:10px;display:flex}
+
+.types.all li{color:var(--ink-2);grid-template-columns:0 minmax(0,1.4fr) 40px minmax(0,2fr);gap:10px 10px}
+.types.all .mark{display:none}
+.types.all li{grid-template-columns:minmax(0,1.4fr) 40px minmax(0,2fr)}
+.facts{border-collapse:collapse;width:100%;font:400 13px/20px var(--sans)}
+.facts th,.facts td{text-align:left;padding:3px 0;border-bottom:1px solid var(--line)}
+.facts thead th{font:400 11px/16px var(--mono);letter-spacing:.08em;color:var(--ink-3)}
+.facts tbody th{font-weight:400;color:var(--ink-2)}
+.facts td{font-family:var(--mono);font-size:12px;width:22%}
+
+/* the mark: home on every page, and beside the name on the opening one */
+.logo{display:flex;flex:none;border-radius:5px}
+.logo .mark,.home h1 .mark{display:block;border-radius:5px}
+.home h1{display:flex;align-items:center;gap:14px}
+
+/* the hands that carry one name */
+.types li[data-tag]{cursor:pointer}
+.types li[data-tag]:hover .tname{text-decoration:underline;text-underline-offset:3px}
+.group{gap:14px}
+.group:focus{outline:none}
+.g-head{display:flex;flex-direction:column;gap:2px}
+.g-head h3{margin:0;font:500 20px/24px var(--sans);text-transform:none;letter-spacing:0;color:var(--ink)}
+.g-head span{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.group .mix .bar{height:8px}
+.g-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(74px,1fr));gap:4px}
+.g-list button{font:500 12px/16px var(--mono);display:flex;flex-direction:column;gap:3px;padding:5px 7px;align-items:stretch;color:var(--ink)}
+.g-list button[aria-pressed="true"]{border-color:var(--ink)}
+.g-list button span:first-child{display:flex;gap:3px}
+
+/* phones: the top bar must fit the screen, so the board gives way before anything else is pushed off the edge */
+header{min-width:0}
+header .board{min-width:0;flex:0 1 auto}
+@media (max-width:600px){
+  header{gap:6px}
+  .board{gap:2px}
+  .board button{font-size:clamp(17px,5.6vw,24px);line-height:28px;padding:2px 1px}
+  header .icon{padding:6px 5px}
+  .logo .mark{width:24px;height:24px}
+}
+
+/* where the turn and the river will go */
+.board .slot{width:1.15em;height:30px;border:1px dashed var(--line-strong);border-radius:3px;padding:0;background:none;align-self:center;margin-left:3px;font-size:22px}
+.board .slot[data-later]{opacity:.5}
+.board .slot:hover{border-color:var(--ink-3);background:var(--surface)}
+.board button{touch-action:manipulation}
+
+.g-list .spark{display:block;width:100%;height:24px;margin-top:2px;background:var(--surface)}
+.g-list .spark polyline{fill:none;stroke:var(--ink);stroke-width:1.2;vector-effect:non-scaling-stroke}
+.g-list .spark .mid{stroke:var(--line-strong);stroke-width:1;vector-effect:non-scaling-stroke}
+.g-list .spark .now{stroke:var(--accent);stroke-width:1;stroke-dasharray:2 2;vector-effect:non-scaling-stroke}
+/* the streets before the one asked about: who did what */
+.past{display:flex;flex-direction:column;gap:4px;font:400 12px/16px var(--mono);color:var(--ink)}
+.past:empty{display:none}
+.past div{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline}
+.past .street{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);min-width:38px}
+.past i{font-style:normal;color:var(--ink-3)}
+/* the ladder: both ranges on one scale, out of position above, in position below; the range not to act is drawn plain */
+.ladder{gap:4px}
+.ladder .row{display:flex;flex-direction:column;gap:3px}
+.ladder .strip{height:30px}
+/* a flat grey, not ink seen through: see-through columns that overlap by a hair draw dark lines */
+.ladder .strip .other{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+@media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}}
+/* Train's ladder: hero in ink, villain faded, the hand asked about marked */
+.train .ladder{margin:0}
+.train .ladder .strip{height:44px}
+.ladder .strip .hero{background:var(--ink)}
+.ladder .strip .mark{background:var(--accent);position:relative;z-index:1;box-shadow:0 0 0 1px var(--accent)}
+.ladder .strip .mark::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);border:5px solid transparent;border-top:7px solid var(--accent);border-bottom:0}
+@media (min-width:900px) and (min-height:520px){.train .ladder{height:160px}}
+/* a thumb slid along the action chart picks hands: sideways is the chart's, up and down still scrolls the page */
+#strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+/* under the cards to pick from: the street dealt at random */
+.deal button.random{aspect-ratio:auto;width:100%;margin-top:6px;padding:9px 12px;font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);border-radius:3px}
+.deal button.random:hover{border-color:var(--ink);color:var(--ink)}
+/* ranges by position and preflop action: three rows of choices, in setup and in a menu off the top bar */
+.presets{display:flex;flex-direction:column;gap:8px}
+.presets .line{display:flex;align-items:center;gap:10px}
+.presets .line > span{flex:none;width:46px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.presets .seg{flex-wrap:wrap;row-gap:4px}
+.presets .seg button{padding:4px 7px;font:400 11px/14px var(--mono);letter-spacing:.02em}
+.presets .said{margin:2px 0 0;font:400 12px/17px var(--sans);color:var(--ink-3);text-wrap:pretty}
+.seatpick{width:min(340px,calc(100vw - 24px));padding:14px}
+.presets .seg button.far{color:var(--ink-3);opacity:.55}
+
+/* a sentence with numbers behind it: they open under it on a tap */
+.why p[data-more]{cursor:pointer}
+.why p[data-more] .t::after{content:' \22EF';color:var(--ink-3)}
+.why p[data-more].open .t::after{content:''}
+.why p small{display:none;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-3)}
+.why p.open small{display:block}
+
+/* Train with Study beside it: two panes the width of the window, one shown; each keeps its own scroll and state */
+body.paged{overflow:hidden;height:100dvh}
+/* the panes lie over each other inside a box the width of the window, so the page never grows wider than it (a wider
+   page lets a phone widen its layout, and things fixed to its right edge, the drawers, end up off screen) */
+.pager{position:relative;width:100%;height:100dvh;overflow:hidden}
+.pane{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch}
+@media (prefers-reduced-motion:no-preference){.pane{transition:transform .28s ease}}
+.study-pane{transform:translateX(100%)}
+.pager.on-study .pane:not(.study-pane){transform:translateX(-100%)}
+.pager.on-study .study-pane{transform:none}
+.study-pane{display:flex;flex-direction:column;overflow:hidden;background:var(--bg)}
+.study-pane .study{flex:1;min-height:0;overflow-x:hidden;overflow-y:auto}
+@media (min-width:900px) and (min-height:520px){.study-pane main{height:100%}}
+.drawer>form{display:contents}
+.back-bar{display:flex;align-items:center;height:36px;padding:0 max(12px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);flex:none}
+.back-bar button{border:0;background:none;color:var(--ink-2);font:500 13px/18px var(--sans);padding:6px 4px;cursor:pointer}
+
+/* Play: a heads-up table kept plain. Villain above, the board and pot between, you below with your actions; the same
+   type, ink and suit colours as the rest. The seat to act is marked with the accent rule. */
+.table{max-width:560px;gap:22px;min-height:100dvh}
+.play header .session{font:400 13px/18px var(--mono);color:var(--ink-2)}
+.play header .session.down{color:var(--danger)}
+.seat{display:grid;grid-template-columns:1fr auto;grid-template-areas:"who hole" "stack hole" "last hole";align-items:center;gap:2px 16px;padding:12px 0 12px 14px;border-left:2px solid var(--line)}
+.seat.acting{border-left-color:var(--accent)}
+.seat:empty{border-left-color:transparent}
+.seat .who{grid-area:who;display:flex;gap:8px;align-items:baseline}
+.seat .name{font:500 15px/20px var(--sans);color:var(--ink)}
+.seat .pos,.pot span{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.seat .stack{grid-area:stack;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.seat .last{grid-area:last;font:500 13px/18px var(--mono);color:var(--ink-2);min-height:18px}
+.seat .hole{grid-area:hole;display:flex;gap:4px}
+.seat .hole span{font:500 24px/28px var(--mono);padding:2px 3px}
+.seat .hole.big span{font-size:34px;line-height:38px}
+.seat .back{display:block;width:24px;height:32px;border-radius:3px;background:repeating-linear-gradient(135deg,var(--surface) 0 4px,var(--line) 4px 5px);border:1px solid var(--line-strong)}
+.felt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
+.p-board{display:flex;gap:6px;align-items:center;min-height:40px}
+.p-board span{font:500 30px/34px var(--mono);padding:2px 3px}
+.p-board .slot{width:26px;height:34px;padding:0;border:1px dashed var(--line-strong);border-radius:3px}
+.pot{font:500 15px/20px var(--mono);color:var(--ink);display:flex;gap:8px;align-items:baseline}
+.felt .past{align-self:stretch;padding:0}
+.ranges{gap:16px}
+.moves{display:flex;flex-direction:column;gap:12px;min-height:96px}
+.moves .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}
+.moves .act{padding:12px 10px;font:500 14px/18px var(--sans);color:var(--ink);border-color:var(--line-strong)}
+.moves .act.k-fold{color:var(--ink-3)}
+.moves .act:disabled{opacity:.4;cursor:default}
+.moves .lead{margin:0;font:500 20px/26px var(--sans);color:var(--ink)}
+.moves .note{margin:0;font:400 13px/18px var(--sans);color:var(--ink-3)}
+.moves .result{margin:0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font:400 15px/22px var(--sans);color:var(--ink-2)}
+.moves .result b{font:500 24px/28px var(--mono);color:var(--ok)}
+.moves .result.down b{color:var(--danger)}
+.moves .result span{flex-basis:100%;font:400 13px/18px var(--sans);color:var(--ink-3)}
+.moves .primary{align-self:flex-start;min-width:120px;padding:10px 14px}
+
+/* ---- Train: the drills on the ranges, and the counts behind an answer ---- */
+.ask .sub{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.ask .more{font:400 14px/21px var(--sans);color:var(--ink-2)}
+.opts.wide{grid-template-columns:minmax(0,1fr)}
+.opt .hand{font:500 16px/20px var(--mono);display:inline-flex;gap:3px}
+.opts.shapes{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))}
+.opts.shapes .opt{flex-direction:column;align-items:flex-start;gap:8px;font:500 13px/18px var(--sans)}
+.opt .shape{flex:none;display:flex;align-items:flex-end;width:100%;max-width:72px;height:26px;background:var(--act-check)}
+.opt .hand span{flex:none}
+.shape b{flex:1;display:block;background:var(--act-big)}
+.minis.solo{grid-template-columns:minmax(0,min(360px,40dvh))}
+.blk{display:flex;flex-direction:column;gap:6px}
+.blk>b{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.blk>b em{font-style:normal;color:var(--accent)}
+.cmp{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.cmp li{display:grid;grid-template-columns:56px minmax(0,1fr) 40px;gap:10px;align-items:center}
+.cmp li span:last-child{text-align:right;color:var(--ink)}
+.cmp .bar{height:4px;display:flex;background:var(--line)}
+.cmp .bar i{display:block;height:4px;background:var(--ink)}
+.cmp .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+
+/* ---- Train: the drills to choose from ---- */
+.train .board .title{font:500 22px/28px var(--mono);padding:2px 3px;color:var(--ink)}
+.drills{display:flex;flex-direction:column;gap:10px;max-width:720px}
+.drills .lede{margin:0 0 4px;font:400 15px/23px var(--sans);color:var(--ink-2);max-width:52ch;text-wrap:pretty}
+.drills h3{margin:12px 0 0;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.drills .choose{grid-template-columns:minmax(0,1fr);gap:8px}
+.drills .choose button{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1px solid var(--line-strong);border-radius:3px;text-align:left;color:var(--ink);background:transparent}
+.drills .choose button:hover{background:var(--surface);border-color:var(--ink)}
+.drills .choose button>span:first-child{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.drills .choose .kind{font:500 16px/22px var(--sans)}
+.drills .choose .what{font:400 13px/18px var(--sans);color:var(--ink-2);text-wrap:pretty}
+.drills .choose .n{font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
+.drills .choose .n.played{color:var(--ink)}
+
+/* ---- Train: everything of an answer on one screen ---- */
+.opts.done .opt:not(.right):not(.wrong){display:none}
+.ask .rest summary{cursor:pointer;font:500 13px/18px var(--sans);color:var(--ink-2);list-style:none;width:max-content;border-bottom:1px solid var(--line-strong)}
+.ask .rest summary::-webkit-details-marker{display:none}
+.ask .rest[open] summary{margin-bottom:10px}
+.ask .rest p + p{margin-top:10px}
+.ask .minis.shown{max-width:min(100%,46dvh)}
+.ask .minis.shown.solo{grid-template-columns:minmax(0,min(240px,30dvh))}
+@media (max-width:899px){
+  .ask #next{position:sticky;bottom:max(12px,env(safe-area-inset-bottom,0px));align-self:stretch;z-index:2;box-shadow:0 0 0 12px var(--bg),0 -20px 16px 0 var(--bg)}
+  .train main{padding-bottom:28px}
+}
+
+/* ---- the mock-up's own additions, in the app's idiom: mono labels, hairlines, hero in ink and villain faded ---- */
+body{padding:0}
+main{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main.home{min-height:0;justify-content:flex-start;gap:18px}
+.home .lede{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);max-width:52ch;text-wrap:pretty}
+.home h3{margin:14px 0 0;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.home .choose{gap:8px}
+.home .choose a{min-height:0;padding:14px 16px;gap:4px;flex-direction:row;align-items:center;cursor:pointer}
+.home .choose a>span:first-child{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.home .choose .kind{font:500 16px/22px var(--sans)}
+.home .choose .what{font:400 13px/18px var(--sans)}
+.home .choose .n{font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
+.home .choose .n.done{color:var(--ok)}
+.home .note{margin:10px 0 0;font:400 13px/20px var(--sans);color:var(--ink-3);text-wrap:pretty;max-width:60ch}
+.train main{gap:20px}
+.t-stage{gap:24px}
+.ask h2.plain{letter-spacing:.02em}
+.ask .sub{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.left .mini.solo{max-width:360px}
+.cmp{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.cmp li{display:grid;grid-template-columns:36px minmax(0,1fr) 40px;gap:10px;align-items:center}
+.cmp li span:last-child{text-align:right;color:var(--ink)}
+.cmp .bar{height:4px;display:flex;background:var(--line)}
+.cmp .bar i{display:block;height:4px;background:var(--ink)}
+.cmp .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.cmp li .ex{grid-column:2/4;color:var(--ink-3);text-align:left}
+.blk{display:flex;flex-direction:column;gap:6px}
+.blk>b{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);display:flex;justify-content:space-between}
+.blk>b em{font-style:normal;color:var(--accent)}
+.blk.dim{opacity:.5}
+.eq{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;font:500 12px/16px var(--mono);color:var(--ink)}
+.eq .bar{height:4px;display:flex}.eq .bar i{display:block;height:4px;background:var(--ink)}.eq .bar i.v{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.eq .v{color:var(--ink-3)}
+.strip.mock{position:relative;height:72px;margin:6px 0 0}
+.strip.mock button{cursor:default}
+.strip.mock.tap,.strip.mock.tap button{cursor:pointer}
+.strip.mock .pin{position:absolute;top:-6px;bottom:-6px;width:0;border-left:2px solid var(--ink);z-index:3;pointer-events:none}
+.strip.mock .pin.you{border-color:var(--accent)}
+.strip.mock .pin.thin{border-left:1px dashed var(--ink-2)}
+.strip.mock .pin u{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font:400 11px/14px var(--mono);color:var(--ink);text-decoration:none;white-space:nowrap}
+.strip.mock .pin.you u{color:var(--accent);bottom:auto;top:100%}
+.strip.mock .pin.thin u{color:var(--ink-3)}
+.strip.mock .pin:not(.you):not(.thin) u{font-weight:500}
+.ends{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3);margin-top:16px}
+.keyrow{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2);align-items:center}
+.keyrow .sw{margin-right:6px}
+.opts.shapes{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+.opts.shapes .opt{flex-direction:column;padding:8px 2px;font:400 11px/14px var(--sans);text-align:center;gap:6px}
+.opts.shapes .opt svg{position:absolute;display:none}
+.shape{display:flex;width:100%;max-width:56px;height:26px;background:var(--act-check);align-items:flex-end}
+.shape b{flex:1;background:var(--act-big);display:block}
+.opts.one{grid-template-columns:minmax(0,1fr)}
+.tally{display:flex;gap:24px;font:400 12px/16px var(--mono);color:var(--ink-3)}
+.tally b{display:block;font:500 22px/26px var(--mono);color:var(--ink)}
+.twin{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 12px;align-items:center;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.twin .bar{height:4px;display:flex;background:var(--line)}.twin .bar i{display:block;height:4px}
+.twin b{font:500 13px/18px var(--mono);color:var(--ink)}
+.backlink{border:0;padding:0;font:400 12px/16px var(--mono);color:var(--ink-3)}
+</style>
+<style>
+/* the strength ladder: both ranges back to back on the board's own scale of hands, the range to act coloured by what it does */
+.sl{position:relative;display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.sl .row{display:grid;grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);align-items:center;gap:8px;height:30px;border:0;border-radius:0;padding:0;background:none;width:100%;color:var(--ink);cursor:pointer}
+.sl .row[aria-pressed="true"] .name{color:var(--accent)}
+.sl .name{font:500 12px/14px var(--sans);text-align:center;color:var(--ink);white-space:nowrap}
+.sl .side{display:flex;align-items:center;gap:6px;height:100%;min-width:0}
+.sl .side.me{justify-content:flex-end}
+.sl .side b{font:400 11px/14px var(--mono);color:var(--ink-3);flex:none;min-width:24px}
+.sl .side.me b{text-align:right}
+.sl .bar{display:flex;height:22px;min-width:1px}
+.sl .bar i{display:block;height:100%}
+.sl .him .bar{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.sl .none .bar{background:none;border-left:1px solid var(--line-strong);min-width:0;width:0!important}
+.sl .cut{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--ink);pointer-events:none;z-index:2}
+.sl .cut span{position:absolute;right:0;bottom:3px;font:500 11px/14px var(--mono);color:var(--ink);background:var(--bg);padding:0 0 0 6px}
+.heads{display:grid;grid-template-columns:minmax(0,1fr) 96px minmax(0,1fr);gap:8px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.heads span:first-child{text-align:right}.heads span:nth-child(2){text-align:center}
+.detail{border-top:1px solid var(--line);padding-top:12px;display:flex;flex-direction:column;gap:6px;min-height:76px}
+.detail .t{font:500 15px/20px var(--sans)}
+.detail p{margin:0;font:400 13px/19px var(--sans);color:var(--ink-2)}
+.detail p b{font:500 13px/19px var(--mono);color:var(--ink)}
+.reads{display:flex;flex-direction:column;gap:8px;max-width:56ch}
+.reads p{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
+.reads p b{color:var(--ink);font-weight:500}
+.tally{display:flex;gap:20px;flex-wrap:wrap}
+main.one{max-width:560px}
+</style>
+<div id="app"></div>
+<script>
+const D = [{"title":"Turn","who":"BU","stands":"Checked to you","history":[["Turn",[["BB","X"]]]],"facing":false,"board":"Ks 9d 4s 7h","actions":[{"label":"X","kind":"check","freq":0.581},{"label":"B75","kind":"bet","freq":0.419}],"equity":[0.546,0.455],"bet":0.751,"price":null,"mine":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.025,"eq":0.952,"mix":[0,1],"draws":0,"hands":["44","77","99","KK"]},{"share":0.04,"eq":0.903,"mix":[0,1],"draws":0.053,"hands":["K9o","K7o","K4s","97s","K9s","K7s"]},{"share":0.013,"eq":0.846,"mix":[0,1],"draws":0,"hands":["AA"]},{"share":0.15,"eq":0.829,"mix":[0.402,0.598],"draws":0,"hands":["KTo","KJo","KQo","AKo","K8o","K2s"]},{"share":0.252,"eq":0.672,"mix":[0.803,0.197],"draws":0.106,"hands":["T9o","J9o","Q9o","A7o","A9o","55"]},{"share":0.063,"eq":0.476,"mix":[1,0],"draws":0,"hands":["A4o","33","22","Q4s","A4s","54s"]},{"share":0.189,"eq":0.334,"mix":[0.384,0.616],"draws":0,"hands":["JTo","QTo","QJo","T8o","65s","86s"]},{"share":0.267,"eq":0.326,"mix":[0.681,0.319],"draws":0,"hands":["A3o","A5o","A6o","A8o","ATo","AJo"]}],"his":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.018,"eq":0.944,"mix":null,"draws":0,"hands":["44","77","99"]},{"share":0.047,"eq":0.888,"mix":null,"draws":0.062,"hands":["K9o","K4s","74s","97s","K9s","K7s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.097,"eq":0.787,"mix":null,"draws":0,"hands":["KQo","K8s","KTs","K5s","KJs","KTo"]},{"share":0.255,"eq":0.581,"mix":null,"draws":0.129,"hands":["A9o","J9o","T9o","A7o","66","55"]},{"share":0.105,"eq":0.428,"mix":null,"draws":0,"hands":["33","22","A4s","43s","Q4s","64s"]},{"share":0.238,"eq":0.276,"mix":null,"draws":0,"hands":["QTo","JTo","QJo","53s","85s","63s"]},{"share":0.241,"eq":0.258,"mix":null,"draws":0,"hands":["A8o","AJo","ATo","A5o","A3s","Q2s"]}],"levels":["Full house +","Flush","Straight","Set / trips","Two pair","Overpair","Top pair","Middle pair","Low pair","Draws","Trash"]},{"title":"River","who":"BB","stands":"First to act","history":[["Turn",[["BB","X"],["BU","X"]]]],"facing":false,"board":"Ks 9d 4s 7h 2c","actions":[{"label":"X","kind":"check","freq":0.671},{"label":"B75","kind":"bet","freq":0.329}],"equity":[0.467,0.529],"bet":0.751,"price":null,"mine":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.029,"eq":1,"mix":[0.904,0.096],"draws":0,"hands":["22","44","77","99"]},{"share":0.055,"eq":0.989,"mix":[0.67,0.33],"draws":0,"hands":["K9o","K4s","74s","97s","K9s","K2s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.09,"eq":0.961,"mix":[0.139,0.861],"draws":0,"hands":["KQo","K8s","KTs","K5s","KJs","KTo"]},{"share":0.344,"eq":0.645,"mix":[0.624,0.376],"draws":0,"hands":["A9o","J9o","T9o","33","A7o","66"]},{"share":0.028,"eq":0.434,"mix":[1,0],"draws":0,"hands":["Q2s","A2s","52s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.454,"eq":0.138,"mix":[0.777,0.223],"draws":0,"hands":["A8o","QTo","AJo","ATo","JTo","QJo"]}],"his":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.009,"eq":0.981,"mix":null,"draws":0,"hands":["22","KK"]},{"share":0.007,"eq":0.95,"mix":null,"draws":0,"hands":["K2s","K9o","K4s","K7o","K7s","97s"]},{"share":0,"eq":0.902,"mix":null,"draws":0,"hands":["AA"]},{"share":0.094,"eq":0.88,"mix":null,"draws":0,"hands":["K8o","KTo","K3s","K6s","K5s","K8s"]},{"share":0.445,"eq":0.67,"mix":null,"draws":0,"hands":["A7o","A4o","Q9o","T9o","J9o","66"]},{"share":0.001,"eq":0.464,"mix":null,"draws":0,"hands":["A2s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.443,"eq":0.296,"mix":null,"draws":0,"hands":["AQo","AJo","ATo","A8o","QJo","A6o"]}],"levels":["Full house +","Flush","Straight","Set / trips","Two pair","Overpair","Top pair","Middle pair","Low pair","Draws","Trash"]},{"title":"River, facing a bet","who":"BU","stands":"Facing B75","history":[["Turn",[["BB","X"],["BU","X"]]],["River",[["BB","B75"]]]],"facing":true,"board":"Ks 9d 4s 7h 2c","actions":[{"label":"F","kind":"fold","freq":0.44},{"label":"C","kind":"call","freq":0.464},{"label":"R3x","kind":"raise","freq":0.096}],"equity":[0.393,0.612],"bet":0,"price":0.3,"mine":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.009,"eq":0.992,"mix":[0,0,1],"draws":0,"hands":["22","KK"]},{"share":0.007,"eq":0.951,"mix":[0,0,1],"draws":0,"hands":["K2s","K9o","K4s","K7o","K7s","97s"]},{"share":0,"eq":0.933,"mix":[0,0,1],"draws":0,"hands":["AA"]},{"share":0.094,"eq":0.83,"mix":[0,0.428,0.572],"draws":0,"hands":["K8o","KTo","K3s","K6s","K5s","K8s"]},{"share":0.445,"eq":0.419,"mix":[0.242,0.708,0.05],"draws":0,"hands":["A7o","A4o","Q9o","T9o","J9o","66"]},{"share":0.001,"eq":0.312,"mix":[0.001,0.99,0.009],"draws":0,"hands":["A2s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.443,"eq":0.252,"mix":[0.749,0.244,0.008],"draws":0,"hands":["AQo","AJo","ATo","A8o","QJo","A6o"]}],"his":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.009,"eq":1,"mix":null,"draws":0,"hands":["99","22","44","77"]},{"share":0.056,"eq":0.99,"mix":null,"draws":0,"hands":["K9o","K9s","K2s","97s","K4s","K7s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.236,"eq":0.961,"mix":null,"draws":0,"hands":["KQo","KTs","K5s","KJs","KJo","KTo"]},{"share":0.393,"eq":0.77,"mix":null,"draws":0,"hands":["J9o","T9o","A9o","88","Q9s","98s"]},{"share":0,"eq":0.435,"mix":null,"draws":0,"hands":["Q2s","A2s","52s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.308,"eq":0.066,"mix":null,"draws":0,"hands":["JTo","QTo","J8s","T8s","86s","85s"]}],"levels":["Full house +","Flush","Straight","Set / trips","Two pair","Overpair","Top pair","Middle pair","Low pair","Draws","Trash"]}];
+const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join(''); const pct = (x) => `${Math.round(100 * x)}%`;
+const MARK = `<svg class="mark" viewBox="0 0 512 512" width="26" height="26" aria-hidden="true"><rect width="512" height="512" rx="72" fill="#15171B"/><rect x="96" y="150" width="68" height="212" fill="#7FCDBB"/><rect x="180" y="150" width="68" height="212" fill="#F4C261"/><rect x="180" y="150" width="68" height="90" fill="#7FCDBB"/><rect x="264" y="150" width="68" height="212" fill="#F4C261"/><rect x="348" y="150" width="68" height="212" fill="#F08A6B"/><rect x="348" y="150" width="68" height="60" fill="#F4C261"/></svg>`;
+const COL = { fold: '--act-fold', check: '--act-check', call: '--act-check', bet: '--act-big', raise: '--act-allin', allin: '--act-allin' };
+const WORD = { fold: 'folds', check: 'checks', call: 'calls', bet: 'bets', raise: 'raises', allin: 'goes all-in' };
+const app = document.getElementById('app'); let at = 0; let picked = null; const ROW = 33;
+function show() {
+  const d = D[at]; const rows = d.levels.map((name, i) => ({ name, i, me: d.mine[i], him: d.his[i] })).filter((r) => r.me.share > 0.001 || r.him.share > 0.001); const most = Math.max(...rows.flatMap((r) => [r.me.share, r.him.share]));
+  // the line: for a bet, value must beat four fifths of his range; facing one, a call needs the price against what he bets
+  const t = d.facing ? d.price : 0.8; let cum = 0; let y = rows.length * ROW; let above = [0, 0];
+  for (let k = rows.length - 1; k >= 0; k--) { const s = rows[k].him.share; if (cum + s >= t) { const frac = s > 0 ? (t - cum) / s : 0; y = k * ROW + (ROW - 3) * (1 - frac); above = [rows.slice(0, k).reduce((u, r) => u + r.me.share, 0) + rows[k].me.share * (1 - frac), 1 - t]; break; } cum += s; }
+  const bar = (r) => { const m = r.me; if (!(m.share > 0.001)) return `<span class="side me none"><span class="bar"></span></span>`; return `<span class="side me"><b>${pct(m.share)}</b><span class="bar" style="width:${Math.max(2, (100 * m.share) / most)}%">${m.mix.map((p, a) => `<i style="width:${100 * p}%;background:var(${COL[d.actions[a].kind]})"></i>`).join('')}</span></span>`; };
+  const his = (r) => (r.him.share > 0.001 ? `<span class="side him"><span class="bar" style="width:${Math.max(2, (100 * r.him.share) / most)}%"></span><b>${pct(r.him.share)}</b></span>` : `<span class="side him none"><span class="bar"></span></span>`);
+  const ladder = rows.map((r) => `<button type="button" class="row" data-i="${r.i}" aria-pressed="${picked === r.i}">${bar(r)}<span class="name">${r.name}</span>${his(r)}</button>`).join('');
+  const pk = picked != null ? rows.find((r) => r.i === picked) : null;
+  const does = (m) => d.actions.map((a, k) => [a, m.mix[k]]).filter(([, p]) => p >= 0.05).sort((x, y) => y[1] - x[1]).map(([a, p]) => `${WORD[a.kind]} ${pct(p)}`).join(', ');
+  const detail = pk ? `<div class="t">${pk.name}</div>${pk.me.share > 0.001 ? `<p>You, ${pct(pk.me.share)} of your range: <b>${pk.me.hands.join(' ')}</b>. It ${does(pk.me)}.${pk.me.draws >= 0.15 ? ` ${pct(pk.me.draws)} of it also has a draw.` : ''}</p>` : '<p>You have none.</p>'}${pk.him.share > 0.001 ? `<p>Him, ${pct(pk.him.share)} of his range: <b>${pk.him.hands.join(' ')}</b>.</p>` : '<p>He has none.</p>'}` : `<div class="t">Tap a level</div><p>See which hands sit there in each range, and what yours do.</p>`;
+  const ratio = d.bet / (1 + d.bet); const trash = rows.find((r) => r.name === 'Trash'); const draws = rows.find((r) => r.name === 'Draws');
+  const reads = d.facing
+    ? [`<b>The line is the price.</b> A call has to beat ${pct(d.price)} of the hands he bets. Count up from the bottom of his side to ${pct(d.price)}: your hands level with that or above continue.`, `Above the line you have <b>${pct(above[0])}</b> of your range. The top of it, where you beat nearly everything he bets, raises.`]
+    : [`<b>The line is value.</b> A bet of ${pct(d.bet)} of the pot should beat four fifths of his range. Count down from the top of his side to a fifth: your hands level with that or above bet for value.`, `Above the line you have <b>${pct(above[0])}</b> of your range and he has ${pct(above[1])} of his. Bluffs come from the bottom of your side: about ${pct(ratio * above[0])} of your range${draws && draws.me.share > 0.01 ? ', draws first, then trash' : ', from the trash'}.`];
+  const legend = d.actions.filter((a) => a.freq >= 0.01).map((a) => `<span><i class="sw" style="background:var(${COL[a.kind]})"></i>${a.label} ${pct(a.freq)}</span>`).join('');
+  app.className = 'train';
+  app.innerHTML = `<div class="rule"></div><main class="one"><header><a class="logo">${MARK}</a><div class="board">${cards(d.board)}</div><span class="grow"></span></header>
+    <div class="seg" role="tablist">${D.map((x, k) => `<button type="button" role="tab" data-k="${k}" aria-selected="${k === at}">${x.title}</button>`).join('')}</div>
+    <div class="left"><div class="past">${d.history.map(([st, acts]) => `<div><span class="street">${st}</span>${acts.map(([w, l]) => `<span><i>${w}</i> ${l}</span>`).join('')}</div>`).join('')}</div>
+      <div class="where"><span class="who">Hero ${d.who}</span><span class="stands">${d.stands}</span><span class="grow"></span><span class="chips">Single-raised pot</span></div>
+      <div class="tally"><span><b>${pct(d.equity[0])}</b>your equity</span><span><b>${pct(d.equity[1])}</b>his</span><span><b>${pct(above[0])}</b>of your range above the line</span></div>
+      <div><div class="heads"><span>You (${d.who})</span><span>Strongest</span><span>Him</span></div>
+        <div class="sl">${ladder}<div class="cut" style="top:${y}px"><span>${d.facing ? `price: beats ${pct(d.price)} of his bets` : 'value: beats 80% of his range'}</span></div></div>
+        <div class="heads" style="margin-top:4px"><span></span><span>Weakest</span><span></span></div></div>
+      <div class="keyrow">${legend}<span><i class="sw" style="background:color-mix(in srgb,var(--ink) 28%,var(--bg))"></i>his range</span></div>
+      <div class="detail">${detail}</div>
+      <div class="reads">${reads.map((r) => `<p>${r}</p>`).join('')}</div>
+      <p class="hint" style="margin:0;font:400 13px/18px var(--sans);color:var(--ink-3);max-width:56ch">A mock-up on a real solved spot. Bar length is the share of the range at that level; colours are what your range does there. The line is placed by counting his range, as a player would; it is not read off the solution.</p>
+    </div></main>`;
+  app.querySelectorAll('.seg button').forEach((b) => { b.onclick = () => { at = +b.dataset.k; picked = null; show(); window.scrollTo(0, 0); }; });
+  app.querySelectorAll('.sl .row').forEach((b) => { b.onclick = () => { picked = picked === +b.dataset.i ? null : +b.dataset.i; show(); }; });
+}
+show();
+</script>
