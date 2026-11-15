@@ -4,7 +4,7 @@
 import { writeFileSync, appendFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
 import { treeOf } from '../../src/solver/flopsolve.js';
-import { PRESETS } from '../../web/presets.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 import { study, measure, explainStreet, explainRange, tolerance, oneMove, RARE } from '../../src/explain/street.js';
 import { whatIf } from '../../src/explain/whatif.js';
 const [count = '6', seed = '81'] = process.argv.slice(2);

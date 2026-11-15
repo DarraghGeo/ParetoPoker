@@ -19,7 +19,7 @@
 import { writeFileSync, appendFileSync, readFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
-import { PRESETS } from '../../web/presets.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
 const STRIDE = +(process.env.STRIDE ?? 1);   // with DEEP: look at every STRIDE-th card of the next street, to save time
 const DEEP = +(process.env.DEEP ?? 0);   // 0: reaching the river is worth the hand's equity. 1: it is worth what the same rule makes of every river card, against what he does there

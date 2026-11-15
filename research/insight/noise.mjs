@@ -2,7 +2,7 @@
 // and far finer, by two algorithms: the difference in how often the range bets, folds and raises at each decision.
 import { fs } from '../proof/lib.mjs';
 import { treeOf } from '../../src/solver/flopsolve.js';
-import { PRESETS } from '../../web/presets.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 import { study } from '../../src/explain/street.js';
 const TREE = { betSizes: [[0.33, 0.75, 1.25], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: [2, 1, 1], allInThreshold: 0.67 };
 const spots = [['4BP-BB-BU', 'Kh7d2c'], ['4BP-CO-BU', '9s8s4d'], ['4BP-SB-BU', 'QcJd5h'], ['Squeeze-SB-CO', 'Ah8d3d'], ['4BP-UTG-BU', '7c6c2h'], ['4BP-HJ-CO', 'KsQd9c']];

@@ -6,7 +6,7 @@
 import { writeFileSync, appendFileSync, readFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
-import { PRESETS } from '../../web/presets.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 import { acting, facing, fill, denial } from './formulas.mjs';
 import { facts, tunedBet, tunedFold, tunedRaise, foldBase } from './tuned.mjs';
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1];
