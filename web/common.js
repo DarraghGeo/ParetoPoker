@@ -56,3 +56,15 @@ export function copied(button, ok) {
   button.querySelector('svg').innerHTML = ok ? `<path d="M3.5 8.5l3 3 6-7" ${DRAWN}/>` : `<path d="M4 4l8 8M12 4l-8 8" ${DRAWN}/>`;
   setTimeout(() => { if (button.isConnected) { button.classList.remove('done', 'failed'); button.setAttribute('aria-label', label); button.querySelector('svg').innerHTML = COPY_ICON; } }, 1400);
 }
+
+/** A range as a 13x13 chart: each cell filled by how much of it the range holds; `kind` 'villain' draws it faded, `marked` outlines one cell ("row,column"). `hands`: [{ name, w }]. */
+export function mini(title, hands, kind = '', marked = null) {
+  const cells = new Map(); let combos = 0;
+  for (const h of hands ?? []) { const key = cellOf(h.name); cells.set(key, (cells.get(key) ?? 0) + h.w); combos += h.w; }
+  let html = '';
+  for (let i = 0; i < 13; i++) for (let j = 0; j < 13; j++) {
+    const key = `${i},${j}`; const held = Math.min(1, (cells.get(key) ?? 0) / (i === j ? 6 : i < j ? 4 : 12));
+    html += `<b${key === marked ? ' class="mark"' : ''} style="grid-column:${j + 1 + (j > 4) + (j > 8)};grid-row:${i + 1 + (i > 4) + (i > 8)}" title="${cellName(i, j)}"><i style="height:${Math.round(100 * held)}%"></i></b>`;
+  }
+  return `<figure class="mini ${kind}"><figcaption><span>${esc(title)}</span><span>${hands ? Math.round(combos) : ''}</span></figcaption><div class="paint" role="img" aria-label="${esc(title)}'s range">${html}</div></figure>`;
+}

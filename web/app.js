@@ -54,7 +54,7 @@ worker.onmessage = ({ data }) => {
   if (data.type === 'fits') { onFits(data); return; }
   if (data.job !== state.job) return;
   // the street handed over from Train is on screen: the finer solve runs behind it, with no loader in the way
-  if (data.type === 'progress' && data.refine) { state.status = `Train's solve; refining ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; return; }
+  if (data.type === 'progress' && data.refine) { state.status = `Quick solve; refining ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; return; }
   if (data.type === 'progress') { loading(data); state.status = data.lite ? 'solving lite' : `solving ${data.exploit < 100 ? `${data.exploit.toFixed(data.exploit < 1 ? 2 : 1)}%` : ''}`; $('state').textContent = state.status; $('state').dataset.busy = '1'; }
   if (data.type === 'error') { loaded(); state.status = ''; $('state').textContent = ''; delete $('state').dataset.busy; openSetup(state.sub ? { sub: true } : undefined); $('f-error').textContent = data.message; }
   if (data.type === 'subgame') {
@@ -65,7 +65,7 @@ worker.onmessage = ({ data }) => {
   }
   if (data.type === 'solved') {
     loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.looked.clear(); state.ranged.clear(); state.whatif.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
-    if (data.provisional) { state.status = `Train's solve, ${data.exploit.toFixed(2)}%; refining`; $('state').dataset.busy = '1'; }
+    if (data.provisional) { state.status = `Quick solve, ${data.exploit.toFixed(2)}%; refining`; $('state').dataset.busy = '1'; }
     // the finer solve of a street shown from Train's: stay where the walk has got to since
     if (state.refining && !data.provisional && !state.open) version().pos = { node: state.node, dealt: [...state.dealt] };
     state.refining = !!data.provisional;
