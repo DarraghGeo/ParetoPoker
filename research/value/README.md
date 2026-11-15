@@ -71,3 +71,45 @@ The simplest derivation a player could do, from two inputs: the bet size, and wh
 - The derivation gets most of the way from knowing nothing about which hands (5.9 and 9.1) to the best lines (0.7 and 0.75): it gives up 0.9 on the turn and 2.0 on the river.
 - On the turn it is nearly as good as the best three bands. On the river it leaves 1.3 points that the two inputs do not explain, mostly in when to bet.
 - Erring towards a tighter value line (80%) costs less than a looser one (60%). Leaving the bluffs out costs nothing against an opponent who does not adapt.
+
+## The river derivation, taken apart and rebuilt (`derive.mjs`, `rules.mjs`, `values*.py`)
+
+Each rule was played at one kind of decision only, with the solution everywhere else, to see where the first derivation lost. Then, for every river decision of 40 spots, what betting and what checking each give up was recorded by equity step (`DUMP=values`), and the rule rebuilt from what that showed. The rebuilt rule was tested on 54 spots it had not seen (seeds 33 and 44).
+
+**What was wrong with the first derivation**
+
+- **Facing a bet, it never raised.** Calling everything with the price is the right call line, but gives up 0.7% by not raising the best hands.
+- **Checked to, its bluffs spilled into hands that win showdowns.** Taking bluffs "from the bottom up" until the ratio is filled bets hands with 15 to 40% equity, which lose by betting. The bluffs are only the hands that cannot win a showdown.
+- **First to act, it bet as if a check were a showdown.** Out of position a check is not the end: he bets his strong hands himself, so when he holds many of them the whole range checks; and weak hands that would win a showdown do not get one, so more of them bet.
+- **A fault in the test, not the rule:** where all-in was the only bet on offer the rule was not betting at all. Fixed; the figures below are after the fix.
+
+**The rule now** (inputs: the bet size s; each hand's equity against his range; how much of his range is weak, under 30% equity against yours, and how much is strong, 80% or more)
+
+| Decision | Rule |
+|---|---|
+| Checked to | Value: 80% equity or more. Bluffs: only hands under 15%, s/(1+s) of a bluff per value bet, weakest first; none if under a tenth of his range is weak. |
+| First to act | If over 30% of his range is strong, check everything. Otherwise value from 80% (90% if most of his range is weak), and bet every hand more than a quarter below his weak share. |
+| Facing a bet | Call with the price, s/(1+2s). Raise from 85%. |
+| Facing a raise | Continue with the price. |
+
+**What it gives up on the river** (% of the pot, unseen spots; seed 44, 30 spots, in brackets seed 33, 24 spots)
+
+| | First derivation | Rebuilt |
+|---|---|---|
+| Betting (checked to and first to act) | 0.77 (0.79) | 0.42 (0.44) |
+| Facing a bet | 0.70 (0.74) calling with the price; about 0.85 keeping the top 1/(1+s) | 0.14 (0.18) |
+| Facing a raise | 0.22 keeping the top 1/(1+s) | 0.04 (0.04) |
+| **Whole river** | about 1.8 | **0.63 (0.68)** |
+
+For comparison, on the river: the best three bands found from the solution give up 0.79, the 13x13 grid 0.91, frequencies alone 9.1. By pot type (seed 33): single-raised 0.65, 3-bet 0.70, 4-bet 0.62, squeezed 0.77.
+
+**What the values showed about the structure**
+
+- Per decision, a few strength steps played all-or-nothing lose almost nothing (4 to 8% of the first rule's loss). So the lines are the whole answer; the work is predicting where they fall spot by spot.
+- **Whether the weak hands bluff is set by his weak share.** First to act, with under a fifth of his range weak nothing bluffs; at 30 to 45% the hands under 15% bluff; at 45 to 60% the hands under about 25%; at 60% and over everything under 45% bets, and value starts at 90%.
+- **Bluffing spots are over-folding spots.** Where bluffing the weakest hands wins, he folds 57 to 62% (a 75% bet needs 43%): he has too little to defend. Where it does not, he folds 42 to 43%, exactly the break-even, and the bluffs are a mix.
+- **Which weak hands bluff matters little.** Choosing them by blockers, or even as the solution does, moved the loss by 0.1 to 0.2.
+
+A cleaner single-quantity version (one fold share f, value from (1+f)/2, bluffs under f(1+s)-s, solved by going round) was tried and did no better (`fourth`), so the thresholds above stay as found.
+
+Not done: the same rebuild for the turn (first derivation: 0.9), and for the flop.

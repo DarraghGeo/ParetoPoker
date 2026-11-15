@@ -30,3 +30,5 @@ research/charts/out/*.jsonl
 research/advantage/out/
 research/value/out/*.log
 research/value/out/*.jsonl
+research/value/out/values.jsonl
+research/value/out/dump.jsonl
