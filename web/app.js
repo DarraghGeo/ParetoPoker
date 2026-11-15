@@ -18,7 +18,7 @@ const state = {
   // flop and turn reasons, as the worker has worked them out: `${node}|${dealt}|${combo}`
   told: new Map(), asked: new Set(),
   // the analytical look at a hand, likewise, and which of the two the panel shows
-  looked: new Map(), ranged: new Map(), tab: 'why',
+  looked: new Map(), ranged: new Map(), whatif: new Map(), tab: 'why',
 };
 try { const saved = JSON.parse(localStorage.getItem('pareto') ?? 'null'); if (saved?.config) Object.assign(state.config, saved.config);
   // an earlier visit saved one raise size as `raise`
@@ -64,7 +64,7 @@ worker.onmessage = ({ data }) => {
     state.sub = null; turnTo(state.versions.length - 1);
   }
   if (data.type === 'solved') {
-    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.looked.clear(); state.ranged.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
+    loaded(); state.nodes = data.nodes; state.told.clear(); state.asked.clear(); state.looked.clear(); state.ranged.clear(); state.whatif.clear(); state.status = `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`; delete $('state').dataset.busy;
     if (data.provisional) { state.status = `Train's solve, ${data.exploit.toFixed(2)}%; refining`; $('state').dataset.busy = '1'; }
     // the finer solve of a street shown from Train's: stay where the walk has got to since
     if (state.refining && !data.provisional && !state.open) version().pos = { node: state.node, dealt: [...state.dealt] };
@@ -104,6 +104,7 @@ worker.onmessage = ({ data }) => {
   }
   if (data.type === 'decision') show(data.decision);
   if (data.type === 'looked') { state.looked.set(`${data.id}|${state.dealt.join(' ')}|${data.combo ?? null}`, data.look ?? { types: [], spread: null }); renderWhy(); }
+  if (data.type === 'whatif') { state.whatif.set(`${data.id}|${state.dealt.join(' ')}`, data.said ?? { skipped: 'failed' }); if (!state.hand) renderWhy(); }
   if (data.type === 'ranged') { state.ranged.set(`${data.id}|${state.dealt.join(' ')}`, data.said ?? { line: '', reasons: [] }); if (!state.hand) renderWhy(); }
   if (data.type === 'told') { state.told.set(`${data.id}|${state.dealt.join(' ')}|${data.combo}`, data.told ?? { line: '', reasons: [], silent: data.error ?? '' }); renderWhy(); }
 };
@@ -505,7 +506,13 @@ function rangeWhy() {
   let said = '';
   if (state.tab !== 'look') {
     const key = `${state.node}|${state.dealt.join(' ')}`; const got = state.ranged.get(key);
-    if (got) said = (got.line ? `<p class="lead">${esc(got.line)}</p>` : '') + got.reasons.map((r) => said1(r)).join('');
+    if (got) {
+      // what would change it: the street solved again with one thing changed, asked for once the range has been explained
+      const wi = state.whatif.get(key); let change = '';
+      if (wi?.said) change = said1(wi.said); else if (!wi) { change = '<p class="quiet">Solving the street again to see what would change it\u2026</p>'; if (!state.asked.has(`whatif|${key}`) && !state.scrub) { state.asked.add(`whatif|${key}`); worker.postMessage({ type: 'whatif', job: state.job, id: state.node, dealt: state.dealt }); } }
+      const list = got.reasons.map((r) => said1(r)); const at = got.reasons.findIndex((r) => r.id === 'which'); if (change) list.splice(at >= 0 ? at : list.length, 0, change);
+      said = (got.line ? `<p class="lead">${esc(got.line)}</p>` : '') + list.join('');
+    }
     else { said = '<p class="quiet">Working out the reasons\u2026</p>'; if (!state.asked.has(`range|${key}`) && !state.scrub) { state.asked.add(`range|${key}`); worker.postMessage({ type: 'range', job: state.job, id: state.node, dealt: state.dealt }); } }
   }
   if (state.tab === 'look') body = lookHtml(null, strata);

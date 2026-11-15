@@ -3,6 +3,7 @@ import * as fs from 'poker-flopsolve';
 import { decisionAt, equityVs, treeOf } from '../src/solver/flopsolve.js';
 import { KNOBS, describe, isNeutral, reshape } from '../src/warp/reshape.js';
 import { study, measure, tolerance, explainStreet, explainRange, analysis, RARE } from '../src/explain/street.js';
+import { whatIf } from '../src/explain/whatif.js';
 
 let solution = null;
 let nodes = null;
@@ -98,7 +99,7 @@ self.onmessage = async ({ data }) => {
       }
       if (mine !== job) return;
       if (!run.completed) { run.step(1); exploit = run.exploitabilityPercent(); }
-      const entry = { solution: run.snapshot(), nodes: treeOf(fs, spot), run, board: c.board, exploit, lite: !!preset, bytes: spot.estimate.bytes };
+      const entry = { solution: run.snapshot(), nodes: treeOf(fs, spot), run, board: c.board, exploit, lite: !!preset, bytes: spot.estimate.bytes, config: c };
       use(entry); keep(data.key, entry);
       self.postMessage({ type: 'solved', job: data.job, nodes: strip(nodes), exploit, lite: !!preset, iterations: run.completed, warm: !!warm, ms: Date.now() - started });
     } catch (error) {
@@ -172,6 +173,14 @@ self.onmessage = async ({ data }) => {
     } catch (error) {
       self.postMessage({ type: 'looked', job: data.job, id: data.id, combo: data.combo, look: null, error: String(error?.message ?? error) });
     }
+  } else if (data.type === 'whatif' && solution) {
+    // What would change what the range does here. Not argued: the street is played again with one thing changed, and
+    // solved. His strongest fifth of hands out of his range; our strongest fifth out of ours; no raise for him on this
+    // street; no bet for him when checked to. The same street solved again unchanged is what each is set beside.
+    try {
+      const out = whatIf(fs, { solution, nodes, config: current?.config }, data.id, fs.parseCards((data.dealt ?? []).join(' ')));
+      self.postMessage({ type: 'whatif', job: data.job, id: data.id, said: out });
+    } catch (error) { self.postMessage({ type: 'whatif', job: data.job, id: data.id, said: null, error: String(error?.message ?? error) }); }
   } else if (data.type === 'range' && solution) {
     // The range as a whole at a decision: what it does and why
     try {

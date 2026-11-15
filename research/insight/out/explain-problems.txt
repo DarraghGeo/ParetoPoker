@@ -1,0 +1,25 @@
+4BP 2d6h3s B33 C / 9s [OOP] AcQc: says best, but another action is 7.7% of the pot better by the count
+4BP 2d6h3s B33 C / 9s [OOP] AhQh: says best, but another action is 9.0% of the pot better by the count
+4BP 2d6h3s B33 C / 9s [OOP] QcQh: says best, but another action is 3.4% of the pot better by the count
+4BP 2d6h3s B33 C / 9s [OOP] QcQd: says best, but another action is 3.4% of the pot better by the count
+4BP 2d6h3s B33 C / 9s [OOP] QdQh: says best, but another action is 3.4% of the pot better by the count
+4BP 2d6h3s B33 C / 9s [OOP] QcQs: says best, but another action is 3.3% of the pot better by the count
+4BP 2d6h3s B33 C / 9s [OOP] QhQs: says best, but another action is 3.4% of the pot better by the count
+4BP 2d6h3s B33 C / 9s [OOP] QdQs: says best, but another action is 3.3% of the pot better by the count
+3BP JsQc7s B33 C / 6c X [IP] 4d4s: says best, but another action is 6.6% of the pot better by the count
+3BP JsQc7s B33 C / 6c X B75 [OOP] AhQd: says best, but another action is 15.5% of the pot better by the count
+3BP JsQc7s B33 C / 6c B75 [IP] AhQs: says best, but another action is 11.1% of the pot better by the count
+3BP JsQc7s B33 R3x C / 4s [OOP] QhJh: says best, but another action is 6.4% of the pot better by the count
+3BP JsQc7s X [IP] 7c7h: says best, but another action is 4.7% of the pot better by the count
+3BP JsQc7s X X / 4d X [IP] 5c5s: says best, but another action is 8.7% of the pot better by the count
+3BP JsQc7s X X / 4d X [IP] AhKd: says best, but another action is 3.5% of the pot better by the count
+4BP 7c7hQc [OOP] As4s: says best, but another action is 3.9% of the pot better by the count
+4BP 7c7hQc [OOP] Ah4h: says best, but another action is 7.1% of the pot better by the count
+4BP 7c7hQc [OOP] AdKs: says best, but another action is 7.2% of the pot better by the count
+4BP 7c7hQc [OOP] AcAd: says best, but another action is 9.7% of the pot better by the count
+4BP 7c7hQc B75 C / 5d [OOP] AcJc: says best, but another action is 4.3% of the pot better by the count
+4BP 7c7hQc B75 C / 5d [OOP] KhKs: says best, but another action is 8.6% of the pot better by the count
+4BP 7c7hQc B75 C / 5d [OOP] KdKs: says best, but another action is 8.6% of the pot better by the count
+4BP 7c7hQc B75 C / 5d [OOP] AhAs: says best, but another action is 5.1% of the pot better by the count
+4BP 7c7hQc B75 C / 5d [OOP] AcAs: says best, but another action is 3.7% of the pot better by the count
+4BP 7c7hQc B75 C / 5d [OOP] AdQh: says best, but another action is 3.2% of the pot better by the count
