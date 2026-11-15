@@ -1,10 +1,10 @@
 <!-- What sits above the question: the two ranges side by side, their equity curves, or the ladder of both on one scale. -->
 <script>
   import RangeChart from '../common/RangeChart.svelte';
-  import Curve from './Curve.svelte';
-  import Ladder from './Ladder.svelte';
+  import Curve from '../common/Curve.svelte';
+  import Ladder from '../common/Ladder.svelte';
   import { cellOf } from '../../lib/cards.js';
-  import { seatName } from '../../lib/train/spotText.js';
+  import { seatName } from '../../lib/actions.js';
   let { spot, view, hand = null } = $props();
   const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');
 </script>

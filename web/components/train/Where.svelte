@@ -2,7 +2,7 @@
 <script>
   import CopyButton from '../common/CopyButton.svelte';
   import Icon from '../common/Icon.svelte';
-  import { seatName } from '../../lib/train/spotText.js';
+  import { seatName } from '../../lib/actions.js';
   let { decision, studyHref, onStudy, copy, view, onView } = $props();
   const NEXT = { grid: ['curve', 'Equity distribution'], curve: ['ladder', 'Ladder: both ranges on one scale'], ladder: ['grid', 'Ranges'] };
   const last = $derived(decision.line[decision.line.length - 1]);

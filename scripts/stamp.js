@@ -12,8 +12,8 @@ function versionOf(bundle) {
   return hash.digest('hex').slice(0, 10);
 }
 
-/** An old page's address, sent on to where it now lives in the app. */
-const redirect = (to) => `<!doctype html><meta charset="utf-8"><title>Pareto</title><script>location.replace('${to}')</script>`;
+/** An old page's address, sent on to where it now lives in the app, with the spot it names. */
+const redirect = (to) => `<!doctype html><meta charset="utf-8"><title>Pareto</title><script>location.replace('${to}' + location.search)</script>`;
 
 /** The Vite plugin: stamps the pages, emits the service worker, version.json and the old pages' redirects. */
 export function stamp({ worker, moved = {} }) {

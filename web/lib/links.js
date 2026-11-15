@@ -10,7 +10,7 @@ export function studyUrl(config, board, { line = [], dealt = [], hand = null, li
   });
   const extra = { line: line.join(','), dealt: dealt.join(','), hand: hand ?? '', lite: lite ? '1' : '', resolve: resolve ? '1' : '' };
   for (const [key, value] of Object.entries(extra)) if (value) q.set(key, value);
-  return `study.html?${q}`;
+  return `#/study?${q}`;
 }
 
 /** Every action on the way to a decision, in order: the streets before it, then its own. */
