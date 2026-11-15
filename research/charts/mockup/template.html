@@ -5,17 +5,17 @@
 /* Layout: one column of three studies; each is a spot line, one picture on a fixed frame (strong at the top), and what it says. */
 :root{
   --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
-  --fold:#D9D7CF;--stay:#7CCDBE;--bet:#F3C46A;--big:#F0896B;--his:#B9BDC9;--guess:#2A3CE0;
+  --fold:#D9D7CF;--stay:#7CCDBE;--bet:#F3C46A;--big:#F0896B;--his:#B9BDC9;--guess:#2A3CE0;--pass:#58B787;--mid:#F2C45F;--mid2:#EE9A55;--agg:#DD4B39;
   --s-s:#15171B;--s-h:#C8281F;--s-d:#0B6FC2;--s-c:#17803F;
   --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
-  --fold:#3A3C42;--stay:#4FAE9D;--bet:#D9A84A;--big:#D9714F;--his:#5B6070;--guess:#8E9BFF;
+  --fold:#3A3C42;--stay:#4FAE9D;--bet:#D9A84A;--big:#D9714F;--his:#5B6070;--guess:#8E9BFF;--pass:#3F9C6E;--mid:#D3A640;--mid2:#D07F3C;--agg:#D2513F;
   --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
-  --fold:#3A3C42;--stay:#4FAE9D;--bet:#D9A84A;--big:#D9714F;--his:#5B6070;--guess:#8E9BFF;
+  --fold:#3A3C42;--stay:#4FAE9D;--bet:#D9A84A;--big:#D9714F;--his:#5B6070;--guess:#8E9BFF;--pass:#3F9C6E;--mid:#D3A640;--mid2:#D07F3C;--agg:#D2513F;
   --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:400 15px/23px var(--sans);padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
@@ -76,20 +76,25 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:v
 .cell.none{border-style:dashed;justify-content:center;align-items:center;color:var(--ink-3);font:400 12px/16px var(--mono)}
 .note{font-size:13px;line-height:20px;color:var(--ink-3);max-width:68ch}
 
-.ladder{position:relative;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;align-items:start}
-.rung{display:flex;flex-direction:column;align-items:center;gap:8px;min-width:0}
-.rung .cards{font:500 15px/20px var(--mono);min-height:20px;white-space:nowrap}
-.rung .left{font:400 11px/14px var(--mono);color:var(--ink-3);text-align:center}
-.rung .strip{width:56px;height:auto;cursor:default;gap:0;overflow:hidden}
-.rung .strip i{flex:1 1 0;min-height:0;box-shadow:inset 0 -1px 0 var(--bg)}
+.ladder{display:flex;flex-direction:column;gap:18px}
+.street{font:500 16px/22px var(--mono);display:flex;gap:10px;align-items:baseline;border-top:1px solid var(--line);padding-top:12px}
+.street small{font:400 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+.rung{display:flex;flex-direction:column;gap:8px}
+.pair{display:grid;grid-template-columns:26px minmax(0,1fr);gap:6px 8px;align-items:center}
+.pair .who{font:500 11px/14px var(--mono);color:var(--ink-3)}
+.pair .who.on{color:var(--ink)}
+.track{position:relative;height:44px}
+.bar{position:relative;height:100%;display:flex;background:var(--his);border-radius:2px;overflow:hidden}
+.bar u{flex:1 1 0;display:flex;flex-direction:column;min-width:0;text-decoration:none}
+.bar u b{display:block;width:100%}
+.tick{position:absolute;top:-3px;bottom:-3px;width:0;border-left:1px dashed var(--ink);pointer-events:none}
+.pin{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);pointer-events:none}
+.rung .acts{display:flex;flex-wrap:wrap;gap:6px;padding-left:34px;align-items:center}
+.rung .acts button{padding:5px 9px;font:500 12px/16px var(--mono);display:flex;align-items:center;gap:6px}
+.rung .acts button i{width:9px;height:9px;display:inline-block}
+.rung .acts button[disabled]{opacity:.5;cursor:default}
+.rung .acts span{font:400 12px/16px var(--mono);color:var(--ink-3)}
 button[aria-pressed="true"] span{color:inherit}
-.rung .acts{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;min-height:34px}
-.rung .acts button{padding:5px 8px;font:500 12px/16px var(--mono)}
-.rung .acts button[disabled]{opacity:.45;cursor:default}
-.rung .then{font:400 11px/14px var(--mono);color:var(--ink-3);text-align:center;min-height:28px}
-.dot{position:absolute;left:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);pointer-events:none}
-.ladder svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.ladder svg line{stroke:var(--ink);stroke-width:2;stroke-dasharray:1 5;stroke-linecap:round}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chips button{font:500 13px/18px var(--mono);padding:6px 9px}
 [data-wait]{visibility:hidden}
@@ -98,18 +103,19 @@ button[aria-pressed="true"] span{color:inherit}
   <div class="lede">
     <div class="tag">Mock-up · three real solved spots</div>
     <h1>Range pictures on one frame</h1>
-    <p>Every picture uses the same frame: your range as a single strip, strongest hands at the top. The ladder comes first: the strip repeated street by street as the hand unfolds. The three below it are the single-decision pictures from before.</p>
+    <p>Every picture uses the same frame: your range as a single strip, strongest hands at the top. The ladder comes first: both players' action bars, decision by decision, as the hand unfolds. The three below it are the single-decision pictures from before.</p>
   </div>
 
 
   <section id="s0">
-    <div class="tag">The ladder · a range as the hand unfolds</div>
-    <h2>One strip per street: what is left, what it does, and where your hand now stands</h2>
+    <div class="tag">The ladder · both ranges as the hand unfolds</div>
+    <h2>Two action bars per decision: out of position on top, in position below</h2>
     <div class="spot" id="spot0"></div>
-    <p>Each rung is the part of your range that is still in the hand, strongest at the top. It gets shorter as hands leave. Pick your flop bet to walk a line, and pick a hand to follow it up and down the range.</p>
-    <div class="chips" id="chips"></div>
+    <p>Each bar is a range sorted weakest (left) to strongest (right). The player to act is coloured by what each part of the range does: passive on top, the most aggressive action at the bottom. The other bar is the range he is up against. Bars get shorter as hands leave. Tap an action to walk the line.</p>
+    <div class="key"><span><i style="background:var(--fold)"></i>fold</span><span><i style="background:var(--pass)"></i>check or call</span><span><i style="background:var(--mid)"></i>smaller bet</span><span><i style="background:var(--agg)"></i>biggest bet or raise</span><span><i style="background:var(--his)"></i>not to act</span><span>┊ hands above 70% equity start here</span></div>
     <div class="ladder" id="ladder"></div>
-    <div class="key"><span><i style="background:var(--stay)"></i>check</span><span><i style="background:var(--bet)"></i>bet 33%</span><span><i style="background:var(--big)"></i>bet 75%</span><span>faded = not the line you took</span></div>
+    <p class="tag" style="margin-top:6px">Follow one of the out-of-position hands</p>
+    <div class="chips" id="chips"></div>
     <p id="text0"></p>
   </section>
 
@@ -178,28 +184,28 @@ function examples(el, blocks, at) { el.innerHTML = at.map((f) => { const b = blo
 
 
 // 0. the ladder
-{ const L = /*LADDER*/; const el = $('ladder'); let pick = ['B33', 'X']; let who = L.hands.length - 1; const PX = 300;
-  const colour = (a) => (a.kind === 'check' ? 'var(--stay)' : a.label === 'B33' ? 'var(--bet)' : 'var(--big)'); const act = (l) => (l === 'X' ? 'check' : `bet ${l.slice(1)}%`);
-  $('spot0').innerHTML = spotLine({ spot: L.spot, board: L.flop }, 'You are out of position, first to act on every street.');
-  const where = (x) => (x <= 0.1 ? 'at the very top' : x <= 0.33 ? 'in the top third' : x <= 0.66 ? 'in the middle' : x <= 0.9 ? 'in the bottom third' : 'at the very bottom');
+{ const L = /*LADDER*/; const el = $('ladder'); let who = L.hands.length - 1; const STREET = ['Flop', 'Turn', 'River'];
+  const follow = (path) => { for (;;) { const n = L.nodes[path.join('/')]; if (!n) break; const a = n.actions.filter((x) => L.nodes[[...path, x.label].join('/')] !== undefined).sort((x, y) => y.freq - x.freq)[0]; if (!a) break; path.push(a.label); } return path; };
+  let path = follow([]);
+  const colours = (acts) => { const w = acts.map((a, i) => (['bet', 'raise', 'allin'].includes(a.kind) ? i : -1)).filter((i) => i >= 0); return acts.map((a, i) => (a.kind === 'fold' ? 'var(--fold)' : a.kind === 'check' || a.kind === 'call' ? 'var(--pass)' : i === w[w.length - 1] ? 'var(--agg)' : i === w[0] ? 'var(--mid)' : 'var(--mid2)')); };
+  const verb = (a) => (a.kind === 'fold' ? 'Fold' : a.kind === 'check' ? 'Check' : a.kind === 'call' ? 'Call' : a.kind === 'allin' ? 'All-in' : a.kind === 'raise' ? 'Raise' : `Bet ${a.label.slice(1)}%`);
+  const where = (x) => (x >= 0.9 ? 'at the very top' : x >= 0.67 ? 'in the top third' : x >= 0.33 ? 'in the middle' : x >= 0.1 ? 'in the bottom third' : 'at the very bottom');
+  $('spot0').innerHTML = spotLine({ spot: L.spot, board: L.flop }, `${L.names[0]} is out of position, ${L.names[1]} in position.`);
   $('chips').innerHTML = L.hands.map((h, i) => `<button data-i="${i}">${hand(h)}</button>`).join('');
   function draw() {
-    const keys = ['', pick[0], `${pick[0]}/${pick[1]}`]; const boards = [L.flop, `${L.flop} ${L.run[0]}`, `${L.flop} ${L.run[0]} ${L.run[1]}`]; let html = ''; const said = [];
-    keys.forEach((k, r) => { const n = L.nodes[k]; const chosen = pick[r]; const his = L.his[[...pick.slice(0, r), chosen].filter(Boolean).join('/')];
-      const rows = n.blocks.map((b) => (b ? `<i>${b.mix.map((p, a) => `<b style="width:${100 * p}%;background:${colour(n.actions[a])};opacity:${chosen && n.actions[a].label !== chosen ? 0.3 : 1}"></b>`).join('')}</i>` : '')).join('');
-      const opts = n.actions.filter((a) => a.freq >= 0.08); const btns = r === 2 ? opts.map((a) => `<button disabled>${a.label} ${pct(a.freq)}</button>`).join('') : opts.map((a) => `<button data-r="${r}" data-l="${a.label}" aria-pressed="${a.label === chosen}" ${opts.length < 2 ? 'disabled' : ''}>${a.label} ${pct(a.freq)}</button>`).join('');
-      html += `<div class="rung"><div class="cards">${r === 0 ? board(L.flop) : board(L.run[r - 1])}</div><div class="left">${r === 0 ? 'whole range' : `${pct(n.left)} of it left`}</div><div class="strip" data-r="${r}" style="height:${Math.max(40, PX * n.left)}px">${rows}</div><div class="acts">${btns}</div><div class="then">${his && r < 2 ? `you ${act(chosen)}, he ${his.does}` : ''}</div></div>`;
-      const h = n.hands[who]; if (h) { const top = n.actions.reduce((b, a, i) => (h.mix[i] > h.mix[b] ? i : b), 0); said.push(`On the ${n.street} it sits <strong>${where(h.at)}</strong> of what you hold and ${h.mix[top] >= 0.8 ? '' : 'mostly '}${n.actions[top].kind === 'check' ? 'checks' : `bets ${n.actions[top].label.slice(1)}%`}.`); } else said.push(`By the ${n.street} it has almost always left this line.`); });
-    el.innerHTML = html + '<svg></svg>'; 
-    const box = el.getBoundingClientRect(); const pts = [];
-    keys.forEach((k, r) => { const h = L.nodes[k].hands[who]; const s = el.querySelector(`.strip[data-r="${r}"]`); if (!h) { pts.push(null); return; } const d = document.createElement('div'); d.className = 'dot'; d.style.top = `${100 * h.at}%`; s.append(d); const q = s.getBoundingClientRect(); pts.push([q.left + q.width / 2 - box.left, q.top + q.height * h.at - box.top]); });
-    el.querySelector('svg').innerHTML = pts.slice(1).map((p, i) => (p && pts[i] ? `<line x1="${pts[i][0]}" y1="${pts[i][1]}" x2="${p[0]}" y2="${p[1]}"/>` : '')).join('');
-    $('chips').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.i === who));
-    $('text0').innerHTML = `<strong>${hand(L.hands[who])}</strong>. ${said.join(' ')} The ${board(L.run[0])} is the card that reorders this range: watch which hands jump.`;
+    let html = ''; let street = -1; const said = [];
+    for (let d = 0; d <= path.length; d++) { const key = path.slice(0, d).join('/'); const n = L.nodes[key]; if (!n) break; const cols = colours(n.actions);
+      if (n.street !== street) { street = n.street; html += `<div class="street"><small>${STREET[street]}</small><span>${street === 0 ? board(L.flop) : board(L.run[street - 1])}</span></div>`; const h = n.hands[who]; said.push(h ? `${STREET[street]}: <strong>${where(h.at)}</strong> of ${L.names[0]}'s range.` : `${STREET[street]}: it has almost always left this line.`); }
+      const bar = (seat) => { const live = seat === n.seat; const inner = live ? n.blocks.map((m) => `<u>${m ? m.map((p, a) => `<b style="height:${100 * p}%;background:${cols[a]}"></b>`).join('') : ''}</u>`).join('') : ''; const h = seat === 0 ? n.hands[who] : null;
+        return `<div class="who${live ? ' on' : ''}">${L.names[seat]}</div><div class="track"><div style="position:relative;height:100%;width:${Math.max(4, 100 * n.left[seat])}%"><div class="bar">${inner}</div><div class="tick" style="left:${100 * n.mark[seat]}%"></div>${h ? `<div class="pin" style="left:${100 * h.at}%"></div>` : ''}</div></div>`; };
+      const taken = path[d]; const btns = n.actions.filter((a) => a.freq >= 0.02).map((a) => { const i = n.actions.indexOf(a); const can = L.nodes[[...path.slice(0, d), a.label].join('/')] !== undefined; return `<button data-d="${d}" data-l="${a.label}" aria-pressed="${a.label === taken}" ${can ? '' : 'disabled'}><i style="background:${cols[i]}"></i>${verb(a)} ${pct(a.freq)}</button>`; }).join('');
+      html += `<div class="rung"><div class="pair">${bar(0)}${bar(1)}</div><div class="acts"><span>${L.names[n.seat]} ${n.facing ? 'faces a bet' : 'to act'}</span>${btns}</div></div>`; }
+    el.innerHTML = html; $('chips').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.i === who));
+    $('text0').innerHTML = `<strong>${hand(L.hands[who])}</strong> (the dot). ${said.join(' ')}`;
   }
   $('chips').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { who = +b.dataset.i; draw(); } });
-  el.addEventListener('click', (e) => { const b = e.target.closest('button[data-r]'); if (!b || b.disabled) return; pick[+b.dataset.r] = b.dataset.l; if (!L.nodes[`${pick[0]}/${pick[1]}`]) pick[1] = 'X'; draw(); });
-  draw(); window.addEventListener('resize', draw); }
+  el.addEventListener('click', (e) => { const b = e.target.closest('button[data-d]'); if (!b || b.disabled) return; path = follow([...path.slice(0, +b.dataset.d), b.dataset.l]); draw(); });
+  draw(); }
 
 // 1. the line
 { const d = D.face; const bet = Math.round(100 * d.toCall / (d.pot - d.toCall));
