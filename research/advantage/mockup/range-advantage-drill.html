@@ -1,0 +1,99 @@
+<title>Range advantage drill</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one question card at a time; the question on top, the answer and its counts underneath once you commit. */
+:root{
+  --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
+  --ok:#1C8A78;--miss:#C93A24;--oop:#2A3CE0;--ip:#D9792B;--idle:#E3E1D9;--card:#FFFFFF;
+  --s-s:#15171B;--s-h:#C8281F;--s-d:#0B6FC2;--s-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
+  --ok:#4FBFA9;--miss:#F0766C;--oop:#8E9BFF;--ip:#E69A55;--idle:#33353B;--card:#17181B;
+  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
+  --ok:#4FBFA9;--miss:#F0766C;--oop:#8E9BFF;--ip:#E69A55;--idle:#33353B;--card:#17181B;
+  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/23px var(--sans);padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:24px}
+h1{font:600 24px/30px var(--sans);margin:0;letter-spacing:-.01em}
+p{margin:0;color:var(--ink-2);max-width:60ch}
+.tag{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.screen{background:var(--card);border:1px solid var(--line-strong);border-radius:10px;padding:18px 16px 20px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.dots{display:flex;gap:5px}.dots i{width:18px;height:4px;border-radius:2px;background:var(--idle)}.dots i.on{background:var(--ink)}.dots i.good{background:var(--ok)}.dots i.bad{background:var(--miss)}
+.board{font:500 26px/30px var(--mono);letter-spacing:.02em}
+.s{color:var(--s-s)}.h{color:var(--s-h)}.d{color:var(--s-d)}.c{color:var(--s-c)}
+.ctx{font:400 13px/20px var(--mono);color:var(--ink-2)}
+.ctx b{color:var(--ink);font-weight:500}
+.q{font:600 18px/24px var(--sans)}
+.opts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+button{font:500 14px/20px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:6px;padding:11px 8px;cursor:pointer;text-align:center}
+button small{display:block;font:400 11px/14px var(--mono);color:var(--ink-3)}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[data-res="right"]{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+button[data-res="wrong"]{border-color:var(--miss);box-shadow:inset 0 0 0 1px var(--miss)}
+button.go{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.after{display:flex;flex-direction:column;gap:16px;border-top:1px solid var(--line);padding-top:14px}
+.verdict{font:600 16px/22px var(--sans)}.verdict.good{color:var(--ok)}.verdict.bad{color:var(--miss)}
+.split{display:flex;height:26px;border-radius:3px;overflow:hidden;font:500 12px/26px var(--mono);color:#fff}
+.split span{display:block;padding:0 8px;white-space:nowrap;overflow:hidden}
+.split span:last-child{text-align:right}
+.count{display:flex;flex-direction:column;gap:6px}
+.count .name{font:600 14px/20px var(--sans);display:flex;justify-content:space-between;gap:8px}
+.count .name small{font:400 11px/20px var(--mono);color:var(--ink-3)}
+.rowc{display:grid;grid-template-columns:34px 1fr 40px;gap:8px;align-items:center;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.rowc .m{height:12px;background:var(--idle);border-radius:2px;overflow:hidden}.rowc .m i{display:block;height:100%}
+.rowc span:last-child{text-align:right;color:var(--ink);font-variant-numeric:tabular-nums}
+.exs{font:400 12px/17px var(--mono);color:var(--ink-3);padding-left:42px}
+.count.dim{opacity:.55}
+.why{font-size:15px;color:var(--ink)}
+.rule{font:400 13px/19px var(--sans);color:var(--ink-2);background:var(--surface);padding:10px 12px;border-radius:6px}
+.rule b{color:var(--ink);font-weight:600}
+.done{display:flex;flex-direction:column;gap:12px}
+.done .big{font:600 34px/38px var(--sans);font-variant-numeric:tabular-nums}
+.note{font-size:13px;line-height:20px;color:var(--ink-3)}
+</style>
+<main>
+  <div><div class="tag">Mock-up · Train</div><h1>Who has the range advantage?</h1></div>
+  <section class="screen" id="card"></section>
+  <p class="note">Six real spots. Flops use the starting ranges for each position; turns and rivers use the ranges a solved hand arrives with after the action shown. Equity and every count are computed from those ranges. "Close" means the two equities are within 2 points of 50.</p>
+</main>
+<script>
+const Q = [{"pre":"SRP","names":["BB","BU"],"board":"Ac Td Th","street":3,"eq":[0.426,0.574],"sides":[{"tp":0.283,"pair":0.412,"big":0.093,"exTp":["A9o","A8o","AJo","A7o"],"exBig":["QTo","JTo","T9o","ATo"]},{"tp":0.382,"pair":0.524,"big":0.112,"exTp":["AKo","AQo","AJo","A9o"],"exBig":["KTo","QTo","JTo","T9o"]}],"hist":[],"cur":"Flop dealt","bettor":null,"answer":1},{"pre":"3BP","names":["SB","BU"],"board":"5h 5d 9d","street":3,"eq":[0.499,0.5],"sides":[{"tp":0.232,"pair":0.321,"big":0.027,"exTp":["AA","KK","QQ","JJ"],"exBig":["99","A5s","55"]},{"tp":0.16,"pair":0.419,"big":0.073,"exTp":["99","T9s","A9s","A5s"],"exBig":["99","A5s","65s","55"]}],"hist":[],"cur":"Flop dealt","bettor":null,"answer":"close"},{"pre":"SRP","names":["SB","UTG"],"board":"Js 4h 2s","street":3,"eq":[0.541,0.459],"sides":[{"tp":0.202,"pair":0.653,"big":0.042,"exTp":["AJs","JJ","JTs","KJs"],"exBig":["JJ","44"]},{"tp":0.255,"pair":0.42,"big":0.015,"exTp":["AJo","KJo","AA","KK"],"exBig":["JJ","44"]}],"hist":[],"cur":"Flop dealt","bettor":null,"answer":0},{"pre":"SRP","names":["SB","UTG"],"board":"3s Qc Ts Ah","street":4,"eq":[0.434,0.566],"sides":[{"tp":0.458,"pair":0.981,"big":0.286,"exTp":["AJs","AQo","AQs","ATs"],"exBig":["AQo","AQs","ATs","TT"]},{"tp":0.618,"pair":0.917,"big":0.311,"exTp":["KJo","AKo","AJo","AA"],"exBig":["KJo","AA","KJs","A3s"]}],"hist":["OOP checked, IP bet, OOP called"],"cur":"OOP to act","bettor":null,"answer":1},{"pre":"SRP","names":["SB","UTG"],"board":"3s Qc Ts Ah 5h","street":5,"eq":[0.621,0.379],"sides":[{"tp":0.707,"pair":0.991,"big":0.342,"exTp":["AJs","ATs","AQo","AQs"],"exBig":["ATs","AQo","AQs","55"]},{"tp":0.332,"pair":0.986,"big":0.086,"exTp":["AJo","AKo","A9s","ATo"],"exBig":["ATo","A5s","ATs","55"]}],"hist":["checked through","checked through"],"cur":"OOP bets","bettor":0,"answer":0},{"pre":"4BP","names":["SB","BU"],"board":"2s Jh Js 5c 9h","street":5,"eq":[0.616,0.384],"sides":[{"tp":0.299,"pair":0.545,"big":0.295,"exTp":["99","AJs","QJs","JTs"],"exBig":["99","AJs","QJs","JTs"]},{"tp":0.308,"pair":0.341,"big":0.097,"exTp":["KK","AJo","AA","55"],"exBig":["AJo","55","QJs","JJ"]}],"hist":["OOP checked, IP bet, OOP called","checked through"],"cur":"OOP to act","bettor":null,"answer":0}];
+const SUIT = { s: '♠', h: '♥', d: '♦', c: '♣' }; const NAMES = { SRP: 'Single-raised pot', '3BP': '3-bet pot', '4BP': '4-bet pot', Squeeze: 'Squeezed pot' }; const STREET = { 3: 'flop', 4: 'turn', 5: 'river' };
+const cards = (t) => t.split(' ').map((c) => `<span class="${c[1]}">${c[0]}${SUIT[c[1]]}</span>`).join(' '); const pct = (x) => `${Math.round(100 * x)}%`;
+let at = 0; const res = []; const el = document.getElementById('card'); const COL = ['var(--oop)', 'var(--ip)'];
+const tell = (q, t) => t.replace(/OOP/g, q.names[0]).replace(/IP/g, q.names[1]);
+function reason(q) { const [a, b] = q.sides; const w = q.answer; const N = q.names; const adv = q.eq[0] - 0.5; const sg = Math.sign(adv); const d = (k) => Math.sign(a[k] - b[k]); const v = (k, i) => pct(q.sides[i][k]);
+  if (w === 'close') return { key: null, text: `It is close: ${pct(q.eq[0])} against ${pct(q.eq[1])}. ${a.tp > b.tp ? N[0] : N[1]} has more top pair or better, but ${a.pair > b.pair ? N[0] : N[1]} has more pairs and more of the biggest hands. The two pull in opposite directions and cancel.` };
+  const W = N[w], L = N[1 - w];
+  if (q.bettor != null) return { key: d('big') === sg ? 'big' : 'tp', text: `${N[q.bettor]} bet. A river bet is made of strong hands and bluffs, so after a bet the bettor nearly always has the advantage. The count agrees: ${v('big', w)} of ${W}'s range is two pair or better, against ${v('big', 1 - w)} of ${L}'s.` };
+  if (q.street === 5 && d('tp') !== sg && d('big') === sg) return { key: 'big', text: `Top pair is not the bar on the river. The two ranges have about the same share of top pair or better, but ${v('big', w)} of ${W}'s range is two pair or better, against ${v('big', 1 - w)} of ${L}'s. That is what decides it.` };
+  if (d('tp') === sg) return { key: 'tp', text: `${W} has more top pair or better on this board: ${v('tp', w)} of the range, against ${v('tp', 1 - w)} of ${L}'s. On the ${STREET[q.street]} that count is what range advantage usually comes down to.` };
+  return { key: 'pair', text: `This is the exception. ${L} has more top pair or better (${v('tp', 1 - w)} against ${v('tp', w)}), but ${W} has far more pairs of any kind: ${v('pair', w)} against ${v('pair', 1 - w)}. On a low board with few ways to have top pair, those pairs are worth a lot, and ${L}'s unpaired high cards are not.` }; }
+const RULE = { 3: '<b>Flop:</b> count who has more top pair or better, as a share of the range.', 4: '<b>Turn:</b> the same count, then lean towards whoever has been betting.', 5: '<b>River:</b> the bar rises to two pair or better, and whoever bet usually has it.' };
+function draw(answered) { const q = Q[at]; if (!q) return finish();
+  const dots = Q.map((_, i) => `<i class="${i < res.length ? (res[i] ? 'good' : 'bad') : i === at ? 'on' : ''}"></i>`).join('');
+  const hist = q.hist.map((h, i) => `${['Flop', 'Turn'][i]}: ${tell(q, h)}.`).join(' '); const cur = q.street === 3 ? '' : `${q.street === 4 ? 'Turn' : 'River'}: ${tell(q, q.cur)}.`;
+  let html = `<div class="top"><span class="tag">${at + 1} of ${Q.length} · ${STREET[q.street]}</span><span class="dots">${dots}</span></div>
+    <div><div class="board">${cards(q.board)}</div><div class="ctx">${NAMES[q.pre]}. <b>${q.names[0]}</b> out of position, <b>${q.names[1]}</b> in position.${hist || cur ? `<br>${hist} ${cur}` : ''}</div></div>
+    <div class="q">Who has the range advantage?</div>
+    <div class="opts" id="opts"><button data-v="0">${q.names[0]}<small>out of position</small></button><button data-v="close">Close<small>within 2 points</small></button><button data-v="1">${q.names[1]}<small>in position</small></button></div>`;
+  if (answered != null) { const ok = String(q.answer) === answered; const r = reason(q); const w = q.answer;
+    const row = (k, name, exKey) => `<div class="count${r.key && r.key !== k ? ' dim' : ''}"><div class="name">${name}${r.key === k ? '<small>this decides it</small>' : ''}</div>${[0, 1].map((i) => `<div class="rowc"><span>${q.names[i]}</span><div class="m"><i style="width:${100 * q.sides[i][k]}%;background:${COL[i]}"></i></div><span>${pct(q.sides[i][k])}</span></div>${exKey && r.key === k && q.sides[i][exKey].length ? `<div class="exs">${q.sides[i][exKey].join(' ')}</div>` : ''}`).join('')}</div>`;
+    html += `<div class="after"><div class="verdict ${ok ? 'good' : 'bad'}">${ok ? 'Right.' : 'Not this time.'} ${w === 'close' ? 'It is close.' : `${q.names[w]} has it.`}</div>
+      <div class="split"><span style="width:${100 * q.eq[0]}%;background:var(--oop)">${q.names[0]} ${pct(q.eq[0])}</span><span style="width:${100 * q.eq[1]}%;background:var(--ip)">${pct(q.eq[1])} ${q.names[1]}</span></div>
+      <p class="why">${r.text}</p>
+      ${row('tp', 'Top pair or better', 'exTp')}${q.street === 5 || r.key === 'big' ? row('big', 'Two pair or better', 'exBig') : ''}${row('pair', 'Any pair or better', null)}
+      <div class="rule">${RULE[q.street]}</div><button class="go" id="next">${at + 1 < Q.length ? 'Next' : 'See the result'}</button></div>`; }
+  el.innerHTML = html;
+  if (answered != null) { el.querySelectorAll('#opts button').forEach((b) => { b.disabled = true; if (b.dataset.v === String(q.answer)) b.dataset.res = 'right'; else if (b.dataset.v === answered) b.dataset.res = 'wrong'; }); document.getElementById('next').onclick = () => { at++; draw(null); el.scrollIntoView({ block: 'start' }); }; }
+  else el.querySelector('#opts').onclick = (e) => { const b = e.target.closest('button'); if (!b) return; res.push(b.dataset.v === String(q.answer)); draw(b.dataset.v); }; }
+function finish() { const n = res.filter(Boolean).length; el.innerHTML = `<div class="top"><span class="tag">Done</span><span class="dots">${res.map((r) => `<i class="${r ? 'good' : 'bad'}"></i>`).join('')}</span></div><div class="done"><div class="big">${n} of ${Q.length}</div><p>The three rules, by street:</p><div class="rule">${RULE[3]}</div><div class="rule">${RULE[4]}</div><div class="rule">${RULE[5]}</div><p>Missed spots would come back in a few days on a new board.</p><button class="go" id="again">Go again</button></div>`; document.getElementById('again').onclick = () => { at = 0; res.length = 0; draw(null); }; }
+draw(null);
+</script>
