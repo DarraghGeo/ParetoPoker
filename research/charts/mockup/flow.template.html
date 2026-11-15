@@ -1,0 +1,173 @@
+<title>Pareto study flow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column; two screens of the app as they would look, each a card you work through from top to bottom. */
+:root{
+  --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
+  --ok:#1C8A78;--miss:#C93A24;--pass:#7CCDBE;--agg:#F0896B;--idle:#D9D7CF;--card:#FFFFFF;
+  --s-s:#15171B;--s-h:#C8281F;--s-d:#0B6FC2;--s-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
+  --ok:#4FBFA9;--miss:#F0766C;--pass:#4FAE9D;--agg:#D9714F;--idle:#3A3C42;--card:#17181B;
+  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121316;--surface:#1B1D21;--line:#2A2C31;--line-strong:#3C3F46;--ink:#ECEBE6;--ink-2:#B4B6BC;--ink-3:#8D9098;--accent:#8E9BFF;
+  --ok:#4FBFA9;--miss:#F0766C;--pass:#4FAE9D;--agg:#D9714F;--idle:#3A3C42;--card:#17181B;
+  --s-s:#ECEBE6;--s-h:#F0766C;--s-d:#62A8EA;--s-c:#5FBF83;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 15px/23px var(--sans);padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:44px}
+h1{font:600 26px/32px var(--sans);margin:0;letter-spacing:-.01em;text-wrap:balance}
+h2{font:600 18px/24px var(--sans);margin:0;text-wrap:balance}
+p{margin:0;color:var(--ink-2);max-width:60ch}
+.tag{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.lede{display:flex;flex-direction:column;gap:10px}
+.screen{background:var(--card);border:1px solid var(--line-strong);border-radius:10px;padding:18px 16px 20px;display:flex;flex-direction:column;gap:16px}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.mode{font:500 12px/16px var(--mono);color:var(--ink-3)}
+.board{font:500 22px/26px var(--mono);letter-spacing:.02em}
+.s{color:var(--s-s)}.h{color:var(--s-h)}.d{color:var(--s-d)}.c{color:var(--s-c)}
+.ctx{font:400 13px/19px var(--mono);color:var(--ink-2)}
+.step{display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--line);padding-top:14px}
+.q{font:600 16px/22px var(--sans);color:var(--ink)}
+.sub{font:500 13px/18px var(--sans);color:var(--ink-2)}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts.col{flex-direction:column}
+button{font:500 14px/20px var(--sans);color:var(--ink);background:var(--bg);border:1px solid var(--line-strong);border-radius:6px;padding:9px 12px;cursor:pointer;text-align:left}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+button[aria-pressed="true"]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+button.go{background:var(--ink);color:var(--bg);border-color:var(--ink);text-align:center}
+button.go[disabled]{opacity:.35;cursor:default}
+button[data-res="right"]{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok)}
+button[data-res="wrong"]{border-color:var(--miss);box-shadow:inset 0 0 0 1px var(--miss)}
+.locked button{cursor:default}
+.bar{height:64px;display:flex;border-radius:3px;overflow:hidden;background:var(--idle)}
+.bar u{flex:1 1 0;display:flex;flex-direction:column;min-width:0;text-decoration:none}
+.bar u b{display:block;width:100%}
+.ends{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3);margin-top:4px}
+.key{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.key i{display:inline-block;width:10px;height:10px;margin-right:6px;vertical-align:-1px}
+.verdict{display:flex;gap:8px;align-items:baseline;font:600 15px/21px var(--sans)}
+.verdict.good{color:var(--ok)}.verdict.part{color:var(--ink)}.verdict.bad{color:var(--miss)}
+.why{display:flex;flex-direction:column;gap:10px}
+.why p{color:var(--ink);font-size:15px}
+.why p.soft{color:var(--ink-2)}
+.pairrow{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;font:400 13px/18px var(--mono);align-items:center;color:var(--ink-2)}
+.pairrow b{font-weight:500;color:var(--ink)}
+.meter{height:8px;background:var(--idle);border-radius:2px;overflow:hidden;display:flex}
+.meter i{display:block;height:100%}
+.foot{display:flex;flex-wrap:wrap;gap:8px 16px;justify-content:space-between;font:400 12px/18px var(--mono);color:var(--ink-3);border-top:1px solid var(--line);padding-top:12px}
+.foot b{color:var(--ink);font-weight:500}
+.note{font-size:13px;line-height:20px;color:var(--ink-3)}
+.counts{display:flex;gap:20px}
+.counts div{font:400 12px/17px var(--mono);color:var(--ink-2)}
+.counts b{display:block;font:600 24px/28px var(--sans);color:var(--ink);font-variant-numeric:tabular-nums}
+</style>
+<main>
+  <div class="lede">
+    <div class="tag">Mock-up · two changes to how the app teaches</div>
+    <h1>Answer first, then read why</h1>
+    <p>Both screens use one real solved spot. In Study you commit to an answer and a reason before the solution appears. In Train the full reason arrives the moment you answer. Work through each from the top.</p>
+  </div>
+
+  <section class="screen" id="study">
+    <div class="top"><span class="tag">Study</span><span class="mode">predict · then reveal</span></div>
+    <div><div class="board" id="b1"></div><div class="ctx">Single-raised pot, SB against BB. The flop was checked through. SB checks the turn. You are BB.</div></div>
+
+    <div class="step" id="r1">
+      <div class="q">How much of your range bets here?</div>
+      <div class="opts" data-g="freq"><button data-v="a">Under 20%</button><button data-v="b">20 to 45%</button><button data-v="c">45 to 70%</button><button data-v="d">Over 70%</button></div>
+      <div class="sub">The main reason</div>
+      <div class="opts col" data-g="why"><button data-v="nuts">I hold the very best hands and he has none</button><button data-v="ahead">My whole range is well ahead of his</button><button data-v="folds">He folds so much that any hand can bet</button><button data-v="protect">My pairs need protecting from the draws</button></div>
+      <button class="go" id="go1" disabled>Show the solution</button>
+    </div>
+
+    <div class="step" id="r2" hidden>
+      <div class="verdict" id="v1"></div>
+      <div><div class="bar" id="bar1"></div><div class="ends"><span>your weakest hands</span><span>your strongest</span></div></div>
+      <div class="key"><span><i style="background:var(--pass)"></i>check</span><span><i style="background:var(--agg)"></i>bet 75%</span></div>
+      <div class="counts"><div><b>8%</b>of your hands are near-certain winners</div><div><b>0%</b>of his are</div></div>
+      <div class="why">
+        <p>You bet a bit over a third of your range and check the rest.</p>
+        <p>He has checked twice, the second time after the third diamond came, so he has no flushes left. The very best hands are all yours. That is what lets you bet.</p>
+        <p class="soft">It is not that your range is ahead: overall the two are about even, and he has slightly more hands that are simply good. That is why most of your range still checks.</p>
+        <p class="soft">The bets come from both ends of the bar: flushes, sets and two pair on the right, and hands with nothing but a draw on the left. The pairs in the middle check.</p>
+      </div>
+    </div>
+
+    <div class="step" id="h1" hidden>
+      <div class="q"><span id="hn1"></span> has 37% equity. What does it do?</div>
+      <div class="opts" data-g="act1"><button data-v="x">Check</button><button data-v="b">Bet 75%</button></div>
+      <div class="sub">Because</div>
+      <div class="opts col" data-g="why1"><button data-v="sd">It wins often enough at showdown; a bet folds out what it beats</button><button data-v="draw">It wins nothing unless it improves, so it bets: he may fold, or it gets there</button><button data-v="value">Worse hands will call it</button></div>
+      <button class="go" id="go2" disabled>Show the solution</button>
+    </div>
+
+    <div class="step" id="h2" hidden>
+      <div class="verdict" id="v2"></div>
+      <div class="why">
+        <p><strong>It always bets.</strong> Every bit of its 37% comes from cards still to come: a diamond or a card that makes its straight. Checked down, it wins nothing.</p>
+        <p class="soft">He folds about half the time to this bet. When he calls, it can still make the best hand.</p>
+      </div>
+      <div class="q" style="margin-top:6px"><span id="hn2"></span> has the same equity, 36%. What does it do?</div>
+      <div class="opts" data-g="act2"><button data-v="x">Check</button><button data-v="b">Bet 75%</button></div>
+    </div>
+
+    <div class="step" id="h3" hidden>
+      <div class="verdict" id="v3"></div>
+      <div class="why">
+        <p><strong>It never bets.</strong> Nearly all of its 36% is showdown: it is ahead of his missed hands right now and has almost nothing to improve to. A bet would fold out the hands it beats and be called by better.</p>
+        <div class="pairrow"><b id="pa"></b><div class="meter"><i style="width:0%;background:var(--ink)"></i><i style="width:37%;background:var(--accent)"></i></div><span>bets</span>
+          <b id="pb"></b><div class="meter"><i style="width:34%;background:var(--ink)"></i><i style="width:2%;background:var(--accent)"></i></div><span>checks</span></div>
+        <div class="key"><span><i style="background:var(--ink)"></i>wins now</span><span><i style="background:var(--accent)"></i>wins if it improves</span></div>
+        <p class="soft">Same equity, opposite play. Among weak hands, what a hand still has to come decides whether it bets.</p>
+      </div>
+      <div class="foot"><span>This idea returns in <b>3 days</b> on a new board</span><span>Browse the full solution ›</span></div>
+    </div>
+  </section>
+
+  <section class="screen" id="train">
+    <div class="top"><span class="tag">Train</span><span class="mode">question 6 of 10</span></div>
+    <div><div class="board" id="b2"></div><div class="ctx">Same spot, seen as a quiz question. You are BB; SB has checked the flop and the turn.</div></div>
+    <div class="step" id="t1">
+      <div class="q">Who has more of the very best hands?</div>
+      <div class="opts" data-g="tq"><button data-v="me">You</button><button data-v="him">Him</button><button data-v="even">About even</button></div>
+      <div class="sub">How sure are you?</div>
+      <div class="opts" data-g="sure"><button data-v="y">Sure</button><button data-v="n">Not sure</button></div>
+      <button class="go" id="go3" disabled>Answer</button>
+    </div>
+    <div class="step" id="t2" hidden>
+      <div class="verdict" id="v4"></div>
+      <div class="counts"><div><b>8%</b>of your range beats 90% of his</div><div><b>0%</b>of his beats 90% of yours</div></div>
+      <div class="why">
+        <p>You do. A third diamond came on the turn and he checked again. His flushes would have bet, so he has none left; yours are all still there.</p>
+        <p class="soft">Careful with the other question: on overall equity the ranges are about even (49% to 51%). Having the best hands and being ahead on average are different things, and they lead to different plans.</p>
+      </div>
+      <div class="foot"><span id="back"></span><span>Open in Study ›</span></div>
+    </div>
+    <div class="foot"><span>Today <b>5 of 6</b></span><span>Held after a week <b>64%</b></span><span>Weakest: <b>reading the next card</b></span></div>
+  </section>
+
+  <p class="note">The spot, the bar and every percentage about it are from a real solution. The explanation wording is written for the mock-up. The footer figures in Train (5 of 6, 64%, weakest skill) are examples of what the come-back queue would show, not real results.</p>
+</main>
+<script>
+const SL = /*SLICES*/;
+const $ = (id) => document.getElementById(id); const SUIT = { s: '♠', h: '♥', d: '♦', c: '♣' };
+const cards = (t) => t.match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="${c[1]}">${c[0]}${SUIT[c[1]]}</span>`).join(' ');
+$('b1').innerHTML = cards('Ad8h5d7d'); $('b2').innerHTML = cards('Ad8h5d7d'); $('hn1').innerHTML = cards('Td9s'); $('hn2').innerHTML = cards('3h3s'); $('pa').innerHTML = cards('Td9s'); $('pb').innerHTML = cards('3h3s');
+const picked = {};
+document.addEventListener('click', (e) => { const b = e.target.closest('.opts button'); if (!b) return; const g = b.parentElement; if (g.closest('.locked')) return; g.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', x === b)); picked[g.dataset.g] = b.dataset.v; ready(); });
+const mark = (g, right) => { const el = document.querySelector(`[data-g="${g}"]`); el.closest('.step').classList.add('locked'); el.querySelectorAll('button').forEach((x) => { if (x.dataset.v === right) x.dataset.res = 'right'; else if (x.getAttribute('aria-pressed') === 'true') x.dataset.res = 'wrong'; }); return picked[g] === right; };
+const say = (el, a, b) => { el.className = `verdict ${a && b ? 'good' : a || b ? 'part' : 'bad'}`; el.textContent = a && b ? 'Right, and for the right reason.' : a ? 'Right answer, but not the main reason.' : b ? 'Right reason, wrong amount.' : 'Not this time. Here is how it works.'; };
+function ready() { $('go1').disabled = !(picked.freq && picked.why); $('go2').disabled = !(picked.act1 && picked.why1); $('go3').disabled = !(picked.tq && picked.sure);
+  if (picked.act2 && $('h3').hidden) { const ok = mark('act2', 'x'); $('v3').className = `verdict ${ok ? 'good' : 'bad'}`; $('v3').textContent = ok ? 'Right.' : 'No: it checks.'; $('h3').hidden = false; } }
+$('go1').addEventListener('click', () => { const a = mark('freq', 'b'), b = mark('why', 'nuts'); say($('v1'), a, b); $('go1').hidden = true;
+  $('bar1').innerHTML = SL.map((x) => `<u><b style="height:${100 * x[0]}%;background:var(--pass)"></b><b style="height:${100 * (1 - x[0])}%;background:var(--agg)"></b></u>`).join(''); $('r2').hidden = false; $('h1').hidden = false; });
+$('go2').addEventListener('click', () => { const a = mark('act1', 'b'), b = mark('why1', 'draw'); say($('v2'), a, b); $('go2').hidden = true; $('h2').hidden = false; });
+$('go3').addEventListener('click', () => { const ok = mark('tq', 'me'); const sure = picked.sure === 'y'; document.querySelector('[data-g="sure"]').closest('.step').classList.add('locked'); $('go3').hidden = true;
+  $('v4').className = `verdict ${ok ? 'good' : 'bad'}`; $('v4').textContent = ok ? (sure ? 'Right, and you knew it.' : 'Right, but you were not sure.') : (sure ? 'Wrong, and you were sure. Worth a close look.' : 'Not this time.');
+  $('back').innerHTML = ok && sure ? 'Comes back in <b>8 days</b> on a new board' : ok ? 'Comes back in <b>3 days</b> on a new board' : 'Comes back <b>tomorrow</b> on a new board'; $('t2').hidden = false; });
+</script>
