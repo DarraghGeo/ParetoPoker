@@ -55,3 +55,13 @@ for y, title in (('adv', 'RANGE ADVANTAGE (equity)'), ('strong', 'WHO HAS MORE S
 print('\nby high card of the flop, mean advantage of the out-of-position player (points):'); print((100 * T.groupby('hi').adv.mean()).round(1).rename(index=lambda i: R[i]).to_dict())
 print('correlations with advantage:', {c: round(float(np.corrcoef(T[c], T.adv)[0, 1]), 2) for c in ['d_pair', 'd_tp', 'd_over', 'd_big', 'd_fd']})
 print('within matchup:', {c: round(float(np.corrcoef(T[c] - T.groupby('pre')[c].transform('mean'), T.adv - T.base)[0, 1]), 2) for c in ['d_pair', 'd_tp', 'd_over', 'd_big', 'd_fd']})
+
+# how wrong, and where: the right player named by size of the advantage; and how few counts get close to all of them
+def pred(cols):
+    X = T[cols].values; Y = T.adv.values; p = np.zeros(len(T))
+    for tr, te in GroupKFold(5).split(X, Y, T.board): p[te] = LinearRegression().fit(X[tr], Y[tr]).predict(X[te])
+    return p
+print('\nNames the right player, by how big the advantage is')
+for name, cols in [('matchup alone', ['base']), ('matchup + top pair or better', ['base', 'd_tp']), ('matchup + top pair or better + any pair', ['base', 'd_tp', 'd_pair']), ('matchup + top pair or better + any pair + overpairs', ['base', 'd_tp', 'd_pair', 'd_over']), ('all counts', ['base', 'd_pair', 'd_tp', 'd_over', 'd_big', 'd_fd'])]:
+    p = pred(cols); a = np.abs(T.adv.values); ok = np.sign(p) == np.sign(T.adv.values); print(f'  {name:52s}', '  '.join(f'{lab} {100*ok[m].mean():3.0f}% (n {m.sum()})' for lab, m in (('under 1.5 pts', a < .015), ('1.5 to 4', (a >= .015) & (a < .04)), ('4 to 8', (a >= .04) & (a < .08)), ('over 8', a >= .08))))
+p = pred(['base', 'd_tp']); bad = T[(np.sign(p) != np.sign(T.adv)) & (T.adv.abs() >= .04)]; print('\nmisses where the advantage is 4+ points:', len(bad)); print(bad[['pre', 'board', 'adv', 'd_tp', 'd_pair', 'd_over']].round(3).head(12).to_string())
