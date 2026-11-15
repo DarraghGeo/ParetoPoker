@@ -437,6 +437,7 @@ body.train{overflow:hidden;height:100dvh}
 .play header .session.down{color:var(--danger)}
 .seat{display:grid;grid-template-columns:1fr auto;grid-template-areas:"who hole" "stack hole" "last hole";align-items:center;gap:2px 16px;padding:12px 0 12px 14px;border-left:2px solid var(--line)}
 .seat.acting{border-left-color:var(--accent)}
+.seat:empty{border-left-color:transparent}
 .seat .who{grid-area:who;display:flex;gap:8px;align-items:baseline}
 .seat .name{font:500 15px/20px var(--sans);color:var(--ink)}
 .seat .pos,.pot span{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}

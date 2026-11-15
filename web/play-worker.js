@@ -16,6 +16,8 @@ const AHEAD = 2;
 const ENOUGH = 1;
 const STREET = ['flop', 'turn', 'river'];
 const pause = () => new Promise((resolve) => setTimeout(resolve));
+/** How far along a figure that closes in on its target by ratio is, 0 to 1 (as Train). */
+const along = (from, now, to) => (now < Infinity ? Math.min(1, Math.max(0, Math.log(from / now) / Math.log(from / to))) : 0);
 const cardsOf = (combo) => [fs.COMBO_CARDS[2 * combo], fs.COMBO_CARDS[2 * combo + 1]];
 const text = (cards) => cards.map((c) => fs.formatCard(c)).join(' ');
 
@@ -26,6 +28,7 @@ let playing = null; // the hand on screen, with where its play stands
 const current = () => playing?.hand ?? null;
 const jobs = new Map(); // solves under way, by key
 let pumping = false;
+const shown = { job: null, at: 0 }; // the solve last reported to the page
 
 /** The betting a street is solved with: one list of bet sizes plays on every street; several, the last ones are the later streets. */
 function betting(c, cards) {
@@ -62,6 +65,7 @@ function flopJob(hand) {
   let run = null, spot = null, lite = null, settle = null, spent = 0, settled = false;
   return {
     key: `flop|${hand.id}`, hand, street: 'flop',
+    done: () => (settle && !Number.isNaN(settle.movement) ? along(0.35, settle.movement, lite.options.settle?.tolerance ?? 0.01) : 0),
     step() {
       if (!run) {
         lite = fs.litePreset({ board: text(hand.board.slice(0, 3)), pot: config.pot, stack: config.stack, oop: config.oop, ip: config.ip, ...betting(config, 3) });
@@ -82,6 +86,7 @@ function nextJob(hand, parent, end) {
   const parentKey = parent.key ?? 'flop';
   return {
     key: `${street}|${hand.id}|${parentKey}|${end}`, hand, street, slot: `${parentKey}|${end}`,
+    done: () => along(100, exploit, plan.target),
     step() {
       if (!run) {
         const child = parent.nodes[end].edges[0].child;
@@ -146,6 +151,7 @@ async function pump() {
       const job = wanted()[0];
       if (!job) break;
       let result;
+      if (job !== shown.job) shown.job = job;
       try { result = job.step(); } catch (error) { result = { failed: true, error: String(error?.message ?? error) }; }
       if (result) {
         jobs.delete(job.key);
@@ -157,6 +163,8 @@ async function pump() {
         if (job.hand === current()) proceed();
         else if (!current() && hands.some((h) => h.flop)) say({ type: 'ready' });
       }
+      // how far along the solve is, for the page's bar (at most a few times a second)
+      if (!result && Date.now() - shown.at > 200) { shown.at = Date.now(); say({ type: 'progress', street: job.street, ahead: job.hand !== current(), done: job.done() }); }
       await pause();
     }
   } finally { pumping = false; }

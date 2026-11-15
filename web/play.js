@@ -14,7 +14,7 @@ const session = { day: today, net: 0, hands: 0, last: 0 };
 try { const s = JSON.parse(localStorage.getItem(KEY) ?? 'null'); if (s?.day === today) Object.assign(session, s); } catch { /* private window */ }
 const keep = () => { try { localStorage.setItem(KEY, JSON.stringify(session)); } catch { /* private window */ } };
 
-const view = { state: null, status: null, ranges: false, study: null, error: '' };
+const view = { state: null, status: null, progress: null, ranges: false, study: null, error: '' };
 const num = (x) => String(Math.round(10 * x) / 10);
 const signed = (x) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${num(Math.abs(x))}`;
 const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');
@@ -24,6 +24,7 @@ const worker = new Worker(new URL('./play-worker.js', import.meta.url));
 worker.onmessage = ({ data }) => {
   if (data.type === 'export') { pane.handedOver(data); return; }
   if (data.type === 'status') { view.status = data; if (!view.state || view.state.waiting || view.state.result) renderMoves(); return; }
+  if (data.type === 'progress') { view.progress = data; if (!view.state || view.state.waiting || (view.state.result && !view.status?.ready)) renderMoves(); return; }
   if (data.type === 'ready' && !view.state) { worker.postMessage({ type: 'deal' }); return; }
   if (data.type === 'error') { view.error = data.message; renderMoves(); return; }
   if (data.type === 'state') {
@@ -77,20 +78,22 @@ function renderRanges() {
   const list = (seat) => st.ranges[seat].map(([name, w]) => ({ name, w }));
   $('ranges').innerHTML = mini(`You ${SEAT[st.seat]}`, list(st.seat), '', cellOf(st.hero)) + mini(`Villain ${SEAT[other(st.seat)]}`, list(other(st.seat)), 'villain');
 }
+/** The bar for the solve being waited on (as Train's): how far along it is. */
+const bar = () => `<div class="track"><i style="width:${(100 * Math.max(0.04, view.progress?.done ?? 0)).toFixed(1)}%"></i></div>`;
 /** What hero can do now, what the hand is waiting for, or how it ended and the next one. */
 function renderMoves() {
   const st = view.state; const el = $('moves');
   if (view.error) { el.innerHTML = `<p class="note">This setup cannot be played: ${esc(view.error)}</p><p class="note">The ranges, pot and bet sizes are the ones set up in <a href="study.html">Study</a>.</p>`; return; }
   const solving = view.status?.solving ? `Solving the ${esc(view.status.solving.replace(' ahead', ''))}${view.status.solving.endsWith('ahead') ? ' for the hands ahead' : ''}` : '';
-  if (!st) { el.innerHTML = `<p class="lead">Dealing the first hand</p><p class="note">${solving || 'Solving its flop'}. A flop takes up to a minute; after that the next hands are solved while you play.</p>`; return; }
+  if (!st) { el.innerHTML = `<p class="lead">Dealing the first hand</p>${bar()}<p class="note">Solving its flop. A flop takes up to a minute; after that the next hands are solved while you play.</p>`; return; }
   if (st.result) {
     const r = st.result;
     el.innerHTML = `<p class="result${r.net < 0 ? ' down' : ''}"><b>${signed(r.net)}</b> ${esc(r.how)}${r.mine ? `<span>${esc(r.mine)} against ${esc(r.his)}</span>` : ''}</p>`
-      + `<button type="button" class="primary" id="next">Next hand</button>${view.status && !view.status.ready ? `<p class="note">${solving || 'Solving the next flop'}</p>` : ''}`;
+      + `<button type="button" class="primary" id="next">Next hand</button>${view.status && !view.status.ready ? `${bar()}<p class="note">${solving || 'Solving the next flop'}</p>` : ''}`;
     $('next').onclick = () => { view.state = null; view.error = ''; render(); worker.postMessage({ type: 'deal' }); };
     return;
   }
-  if (st.waiting) { el.innerHTML = `<p class="note">Dealing the ${esc(st.history[st.history.length - 1]?.street === 'flop' ? 'turn' : 'river')}… ${solving ? `(${solving.toLowerCase()})` : ''}</p>`; return; }
+  if (st.waiting) { el.innerHTML = `<p class="note">Dealing the ${esc(st.history[st.history.length - 1]?.street === 'flop' ? 'turn' : 'river')}… ${solving ? `(${solving.toLowerCase()})` : ''}</p>${bar()}`; return; }
   if (!st.toAct) { el.innerHTML = '<p class="note">Villain to act…</p>'; return; }
   el.innerHTML = `<div class="acts">${st.actions.map((a) => `<button type="button" class="act k-${a.kind}" data-act="${esc(a.label)}">${esc(words(a))}</button>`).join('')}</div>`;
   for (const b of el.querySelectorAll('[data-act]')) b.onclick = () => { el.querySelectorAll('button').forEach((x) => { x.disabled = true; }); worker.postMessage({ type: 'act', label: b.dataset.act }); };
