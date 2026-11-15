@@ -1,0 +1,3 @@
+<!-- The mark: the four bars, linking home. -->
+<script>let { size = 26 } = $props();</script>
+<a class="logo" href="#/" aria-label="Home"><svg class="mark" viewBox="0 0 512 512" width={size} height={size} aria-hidden="true"><rect width="512" height="512" rx="72" fill="#15171B" /><rect x="96" y="150" width="68" height="212" fill="#7FCDBB" /><rect x="180" y="150" width="68" height="212" fill="#F4C261" /><rect x="180" y="150" width="68" height="90" fill="#7FCDBB" /><rect x="264" y="150" width="68" height="212" fill="#F4C261" /><rect x="348" y="150" width="68" height="212" fill="#F08A6B" /><rect x="348" y="150" width="68" height="60" fill="#F4C261" /></svg></a>

@@ -452,7 +452,7 @@ body.train{overflow:hidden;height:100dvh}
 .p-board span{font:500 30px/34px var(--mono);padding:2px 3px}
 .p-board .slot{width:26px;height:34px;padding:0;border:1px dashed var(--line-strong);border-radius:3px}
 .pot{font:500 15px/20px var(--mono);color:var(--ink);display:flex;gap:8px;align-items:baseline}
-.felt .trail{align-self:stretch;padding:0}
+.felt .past{align-self:stretch;padding:0}
 .ranges{gap:16px}
 .moves{display:flex;flex-direction:column;gap:12px;min-height:96px}
 .moves .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}

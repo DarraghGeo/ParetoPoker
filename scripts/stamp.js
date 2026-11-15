@@ -12,8 +12,11 @@ function versionOf(bundle) {
   return hash.digest('hex').slice(0, 10);
 }
 
-/** The Vite plugin: stamps the pages, emits the service worker and version.json. */
-export function stamp({ worker }) {
+/** An old page's address, sent on to where it now lives in the app. */
+const redirect = (to) => `<!doctype html><meta charset="utf-8"><title>Pareto</title><script>location.replace('${to}')</script>`;
+
+/** The Vite plugin: stamps the pages, emits the service worker, version.json and the old pages' redirects. */
+export function stamp({ worker, moved = {} }) {
   return {
     name: 'pareto-stamp', enforce: 'post',
     generateBundle(_, bundle) {
@@ -21,6 +24,7 @@ export function stamp({ worker }) {
       for (const file of Object.values(bundle)) if (file.fileName.endsWith('.html')) file.source = String(file.source).replaceAll('__V__', version);
       this.emitFile({ type: 'asset', fileName: 'sw.js', source: readFileSync(worker, 'utf8').replaceAll('__V__', version) });
       this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version }) });
+      for (const [page, to] of Object.entries(moved)) this.emitFile({ type: 'asset', fileName: page, source: redirect(to) });
     },
   };
 }

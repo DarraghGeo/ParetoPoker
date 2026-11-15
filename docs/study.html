@@ -21,7 +21,7 @@
 // build each time the app comes back to the front, and a reload when one is there (on the opening page only, so that
 // a study in progress is never thrown away).
 if ('serviceWorker' in navigator) {
-  const here = '19c3329b52'; const opening = !/(study|train|play)\.html/.test(location.pathname);
+  const here = '03b9880aa8'; const opening = !/(study|train|play)\.html/.test(location.pathname);
   navigator.serviceWorker.register('sw.js').then((reg) => {
     const check = async () => {
       try { reg.update(); const latest = (await (await fetch('version.json', { cache: 'no-store' })).json()).version; if (latest && latest !== here && opening) location.reload(); } catch { /* offline */ }
@@ -31,11 +31,10 @@ if ('serviceWorker' in navigator) {
   }).catch(() => {});
 }
 </script>
-  <script type="module" crossorigin src="./assets/study-Cr4u45AY.js"></script>
+  <script type="module" crossorigin src="./assets/study-_XrAEaUc.js"></script>
   <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-BWaJ3C7D.js">
-  <link rel="modulepreload" crossorigin href="./assets/common-wcTlG9Y-.js">
-  <link rel="modulepreload" crossorigin href="./assets/outline-BQwRrOLd.js">
-  <link rel="stylesheet" crossorigin href="./assets/style-XF1DVGY-.css">
+  <link rel="modulepreload" crossorigin href="./assets/style-Bq7OYcRU.js">
+  <link rel="stylesheet" crossorigin href="./assets/style-Br7vkfoG.css">
 </head>
 <body>
 <div class="rule" id="rule"></div>
