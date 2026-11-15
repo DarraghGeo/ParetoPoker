@@ -33,7 +33,7 @@ The page opens on a choice between the two:
   choice sets both ranges, the pot and the stack.
   A spot too big to solve whole in a browser (most flops with several sizes, raises and all-in) is
   offered as Solve (Lite): the first street's betting as given, one bet size on the later ones.
-- **Train**: questions in three groups, each chosen in settings. *Ranges* (whose range a chart is, whether a hand is
+- **Train** opens on its drills, in three groups; tap one to take it up, and the arrow in the header to come back. *Ranges* (whose range a chart is, whether a hand is
   in a range) and *whose card is it* use the preset ranges, need no solve, and fill the wait for one. *Range advantage*
   and *Actions* (how much of the range bets and in which of five shapes, how much continues against a bet, the biggest
   size, what a hand can do, which of two hands of the same equity bets) are asked on boards dealt at random, with the ranges, pot and bet sizes set up in

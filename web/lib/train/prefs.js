@@ -1,11 +1,33 @@
-// What Train keeps between visits: the kinds of question (in three groups) and the streets chosen, the view above the question, each day's
+// What Train keeps between visits: the drill taken up (as its kinds of question) and the streets chosen, the view above the question, each day's
 // results by question type and street, and the last thirty questions.
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
 
 export const TYPES = { whose: 'Whose range is this', inout: 'In or out of a range', card: 'Whose card is it', range: 'Range advantage', nuts: 'Nut advantage', freq: 'How much the range bets', shape: 'The shape of the betting', defend: 'How much continues against a bet', size: 'Maximum bet or raise', hand: 'What a hand can do', twin: 'Which of two hands bets' };
-/** The kinds of question as settings lists them: what the ranges are, who is ahead, and what to do. */
-export const TYPE_GROUPS = [['Ranges', ['whose', 'inout']], ['Range advantage', ['card', 'range', 'nuts']], ['Actions', ['freq', 'shape', 'defend', 'size', 'hand', 'twin']]];
+/** The drills Train offers, in three groups: what the ranges are, who is ahead, and what to do. Each asks its own kinds of question. */
+export const DRILLS = [
+  { id: 'whose', group: 'Ranges', name: 'Whose range is this?', what: 'See a range, name the position and the action.', types: ['whose'] },
+  { id: 'inout', group: 'Ranges', name: 'In or out?', what: 'See a position and a hand, say whether it is in the range.', types: ['inout'] },
+  { id: 'card', group: 'Range advantage', name: 'Whose card is it?', what: 'One rank, two ranges: who holds more of it.', types: ['card'] },
+  { id: 'advantage', group: 'Range advantage', name: 'Who has the advantage?', what: 'A board and the action so far: the range advantage and the nut advantage.', types: ['range', 'nuts'] },
+  { id: 'bets', group: 'Actions', name: 'How does the range bet?', what: 'How often, in which shape, and how big.', types: ['freq', 'shape', 'size'] },
+  { id: 'line', group: 'Actions', name: 'Where is the line?', what: 'Facing a bet: how much of your range continues.', types: ['defend'] },
+  { id: 'hand', group: 'Actions', name: 'What does this hand do?', what: 'What one hand can do, and which of two hands of the same equity bets.', types: ['hand', 'twin'] },
+];
+export const DRILL_GROUPS = [...new Set(DRILLS.map((d) => d.group))];
+
+/** Take up a drill: its kinds of question are the ones asked. */
+export function setDrill(prefs, drill) {
+  for (const key of Object.keys(TYPES)) prefs.types[key] = drill.types.includes(key);
+  savePrefs(prefs);
+}
+
+/** Today's answers in a drill: right out of all. */
+export function drillToday(prefs, drill) {
+  const by = todayOf(prefs).by ?? {}; let ok = 0, n = 0;
+  for (const t of drill.types) { ok += by[t]?.[0] ?? 0; n += by[t]?.[1] ?? 0; }
+  return { ok, n };
+}
 export const STREETS = { flop: 'Flop', turn: 'Turn', river: 'River' };
 /** What sits above the question: the two ranges side by side, their equity curves, or the ladder of both on one scale. */
 export const VIEWS = ['grid', 'curve', 'ladder'];

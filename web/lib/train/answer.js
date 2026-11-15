@@ -1,7 +1,7 @@
 // Answering in Train: answers picked and graded, the result recorded, and the choices in settings changed.
 import { dayKey } from '../days.js';
 import { advance, want } from './flow.js';
-import { record, savePrefs, toggle, VIEWS } from './prefs.js';
+import { record, savePrefs, setDrill, toggle, VIEWS } from './prefs.js';
 import { isRight, namesOf } from './questions.js';
 
 /** Grade the answer and record it with its spot, for the day's score and the last questions. */
@@ -18,6 +18,9 @@ export function choose(game, k) {
   if (!q.multi) { game.q = { ...q, chosen: [k] }; grade(game); return; }
   game.q = { ...q, chosen: q.chosen.includes(k) ? q.chosen.filter((x) => x !== k) : [...q.chosen, k] };
 }
+
+/** Start a drill: its questions from here on, the one on screen dropped. */
+export function startDrill(game, drill) { setDrill(game.prefs, drill); game.turn = 0; game.q = null; advance(game); }
 
 /** Turn a kind of question or a street on or off; what no longer applies is dropped. */
 export function setChoice(game, group, key) {
