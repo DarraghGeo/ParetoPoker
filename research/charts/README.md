@@ -91,3 +91,26 @@ The strip is sorted by equity now. A line beside it would show each hand's equit
 - **Max: barely.** Nearly every hand has some very good card.
 - **Median: a little, and consistently.** Where the median dips below the strip (the hand is behind on most cards and far ahead on a few: a draw) the hand bets and continues more than its strength says. The link is weak (0.1 to 0.3) but points the same way in 81 to 95% of decisions.
 - As a second axis any of these lifts six regions by 8 to 10 points, the same as the settled/unsettled map. They are one idea measured different ways.
+
+## 6. Do different kinds of equity track value bets and bluffs differently? (`exp6.py`)
+
+Betting decisions with mixing. The range is cut in three by equity now; inside each part, how each measure goes with how often the hand bets (correlation inside the decision, averaged; share of decisions with the same sign).
+
+Turn (1,065 to 1,449 decisions for the showdown and draw measures; 62 to 94 for the next-card ones):
+
+| Measure | Weak end (bluffs) | Middle | Strong end (value) |
+|---|---|---|---|
+| Draw: equity still to come | **+0.54** (94%) | +0.46 (85%) | -0.23 (74%) |
+| What good cards add / bad cards cost | **+0.55** (93%) | +0.48 (86%) | -0.09 (62%) |
+| Equity against his best third | +0.51 (91%) | +0.43 (85%) | **+0.34** (74%) |
+| Showdown: beats now, no more cards | -0.26 (78%) | -0.34 (79%) | **+0.33** (76%) |
+| Equity now | +0.13 (64%) | -0.13 (64%) | +0.29 (72%) |
+| Spread of next cards | +0.38 (79%) | **+0.55** (90%) | -0.31 (83%) |
+| Median next card | -0.26 (80%) | -0.38 (84%) | **+0.58** (96%) |
+| Best next card (max) | +0.18 (71%) | +0.24 (79%) | +0.45 (93%) |
+
+Flop (177 to 180 decisions): the same pattern, weaker. Draw +0.15 at the weak end, +0.28 in the middle, -0.16 at the strong end; showdown -0.12, -0.22, +0.22. The flop next-card sample (14 to 15 decisions) is too small to read.
+
+- **Yes, they track differently, and the sign flips.** At the weak end and in the middle, the hands that bet are the ones that still change: draw and movement go with betting (+0.5 on the turn) and showdown strength goes against it. At the strong end it reverses: showdown strength and equity against his best hands go with betting, and draw goes against it.
+- **Max is not the bluff measure.** It is the weakest of the movement measures at the weak end (+0.18); how much the hand moves, or its draw, does far more.
+- **One measure works across the whole range: equity against his best third** (+0.51, +0.43, +0.34). It is high for draws among weak hands and for the nuts among strong ones.

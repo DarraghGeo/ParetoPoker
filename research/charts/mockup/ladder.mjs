@@ -4,7 +4,7 @@
 import { writeFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../../src/solver/flopsolve.js';
-import { PRESETS } from '../../../web/presets.js';
+import { PRESETS } from '../../../web/lib/study/presets.js';
 import { study } from '../../../src/explain/street.js';
 const p = PRESETS.find((x) => x.action === '3BP' && x.oop === 'SB' && x.ip === 'BU') ?? PRESETS.find((x) => x.action === '3BP'); const FLOP = 'Ks9d4s'; const RUN = ['Qs', '4h'];
 const spot = fs.defineSpot({ board: FLOP, pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, betSizes: [[0.33, 0.75], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 });
@@ -23,7 +23,12 @@ function visit(id, dealt, path) {
   const mine = order(f.mine, eq); const other = order(f.his, his); const kinds = n.edges.map((e) => e.kind); const blocks = Array.from({ length: B }, () => ({ w: 0, mix: kinds.map(() => 0) }));
   for (const c of mine.hs) { const b = blocks[Math.min(B - 1, Math.floor(mine.at.get(c) * B))]; b.w += f.mine[c]; kinds.forEach((_, a) => { b.mix[a] += f.mine[c] * st.sigma(c, a); }); }
   const oop = me === 0 ? mine : other; const oopRange = me === 0 ? f.mine : f.his; const left = [0, 0]; left[me] = r3(mine.mass / mass0[me]); left[1 - me] = r3(other.mass / mass0[1 - me]); const mark = [0, 0]; mark[me] = r3(mine.mark); mark[1 - me] = r3(other.mark);
-  out.nodes[path.join('/')] = { seat: me, street: f.board.length - 3, facing: st.toCall > 0, left, mark, actions: st.actions.map((a) => ({ label: a.label, kind: a.kind, freq: r3(a.freq) })),
+  // the white line: facing a bet, where the range starts to have the price; betting, where it starts to beat half of what calls
+  let line = null; const share = (test) => { let m = 0; for (const c of mine.hs) if (test(c)) m += f.mine[c]; return m / mine.mass; };
+  if (st.toCall > 0) { const price = st.toCall / (st.pot + st.toCall); line = { kind: 'price', at: r3(share((c) => eq[c] < price)), need: r3(price) }; }
+  else { const w = st.actions.map((x, i) => i).filter((i) => ['bet', 'raise', 'allin'].includes(kinds[i])).sort((x, y) => st.actions[y].freq - st.actions[x].freq)[0]; const child = w == null ? null : nodes[n.edges[w].child];
+    if (child && child.kind === 'decision') { const s2 = study(fs, solution, nodes, child.id, dealt); const ci = child.edges.findIndex((e) => e.kind === 'call'); if (s2 && ci >= 0) { const calls = new Float64Array(N); for (let v = 0; v < N; v++) if (s2.f.mine[v] > 0) calls[v] = s2.f.mine[v] * s2.sigma(v, ci); const eC = equityVs(fs, f.board, f.mine, calls); line = { kind: 'value', at: r3(share((c) => !(eC[c] >= 0.5))), size: n.edges[w].label }; } } }
+  out.nodes[path.join('/')] = { seat: me, street: f.board.length - 3, facing: st.toCall > 0, left, mark, line, actions: st.actions.map((a) => ({ label: a.label, kind: a.kind, freq: r3(a.freq) })),
     blocks: blocks.map((b) => (b.w > 0 ? b.mix.map((x) => r3(x / b.w)) : null)),
     hands: ids.map((c) => (oop.at.has(c) && oopRange[c] / start[0][c] > 0.02 ? { at: r3(oop.at.get(c)), mix: me === 0 ? kinds.map((_, a) => r3(st.sigma(c, a))) : null } : null)) };
   const go = st.actions.map((a, i) => i).filter((i) => st.actions[i].freq >= 0.08 && ['check', 'call', 'bet'].includes(kinds[i])).sort((x, y) => st.actions[y].freq - st.actions[x].freq).slice(0, 2);

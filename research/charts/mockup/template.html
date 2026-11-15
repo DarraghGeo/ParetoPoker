@@ -87,7 +87,9 @@ button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:v
 .bar{position:relative;height:100%;display:flex;background:var(--his);border-radius:2px;overflow:hidden}
 .bar u{flex:1 1 0;display:flex;flex-direction:column;min-width:0;text-decoration:none}
 .bar u b{display:block;width:100%}
-.tick{position:absolute;top:-3px;bottom:-3px;width:0;border-left:1px dashed var(--ink);pointer-events:none}
+.tick{position:absolute;top:0;bottom:0;width:3px;margin-left:-1.5px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35);pointer-events:none}
+.tick span{position:absolute;bottom:100%;left:50%;transform:translateX(-50%);font:500 10px/12px var(--mono);color:var(--ink-2);white-space:nowrap;padding-bottom:1px}
+.track{margin-top:10px}
 .pin{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--ink);border:2px solid var(--bg);pointer-events:none}
 .rung .acts{display:flex;flex-wrap:wrap;gap:6px;padding-left:34px;align-items:center}
 .rung .acts button{padding:5px 9px;font:500 12px/16px var(--mono);display:flex;align-items:center;gap:6px}
@@ -111,8 +113,8 @@ button[aria-pressed="true"] span{color:inherit}
     <div class="tag">The ladder · both ranges as the hand unfolds</div>
     <h2>Two action bars per decision: out of position on top, in position below</h2>
     <div class="spot" id="spot0"></div>
-    <p>Each bar is a range sorted weakest (left) to strongest (right). The player to act is coloured by what each part of the range does: passive on top, the most aggressive action at the bottom. The other bar is the range he is up against. Bars get shorter as hands leave. Tap an action to walk the line.</p>
-    <div class="key"><span><i style="background:var(--fold)"></i>fold</span><span><i style="background:var(--pass)"></i>check or call</span><span><i style="background:var(--mid)"></i>smaller bet</span><span><i style="background:var(--agg)"></i>biggest bet or raise</span><span><i style="background:var(--his)"></i>not to act</span><span>┊ hands above 70% equity start here</span></div>
+    <p>Each bar is a range sorted weakest (left) to strongest (right). The player to act is coloured by what each part of the range does: passive on top, the most aggressive action at the bottom. The other bar is the range he is up against. Bars get shorter as hands leave. The white line is the value or price line. Tap an action to walk the line.</p>
+    <div class="key"><span><i style="background:var(--fold)"></i>fold</span><span><i style="background:var(--pass)"></i>check or call</span><span><i style="background:var(--mid)"></i>smaller bet</span><span><i style="background:var(--agg)"></i>biggest bet or raise</span><span><i style="background:var(--his)"></i>not to act</span><span><i style="background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.35);width:3px"></i>white line: facing a bet, hands to its right have the price to call; betting, hands to its right beat half of what calls (value)</span></div>
     <div class="ladder" id="ladder"></div>
     <p class="tag" style="margin-top:6px">Follow one of the out-of-position hands</p>
     <div class="chips" id="chips"></div>
@@ -197,7 +199,7 @@ function examples(el, blocks, at) { el.innerHTML = at.map((f) => { const b = blo
     for (let d = 0; d <= path.length; d++) { const key = path.slice(0, d).join('/'); const n = L.nodes[key]; if (!n) break; const cols = colours(n.actions);
       if (n.street !== street) { street = n.street; html += `<div class="street"><small>${STREET[street]}</small><span>${street === 0 ? board(L.flop) : board(L.run[street - 1])}</span></div>`; const h = n.hands[who]; said.push(h ? `${STREET[street]}: <strong>${where(h.at)}</strong> of ${L.names[0]}'s range.` : `${STREET[street]}: it has almost always left this line.`); }
       const bar = (seat) => { const live = seat === n.seat; const inner = live ? n.blocks.map((m) => `<u>${m ? m.map((p, a) => `<b style="height:${100 * p}%;background:${cols[a]}"></b>`).join('') : ''}</u>`).join('') : ''; const h = seat === 0 ? n.hands[who] : null;
-        return `<div class="who${live ? ' on' : ''}">${L.names[seat]}</div><div class="track"><div style="position:relative;height:100%;width:${Math.max(4, 100 * n.left[seat])}%"><div class="bar">${inner}</div><div class="tick" style="left:${100 * n.mark[seat]}%"></div>${h ? `<div class="pin" style="left:${100 * h.at}%"></div>` : ''}</div></div>`; };
+        return `<div class="who${live ? ' on' : ''}">${L.names[seat]}</div><div class="track"><div style="position:relative;height:100%;width:${Math.max(4, 100 * n.left[seat])}%"><div class="bar">${inner}</div>${live && n.line ? `<div class="tick" style="left:${100 * n.line.at}%"><span>${n.line.kind}</span></div>` : ''}${h ? `<div class="pin" style="left:${100 * h.at}%"></div>` : ''}</div></div>`; };
       const taken = path[d]; const btns = n.actions.filter((a) => a.freq >= 0.02).map((a) => { const i = n.actions.indexOf(a); const can = L.nodes[[...path.slice(0, d), a.label].join('/')] !== undefined; return `<button data-d="${d}" data-l="${a.label}" aria-pressed="${a.label === taken}" ${can ? '' : 'disabled'}><i style="background:${cols[i]}"></i>${verb(a)} ${pct(a.freq)}</button>`; }).join('');
       html += `<div class="rung"><div class="pair">${bar(0)}${bar(1)}</div><div class="acts"><span>${L.names[n.seat]} ${n.facing ? 'faces a bet' : 'to act'}</span>${btns}</div></div>`; }
     el.innerHTML = html; $('chips').querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', +b.dataset.i === who));

@@ -6,7 +6,7 @@
 import { writeFileSync, appendFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
 import { treeOf } from '../../src/solver/flopsolve.js';
-import { PRESETS } from '../../web/presets.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 import { betting, folding } from './formulas.mjs';
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1];
 const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);

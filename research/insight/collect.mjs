@@ -4,7 +4,7 @@
 import { writeFileSync, appendFileSync } from 'node:fs';
 import { fs } from '../proof/lib.mjs';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
-import { PRESETS } from '../../web/presets.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 import { study } from '../../src/explain/street.js';
 import { evaluator } from '../../src/explain/best.js';
 const [seed = '1', count = '40'] = process.argv.slice(2);

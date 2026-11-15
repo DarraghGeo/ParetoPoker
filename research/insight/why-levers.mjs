@@ -10,7 +10,7 @@
 import { writeFileSync, appendFileSync, readFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
-import { PRESETS } from '../../web/presets.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 import { study, explainRange } from '../../src/explain/street.js';
 const [count = '12', seed = '71'] = process.argv.slice(2); const ROOT = process.env.ROOT ?? 'flop'; const N = fs.COMBOS;
 let a = (+seed * 2654435761) >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
