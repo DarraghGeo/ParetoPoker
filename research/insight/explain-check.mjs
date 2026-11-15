@@ -6,15 +6,18 @@ import * as fs from 'poker-flopsolve';
 import { treeOf } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/presets.js';
 import { study, measure, explainStreet, explainRange, tolerance, oneMove, RARE } from '../../src/explain/street.js';
+import { whatIf } from '../../src/explain/whatif.js';
 const [count = '6', seed = '81'] = process.argv.slice(2);
 let a = (+seed * 2654435761) >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
 const pool = PRESETS.filter((p) => p.action !== 'Limped' && (!process.env.ONLY || process.env.ONLY.split(',').includes(p.action)));
-const TREE = { betSizes: [[0.33, 0.75], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: [2, 2, 2], allInThreshold: 0.67 };
+// the tree as the app builds it (web/worker.js spotOf), and the same settings as the app holds them
+const APP = { bets: [[0.33, 0.75], [0.75], [0.75]], raises: [3], maxRaises: 1, allIn: false };
+const TREE = { betSizes: APP.bets, raiseSizes: APP.raises.map((times) => ({ times })), maxRaises: 1 + APP.maxRaises, allowAllIn: APP.allIn };
 const file = new URL('./out/explain-samples.txt', import.meta.url); writeFileSync(file, ''); const say = (t) => appendFileSync(file, t + '\n');
 const problems = []; const flag = (where, what) => { problems.push(`${where}: ${what}`); };
 const BAD = [/undefined/, /\bNaN\b/, /\bnull\b/, /  /, /\bof of\b/, /\bon on\b/, /\(\)/, /\b(\w+) \1\b/i, /\. \./, /,\./, /: \./, /\bInfinity\b/, / \./, /\bwith \.|\bwith and\b/];
 const lint = (where, text) => { for (const re of BAD) if (re.test(text) && !/that that|had had/.test(text)) flag(where, `wording "${re}" in: ${text}`); if (/^[a-z]/.test(text)) flag(where, `starts lower case: ${text}`); if (!/[.!?]$/.test(text.trim())) flag(where, `no full stop: ${text}`); };
-let hands = 0, ranges = 0; const times = []; const gaps = [];
+let hands = 0, ranges = 0, changes = 0; const times = []; const gaps = []; const agree = [];
 for (let done = 0; done < +count;) {
   const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); } const board = b.join('');
   let spot; try { spot = fs.defineSpot({ board, pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; } if (spot.estimate.bytes > +(process.env.MAXMB ?? 900) * 2 ** 20) continue;
@@ -40,7 +43,13 @@ for (let done = 0; done < +count;) {
     if (r) { ranges++; times.push(['range', Date.now() - t0]); say(`\n== ${where}   (${street}, reach ${st.lineReach.map((x) => x.toFixed(2)).join('/')})\nRANGE: ${r.line}`); lint(where, r.line); for (const x of r.reasons) { say(`   - ${x.text}\n        [${x.detail}]`); lint(where, x.text); lint(where, x.detail); }
       // checks on the range claims
       const F = r.facts; if (F.bet != null && F.clearBet != null) { if (F.bet < F.clearBet - 0.15 || F.bet > 1 - F.clearCheck + 0.15) flag(where, `solver bets ${F.bet.toFixed(2)} outside what clearly bets ${F.clearBet.toFixed(2)} .. ${(1 - F.clearCheck).toFixed(2)}`); }
-      if (/almost your whole range/.test(r.line) && F.bet != null && F.bet > 0.2 && F.bet < 0.8) flag(where, 'line says whole range, frequency does not'); }
+      if (/almost your whole range/.test(r.line) && F.bet != null && F.bet > 0.2 && F.bet < 0.8) flag(where, 'line says whole range, frequency does not');
+      // what would change it: the street solved again (turn and river here; the flop is too slow to do for every decision)
+      if (Math.min(...st.lineReach) >= 0.05 && (st.f.board.length === 3 || changes < 40 || rnd() < 0.15)) { const lim = st.f.board.length === 3 ? { bytes: 1 } : {};
+        t0 = Date.now(); let w; try { w = whatIf(fs, { solution, nodes, config: APP }, v.id, v.dealt, lim); } catch (e) { flag(where, `what-if failed: ${e.stack.split('\n').slice(0, 3).join(' | ')}`); w = null; }
+        if (w && w.said) { changes++; times.push(['change', Date.now() - t0]); say(`   - ${w.said.text}\n        [${w.said.detail}]`); lint(where, w.said.text); lint(where, w.said.detail); const now = F.bet != null ? F.bet : F.fold; if (now != null && w.base != null) { agree.push(Math.abs(w.base - now)); if (Math.abs(w.base - now) > 0.12) flag(where, `solved again it ${w.facing ? 'folds' : 'bets'} ${w.base.toFixed(2)}, in the solution ${now.toFixed(2)}`); } }
+        else if (w && w.skipped && !w.said) say(`   - (what would change it: skipped, ${w.skipped})`); else if (!w) flag(where, 'what-if gave nothing');
+      } }
     // hands across the range: by equity, a dozen of them
     if (Math.min(...st.lineReach) < RARE) continue; const eq = st.equity(); const live = []; for (let c = 0; c < fs.COMBOS; c++) if (st.f.mine[c] > 0.05 && !Number.isNaN(eq[c])) live.push(c); live.sort((x, y) => eq[x] - eq[y]);
     const pick = []; for (let k = 0; k < 10 && live.length; k++) pick.push(live[Math.min(live.length - 1, Math.floor(((k + rnd()) / 10) * live.length))]);
@@ -66,7 +75,8 @@ for (let done = 0; done < +count;) {
   console.error(`${p.action} ${board}: ${visit.length} decisions; so far ${ranges} range and ${hands} hand explanations, ${problems.length} problems`);
 }
 const stat = (k) => { const v = times.filter((x) => x[0] === k).map((x) => x[1]).sort((x, y) => x - y); return v.length ? `median ${v[v.length >> 1]}ms, worst tenth ${v[Math.floor(v.length * 0.9)]}ms, worst ${v[v.length - 1]}ms` : 'none'; };
-console.log(`${ranges} range explanations (${stat('range')}); ${hands} hand explanations (${stat('hand')}); ${problems.length} problems`);
+console.log(`${ranges} range explanations (${stat('range')}); ${hands} hand explanations (${stat('hand')}); ${changes} what-would-change answers (${stat('change')}); ${problems.length} problems`);
+if (agree.length) console.log(`  the street solved again against the solution on screen: apart by ${(100 * agree.reduce((t, x) => t + x, 0) / agree.length).toFixed(1)} points on average, worst ${(100 * Math.max(...agree)).toFixed(0)}`);
 for (const st of ['flop', 'turn', 'river']) { const g = gaps.filter((x) => x[0] === st); if (g.length) { const same = g.filter((x) => Math.sign(x[1]) === Math.sign(x[2]) || Math.abs(x[2]) < 1).length / g.length; const off = g.reduce((t, x) => t + Math.abs(x[1] - x[2]), 0) / g.length; console.log(`  ${st}: the one-move count of a wager against the quiet action, set beside the solution's own: ${g.length} cases, same side in ${(100 * same).toFixed(0)}%, apart by ${off.toFixed(1)}% of the pot on average`); } }
 const kinds = new Map(); for (const x of problems) { const k = x.split(': ').slice(1).join(': ').replace(/[0-9.]+/g, '#').slice(0, 70); kinds.set(k, (kinds.get(k) ?? 0) + 1); }
 for (const [k, n] of [...kinds.entries()].sort((x, y) => y[1] - x[1]).slice(0, 25)) console.log(`  ${n} x ${k}`);

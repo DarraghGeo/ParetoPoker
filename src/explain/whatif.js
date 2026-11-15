@@ -2,7 +2,10 @@
 // solved. His strongest fifth of hands out of his range; our strongest fifth out of ours; no raise for him on this
 // street; no bet for him when checked to. The same street solved again unchanged is what each is set beside.
 import { treeOf, equityVs } from '../solver/flopsolve.js';
-import { study, sayChanges } from './street.js';
+import { study, sayChanges, firstOrder } from './street.js';
+
+/** Where the street cannot be played again: what the solution itself says would change it. */
+function read(fs, solution, nodes, id, dealt) { let st; try { st = study(fs, solution, nodes, id, dealt); } catch { return null; } const r = st ? firstOrder(st) : null; return r ? { skipped: 'large', facing: r.facing, read: r, said: r.said } : { skipped: 'large' }; }
 
 /** The street the decision is on, played again with one thing changed at a time. Null where that is too large to do here. */
 export function whatIf(fs, { solution, nodes, config: c }, id, dealt, limits = {}) {
@@ -14,7 +17,7 @@ export function whatIf(fs, { solution, nodes, config: c }, id, dealt, limits = {
   const ranges = [real(solution.reachAt(root, found.board, 0)), real(solution.reachAt(root, found.board, 1))];
   const streets = 6 - board.length; const bets = Array.isArray(c.bets[0]) ? (c.bets.length > 1 ? c.bets.slice(-streets) : c.bets) : [c.bets]; const most = 1 + (c.raises.length ? c.maxRaises : 0);
   const base = { board: fs.formatCards(board).replace(/ /g, ''), pot: sub.pot, stack: sub.stack, oop: ranges[0], ip: ranges[1], betSizes: bets, raiseSizes: c.raises.length ? c.raises.map((times) => ({ times })) : undefined, maxRaises: most, allowAllIn: !!c.allIn };
-  let probe; try { probe = fs.defineSpot(base); } catch { return null; } if (probe.estimate.bytes > (limits.bytes ?? 160 * 2 ** 20)) return { skipped: 'large' };
+  let probe; try { probe = fs.defineSpot(base); } catch { return null; } if (probe.estimate.bytes > (limits.bytes ?? 160 * 2 ** 20)) return read(fs, solution, nodes, id, dealt);
   const me = nodes[id].seat === 'ip' || nodes[id].seat === 1 ? 1 : 0; const facing = nodes[id].invested[1 - me] > nodes[id].invested[me]; const first = path.length === 0;
   const target = board.length === 5 ? 0.05 : board.length === 4 ? 0.15 : 0.4; const budget = limits.ms ?? (board.length === 3 ? 20000 : 7000);
   const answer = (cfg) => {
@@ -29,6 +32,7 @@ export function whatIf(fs, { solution, nodes, config: c }, id, dealt, limits = {
   out.hisLess = answer({ ...base, [seat[1 - me]]: less(1 - me) }); out.myLess = answer({ ...base, [seat[me]]: less(me) });
   if (!facing && most > 1) { const cap = each(streets, most); const his = each(streets, most); his[0] = 1; try { out.noRaise = answer({ ...base, maxRaises: { [seat[me]]: cap, [seat[1 - me]]: his } }); } catch { /* the tree does not take it */ } }
   if (!facing && first && me === 0) { try { out.noStab = answer({ ...base, betSizes: { oop: bets, ip: [[], ...bets.slice(1)] } }); } catch { /* the tree does not take it */ } }
+  if (facing) { try { const fo = firstOrder(study(fs, solution, nodes, id, dealt)); if (fo) out.close = fo.close; } catch { /* said without it */ } }
   out.ms = Date.now() - t0; out.said = sayChanges(out);
   return out;
 }

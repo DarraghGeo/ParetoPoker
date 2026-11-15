@@ -509,7 +509,7 @@ function rangeWhy() {
     if (got) {
       // what would change it: the street solved again with one thing changed, asked for once the range has been explained
       const wi = state.whatif.get(key); let change = '';
-      if (wi?.said) change = said1(wi.said); else if (!wi) { change = '<p class="quiet">Solving the street again to see what would change it\u2026</p>'; if (!state.asked.has(`whatif|${key}`) && !state.scrub) { state.asked.add(`whatif|${key}`); worker.postMessage({ type: 'whatif', job: state.job, id: state.node, dealt: state.dealt }); } }
+      if (wi?.said) change = said1(wi.said); else if (!wi) { change = '<p class="quiet">Working out what would change it\u2026</p>'; if (!state.asked.has(`whatif|${key}`) && !state.scrub) { state.asked.add(`whatif|${key}`); worker.postMessage({ type: 'whatif', job: state.job, id: state.node, dealt: state.dealt }); } }
       const list = got.reasons.map((r) => said1(r)); const at = got.reasons.findIndex((r) => r.id === 'which'); if (change) list.splice(at >= 0 ? at : list.length, 0, change);
       said = (got.line ? `<p class="lead">${esc(got.line)}</p>` : '') + list.join('');
     }
