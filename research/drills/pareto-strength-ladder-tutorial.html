@@ -1,0 +1,239 @@
+<title>The strength ladder</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. Each section adds one layer to the same chart, then says what the layer tells you and how we know. */
+:root{
+  --bg:#FAFAF7;--surface:#F1F0EB;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
+  --act-fold:#CFCDC4;--act-check:#7CCDBE;--act-big:#F0896B;--act-allin:#B97BAE;--his:#B8B9BC;
+  --suit-s:#15171B;--suit-h:#C8281F;--suit-d:#0B6FC2;--suit-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16px/26px var(--sans);padding-block:36px 96px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+article{max-width:640px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1{font:600 34px/40px var(--sans);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font:600 24px/30px var(--sans);letter-spacing:-.01em;margin:36px 0 0;text-wrap:balance;padding-top:26px;border-top:1px solid var(--line-strong)}
+h3{font:600 17px/24px var(--sans);margin:10px 0 0}
+p{margin:0;color:var(--ink-2);text-wrap:pretty}
+p b,li b{color:var(--ink);font-weight:600}
+.kicker{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.lede{font:400 19px/29px var(--sans);color:var(--ink)}
+ul,ol{margin:0;padding-left:22px;color:var(--ink-2);display:flex;flex-direction:column;gap:8px}
+.s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
+.cards{font:500 16px/22px var(--mono);white-space:nowrap}
+figure{margin:6px 0;display:flex;flex-direction:column;gap:10px;border:1px solid var(--line-strong);border-radius:6px;padding:16px 14px;background:#FFFFFF}
+figcaption{font:400 13px/19px var(--sans);color:var(--ink-3)}
+.spotline{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font:400 12px/18px var(--mono);color:var(--ink-2)}
+.spotline .board{font:500 20px/24px var(--mono)}
+.how{border-left:3px solid var(--ink);padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:8px}
+.how>b{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.how p,.how li{font:400 14px/22px var(--sans)}
+.wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font:400 14px/20px var(--sans)}
+th,td{text-align:left;padding:6px 10px 6px 0;border-bottom:1px solid var(--line);vertical-align:top}
+thead th{font:400 11px/16px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+td.n,th.n{font-family:var(--mono);font-size:13px;white-space:nowrap}
+tbody th{font-weight:500;color:var(--ink)}
+/* the chart */
+.heads,.adv,.sl .row{display:grid;grid-template-columns:minmax(0,1.45fr) 82px minmax(0,1fr);gap:8px;align-items:center}
+.heads{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.heads span:first-child{text-align:right}
+.sl{position:relative;display:flex;flex-direction:column;gap:3px}
+.sl .row{height:40px;border:0;background:none;padding:0;width:100%;color:var(--ink);cursor:pointer;font:inherit}
+.sl .name{font:500 12px/14px var(--sans);text-align:center;white-space:nowrap}
+.sl .row[aria-pressed="true"] .name{color:var(--accent)}
+.side{display:flex;align-items:center;gap:6px;height:100%;min-width:0}
+.side.me{justify-content:flex-end}
+.side b{font:400 11px/14px var(--mono);color:var(--ink-3);flex:none;width:28px}
+.side.me b{text-align:right}
+.bar{position:relative;display:flex;height:32px;min-width:1px}
+.bar u{flex:1 1 0;min-width:0;display:flex;flex-direction:column;text-decoration:none;background:var(--ink)}
+.bar u i{display:block;width:100%}
+.bar.blend u{flex-direction:row}.bar.blend u i{height:100%}
+.him .bar{background:var(--his)}
+.none .bar{width:0!important;border-left:1px solid var(--line-strong)}
+.bar svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.bar polyline{fill:none;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
+.cut{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--ink);pointer-events:none;z-index:2}
+.cut span{position:absolute;right:0;bottom:3px;font:500 11px/14px var(--mono);background:#fff;padding:0 0 0 6px}
+.adv{height:18px}
+.adv .l{display:flex;justify-content:flex-end;align-items:center;gap:6px;min-width:0}.adv .r{display:flex;align-items:center;gap:6px;min-width:0}
+.adv u{flex:1 1 0;min-width:0;display:flex;text-decoration:none}.adv .l u{justify-content:flex-end}
+.adv i{display:block;height:3px;background:var(--ink)}.adv .r i{background:var(--his)}
+.adv b{font:400 11px/14px var(--mono);color:var(--ink-3);flex:none}.adv .win b{color:var(--ink);font-weight:500}
+.adv .mid{font:400 10px/12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:center}
+.ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;justify-content:space-between}
+.seg{display:flex}.seg button{font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);padding:6px 10px;cursor:pointer;margin-left:-1px}
+.seg button:first-child{border-radius:3px 0 0 3px;margin-left:0}.seg button:last-child{border-radius:0 3px 3px 0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);position:relative}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.key{display:flex;flex-wrap:wrap;gap:4px 14px;font:400 12px/16px var(--mono);color:var(--ink-2)}
+.key i{display:inline-block;width:9px;height:9px;margin-right:6px}
+.detail{font:400 13px/20px var(--sans);color:var(--ink-2);min-height:40px;border-top:1px solid var(--line);padding-top:10px}
+.detail b{font:500 13px/20px var(--mono);color:var(--ink)}
+.steps{counter-reset:s;list-style:none;padding:0;gap:14px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:28px minmax(0,1fr);gap:4px 10px}
+.steps li::before{content:counter(s);font:500 13px/26px var(--mono);color:var(--ink);grid-row:1/3}
+.steps li b{display:block}
+.steps li span{color:var(--ink-2)}
+.note{font:400 13px/20px var(--sans);color:var(--ink-3)}
+</style>
+<article>
+  <div class="kicker">Pareto · tutorial</div>
+  <h1>The strength ladder: reading a spot at the table</h1>
+  <p class="lede">The usual charts each show one thing. The 13×13 grid shows which hands are in a range. The action bar shows what a range does. The equity graph shows who is ahead. This chart puts all three on one frame, and the frame is something you can picture without a screen.</p>
+  <p>We build it here one layer at a time, on a real solved hand. After each layer there is a box headed <b>How we know</b>: every claim in this article was checked against solved spots, and the box gives the numbers. Where the chart falls short, that is said too.</p>
+  <p class="note">The hand: a single-raised pot, button against big blind, <span class="cards" id="b0"></span> on the turn. The big blind checks. You are the button. Later we follow it to the river.</p>
+
+  <h2>1. The bars: both ranges on the board's own scale</h2>
+  <p>Players already rank a board's hands in their heads: sets, two pair, top pair, a draw, nothing. The ladder uses that ranking as its scale, best at the top. Your range is on the left, his on the right, and the length of each bar is how much of the range sits at that level.</p>
+  <figure><div class="spotline" id="s1"></div><div id="c1"></div><figcaption>Tap a level to see the hands in it. Hands with no pair are split in two: <b>draws</b>, which can still become strong, and <b>trash</b>, which cannot.</figcaption></figure>
+  <h3>What the bars tell you</h3>
+  <ul>
+    <li><b>What each range is made of.</b> Here more than a quarter of your range is trash and 19% is draws. He has almost the same.</li>
+    <li><b>Where the two ranges differ.</b> Your top pair bar is half as long again as his (15% against 10%), and you have an overpair where he has none. Lower down he is the longer: low pair 11% against 6%, draws 24% against 19%.</li>
+    <li><b>Why draws get their own level.</b> Draws and trash have the same equity in this spot, 33%, and play differently: the draws bet 62% of the time and the trash 32%.</li>
+  </ul>
+  <div class="how"><b>How we know</b>
+    <p><b>A few levels of strength hold as much of the strategy as the whole grid.</b> We rebuilt strategies from different summaries of 61 solved turn spots and played each against the solver. A player holding only three well-placed strength bands gave up 0.7% of the pot on the turn and 0.8% on the river. One holding all 169 cells of the grid gave up 0.8% and 0.9%.</p>
+    <p><b>Knowing how often a range bets, without knowing which hands, is worth almost nothing:</b> it gave up 5.9% and 9.1%. What matters is where each hand sits, which is what the bars show.</p>
+  </div>
+
+  <h2>2. Two thin lines: who has the range advantage, and who has the nuts</h2>
+  <p>Two questions decide most of what a range does: who is ahead overall, and who holds the very best hands. Both can be counted off the bars.</p>
+  <figure><div id="c2"></div><figcaption>Top line: nut advantage. Bottom line: range advantage. Your share is in ink on the left, his in grey on the right. The side that is ahead is in bold.</figcaption></figure>
+  <h3>Range advantage: who has more top pair or better</h3>
+  <p>Add up everything from the top of the ladder down to top pair, as a share of each range. Here that is <b>23% of yours against 16% of his</b>, so the advantage is yours. The true equities agree: 55% against 46%.</p>
+  <p>It is a share, not a count of hands. A wide range can hold more top pairs and still be behind, because they are a smaller part of it.</p>
+  <h3>Nut advantage: who has more of the best hands the board allows</h3>
+  <p>Find the strongest kind of hand that is actually held in some number, and count who has more of that kind or better. On this board that is two pair or better: <b>7% each</b>. Nobody has the nuts advantage here.</p>
+  <h3>What they do to your strategy</h3>
+  <ul>
+    <li><b>Early streets: range advantage means bet small and often.</b> A range that is ahead bets many hands for a small size; one that is not bets fewer hands, bigger.</li>
+    <li><b>The river: nut advantage sets the size.</b> With the nuts on your side you bet big; when he has them you bet small or check.</li>
+    <li><b>Out of position, his strong hands shut you down.</b> First to act on the river, if about a third of his range or more is strong, the whole range checks.</li>
+  </ul>
+  <div class="how"><b>How we know</b>
+    <p><b>Range advantage.</b> On 1,103 flops with the starting ranges, the share with top pair or better had a correlation of 0.78 with the true equity advantage. With the usual tendency of the matchup, it named the right player on 96% of flops where the advantage was 4 to 8 points and 99% where it was more. Where the advantage was under 4 points it was unreliable (53 to 68%): those boards are close, and "close" is the right answer.</p>
+    <p>After betting, on 7,744 turn and river decisions, the count still tracked the advantage (0.74 and 0.76). On the river two pair or better is the better count, and whoever has been betting is usually ahead.</p>
+    <p><b>Nut advantage.</b> On 5,081 decisions, "who has more sets and two pair" named the player with more hands at 90% equity or better on 86 to 92% of flops where the gap was over 3 points. On later streets "the best kind of hand around" did better: 83 to 89% on the turn, 70 to 87% on the river. It is a weaker rule than the one for range advantage. Top pair is the wrong count for the nuts (63 to 76%).</p>
+    <p><b>Their effect on size.</b> On 7,837 river betting decisions the average bet was about half the pot when he had the nut advantage, two thirds when even, and 0.8 to 0.95 of the pot when you had it, at every stack depth. On the flop (112 decisions) nut advantage had no link with size (−0.07) and range advantage went with betting <em>smaller</em> (−0.45).</p>
+  </div>
+
+  <h2>3. One line across: where value starts</h2>
+  <p>A bet for value has to beat most of what continues against it. How much continues depends on the size of the bet, so the line can be worked out, not memorised.</p>
+  <div class="wrap"><table><thead><tr><th>Bet size</th><th>He continues with</th><th>Value must beat</th><th>Bluffs per value bet</th></tr></thead>
+    <tbody><tr><th>A third of the pot</th><td class="n">75%</td><td class="n">63% of his range</td><td class="n">1 for every 4</td></tr><tr><th>Three quarters</th><td class="n">57%</td><td class="n">71%</td><td class="n">3 for every 7</td></tr><tr><th>The pot</th><td class="n">50%</td><td class="n">75%</td><td class="n">1 for every 2</td></tr><tr><th>One and a half pots</th><td class="n">40%</td><td class="n">80%</td><td class="n">3 for every 5</td></tr></tbody></table></div>
+  <p>To place it, count down his side from the top until you have passed what a value bet need not beat. For a three-quarter-pot bet that is about a quarter of his range. Draw the line across. Your hands level with it or above are your value bets.</p>
+  <figure><div class="ctl"><span class="kicker">Bet size</span><div class="seg" id="sz"></div></div><div id="c3"></div><figcaption id="cap3"></figcaption></figure>
+  <ul>
+    <li><b>A bigger bet lifts the line.</b> Change the size and watch how much of your side is left above it. If nothing is left, that size is not available to you.</li>
+    <li><b>Bluffs are counted from the value.</b> Take your share above the line, multiply by the ratio in the table, and mark that much from the bottom of your side.</li>
+    <li><b>Facing a bet, the same line is the price.</b> Count up from the bottom of his betting range to the share a call must beat (30% against a three-quarter-pot bet). Your hands level with that or above continue.</li>
+  </ul>
+  <div class="how"><b>How we know</b>
+    <p><b>The lines are the strategy.</b> At each river decision of 40 solved spots, playing every strength step all-or-nothing lost almost nothing. The work is knowing where the lines fall.</p>
+    <p><b>The calculation gets most of the way.</b> Played exactly, this rule (value from the line, bluffs by the ratio, call with the price) gave up 0.9% of the pot on the turn across 40 spots. A rebuilt river version gave up 0.63% on 30 spots it had never seen and 0.68% on another 24. For comparison, the best three bands read straight off the solution give up 0.79% on the river.</p>
+    <p><b>Set the value line a little higher than the formula.</b> For a three-quarter-pot bet the formula says 71%; a line at 80% lost less. He raises sometimes, and what he calls with is stronger than "the top 57%". The chart above adds that margin. Erring tight is the cheap direction: a line at 60% cost more than one at 80%.</p>
+    <p><b>Facing a bet, call with the price and raise your best.</b> Calling everything with the price but never raising gave up 0.70%. Adding a raise with hands that beat 85% of his bets cut that to 0.14%.</p>
+    <p class="note">Only the three-quarter-pot size and all-in were tested this way. The other rows of the table are the same formula, not yet checked.</p>
+  </div>
+
+  <h2>4. Colour: what each level does</h2>
+  <p>Now colour your side by action. This is the action bar you may know from solvers, folded onto the ladder.</p>
+  <figure><div id="c4"></div><div class="key" id="k4"></div><figcaption>Each bar is split by how often its hands bet and check in the solution.</figcaption></figure>
+  <ul>
+    <li><b>Above the line, bet.</b> Sets, two pair and the overpair always bet. Top pair, which the line cuts through, bets 60% of the time.</li>
+    <li><b>Just below the line, check.</b> Middle pair bets 20% of the time and low pair never. These hands win often enough by checking.</li>
+    <li><b>At the bottom, the bluffs.</b> Draws bet 62% and trash 32%.</li>
+  </ul>
+  <p>That is the shape most betting ranges take: bet the top, check the middle, bet some of the bottom.</p>
+  <div class="how"><b>How we know</b>
+    <p><b>Do not try to copy the mix.</b> A player who took each hand's most common action every time gave up nothing against the solver (−0.02% on the turn, 0.07% on the river, 61 spots). The percentages inside a bar are how the solver balances; they are not something to reproduce hand by hand.</p>
+    <p><b>Betting ranges come in a few shapes.</b> Across 5,099 betting decisions, five shapes (check everything; the top with a little of the rest; both ends; the top half; bet everything) covered 60% of how they differ.</p>
+    <p><b>When unsure, bet.</b> Playing every hand 10 points too passively cost 1.2% of the pot on the turn; 10 points too aggressively cost 0.25%. On the river it was 1.35% against 0.7% (60 spots).</p>
+  </div>
+
+  <h2>5. A line through each bar: which hands inside it</h2>
+  <p>A bar that is part bet and part check raises the last question: which of its hands bet? Sort each bar along one measure and draw it as a white line, low on the left, high on the right. The measure changes down the ladder.</p>
+  <figure><div class="ctl"><span class="kicker">The solver's actions</span><div class="seg"><button type="button" id="t5" aria-pressed="false">Show</button></div></div><div id="c5"></div><div class="key" id="k5"></div><figcaption>Look at the lines first and guess which end of each bar bets. Then show the actions.</figcaption></figure>
+  <div class="wrap"><table><thead><tr><th>Level</th><th>Its line</th><th>What bets</th></tr></thead>
+    <tbody><tr><th>Top pair and above</th><td>How often the hand is ahead right now</td><td>The high end: the best kickers</td></tr><tr><th>Middle pair, draws</th><td>How much of its equity is still to come</td><td>The high end: the hands that can still improve</td></tr><tr><th>Low pair, trash</th><td>How often he folds to this hand, once its cards are out of his range</td><td>The high end: the hands that block his calls</td></tr></tbody></table></div>
+  <p>The switch comes at the value line. Above it you bet what is strongest now. Below it you bet what can still change, or what makes him fold.</p>
+  <p>In this hand the top pair bar shows it cleanly: nothing bets at the weak-kicker end, everything at the strong end. The draws show it partly. Middle pair and trash do not: their line is nearly flat, so it cannot sort them. That is honest to the data: the link below the value line is real but loose.</p>
+  <div class="how"><b>How we know</b>
+    <p>Inside each bar, on turn betting decisions, the link between each measure and how often a hand bets (and how often the direction held):</p>
+    <div class="wrap"><table><thead><tr><th>Level</th><th>Best measure</th><th class="n">Link</th><th class="n">Holds in</th></tr></thead>
+      <tbody><tr><th>Top pair</th><td>Equity against his best hands; ahead now</td><td class="n">+0.43; +0.40</td><td class="n">82%; 80%</td></tr><tr><th>Two pair</th><td>Ahead now</td><td class="n">+0.35</td><td class="n">75%</td></tr><tr><th>Middle pair</th><td>Still to come</td><td class="n">+0.30</td><td class="n">78%</td></tr><tr><th>Draws</th><td>Still to come</td><td class="n">+0.48</td><td class="n">92%</td></tr><tr><th>Low pair</th><td>He folds to this hand</td><td class="n">+0.41</td><td class="n">85%</td></tr><tr><th>Trash</th><td>He folds to this hand</td><td class="n">+0.47</td><td class="n">89%</td></tr></tbody></table></div>
+    <p><b>The same thing flips sign across the line.</b> Having a draw goes against betting for top pair (−0.19) and for it in middle pair (+0.30). Being ahead now goes with betting for top pair (+0.40) and against it in trash (−0.13). Between 714 and 1,066 decisions per level; the flop shows the same pattern.</p>
+    <p><b>A caution on the bottom line.</b> Blockers explain which trash the solver bluffs with, but choosing differently is cheap: on the river, picking bluffs by blockers, or exactly as the solver does, changed the result by only 0.1 to 0.2% of the pot. Learn the top two lines first.</p>
+  </div>
+
+  <h2>6. Using it at the table</h2>
+  <p>You will not have the chart in front of you. What you carry is the frame and five questions, asked in the same order every time.</p>
+  <ol class="steps">
+    <li><b>Lay out both ranges on the board.</b><span>What does each have at the top, in the middle, at the bottom? Rough shares are enough.</span></li>
+    <li><b>Count top pair or better on each side.</b><span>That is the range advantage. On the flop and turn, having it means bet small and often.</span></li>
+    <li><b>Count the best hands the board allows on each side.</b><span>That is the nut advantage. On the river it sets how big you bet. Out of position, if he has plenty of strong hands, check.</span></li>
+    <li><b>Place the line for your bet size.</b><span>Count down his side. Your hands above it are value. Count your bluffs from them and take them from the bottom.</span></li>
+    <li><b>Place your hand.</b><span>Above the line: bet if it is at the strong end of its level. Below: bet if it can still improve; otherwise check. Facing a bet: continue if it is above the price.</span></li>
+  </ol>
+  <p>Here is the same hand at three decisions, with every layer on. Try the five questions on each before reading the bars.</p>
+  <figure><div class="ctl"><div class="seg" id="tabs"></div><div class="seg"><button type="button" id="t6" aria-pressed="true">Actions</button></div></div><div class="spotline" id="s6"></div><div id="c6"></div><div class="key" id="k6"></div><div class="detail" id="d6">Tap a level to see its hands.</div></figure>
+  <h3>Where the counts mislead: the river</h3>
+  <p>On the river, first to act, the range line says you are ahead: 17% top pair or better against his 11%. The equities say the opposite, 47% against 53%. His range is thick with middle pair (45% against your 34%), and on this board those hands beat your trash. This is the kind of board where the count names the wrong player, and it is why the count comes with "about nine times in ten", not "always".</p>
+
+  <h2>7. What the chart cannot tell you</h2>
+  <ul>
+    <li><b>Exact frequencies.</b> A simple reading of any picture of the two ranges gets "mostly check, mixed, or mostly bet" right about 71% of the time, and is about 13 points out on the number (5,099 decisions). It also does not need to: frequencies are worth little if the hands are right.</li>
+    <li><b>Exact sizes.</b> Stack depth, the street and nut advantage together explain 35 to 44% of the solver's size. Getting the size wrong is cheap: using one size in place of two cost 0.02% of the pot on the turn.</li>
+    <li><b>The flop, yet.</b> The line-placing rule has been tested on the turn and rebuilt for the river. It has not been rebuilt for the flop.</li>
+    <li><b>An opponent who adapts.</b> Every money figure here is against a solver that plays its own strategy and does not adjust to you.</li>
+    <li><b>Whether people read it well.</b> The numbers show that the answer is in the chart, in few pieces. Nobody has yet measured how quickly a player learns to see it.</li>
+  </ul>
+  <p class="note">The spot, the bars, the actions and every percentage about this hand come from a real solution. The studies behind the boxes are in the project's research folders (value, charts, advantage).</p>
+</article>
+<script>
+const D = [{"title":"Turn","who":"BU","stands":"Checked to you","history":[["Turn",[["BB","X"]]]],"facing":false,"board":"Ks 9d 4s 7h","actions":[{"label":"X","kind":"check","freq":0.581},{"label":"B75","kind":"bet","freq":0.419}],"equity":[0.546,0.455],"bet":0.751,"price":null,"mine":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"now","slices":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"now","slices":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"now","slices":[]},{"share":0.025,"eq":0.952,"mix":[0,1],"draws":0,"hands":["44","77","99","KK"],"line":"now","slices":[{"v":0.992,"mix":[0,1],"ex":"4c4d"},{"v":0.999,"mix":[0,1],"ex":"7c7s"},{"v":1,"mix":[0,1],"ex":"9c9h"}]},{"share":0.04,"eq":0.903,"mix":[0,1],"draws":0.053,"hands":["K9o","K7o","K4s","97s","K9s","K7s"],"line":"now","slices":[{"v":0.963,"mix":[0,1],"ex":"9s7s"},{"v":0.971,"mix":[0,1],"ex":"Kd7d"},{"v":0.977,"mix":[0,1],"ex":"Kd9s"},{"v":0.978,"mix":[0,1],"ex":"Kh9s"}]},{"share":0.013,"eq":0.846,"mix":[0,1],"draws":0,"hands":["AA"],"line":"now","slices":[{"v":0.925,"mix":[0,1],"ex":"AcAd"}]},{"share":0.15,"eq":0.829,"mix":[0.402,0.598],"draws":0,"hands":["KTo","KJo","KQo","AKo","K8o","K2s"],"line":"now","slices":[{"v":0.877,"mix":[1,0],"ex":"Kh3h"},{"v":0.882,"mix":[0.999,0.001],"ex":"Kd2d"},{"v":0.891,"mix":[0.927,0.073],"ex":"Kh6h"},{"v":0.896,"mix":[0.793,0.207],"ex":"Kh8h"},{"v":0.898,"mix":[0.698,0.302],"ex":"Kc8c"},{"v":0.906,"mix":[0.469,0.531],"ex":"KhTh"},{"v":0.909,"mix":[0.337,0.663],"ex":"KdTd"},{"v":0.91,"mix":[0.393,0.607],"ex":"KdTc"},{"v":0.921,"mix":[0.091,0.909],"ex":"KhJh"},{"v":0.923,"mix":[0.041,0.959],"ex":"KdJs"},{"v":0.928,"mix":[0.054,0.946],"ex":"KdJc"},{"v":0.935,"mix":[0,1],"ex":"KhQs"},{"v":0.936,"mix":[0,1],"ex":"KdQs"},{"v":0.938,"mix":[0.192,0.808],"ex":"KcQc"},{"v":0.94,"mix":[0.269,0.731],"ex":"AsKh"},{"v":0.941,"mix":[0.2,0.8],"ex":"AdKc"}]},{"share":0.252,"eq":0.672,"mix":[0.803,0.197],"draws":0.106,"hands":["T9o","J9o","Q9o","A7o","A9o","55"],"line":"draw","slices":[{"v":0.009,"mix":[0.482,0.518],"ex":"TcTh"},{"v":0.009,"mix":[0.667,0.333],"ex":"QdQh"},{"v":0.011,"mix":[1,0],"ex":"QdQs"},{"v":0.015,"mix":[1,0],"ex":"8c8d"},{"v":0.015,"mix":[0.984,0.016],"ex":"Qc9c"},{"v":0.016,"mix":[0.97,0.03],"ex":"Qc9h"},{"v":0.017,"mix":[0.901,0.099],"ex":"Jc9c"},{"v":0.017,"mix":[0.611,0.389],"ex":"Jd9h"},{"v":0.017,"mix":[0.406,0.594],"ex":"6h6s"},{"v":0.018,"mix":[0.609,0.391],"ex":"Ah9h"},{"v":0.019,"mix":[0.972,0.028],"ex":"5c5s"},{"v":0.019,"mix":[1,0],"ex":"Th9s"},{"v":0.024,"mix":[0.968,0.032],"ex":"Ts9h"},{"v":0.03,"mix":[1,0],"ex":"Td7d"},{"v":0.031,"mix":[1,0],"ex":"Ac7c"},{"v":0.034,"mix":[1,0],"ex":"Ah7s"},{"v":0.058,"mix":[0.164,0.836],"ex":"As9s"},{"v":0.098,"mix":[0.732,0.268],"ex":"As7s"}]},{"share":0.063,"eq":0.476,"mix":[1,0],"draws":0,"hands":["A4o","33","22","Q4s","A4s","54s"],"line":"draw","slices":[{"v":0.021,"mix":[1,0],"ex":"3d3h"},{"v":0.022,"mix":[1,0],"ex":"3d3s"},{"v":0.031,"mix":[1,0],"ex":"Qc4c"},{"v":0.042,"mix":[1,0],"ex":"Qh4h"},{"v":0.042,"mix":[1,0],"ex":"Ad4c"},{"v":0.042,"mix":[1,0],"ex":"Ac4h"},{"v":0.043,"mix":[1,0],"ex":"As4h"}]},{"share":0.189,"eq":0.334,"mix":[0.384,0.616],"draws":0,"hands":["JTo","QTo","QJo","T8o","65s","86s"],"line":"draw","slices":[{"v":0.136,"mix":[0.493,0.507],"ex":"QcJd"},{"v":0.136,"mix":[0.506,0.494],"ex":"QhJh"},{"v":0.136,"mix":[0.395,0.605],"ex":"QcTh"},{"v":0.136,"mix":[0.402,0.598],"ex":"QdTc"},{"v":0.137,"mix":[0.449,0.551],"ex":"QdTd"},{"v":0.137,"mix":[0.003,0.997],"ex":"QsTc"},{"v":0.143,"mix":[0.928,0.072],"ex":"Jc8c"},{"v":0.151,"mix":[0.848,0.152],"ex":"Th6h"},{"v":0.171,"mix":[0,1],"ex":"As8s"},{"v":0.212,"mix":[0.143,0.857],"ex":"As3s"},{"v":0.221,"mix":[0.193,0.807],"ex":"8c6c"},{"v":0.222,"mix":[0.293,0.707],"ex":"JhTd"},{"v":0.223,"mix":[0.249,0.751],"ex":"JcTc"},{"v":0.224,"mix":[0.521,0.479],"ex":"JdTs"},{"v":0.225,"mix":[0.398,0.602],"ex":"6c5c"},{"v":0.227,"mix":[0.496,0.504],"ex":"Tc8h"},{"v":0.261,"mix":[0.478,0.522],"ex":"Js6s"},{"v":0.349,"mix":[0.179,0.821],"ex":"Ts6s"}]},{"share":0.267,"eq":0.326,"mix":[0.681,0.319],"draws":0,"hands":["A3o","A5o","A6o","A8o","ATo","AJo"],"line":"draw","slices":[{"v":0.044,"mix":[0.837,0.163],"ex":"Ac6c"},{"v":0.045,"mix":[0.28,0.72],"ex":"Ac6h"},{"v":0.045,"mix":[0.858,0.142],"ex":"Ac8c"},{"v":0.046,"mix":[0.925,0.075],"ex":"Ad8h"},{"v":0.047,"mix":[0.774,0.226],"ex":"As8d"},{"v":0.048,"mix":[0.417,0.583],"ex":"Ad5c"},{"v":0.049,"mix":[0.573,0.427],"ex":"As5c"},{"v":0.05,"mix":[0.87,0.13],"ex":"AdQd"},{"v":0.05,"mix":[0.741,0.259],"ex":"AhJd"},{"v":0.05,"mix":[1,0],"ex":"AdJd"},{"v":0.051,"mix":[1,0],"ex":"AsQd"},{"v":0.051,"mix":[1,0],"ex":"AsJh"},{"v":0.052,"mix":[0.766,0.234],"ex":"AhTc"},{"v":0.052,"mix":[0.574,0.426],"ex":"Ah3c"},{"v":0.052,"mix":[0.874,0.126],"ex":"Ac3s"},{"v":0.058,"mix":[0.137,0.863],"ex":"As3h"},{"v":0.064,"mix":[0.438,0.562],"ex":"Qh5h"},{"v":0.069,"mix":[0.191,0.809],"ex":"Qh8h"}]}],"his":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.018,"eq":0.944,"mix":null,"draws":0,"hands":["44","77","99"]},{"share":0.047,"eq":0.888,"mix":null,"draws":0.062,"hands":["K9o","K4s","74s","97s","K9s","K7s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.097,"eq":0.787,"mix":null,"draws":0,"hands":["KQo","K8s","KTs","K5s","KJs","KTo"]},{"share":0.255,"eq":0.581,"mix":null,"draws":0.129,"hands":["A9o","J9o","T9o","A7o","66","55"]},{"share":0.105,"eq":0.428,"mix":null,"draws":0,"hands":["33","22","A4s","43s","Q4s","64s"]},{"share":0.238,"eq":0.276,"mix":null,"draws":0,"hands":["QTo","JTo","QJo","53s","85s","63s"]},{"share":0.241,"eq":0.258,"mix":null,"draws":0,"hands":["A8o","AJo","ATo","A5o","A3s","Q2s"]}],"levels":["Full house +","Flush","Straight","Set / trips","Two pair","Overpair","Top pair","Middle pair","Low pair","Draws","Trash"]},{"title":"River","who":"BB","stands":"First to act","history":[["Turn",[["BB","X"],["BU","X"]]]],"facing":false,"board":"Ks 9d 4s 7h 2c","actions":[{"label":"X","kind":"check","freq":0.671},{"label":"B75","kind":"bet","freq":0.329}],"equity":[0.467,0.529],"bet":0.751,"price":null,"mine":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0.029,"eq":1,"mix":[0.904,0.096],"draws":0,"hands":["22","44","77","99"],"line":"equity","slices":[{"v":1,"mix":[0.826,0.174],"ex":"4c4d"},{"v":1,"mix":[0.99,0.01],"ex":"2d2h"}]},{"share":0.055,"eq":0.989,"mix":[0.67,0.33],"draws":0,"hands":["K9o","K4s","74s","97s","K9s","K2s"],"line":"equity","slices":[{"v":0.984,"mix":[0.734,0.266],"ex":"7c4c"},{"v":0.99,"mix":[0.317,0.683],"ex":"Kc9c"},{"v":0.992,"mix":[0.965,0.035],"ex":"Kd4d"}]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0.09,"eq":0.961,"mix":[0.139,0.861],"draws":0,"hands":["KQo","K8s","KTs","K5s","KJs","KTo"],"line":"equity","slices":[{"v":0.928,"mix":[0.022,0.978],"ex":"Kh5h"},{"v":0.95,"mix":[0.445,0.555],"ex":"Kh8h"},{"v":0.969,"mix":[0.116,0.884],"ex":"KdTd"},{"v":0.972,"mix":[0.079,0.921],"ex":"KhTh"},{"v":0.976,"mix":[0.073,0.927],"ex":"KdJd"},{"v":0.978,"mix":[0.106,0.894],"ex":"KdQc"}]},{"share":0.344,"eq":0.645,"mix":[0.624,0.376],"draws":0,"hands":["A9o","J9o","T9o","33","A7o","66"],"line":"equity","slices":[{"v":0.446,"mix":[1,0],"ex":"3c3h"},{"v":0.466,"mix":[1,0],"ex":"Ah4h"},{"v":0.476,"mix":[1,0],"ex":"Ad4d"},{"v":0.482,"mix":[1,0],"ex":"Qh4h"},{"v":0.517,"mix":[0.98,0.02],"ex":"Qd4d"},{"v":0.557,"mix":[1,0],"ex":"6c6d"},{"v":0.587,"mix":[0.997,0.003],"ex":"7d5d"},{"v":0.616,"mix":[0.999,0.001],"ex":"8s7s"},{"v":0.625,"mix":[1,0],"ex":"Ad7d"},{"v":0.636,"mix":[0.891,0.109],"ex":"Qd7d"},{"v":0.677,"mix":[0.356,0.644],"ex":"Qs7s"},{"v":0.732,"mix":[0.001,0.999],"ex":"9c8c"},{"v":0.754,"mix":[0,1],"ex":"9h8h"},{"v":0.77,"mix":[0,1],"ex":"Jc9s"},{"v":0.797,"mix":[0.101,0.899],"ex":"Ah9c"},{"v":0.813,"mix":[0.645,0.355],"ex":"Ah9h"},{"v":0.817,"mix":[0.37,0.63],"ex":"Ah9s"},{"v":0.823,"mix":[0.003,0.997],"ex":"Qc9c"}]},{"share":0.028,"eq":0.434,"mix":[1,0],"draws":0,"hands":["Q2s","A2s","52s"],"line":"equity","slices":[{"v":0.421,"mix":[1,0],"ex":"Qh2h"},{"v":0.446,"mix":[1,0],"ex":"Qd2d"}]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0.454,"eq":0.138,"mix":[0.777,0.223],"draws":0,"hands":["A8o","QTo","AJo","ATo","JTo","QJo"],"line":"equity","slices":[{"v":0,"mix":[0.785,0.215],"ex":"5c3c"},{"v":0.005,"mix":[0.707,0.293],"ex":"8c5c"},{"v":0.015,"mix":[0.477,0.523],"ex":"8s5s"},{"v":0.041,"mix":[0.631,0.369],"ex":"Jc6c"},{"v":0.061,"mix":[0.39,0.61],"ex":"Jh6h"},{"v":0.077,"mix":[0.58,0.42],"ex":"Qc6c"},{"v":0.096,"mix":[0.659,0.341],"ex":"Qc5c"},{"v":0.098,"mix":[0.658,0.342],"ex":"Qs6s"},{"v":0.1,"mix":[0.695,0.305],"ex":"Qs5s"},{"v":0.11,"mix":[0.717,0.283],"ex":"QsTc"},{"v":0.132,"mix":[0.801,0.199],"ex":"Ad3d"},{"v":0.178,"mix":[0.987,0.013],"ex":"Ah3h"},{"v":0.197,"mix":[0.977,0.023],"ex":"Ah6h"},{"v":0.234,"mix":[0.999,0.001],"ex":"Ah8h"},{"v":0.246,"mix":[0.95,0.05],"ex":"Ad8d"},{"v":0.274,"mix":[1,0],"ex":"AdTd"},{"v":0.299,"mix":[0.997,0.003],"ex":"AsTs"},{"v":0.333,"mix":[1,0],"ex":"AcJd"}]}],"his":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.009,"eq":0.981,"mix":null,"draws":0,"hands":["22","KK"]},{"share":0.007,"eq":0.95,"mix":null,"draws":0,"hands":["K2s","K9o","K4s","K7o","K7s","97s"]},{"share":0,"eq":0.902,"mix":null,"draws":0,"hands":["AA"]},{"share":0.094,"eq":0.88,"mix":null,"draws":0,"hands":["K8o","KTo","K3s","K6s","K5s","K8s"]},{"share":0.445,"eq":0.67,"mix":null,"draws":0,"hands":["A7o","A4o","Q9o","T9o","J9o","66"]},{"share":0.001,"eq":0.464,"mix":null,"draws":0,"hands":["A2s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.443,"eq":0.296,"mix":null,"draws":0,"hands":["AQo","AJo","ATo","A8o","QJo","A6o"]}],"levels":["Full house +","Flush","Straight","Set / trips","Two pair","Overpair","Top pair","Middle pair","Low pair","Draws","Trash"]},{"title":"River, facing a bet","who":"BU","stands":"Facing B75","history":[["Turn",[["BB","X"],["BU","X"]]],["River",[["BB","B75"]]]],"facing":true,"board":"Ks 9d 4s 7h 2c","actions":[{"label":"F","kind":"fold","freq":0.44},{"label":"C","kind":"call","freq":0.464},{"label":"R3x","kind":"raise","freq":0.096}],"equity":[0.393,0.612],"bet":0,"price":0.3,"mine":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0.009,"eq":0.992,"mix":[0,0,1],"draws":0,"hands":["22","KK"],"line":"equity","slices":[{"v":0.992,"mix":[0,0,1],"ex":"2d2h"}]},{"share":0.007,"eq":0.951,"mix":[0,0,1],"draws":0,"hands":["K2s","K9o","K4s","K7o","K7s","97s"],"line":"equity","slices":[{"v":0.951,"mix":[0,0,1],"ex":"Kh2h"}]},{"share":0,"eq":0.933,"mix":[0,0,1],"draws":0,"hands":["AA"],"line":"equity","slices":[{"v":0.933,"mix":[0,0,1],"ex":"AhAs"}]},{"share":0.094,"eq":0.83,"mix":[0,0.428,0.572],"draws":0,"hands":["K8o","KTo","K3s","K6s","K5s","K8s"],"line":"equity","slices":[{"v":0.78,"mix":[0,0.998,0.002],"ex":"Kd3d"},{"v":0.803,"mix":[0,0.782,0.218],"ex":"Kh6h"},{"v":0.812,"mix":[0,0.479,0.521],"ex":"Kh8h"},{"v":0.814,"mix":[0,0.277,0.723],"ex":"Kd8d"},{"v":0.845,"mix":[0,0,1],"ex":"KhTd"},{"v":0.925,"mix":[0,0,1],"ex":"KhTc"}]},{"share":0.445,"eq":0.419,"mix":[0.242,0.708,0.05],"draws":0,"hands":["A7o","A4o","Q9o","T9o","J9o","66"],"line":"equity","slices":[{"v":0.294,"mix":[0.728,0.041,0.231],"ex":"Qh4h"},{"v":0.296,"mix":[0.862,0.055,0.083],"ex":"8c8d"},{"v":0.297,"mix":[0.832,0.108,0.06],"ex":"6c6d"},{"v":0.299,"mix":[0.753,0.203,0.044],"ex":"Td7d"},{"v":0.3,"mix":[0.492,0.378,0.13],"ex":"8c7c"},{"v":0.301,"mix":[0.53,0.31,0.159],"ex":"Qd7d"},{"v":0.304,"mix":[0.121,0.694,0.186],"ex":"7c6c"},{"v":0.311,"mix":[0.017,0.982,0.002],"ex":"Ac4d"},{"v":0.312,"mix":[0.001,0.996,0.003],"ex":"Ad4h"},{"v":0.317,"mix":[0,0.999,0.001],"ex":"Ac7d"},{"v":0.363,"mix":[0,0.999,0],"ex":"As7c"},{"v":0.485,"mix":[0,1,0],"ex":"Td9h"},{"v":0.515,"mix":[0,1,0],"ex":"Td9c"},{"v":0.557,"mix":[0,1,0],"ex":"Jh9c"},{"v":0.598,"mix":[0,1,0],"ex":"Qh9h"},{"v":0.618,"mix":[0,1,0],"ex":"Qh9c"},{"v":0.682,"mix":[0,1,0],"ex":"QcQs"},{"v":0.693,"mix":[0,1,0],"ex":"QdQs"}]},{"share":0.001,"eq":0.312,"mix":[0.001,0.99,0.009],"draws":0,"hands":["A2s"],"line":"equity","slices":[{"v":0.312,"mix":[0.001,0.99,0.009],"ex":"Ad2d"}]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[],"line":"equity","slices":[]},{"share":0.443,"eq":0.252,"mix":[0.749,0.244,0.008],"draws":0,"hands":["AQo","AJo","ATo","A8o","QJo","A6o"],"line":"equity","slices":[{"v":0.04,"mix":[0.907,0,0.093],"ex":"6c5c"},{"v":0.08,"mix":[0.99,0,0.01],"ex":"Js5s"},{"v":0.116,"mix":[0.999,0,0.001],"ex":"Js6s"},{"v":0.178,"mix":[0.992,0,0.008],"ex":"Qh3h"},{"v":0.249,"mix":[1,0,0],"ex":"QhJc"},{"v":0.276,"mix":[0.999,0.001,0],"ex":"AcQs"},{"v":0.298,"mix":[0.723,0.276,0.001],"ex":"AcQh"},{"v":0.298,"mix":[0.627,0.371,0.002],"ex":"AdQh"},{"v":0.299,"mix":[0.667,0.322,0.011],"ex":"AcQc"},{"v":0.299,"mix":[0.722,0.271,0.006],"ex":"AdQc"},{"v":0.3,"mix":[0.636,0.364,0],"ex":"AsQh"},{"v":0.3,"mix":[0.734,0.266,0],"ex":"AsQc"},{"v":0.3,"mix":[0.727,0.272,0.001],"ex":"AdJh"},{"v":0.301,"mix":[0.654,0.345,0.001],"ex":"AdQd"},{"v":0.301,"mix":[0.584,0.415,0.001],"ex":"AsJh"},{"v":0.302,"mix":[0.627,0.372,0],"ex":"AdTh"},{"v":0.302,"mix":[0.452,0.547,0],"ex":"AsQd"},{"v":0.304,"mix":[0.422,0.577,0.001],"ex":"AsTc"}]}],"his":[{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.009,"eq":1,"mix":null,"draws":0,"hands":["99","22","44","77"]},{"share":0.056,"eq":0.99,"mix":null,"draws":0,"hands":["K9o","K9s","K2s","97s","K4s","K7s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.236,"eq":0.961,"mix":null,"draws":0,"hands":["KQo","KTs","K5s","KJs","KJo","KTo"]},{"share":0.393,"eq":0.77,"mix":null,"draws":0,"hands":["J9o","T9o","A9o","88","Q9s","98s"]},{"share":0,"eq":0.435,"mix":null,"draws":0,"hands":["Q2s","A2s","52s"]},{"share":0,"eq":null,"mix":null,"draws":0,"hands":[]},{"share":0.308,"eq":0.066,"mix":null,"draws":0,"hands":["JTo","QTo","J8s","T8s","86s","85s"]}],"levels":["Full house +","Flush","Straight","Set / trips","Two pair","Overpair","Top pair","Middle pair","Low pair","Draws","Trash"]}];
+const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' }; const $ = (id) => document.getElementById(id);
+const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join(' ');
+const pct = (x) => `${Math.round(100 * x)}%`; const COL = { fold: '--act-fold', check: '--act-check', call: '--act-check', bet: '--act-big', raise: '--act-allin', allin: '--act-allin' };
+const WORD = { fold: 'folds', check: 'checks', call: 'calls', bet: 'bets', raise: 'raises', allin: 'goes all-in' }; const ROW = 43;
+/** The ladder for a decision, with the layers asked for: adv (the two thin lines), cut (the value or price line), actions ('blend' or 'slices'), lines (the white lines). */
+function ladder(el, d, o = {}) {
+  const rows = d.levels.map((name, i) => ({ name, i, me: d.mine[i], him: d.his[i] })).filter((r) => r.me.share > 0.001 || r.him.share > 0.001); const most = Math.max(...rows.flatMap((r) => [r.me.share, r.him.share]));
+  const upTo = (side, k) => side.slice(0, k + 1).reduce((t, m) => t + m.share, 0); const nutAt = Math.max(0, d.levels.findIndex((_, k) => (upTo(d.mine, k) + upTo(d.his, k)) / 2 >= 0.03));
+  const adv = (label, a, b) => { const big = Math.max(a, b, 0.001); const even = Math.abs(a - b) < 0.02; return `<div class="adv"><span class="l${!even && a > b ? ' win' : ''}"><b>${pct(a)}</b><u><i style="width:${Math.max(2, (100 * a) / big)}%"></i></u></span><span class="mid">${label}</span><span class="r${!even && b > a ? ' win' : ''}"><u><i style="width:${Math.max(2, (100 * b) / big)}%"></i></u><b>${pct(b)}</b></span></div>`; };
+  const size = o.size ?? d.bet; const t = d.facing ? d.price : Math.min(0.95, 1 - 1 / (2 * (1 + size)) + 0.08); let cum = 0, y = rows.length * ROW, above = 0;
+  for (let k = rows.length - 1; k >= 0; k--) { const s = rows[k].him.share; if (cum + s >= t) { const frac = s > 0 ? (t - cum) / s : 0; y = k * ROW + (ROW - 3) * (1 - frac); above = rows.slice(0, k).reduce((u, r) => u + r.me.share, 0) + rows[k].me.share * (1 - frac); break; } cum += s; }
+  const mine = (r) => { const m = r.me; if (!(m.share > 0.001)) return `<span class="side me none"><span class="bar"></span></span>`; const w = `width:${Math.max(3, (100 * m.share) / most)}%`;
+    if (o.actions === 'slices' || o.lines) { const v = m.slices.map((x) => x.v); const lo = Math.min(...v), hi = Math.max(...v); const flat = hi - lo < 0.015; const n = v.length; const pts = n > 1 ? v.map((yv, k) => `${((k + 0.5) / n) * 100},${flat ? 50 : 92 - 84 * ((yv - lo) / (hi - lo))}`).join(' ') : '0,50 100,50';
+      const cols = m.slices.map((x) => `<u>${o.actions === 'slices' ? x.mix.map((p, a) => `<i style="height:${100 * p}%;background:var(${COL[d.actions[a].kind]})"></i>`).join('') : ''}</u>`).join('');
+      return `<span class="side me"><b>${pct(m.share)}</b><span class="bar" style="${w}">${cols}${o.lines ? `<svg viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${pts}" stroke="rgba(0,0,0,.55)" stroke-width="4.5"/><polyline points="${pts}" stroke="#fff" stroke-width="2.5"/></svg>` : ''}</span></span>`; }
+    const inner = o.actions === 'blend' ? `<u>${m.mix.map((p, a) => `<i style="width:${100 * p}%;background:var(${COL[d.actions[a].kind]})"></i>`).join('')}</u>` : '<u></u>';
+    return `<span class="side me"><b>${pct(m.share)}</b><span class="bar${o.actions === 'blend' ? ' blend' : ''}" style="${w}">${inner}</span></span>`; };
+  const his = (r) => (r.him.share > 0.001 ? `<span class="side him"><span class="bar" style="width:${Math.max(3, (100 * r.him.share) / most)}%"></span><b>${pct(r.him.share)}</b></span>` : `<span class="side him none"><span class="bar"></span></span>`);
+  const does = (m) => d.actions.map((a, k) => [a, m.mix[k]]).filter(([, p]) => p >= 0.05).sort((x, z) => z[1] - x[1]).map(([a, p]) => `${WORD[a.kind]} ${pct(p)}`).join(', ');
+  el.innerHTML = `<div class="heads"><span>You (${d.who})</span><span></span><span>Him</span></div>${o.adv ? adv('nuts', upTo(d.mine, nutAt), upTo(d.his, nutAt)) : ''}<div class="sl">${rows.map((r) => `<button type="button" class="row" data-i="${r.i}" aria-pressed="false">${mine(r)}<span class="name">${r.name}</span>${his(r)}</button>`).join('')}${o.cut ? `<div class="cut" style="top:${y}px"><span>${d.facing ? `price: beats ${pct(d.price)} of his bets` : `value: beats ${pct(t)} of his range`}</span></div>` : ''}</div>${o.adv ? adv('range', upTo(d.mine, 6), upTo(d.his, 6)) : ''}<div class="detail" ${o.detail ? 'hidden' : ''}>Tap a level to see its hands.</div>`;
+  const out = o.detail ?? el.querySelector('.detail');
+  el.querySelectorAll('.row').forEach((b) => { b.onclick = () => { el.querySelectorAll('.row').forEach((x) => x.setAttribute('aria-pressed', x === b)); const r = rows.find((x) => x.i === +b.dataset.i);
+    out.innerHTML = `<b>${r.name}.</b> ${r.me.share > 0.001 ? `You, ${pct(r.me.share)} of your range: <b>${r.me.hands.join(' ')}</b>.${o.actions ? ` It ${does(r.me)}.` : ''}` : 'You have none.'} ${r.him.share > 0.001 ? `Him, ${pct(r.him.share)}: <b>${r.him.hands.join(' ')}</b>.` : 'He has none.'}`; }; });
+  return { above, t };
+}
+const key = (el, d) => { el.innerHTML = d.actions.filter((a) => a.freq >= 0.01).map((a) => `<span><i style="background:var(${COL[a.kind]})"></i>${a.label} ${pct(a.freq)}</span>`).join('') + `<span><i style="background:var(--his)"></i>his range</span>`; };
+const T = D[0]; $('b0').innerHTML = cards(T.board); $('s1').innerHTML = `<span class="board cards">${cards(T.board)}</span><span>Single-raised pot · BB checks · you are BU</span>`;
+ladder($('c1'), T); ladder($('c2'), T, { adv: true });
+let size = 0.75; const SZ = [[0.33, 'A third'], [0.75, 'Three quarters'], [1.5, 'One and a half']];
+function three() { $('sz').innerHTML = SZ.map(([s, n]) => `<button type="button" data-s="${s}" aria-pressed="${s === size}">${n}</button>`).join(''); const r = ladder($('c3'), T, { adv: true, cut: true, size });
+  $('cap3').innerHTML = `For this size a value bet should beat <b>${pct(r.t)}</b> of his range (the formula's figure plus the tested margin of 8 points). <b>${pct(r.above)}</b> of your range is above the line. The bluffs to go with it: about ${pct(r.above * (size / (1 + size)))} of your range, from the bottom.`;
+  $('sz').querySelectorAll('button').forEach((b) => { b.onclick = () => { size = +b.dataset.s; three(); }; }); }
+three();
+ladder($('c4'), T, { adv: true, cut: true, actions: 'blend' }); key($('k4'), T);
+let on5 = false; function five() { ladder($('c5'), T, { adv: true, cut: true, lines: true, actions: on5 ? 'slices' : null }); $('t5').textContent = on5 ? 'Hide' : 'Show'; $('t5').setAttribute('aria-pressed', on5); $('k5').innerHTML = on5 ? '' : `<span><i style="background:var(--ink)"></i>your range</span><span><i style="background:var(--his)"></i>his range</span>`; if (on5) key($('k5'), T); }
+$('t5').onclick = () => { on5 = !on5; five(); }; five();
+let at = 0, on6 = true; function six() { const d = D[at]; $('tabs').innerHTML = D.map((x, k) => `<button type="button" data-k="${k}" aria-pressed="${k === at}">${x.title}</button>`).join(''); $('s6').innerHTML = `<span class="board cards">${cards(d.board)}</span><span>You are ${d.who} · ${d.stands} · your equity ${pct(d.equity[0])}, his ${pct(d.equity[1])}</span>`; $('d6').textContent = 'Tap a level to see its hands.';
+  ladder($('c6'), d, { adv: true, cut: true, lines: true, actions: on6 ? 'slices' : null, detail: $('d6') }); if (on6) key($('k6'), d); else $('k6').innerHTML = ''; $('t6').setAttribute('aria-pressed', on6);
+  $('tabs').querySelectorAll('button').forEach((b) => { b.onclick = () => { at = +b.dataset.k; six(); }; }); }
+$('t6').onclick = () => { on6 = !on6; six(); }; six();
+</script>
