@@ -145,7 +145,7 @@ function finalRule(F, board, mine, his, ctx, arm, rnd) {
   let strong = 0, weak = 0, topMe = 0, topHim = 0; for (const c of F.order) { if (he[c] >= 0.8) strong += his[c]; if (he[c] < 0.3) weak += his[c]; if (F.lv[c] >= 4) { topMe += mine[c]; topHim += his[c]; } } strong /= ht; weak /= ht;
   const ahead = topMe / mt - topHim / ht > 0.04;
   if (street === 3) { for (const c of F.order) if (mine[c] > 0) act[c] = ip || (ahead && (arm.flopOop === 'all' || e[c] >= 0.7 || F.come[c] >= 8)) ? 2 : 0; return act; }
-  if (street === 4) { const mode = ip ? 'always' : arm.turnOop ?? 'ahead'; if (mode === 'gate') { if (strong < 0.2) for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= valueFrom(s) ? 2 : 0; return act; }
+  if (street === 4) { const mode = ip ? 'always' : arm.turnOop ?? 'always'; if (mode === 'gate') { if (strong < 0.2) for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= valueFrom(s) ? 2 : 0; return act; }
     if (mode === 'always' || ahead) for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= 0.5 || F.come[c] >= 8 ? 2 : 0; return act; }
   if (!ip && strong >= 0.2) return act;
   const v = valueFrom(s); const bl = street === 5 ? Math.max(0, weak - (ip ? 0.2 : 0.25)) : 0;
