@@ -150,3 +150,14 @@ On the flop the same: trash follows "he folds to this hand" at +0.41 (90%) and h
 
 - The bottom bars are sorted by **blockers**: how much of his range folds once this hand's cards are taken out of it. Equity cannot sort them because they have almost none.
 - So the ladder has three lines: ahead now (top pair and up), still to come (middle pair and draws), and how often he folds to this hand (low pair and trash).
+
+## 9. What sets the bet size, and is it on the ladder? (`exp9.py`)
+
+112 flop decisions with three sizes on offer (33%, 75%, 125% of the pot) on 72 flops. The bets are mostly small: 69% of betting uses the small size and 8% the big one; the mean size is half the pot.
+
+- **What goes with a bigger bet:** deeper stacks (+0.41), and **not** having the range advantage (range gap -0.45, own equity -0.37, own top pair or better -0.36). A range that is ahead bets small with many hands; a range that is not bets bigger with fewer.
+- **What does not:** the nut line (who has more two pair or better: -0.07; nut share at 90% equity: -0.18 on the gap). The saying that nut advantage sets the size is not borne out here.
+- **None of it predicts the size on flops not seen.** A simple rule from the nut line, the range line, stack depth, his weak share, or all of them, is no closer than always saying the average (off by 0.15 to 0.18 pots against 0.17).
+- From the value study: once the hands are right, using one size in place of two gives up 0.02% of the pot on the turn.
+
+So the ladder shows which sizes are possible (slide the value line up: a bigger bet needs value above a higher line), not which one the solution takes; and which one it takes matters little.
