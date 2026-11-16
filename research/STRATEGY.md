@@ -17,7 +17,7 @@ The price of a call is bet ÷ (pot + 2 × bet).
 
 Your default here is to check. Given the disadvantage that OOP has we always play a little bit more cautious from this position.
 
-The exception is when we have range advantage (any more top pair or better than villain). Then on the flop bet value and draws, and on the turn bet anything with 50% equity or a draw. They can mix. The hands that certainly can't bet are the middling ones with no draw.
+The exception is when we have any range advantage (our share of top pair or better is at least 1 point above villain's). Then on the flop bet value and draws, and on the turn bet anything with 50% equity or a draw. They can mix. The hands that certainly can't bet are the middling ones with no draw.
 
 On the river, check everything if villain's range is strong (a fifth or more of it beats most of yours). Otherwise bet value and bluff your weakest hands.
 
