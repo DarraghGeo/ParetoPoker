@@ -177,10 +177,47 @@ function userRule(F, board, mine, his, ctx, arm, rnd) {
   for (const c of pool) { if (room <= 1e-9) break; if (small[c] || big[c] || e[c] >= 0.4) continue; small[c] = 0.5; room -= 0.5 * mine[c]; }
   return { small, big, call };
 }
-const ARMS = process.env.ARMS === 'final' ? (process.env.DIAG === '5' ? { finalEq: { rule: 'final', eq: 'exact' }, user: { rule: 'user', eq: 'exact' }, userChart: { rule: 'user' }, final: { rule: 'final' } } : process.env.DIAG === '4' ? { finalEq: { rule: 'final', eq: 'exact' }, soft5: { rule: 'final', eq: 'exact', noise: 0.05 }, soft10: { rule: 'final', eq: 'exact', noise: 0.1 }, soft3: { rule: 'final', eq: 'exact', noise: 0.03 } } : process.env.DIAG === '3' ? { v2: { rule: 'final', eq: 'exact' }, turnAlways: { rule: 'final', eq: 'exact', turnOop: 'always' }, turnGate: { rule: 'final', eq: 'exact', turnOop: 'gate' }, turnFace5: { rule: 'final', eq: 'exact', turnFaceOop: 0.05 }, flopAll: { rule: 'final', eq: 'exact', flopOop: 'all' }, flopFace10: { rule: 'final', eq: 'exact', flopFaceOop: 0.10 }, exact: {} } : process.env.DIAG === '2' ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} } : process.env.DIAG ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, estRiver: { rule: 'final', exactOn: [3, 4] }, finalNoisy: { rule: 'final', noise: 0.1 } } : { final: { rule: 'final' }, finalEq: { rule: 'final', eq: 'exact' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} }) : process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
+/** The owner's updated strategy (the rewrite with three sizes in position and raises on every street), exact equities. Returns the chance of every action for every hand.
+ *  Out of position first to act: check, unless ahead (any more top pair or better than him): flop, a third with 70%+ or a draw; turn, a third with 50%+ or a draw;
+ *  river, check all if a fifth of his range is strong, else three quarters with 80%+ and bluffs by s/(1+s) from the weakest hands.
+ *  In position checked to: a third with the whole range (flop), with 50%+ or a draw (turn), with 75%+ and bluffs by the ratio (river; none if he has few weak hands).
+ *  With more two pair or better than him the second row may bet three quarters; with more overpairs or better, the top row may bet one and a half pots; each uses
+ *  its bigger size half the time (no blockers are modelled), with bluffs added to the bigger sizes by the ratio, the best draws first (the weakest hands on the river).
+ *  Facing a bet: raise the top row (on the river anything that beats three quarters of his bets), bluff-raise the biggest draws half the time; continue with the
+ *  price in position (5 more on the flop), 10 to 15 more out of position before the river, the price on the river; flush draws continue; on the river and in
+ *  position, fill up to 1/(1+s) of the range with the next-best hands. */
+function userRule2(F, board, mine, his, ctx, arm, rnd) {
+  const { ip, toCall, s, k, fi, ci, xi, ri, bets } = ctx; const P = new Float32Array(N * k); const quiet = toCall > 0 ? (fi >= 0 ? fi : ci) : xi; let mt = 0, ht = 0; const live = [];
+  for (const c of F.order) { P[c * k + quiet] = 1; ht += his[c]; if (mine[c] > 0) { live.push(c); mt += mine[c]; } } if (!(mt > 0) || !(ht > 0)) return P;
+  const street = board.length; const [e, he] = equities(F, board, mine, his, arm, rnd); const put = (c, a, p) => { const room = P[c * k + quiet]; const x = Math.min(p, room); P[c * k + quiet] -= x; P[c * k + a] += x; };
+  const byCome = [...live].sort((x, y) => F.come[y] - F.come[x] || e[x] - e[y]); const byE = [...live].sort((x, y) => e[x] - e[y]);
+  if (toCall > 0) {
+    const price = s / (1 + 2 * s); const extra = street === 5 ? 0 : ip ? (street === 3 ? 0.05 : 0) : s > 0.5 ? 0.15 : 0.10; let rz = 0, cont = 0;
+    for (const c of live) { if (ri >= 0 && (F.lv[c] === 7 || (street === 5 && e[c] >= 0.75))) { put(c, ri, 1); rz += mine[c]; cont += mine[c]; } else if (e[c] >= price + extra || (street < 5 && F.come[c] >= 9)) { put(c, ci, 1); cont += mine[c]; } }
+    if (ri >= 0 && street < 5) { let room = (s / (1 + s)) * rz; for (const c of byCome) { if (room <= 1e-9 || F.come[c] < 12) break; if (P[c * k + ri] > 0) continue; const was = P[c * k + ci]; P[c * k + ci] = was * 0.5; P[c * k + quiet] += 0; P[c * k + ri] += 0.5 * (was + P[c * k + quiet]); P[c * k + quiet] *= 0.5; room -= 0.5 * mine[c]; cont += 0.5 * mine[c] * (1 - was); } }
+    if (street === 5 || ip) { let need = mt / (1 + s) - cont; for (let j = byE.length - 1; j >= 0 && need > 1e-9; j--) { const c = byE[j]; const q = P[c * k + quiet]; if (q <= 0 || fi < 0) continue; const x = Math.min(q, need / mine[c]); put(c, ci, x); need -= x * mine[c]; } }
+    return P; }
+  if (!bets.length) return P; const near = (want) => bets.reduce((b, x) => (Math.abs(x[1] - want) < Math.abs(b[1] - want) ? x : b)); const b33 = near(0.33), b75 = near(0.75), b150 = near(1.5);
+  let topMe = 0, topHim = 0, nutMe = 0, nutHim = 0, strMe = 0, strHim = 0, strong = 0, weak = 0; for (const c of F.order) { if (F.lv[c] >= 4) { topMe += mine[c]; topHim += his[c]; } if (F.lv[c] >= 6) { nutMe += mine[c]; nutHim += his[c]; } if (F.lv[c] >= 5) { strMe += mine[c]; strHim += his[c]; } if (he[c] >= 0.8) strong += his[c]; if (he[c] < 0.3) weak += his[c]; }
+  strong /= ht; weak /= ht; const ratio = (z) => z / (1 + z);
+  const bluff = (a, mass, pool) => { let room = mass; for (const c of pool) { if (room <= 1e-9) break; if (P[c * k + quiet] < 1 || e[c] >= 0.4) continue; put(c, a, 1); room -= mine[c]; } };
+  if (!ip) {
+    if (street === 5) { if (strong >= 0.2) return P; let v = 0; for (const c of live) if (e[c] >= 0.8) { put(c, b75[0], 1); v += mine[c]; } bluff(b75[0], ratio(b75[1]) * v, byE); return P; }
+    if (topMe / mt - topHim / ht <= 0) return P; for (const c of live) if (e[c] >= (street === 3 ? 0.7 : 0.5) || F.come[c] >= 8) put(c, b33[0], 1); return P; }
+  const can75 = b75[0] !== b33[0] && nutMe / mt > nutHim / ht; const can150 = b150[0] !== b75[0] && strMe / mt > strHim / ht; let v33 = 0, v75 = 0, v150 = 0;
+  const valueLine = street === 3 ? 0.7 : street === 4 ? 0.5 : 0.75;
+  for (const c of live) { const big = F.lv[c] === 7 ? (can150 ? b150 : can75 ? b75 : null) : F.lv[c] === 6 ? (can75 ? b75 : null) : null;
+    if (big) { put(c, big[0], 0.5); put(c, b33[0], 0.5); if (big === b150) v150 += 0.5 * mine[c]; else v75 += 0.5 * mine[c]; v33 += 0.5 * mine[c]; } else if (e[c] >= valueLine || F.lv[c] >= 6) { put(c, b33[0], 1); v33 += mine[c]; } }
+  const pool = street === 5 ? byE : byCome; if (v150 > 0) bluff(b150[0], ratio(b150[1]) * v150, pool); if (v75 > 0) bluff(b75[0], ratio(b75[1]) * v75, pool);
+  if (street === 3) { for (const c of live) put(c, b33[0], 1); return P; }
+  if (street === 4) { for (const c of live) if (F.come[c] >= 8) put(c, b33[0], 1); return P; }
+  if (weak >= 0.1) bluff(b33[0], ratio(b33[1]) * v33, byE);
+  return P;
+}
+const ARMS = process.env.ARMS === 'final' ? (process.env.DIAG === '6' ? { user2: { rule: 'user2', eq: 'exact' } } : process.env.DIAG === '5' ? { finalEq: { rule: 'final', eq: 'exact' }, user: { rule: 'user', eq: 'exact' }, userChart: { rule: 'user' }, final: { rule: 'final' } } : process.env.DIAG === '4' ? { finalEq: { rule: 'final', eq: 'exact' }, soft5: { rule: 'final', eq: 'exact', noise: 0.05 }, soft10: { rule: 'final', eq: 'exact', noise: 0.1 }, soft3: { rule: 'final', eq: 'exact', noise: 0.03 } } : process.env.DIAG === '3' ? { v2: { rule: 'final', eq: 'exact' }, turnAlways: { rule: 'final', eq: 'exact', turnOop: 'always' }, turnGate: { rule: 'final', eq: 'exact', turnOop: 'gate' }, turnFace5: { rule: 'final', eq: 'exact', turnFaceOop: 0.05 }, flopAll: { rule: 'final', eq: 'exact', flopOop: 'all' }, flopFace10: { rule: 'final', eq: 'exact', flopFaceOop: 0.10 }, exact: {} } : process.env.DIAG === '2' ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} } : process.env.DIAG ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, estRiver: { rule: 'final', exactOn: [3, 4] }, finalNoisy: { rule: 'final', noise: 0.1 } } : { final: { rule: 'final' }, finalEq: { rule: 'final', eq: 'exact' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} }) : process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
 const [count = '8', seed = '71'] = process.argv.slice(2);
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
-const pool = PRESETS.filter((p) => p.action !== 'Limped'); const TREE = process.env.TREE === 'small' ? { betSizes: [[0.33], [0.33, 0.75], [0.75]], maxRaises: 1 } : { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
+const pool = PRESETS.filter((p) => p.action !== 'Limped'); const TREE = process.env.TREE === 'three' ? { betSizes: [[0.33, 0.75, 1.5], [0.33, 0.75, 1.5], [0.33, 0.75, 1.5]], maxRaises: 1 } : process.env.TREE === 'small' ? { betSizes: [[0.33], [0.33, 0.75], [0.75]], maxRaises: 1 } : { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
 const out = new URL(`./out/play${process.env.ARMS ? `-${process.env.ARMS}` : ''}${process.env.TAG ? `-${process.env.TAG}` : ''}.jsonl`, import.meta.url); writeFileSync(out, '', { flag: 'a' });
 for (let done = 0; done < +count;) {
   const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
@@ -195,7 +232,7 @@ for (let done = 0; done < +count;) {
   const row = { spot: `${p.action}-${p.oop}-${p.ip}`, action: p.action, board: b.join(''), pot: p.pot, spr: +(p.stack / p.pot).toFixed(1), exploit: +ex.toFixed(3), loss: {}, br: {}, freq: {} };
   for (const hero of [0, 1]) {
     // a run for each arm, and for the exact arm on the flop alone and on the flop and turn
-    const runs = { ...Object.fromEntries(NAMES.map((n) => [n, fresh()])), flop: fresh(), flopTurn: fresh() }; const W = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, writer(r)]));
+    const runs = process.env.NODECOMP ? Object.fromEntries(NAMES.map((n) => [n, fresh()])) : { ...Object.fromEntries(NAMES.map((n) => [n, fresh()])), flop: fresh(), flopTurn: fresh() }; const W = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, writer(r)]));
     const dice = Object.fromEntries(NAMES.map((n, i) => { let s = (977 * (i + 1) + done * 31 + hero) >>> 0; return [n, () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }]; }));
     const tally = Object.fromEntries(NAMES.map((n) => [n, [[0, 0], [0, 0], [0, 0]]])); const sol = [[0, 0], [0, 0], [0, 0]];
     const walk = (id, board, bIndex, F, mine, his) => {
@@ -215,6 +252,11 @@ for (let done = 0; done < +count;) {
       const toCall = n.invested[1 - seat] - n.invested[seat]; const street = board.length; const fi = kinds.indexOf('fold'), ci = kinds.indexOf('call'), xi = kinds.indexOf('check'); const bi = kinds.indexOf('bet') >= 0 ? kinds.indexOf('bet') : kinds.indexOf('allin'); const ri = kinds.indexOf('raise') >= 0 ? kinds.indexOf('raise') : toCall > 0 ? kinds.indexOf('allin') : -1;
       const probsBy = NAMES.map((name, j) => {
         const P = new Float32Array(N * k); const w = mine[j];
+        if (ARMS[name].rule === 'user2') {
+          const bets = kinds.map((x, a) => (x === 'bet' ? [a, (nodes[n.edges[a].child].invested[seat] - n.invested[seat]) / n.pot] : null)).filter(Boolean); if (!bets.length && kinds.indexOf('allin') >= 0 && toCall <= 0) bets.push([kinds.indexOf('allin'), (nodes[n.edges[kinds.indexOf('allin')].child].invested[seat] - n.invested[seat]) / n.pot]);
+          const P2 = userRule2(F, board, w, his, { ip: seat === 1, toCall, s: toCall > 0 ? toCall / (n.pot - toCall) : 0, k, fi, ci, xi, ri, bets }, ARMS[name], dice[name]);
+          if (toCall <= 0 && bets.length) { let t = 0, all = 0; for (const c of F.order) { t += w[c] * (1 - P2[c * k + xi]); all += w[c]; } tally[name][street - 3][0] += t; tally[name][street - 3][1] += all; }
+          return P2; }
         if (ARMS[name].rule === 'user') {
           const bets = kinds.map((x, a) => (x === 'bet' ? a : -1)).filter((a) => a >= 0); const b1 = bets.length ? bets[0] : kinds.indexOf('allin'); const b2 = bets.length > 1 ? bets[bets.length - 1] : b1;
           const size = toCall > 0 ? toCall / (n.pot - toCall) : b1 >= 0 ? (nodes[n.edges[b1].child].invested[seat] - n.invested[seat]) / n.pot : 0;
@@ -235,12 +277,12 @@ for (let done = 0; done < +count;) {
         return P; });
       if (toCall <= 0 && bi >= 0) { const view = solved.strategyAt(id, bIndex); const combos = Array.from(view.combos); let t = 0, all = 0; combos.forEach((c, i) => { const w = mine[0][c]; all += w; t += w * (1 - view.probs[i * k + xi]); }); sol[street - 3][0] += t; sol[street - 3][1] += all; }
       const passive = Array.from({ length: k }, (_, a) => (a === 0 ? 1 : 0)); const rowOf = (P) => (c) => (F.lv[c] < 0 ? passive : Array.from({ length: k }, (_, a) => P[c * k + a]));
-      NAMES.forEach((name, j) => W[name](id, bIndex, rowOf(probsBy[j]))); if (n.round === 0) W.flop(id, bIndex, rowOf(probsBy[0])); if (n.round <= 1) W.flopTurn(id, bIndex, rowOf(probsBy[0]));
+      NAMES.forEach((name, j) => W[name](id, bIndex, rowOf(probsBy[j]))); if (W.flop && n.round === 0) W.flop(id, bIndex, rowOf(probsBy[0])); if (W.flopTurn && n.round <= 1) W.flopTurn(id, bIndex, rowOf(probsBy[0]));
       n.edges.forEach((edge, a) => { let live = 0; const next = mine.map((w, j) => { const o = new Float64Array(N); const P = probsBy[j]; for (const c of F.order) if (w[c] > 0) { o[c] = w[c] * P[c * k + a]; live += o[c]; } return o; }); if (live > 1e-9) walk(edge.child, board, bIndex, F, next, his); });
     };
     const b0 = Array.from(spot.board); walk(0, b0, 0, facts(b0), NAMES.map(() => start[hero]), start[1 - hero]);
     const lossOf = (r) => +(100 * (solved.ev(hero) - r.snapshot().ev(hero)) / pot - noise[hero]).toFixed(3); const side = hero ? 'ip' : 'oop';
-    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries([NAMES[0], NAMES[2]].map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
+    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries([NAMES[0], NAMES[2]].filter(Boolean).map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
     row.freq[side] = { solution: sol.map(([t, all]) => +(t / (all || 1)).toFixed(3)), ...Object.fromEntries(NAMES.map((n) => [n, tally[n].map(([t, all]) => +(t / (all || 1)).toFixed(3))])) };
   }
   row.seconds = Math.round((Date.now() - t0) / 1000); appendFileSync(out, JSON.stringify(row) + '\n');
