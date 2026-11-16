@@ -7,7 +7,9 @@ import { keep, load } from '../storage.js';
 import { keepMistakes } from './mistakes.js';
 import { PHONE, configOf, keepSeating } from './seating.js';
 
-const KEY = 'pareto-play';
+const KEY = 'pareto-play'; const DAYS_KEY = 'pareto-days';
+/** How many days of play are kept. */
+export const DAYS = 10;
 /** Seconds: hero's shot clock, each player's time bank, villain's shot clock, the bank a new hand gives back. */
 export const SHOT = 20; export const BANK = 60; const VILLAIN_SHOT = 15; const REFILL = 5; const DEAL_MS = 650;
 const NO_CLOCK = { who: null, left: 0, total: 1, bank: false };
@@ -16,6 +18,19 @@ const NO_CLOCK = { who: null, left: 0, total: 1, bank: false };
 export function loadSession() {
   const saved = load(KEY);
   return saved?.day === dayKey() ? { day: saved.day, net: saved.net, lost: saved.lost ?? 0, hands: saved.hands } : { day: dayKey(), net: 0, lost: 0, hands: 0 };
+}
+
+/** The days played, the newest first, ten at most: each day's hands, chips won and EV given up. Today's session is one of them. */
+export function loadDays() {
+  const kept = load(DAYS_KEY); const days = Array.isArray(kept) ? kept.filter((d) => d?.day && d.hands > 0) : [];
+  const today = loadSession(); if (today.hands && !days.some((d) => d.day === today.day)) days.unshift(today);
+  return days.slice(0, DAYS);
+}
+/** Today's session written into the days kept. */
+function keepDay(game) {
+  const today = { day: game.session.day, net: game.session.net, lost: game.session.lost, hands: game.session.hands };
+  game.days = [today, ...game.days.filter((d) => d.day !== today.day)].sort((a, b) => (a.day < b.day ? 1 : -1)).slice(0, DAYS);
+  keep(DAYS_KEY, game.days);
 }
 
 function stopClock(game) { clearInterval(game.tick); game.tick = null; game.clock = NO_CLOCK; }
@@ -44,7 +59,7 @@ function timedOut(game) {
 function counted(game, data) {
   const hand = `${data.epoch}|${data.id}`; if (!data.result || game.counted === hand) return;
   game.counted = hand; Object.assign(game.session, { net: game.session.net + data.result.net, lost: game.session.lost + (data.result.lost ?? 0), hands: game.session.hands + 1 });
-  keep(KEY, game.session); keepMistakes(game, data);
+  keep(KEY, game.session); keepDay(game); keepMistakes(game, data);
 }
 
 /** Put a step on the table, and start the clock it calls for. */

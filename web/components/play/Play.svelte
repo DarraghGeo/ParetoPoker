@@ -8,6 +8,7 @@
   import Icon from '../common/Icon.svelte';
   import Logo from '../common/Logo.svelte';
   import StudyPane from '../common/StudyPane.svelte';
+  import Days from './Days.svelte';
   import Grade from './Grade.svelte';
   import Mistakes from './Mistakes.svelte';
   import RangePeek from './RangePeek.svelte';
@@ -26,7 +27,7 @@
 
   const GRADE_MS = 4500;
   const game = createPlayGame();
-  let pane = $state(); let studying = $state(false); let peek = $state(null); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null; let reviewing = $state(false);
+  let pane = $state(); let studying = $state(false); let peek = $state(null); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null; let reviewing = $state(false); let scores = $state(false);
   game.onExport = (data) => pane?.handedOver(data);
   // leaving Play stops its solving
   onDestroy(() => { clearTimeout(gradeTimer); clearTimeout(game.timer); clearInterval(game.tick); game.worker.terminate(); for (const h of game.helpers) h.worker.terminate(); });
@@ -63,7 +64,7 @@
   const ev = (x) => `EV ${x >= 0.005 ? '−' : ''}${x.toFixed(2)}`;
   /** The session in a line: what a hand gives up on average (a total would only ever grow), and how many were played. */
   const perHand = $derived(game.session.hands ? game.session.lost / game.session.hands : 0);
-  const session = $derived(game.session.hands ? `${ev(perHand)} a hand · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : '');
+  const session = $derived(game.session.hands ? `${ev(perHand)} a hand · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : game.days.length ? 'Scores' : '');
   /** Study for the decision on screen, its street handed over as solved here. */
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
   /** Study for the move just graded: its street handed over as solved here. */
@@ -74,7 +75,7 @@
   <div class="rule"></div>
   <main class="table">
     <header>
-      <Logo />{#if game.seated}<span class="pool">{st && names.tag ? names.tag : seatingLabel(game.seating)}</span><span class="session" class:down={perHand >= 0.005} title="What your decisions give up against the solver's play, in chips a hand, on average this session. In all: {game.session.lost.toFixed(2)}. Chips won since the flop: {signed(game.session.net)}">{session}</span>{/if}<span class="grow"></span>
+      <Logo />{#if game.seated}<span class="pool">{st && names.tag ? names.tag : seatingLabel(game.seating)}</span><button type="button" class="session" class:down={perHand >= 0.005} aria-label="The last ten days" onclick={() => (scores = true)} title="What your decisions give up against the solver's play, in chips a hand, on average this session. In all: {game.session.lost.toFixed(2)}. Chips won since the flop: {signed(game.session.net)}">{session}</button>{/if}<span class="grow"></span>
       {#if game.mistakes.length || reviewing}<button type="button" class="icon" aria-pressed={reviewing} aria-label="Hands with a mistake" title="Hands with a mistake" onclick={() => (reviewing = !reviewing)}><Icon name="flag" /></button>{/if}
       {#if game.seated}
         <button type="button" class="icon" aria-pressed={sitting} aria-label="Set up the table" title="Set up the table" onclick={() => { sitting = !sitting; reviewing = false; }}><Icon name="seats" /></button>
@@ -83,6 +84,7 @@
           {#if game.study}<a class="icon" id="study" {href} aria-label="Study this spot (or swipe left)" title="Study this spot" onclick={study}><Icon name="study" /></a>{/if}{/if}
       {/if}
     </header>
+    {#if scores}<Days days={game.days} onclose={() => (scores = false)} />{/if}
     {#if reviewing}<Mistakes hands={game.mistakes} onstudy={(href) => pane.open(href)} onclose={() => (reviewing = false)} />
     {:else if sitting}<Sitting seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
     {:else}

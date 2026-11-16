@@ -3,7 +3,7 @@
 // on. flow.js takes the worker's messages and paces them.
 import { loadMistakes } from './mistakes.js';
 import { configOf, loadSeating } from './seating.js';
-import { BANK, broke, heard, loadSession, setup, startHelpers } from './flow.js';
+import { BANK, broke, heard, loadDays, loadSession, setup, startHelpers } from './flow.js';
 
 class PlayState {
   state = $state.raw(null);
@@ -19,6 +19,7 @@ class PlayState {
   config = $state.raw(configOf(loadSeating()));
   seated = $state(false);
   mistakes = $state.raw(loadMistakes());
+  days = $state.raw(loadDays());
   paused = false;
   queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {};
   helpers = []; needs = []; holding = false; epoch = 0; counted = ''; shownAt = 0;
