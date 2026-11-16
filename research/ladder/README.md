@@ -21,3 +21,18 @@
 - For scale: the earlier equity formulas of research/insight gave up about 6.2 over the same kind of hand, and a plain equity ruler 8.6.
 
 Limits: one size a street; twenty spots; the opponent plays the solution; the chart's ranges for the player's own side are its own (wrong) ranges, as they would be for a player reading a chart of the solution only approximately.
+
+## With the rebuilt river rule read off the chart (`ARMS=river`, the same 20 spots)
+
+His strong hands are his share above the line 80% of the player's range sits under, his weak hands his share under the 30% line; the rule is the one of research/value (check everything first to act when over 30% of his range is strong, value above the 80% line, bluffs only where he has something to fold).
+
+| | Out of position | In position | Both |
+|---|---|---|---|
+| Rates on every street (as before) | 4.16 | 3.72 | 3.94 |
+| The rebuilt rule on the river | 3.64 | 3.97 | 3.80 |
+| The same, word 20 points and lines 10 points loose | 4.16 | 3.94 | 4.05 |
+
+- The rule helps out of position (4.16 to 3.64) and not in position (3.72 to 3.97); over both seats the gain is 0.14.
+- It bets the river too seldom: 21% out of position and 38% in, where the solution bets 37% and 54% and the rates 36% and 58%.
+- So river betting was not where the river's 2.1 points went. What is left to look at: facing a river bet, and the ranges the player brings to the river after its own flop and turn.
+- Against a perfect answer it is as exploitable as before (about 32% of the pot).
