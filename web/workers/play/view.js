@@ -53,6 +53,6 @@ export function post(p) {
     board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(play.config.stack - x)), history: p.history,
     toAct, waiting: p.waiting != null, actions: toAct ? choicesAt(node, p.me) : [], actor: node?.seat ?? null,
     ranges: node ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,
-    result: p.done ? resultOf(p) : null, study: studyOf(p, node),
+    result: p.done ? resultOf(p) : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
   });
 }
