@@ -65,9 +65,10 @@ export function streetJob(config, parent, end, cards) {
   const street = streetOf(cards); const plan = PLAN[street];
   const state = { spent: 0, run: null, exploit: Infinity };
   const begin = () => {
-    state.ranges = arriving(parent, end, cards);
+    const kept = parent.slim ? parent.ends.find((e) => e.id === end) : null;   // a slim flop has them read off already
+    state.ranges = kept ? kept.ranges.map((r) => Array.from(r)) : arriving(parent, end, cards);
     if (state.ranges.some((r) => mass(r) < ENOUGH)) return false;
-    state.sub = parent.solution.subgameAt(parent.nodes[end].edges[0].child, parent.spot.resolveBoard(cards).board, {});
+    state.sub = kept ? kept.sub : parent.solution.subgameAt(parent.nodes[end].edges[0].child, parent.spot.resolveBoard(cards).board, {});
     state.spot = fs.defineSpot({ board: text(cards), pot: state.sub.pot, stack: state.sub.stack, oop: state.ranges[0], ip: state.ranges[1], ...bettingFor(config, cards.length) });
     state.run = fs.createRun(state.spot, {});
     return true;
@@ -83,6 +84,7 @@ export function streetJob(config, parent, end, cards) {
 
 /** The deals that end a solved street and lead on to another decision, likeliest first (how often both ranges get there, on `cards`). */
 export function lineEnds(solved, cards) {
+  if (solved.slim) return solved.ends;
   const found = solved.spot.resolveBoard(cards); const out = [];
   for (const node of solved.nodes) {
     const child = solved.nodes[node.edges[0]?.child];

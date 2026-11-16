@@ -1,7 +1,8 @@
 // What the page shows of the hand being played: the board, pot and stacks, the line so far, hero's choices when it is
 // his turn, both ranges at the decision on screen, how the hand ended, and the address and solve for Study.
 import * as fs from 'poker-flopsolve';
-import { cardsOf, onBoard, text } from '../../solver/deck.js';
+import { cardsOf, text } from '../../solver/deck.js';
+import { rangesOf } from './solved.js';
 import { play, say } from './state.js';
 
 const cents = (x) => Math.round(x * 100) / 100;
@@ -10,9 +11,9 @@ const decisionOf = (seg) => { const node = seg.solved.nodes[seg.node]; return no
 
 /** One range at a decision: each hand held, by name, with its weight. */
 function rangeAt(seg, node, who) {
-  const board = boardOf(seg); const found = seg.solved.spot.resolveBoard(board);
-  const weights = onBoard(seg.solved.solution.reachAt(node.id, found.board, who), found, board);
-  return weights.flatMap((w, c) => (w > 1e-6 ? [[fs.formatCombo(c), Math.round(w * 1e4) / 1e4]] : []));
+  const out = []; const weights = rangesOf(seg, node)[who];
+  for (let c = 0; c < weights.length; c++) if (weights[c] > 1e-6) out.push([fs.formatCombo(c), Math.round(weights[c] * 1e4) / 1e4]);
+  return out;
 }
 
 /** Chips won from the flop on by whoever takes the pot (hero's view), and how the hand ended. */

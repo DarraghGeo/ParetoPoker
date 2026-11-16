@@ -115,8 +115,8 @@ function assign(game) {
 function fromHelper(game, h, data) {
   if (data.epoch !== game.epoch) return;   // a solve stopped with the setup it was for
   if (data.type === 'progress') { if (!game.state && data.id === game.needs.first) game.progress = { done: data.done }; return; }
-  if (data.sums) mark(`a flop of ${Math.round(data.sums.byteLength / 2 ** 20)} MB just solved`);
-  h.busy = null; game.worker.postMessage(data, data.sums ? [data.sums.buffer] : []); assign(game);
+  if (data.slim) mark(data.readBack ? 'the flop kept from last time just read back' : `a flop of ${Math.round((data.solvedBytes ?? 0) / 2 ** 20)} MB just solved`);
+  h.busy = null; game.worker.postMessage(data); assign(game);
 }
 /** A flop worker that broke: its flop is told as failed, so the table does not wait for it for ever. */
 function helperBroke(game, h, why) {
@@ -180,7 +180,7 @@ export function setup(game) { game.epoch++; game.worker.postMessage({ type: 'set
 export function broke(game) { clearTimeout(game.timer); stopClock(game); game.error = 'the solver stopped'; }
 
 const HEARD = {
-  need: (game, data) => { game.needs.first ??= data.id; game.needs.push({ id: data.id, epoch: data.epoch, config: data.config, cards: data.cards }); assign(game); },
+  need: (game, data) => { game.needs.first ??= data.id; game.needs.push({ id: data.id, epoch: data.epoch, config: data.config, cards: data.cards, hand: data.hand, kept: !!data.kept }); assign(game); },
   export: (game, data) => game.onExport(data),
   explained: (game, data) => game.onExplained(data),
   status: (game, data) => { game.status = data; },

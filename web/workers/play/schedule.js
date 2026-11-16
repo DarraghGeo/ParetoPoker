@@ -2,8 +2,8 @@
 // dealt here is asked for there, and comes back as numbers read into a solve (`gotFlop`). Here are solved the later
 // streets, the most needed first (the street the hand on screen waits for, the rest of its next street, then the likeliest
 // turns of the hands ahead), stepped one chunk at a time.
-import { flopFrom, lineEnds, streetJob } from '../../solver/jobs.js';
-import { keptFlop, sigOf } from '../../solver/kept.js';
+import { lineEnds, streetJob } from '../../solver/jobs.js';
+import { keptNote, sigOf } from '../../solver/kept.js';
 import { pause } from '../../solver/progress.js';
 import { dealHand } from './deal.js';
 import { current, play, say, slot } from './state.js';
@@ -58,8 +58,8 @@ export const wanted = () => play.hands.flatMap(wantedFor).sort((a, b) => b[0] - 
 /** A finished solve of a later street, kept with its hand. */
 function keep(job, result) { play.jobs.delete(job.key); job.hand.next.set(job.at, result); }
 
-/** What a hand's solved flop is taken to hold before one has come back: a wide range's. */
-const GUESS = 150 * 2 ** 20;
+/** What a hand's flop is taken to hold here, made slim, before one has come back. */
+const GUESS = 2 * 2 ** 20;
 /** Whether another hand may be dealt ahead: fewer than the number kept, and (past the first) within what the device can hold. */
 function room() {
   const ahead = play.hands.filter((h) => h !== current());
@@ -82,34 +82,35 @@ export function resume() { play.held = false; dealAhead(); status(); pump(); }
 export function dealAhead() {
   while (room()) {
     const hand = dealHand(play.config, ++play.ids); play.hands.push(hand);
-    say({ type: 'need', id: hand.id, epoch: play.epoch, config: hand.config, cards: hand.board.slice(0, 3) });
+    ask(hand);
   }
+}
+/** Ask the flop workers for a hand's flop, made slim for it (`kept`: the flop kept on the device, read back). */
+function ask(hand, kept = false) {
+  say({ type: 'need', id: hand.id, epoch: play.epoch, config: hand.config, cards: hand.board.slice(0, 3), hand: { hero: hand.hero, seat: hand.seat, board: hand.board }, kept });
 }
 
 /** The flop kept on the device from the last time, if it was solved for one of this setup's spots with its betting: a
- *  hand is dealt onto it at once (its own hole cards, turn and river), ahead of anything solved now. */
+ *  hand is dealt onto it first (its own hole cards, turn and river), and a flop worker reads it back for that hand, which
+ *  takes a few seconds where solving one takes most of a minute. */
 export async function takeKept() {
   const epoch = play.epoch; play.loading = true; let kept = null;
-  try { kept = await keptFlop(); } catch { kept = null; }
+  try { kept = await keptNote(); } catch { kept = null; }
   if (epoch !== play.epoch) return;
   play.loading = false;
   const spots = play.config.spots?.length ? play.config.spots : [{ oop: play.config.oop, ip: play.config.ip, pot: play.config.pot, stack: play.config.stack }];
   const spot = kept && spots.find((s) => sigOf({ ...play.config, ...s }) === kept.sig);
   if (!spot) return;
-  try {
-    const hand = dealHand(play.config, ++play.ids, { spot, flop: kept.cards });
-    if (hand.hero < 0 || hand.villain < 0) return;
-    hand.flop = flopFrom(hand.config, kept.cards, kept.used, kept.sums); if (!hand.flop) return;
-    hand.bytes = kept.sums.byteLength; play.typical = hand.bytes; play.hands.push(hand);
-    status(); hooks.solved({ hand });
-  } catch { /* solved from scratch instead */ }
+  const hand = dealHand(play.config, ++play.ids, { spot, flop: kept.cards });
+  if (hand.hero < 0 || hand.villain < 0) return;
+  play.hands.push(hand); ask(hand, true);
 }
 
 /** A flop back from a flop worker: read into its hand, or the hand dropped where it could not be solved. */
 export function gotFlop(data) {
   const hand = data.epoch === play.epoch ? play.hands.find((h) => h.id === data.id) : null; if (!hand || hand.flop) return;
-  let flop = null; if (!data.failed) { try { flop = flopFrom(hand.config, hand.board.slice(0, 3), data.used, data.sums); } catch { flop = null; } }
-  if (flop) { hand.flop = flop; hand.bytes = data.sums.byteLength; play.typical = hand.bytes; play.fails = 0; }
+  const flop = data.failed ? null : data.slim ?? null;
+  if (flop) { hand.flop = flop; hand.bytes = GUESS; play.typical = GUESS; play.fails = 0; }
   else { play.fails++; play.hands.splice(play.hands.indexOf(hand), 1); if (!play.hands.some((h) => h.flop) && !current()) say({ type: 'error', message: `This setup cannot be solved${data.why ? ` (${data.why})` : ''}.` }); }
   status(); hooks.solved({ hand }); pump();
 }

@@ -28,6 +28,7 @@ function share(solve) {
  *  the cards dealt inside it): the same explanation Study gives, from the solve the table already holds. */
 function explained(data) {
   const solved = share(data.solve); const hand = play.playing?.hand; if (!solved || !hand) return null;
+  if (solved.slim) return solved.mine[data.at]?.told ?? null;   // read off when the flop was solved
   const st = study(fs, solved.solution, solved.nodes, data.at, data.cards ?? []); if (!st) return null;
   const street = ['flop', 'turn', 'river'][st.f.board.length - 3];
   const T = solved.exploit != null ? tolerance(st.f.round === 0 ? street : `${street} after a deal`, solved.exploit, st.lineReach) : null;
@@ -45,7 +46,7 @@ const handlers = {
   act(data) { heroActs(data.label); },
   explain(data) { let told = null; try { told = explained(data); } catch { told = null; } say({ type: 'explained', ask: data.ask, told }); },
   export(data) {
-    const solved = share(data.solve); const out = !solved ? null : solved.street === 'flop' ? exportedFlop(solved) : solved.oop ? exported(solved) : null;
+    const solved = share(data.solve); const out = !solved || solved.slim ? null : solved.street === 'flop' ? exportedFlop(solved) : solved.oop ? exported(solved) : null;   // a slim flop has no solve to hand over: Study solves it
     if (!out) { say({ type: 'export', ask: data.ask, found: false }); return; }
     say({ type: 'export', ask: data.ask, found: true, ...out }, [out.sums.buffer]);
   },

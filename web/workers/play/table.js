@@ -2,13 +2,13 @@
 // page, and at each street's end the next street solved again for the ranges that arrive (or, where it could not be,
 // played on in the solve before it; all in, the cards are dealt to the showdown).
 import * as fs from 'poker-flopsolve';
-import { actionValues, frameAt } from '../../../src/explain/account.js';
 import { ruleAt } from '../../../src/rules/at.js';
 import { follows } from '../../../src/rules/rules.js';
-import { onBoard, text } from '../../solver/deck.js';
+import { text } from '../../solver/deck.js';
 import { streetOf } from '../../solver/jobs.js';
 import { dealAhead, pump, status } from './schedule.js';
 import { current, play, slot } from './state.js';
+import { rangesOf, strategyOf, worthOf } from './solved.js';
 import { post } from './view.js';
 
 const seatOf = (node) => (node.seat === 'oop' ? 0 : 1);
@@ -30,20 +30,17 @@ export function start() {
 
 /** Villain's action at a decision: one drawn by its frequency for his hand (check or call if his hand is not there). */
 function villainChoice(seg, node, combo) {
-  const found = seg.solved.spot.resolveBoard(boardOf(seg).slice(0, seg.solved.cards.length + node.round));
-  const view = seg.solved.solution.strategyAt(node.id, found.board); const n = view.actions.length;
-  const i = view.combos.indexOf(found.combos[combo]);
+  const st = strategyOf(seg, node); const i = st.at(combo);
   if (i < 0) return node.edges.findIndex((e) => e.kind === 'check' || e.kind === 'call');
   let roll = Math.random();
-  for (let a = 0; a < n; a++) { roll -= view.probs[i * n + a]; if (roll <= 0) return a; }
-  return n - 1;
+  for (let a = 0; a < st.n; a++) { roll -= st.probs[i * st.n + a]; if (roll <= 0) return a; }
+  return st.n - 1;
 }
 
 /** How the solution plays hero's hand at a decision: each action's label and how often, or null if the hand is not there. */
 function mixOf(seg, node, combo) {
-  const found = seg.solved.spot.resolveBoard(boardOf(seg).slice(0, seg.solved.cards.length + node.round));
-  const view = seg.solved.solution.strategyAt(node.id, found.board); const n = view.actions.length; const i = view.combos.indexOf(found.combos[combo]);
-  return i < 0 ? null : node.edges.map((e, a) => ({ label: e.label, kind: e.kind, freq: Math.round(1e3 * view.probs[i * n + a]) / 1e3 }));
+  const st = strategyOf(seg, node); const i = st.at(combo);
+  return i < 0 ? null : node.edges.map((e, a) => ({ label: e.label, kind: e.kind, freq: Math.round(1e3 * st.probs[i * st.n + a]) / 1e3 }));
 }
 
 /** A hand the solution brings to a decision less often than this, of the times it is dealt, has no play there to speak
@@ -55,17 +52,8 @@ const OFF_LINE = 0.01;
 const ERROR = 0.03;
 /** How often the solution gets to a decision with hero's hand, of the times it is dealt. */
 function reachOf(p, node) {
-  const seg = p.seg; const found = seg.solved.spot.resolveBoard(boardOf(seg).slice(0, seg.solved.cards.length + node.round));
-  const reach = seg.solved.solution.reachAt(node.id, found.board, p.me)[found.combos[p.hand.hero]] ?? 0;
+  const reach = rangesOf(p.seg, node)[p.me][p.hand.hero] ?? 0;
   return p.hand.weight > 0 ? reach / p.hand.weight : 0;
-}
-
-/** What each action at a decision is worth to hero's hand, in chips, by the solution's own values; null where it has none. */
-function worthOf(seg, node, combo) {
-  try {
-    const f = frameAt(fs, seg.solved.solution, seg.solved.nodes, node.id, seg.dealt); const worth = actionValues(f).map((v) => v[combo]);
-    return worth.some((x) => Number.isNaN(x)) ? null : worth;
-  } catch { return null; }
 }
 
 /** Whether hero faces a raise of his own bet: two or more bets before this decision on its street. */
@@ -83,8 +71,7 @@ const HELD = 0.5; const NEAR = 0.1;
  */
 function ruleOf(p, node, mix, worth) {
   try {
-    const seg = p.seg; const board = boardOf(seg).slice(0, seg.solved.cards.length + node.round); const found = seg.solved.spot.resolveBoard(board);
-    const range = (who) => onBoard(seg.solved.solution.reachAt(node.id, found.board, who), found, board);
+    const seg = p.seg; const board = boardOf(seg).slice(0, seg.solved.cards.length + node.round); const ranges = rangesOf(seg, node); const range = (who) => ranges[who];
     const toCall = node.invested[1 - p.me] - node.invested[p.me];
     const rule = ruleAt(fs, { board, mine: range(p.me), his: range(1 - p.me), combo: p.hand.hero, ip: p.me === 1, toCall, pot: node.pot, raised: raisedAt(seg.solved.nodes, node), raiser: p.hand.config.raiser ?? null });
     if (!rule) return null;
@@ -110,6 +97,8 @@ function deal(p, node) {
   const allIn = seg.solved.nodes[node.edges[0].child]?.kind !== 'decision';
   if (next === undefined && !seg.dealt.length && !allIn) { p.waiting = node.id; return false; }
   p.step++; p.history.push({ street: streetOf([...boardOf(seg), 0]), actions: [], pot: Math.round((p.pot0 + p.put[0] + p.put[1]) * 100) / 100, cards: text([p.hand.board[boardOf(seg).length]]) });
+  // a street that could not be solved again cannot be played on in a slim flop: the hand is checked down
+  if (next?.failed && seg.solved.slim && !allIn) { p.done = { showdown: true }; return false; }
   if (next && !next.failed && !allIn) { p.seg = { key: at, solved: next, node: 0, dealt: [] }; p.streets[p.history.length - 1] = next; return true; }   // the street as solved again, by its place in the history
   seg.dealt.push(p.hand.board[boardOf(seg).length]); seg.node = node.edges[0].child;
   return true;

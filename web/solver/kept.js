@@ -1,7 +1,7 @@
 // One solved flop kept on the device (IndexedDB), so that Play has a hand to deal the moment it is next opened: the spot it
 // was solved for, its three cards, the betting it was solved with and the strategy's numbers. The newest solve replaces
 // the one kept. Everything here fails quietly: with no storage, Play solves from scratch as before.
-const NAME = 'pareto-kept'; const STORE = 'flops'; const SLOT = 'last';
+const NAME = 'pareto-kept'; const STORE = 'flops'; const SLOT = 'last'; const NOTE = 'note';
 /** Nothing larger than this is kept, in bytes. */
 const MOST = 400 * 2 ** 20;
 let db = null;
@@ -21,13 +21,17 @@ export const sigOf = (c) => JSON.stringify([c.oop, c.ip, c.pot, c.stack, c.bets,
  *  buffer may then be handed on. */
 export async function keepFlop(record, most = MOST) {
   const d = await open(); if (!d || record.sums.byteLength > Math.min(most, MOST)) return;
-  try { d.transaction(STORE, 'readwrite').objectStore(STORE).put(record, SLOT); } catch { /* not kept */ }
+  try { const store = d.transaction(STORE, 'readwrite').objectStore(STORE); store.put(record, SLOT); store.put({ sig: record.sig, cards: record.cards }, NOTE); } catch { /* not kept */ }
 }
 
+/** What the flop kept was solved for and its cards, without its numbers: `{ sig, cards }`, or null. */
+export const keptNote = () => read(NOTE);
 /** The flop kept, or null. */
-export async function keptFlop() {
+export const keptFlop = () => read(SLOT);
+
+async function read(slot) {
   const d = await open(); if (!d) return null;
   return new Promise((done) => {
-    try { const ask = d.transaction(STORE).objectStore(STORE).get(SLOT); ask.onsuccess = () => done(ask.result ?? null); ask.onerror = () => done(null); } catch { done(null); }
+    try { const ask = d.transaction(STORE).objectStore(STORE).get(slot); ask.onsuccess = () => done(ask.result ?? null); ask.onerror = () => done(null); } catch { done(null); }
   });
 }
