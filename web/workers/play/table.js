@@ -76,7 +76,9 @@ function advance(p) {
 export function proceed() {
   const p = play.playing; if (!p) return;
   p.waiting = null;
-  // every step is told to the page, which shows them one at a time, on the clock
+  // every step is told to the page, which shows them one at a time, on the clock: first where the hand stands (so a
+  // villain who acts first is seen to think), then each step
+  post(p);
   for (let guard = 0; guard < 64 && !p.done && advance(p); guard++) post(p);
   post(p); status(); pump();
 }

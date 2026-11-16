@@ -28,7 +28,9 @@ function rankOf(hand, k, end, i) {
 /** The solves one hand wants, each with how much it matters. */
 function wantedFor(hand, k) {
   if (hand === current() && play.playing.done) return [];
-  if (!hand.flop) return [[k === 0 ? 90 : 60 - 10 * k, keyed(`flop|${hand.id}`, () => ({ hand, ...flopJob(play.config, hand.board.slice(0, 3)) }))]];
+  // the next hand's flop comes before anything of the hand being played but the street it is waiting for: villain's
+  // thinking time covers a street solved when it is reached, and the next hand is then ready when this one ends
+  if (!hand.flop) return [[k === 0 ? 90 : k === 1 ? 85 : 60 - 10 * k, keyed(`flop|${hand.id}`, () => ({ hand, ...flopJob(play.config, hand.board.slice(0, 3)) }))]];
   const base = baseOf(hand); if (base.solved.cards.length >= 5) return [];
   const cards = hand.board.slice(0, base.solved.cards.length + 1);
   base.solved.ends ??= lineEnds(base.solved, cards);

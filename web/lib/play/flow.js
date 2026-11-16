@@ -1,12 +1,12 @@
 // How Play's game moves on. The worker tells every step of a hand as it happens; here they are shown one at a time, on
-// the clock: villain takes a moment over each action, a street takes a moment to deal, and hero has a shot clock and
+// the clock: villain takes three to eight seconds over each action, a street takes a moment to deal, and hero has a shot clock and
 // then a time bank (out of time, he checks if he can and folds if not). A finished hand is counted once in the session.
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
 
 const KEY = 'pareto-play';
 /** Seconds: hero's shot clock, each player's time bank, villain's shot clock, the bank a new hand gives back. */
-export const SHOT = 20; export const BANK = 60; const VILLAIN_SHOT = 12; const REFILL = 5; const DEAL_MS = 650;
+export const SHOT = 20; export const BANK = 60; const VILLAIN_SHOT = 15; const REFILL = 5; const DEAL_MS = 650;
 const NO_CLOCK = { who: null, left: 0, total: 1, bank: false };
 
 /** Today's session: chips won and hands played (a new day starts a new one). */
@@ -53,18 +53,15 @@ function show(game, data) {
 }
 
 const moves = (st, who) => st.history.reduce((t, h) => t + h.actions.filter((a) => a.who === who).length, 0);
-/** How long villain takes over the action he just took, in milliseconds: longer over a bet or raise. */
-function thinking(data) {
-  const last = data.history.flatMap((h) => h.actions).filter((a) => a.who === 'villain').at(-1); const big = last && ['bet', 'raise', 'allin'].includes(last.kind);
-  return (big ? 1500 : 900) + Math.random() * (big ? 2300 : 1300);
-}
+/** How long villain takes over an action, in milliseconds: three to eight seconds, at random. */
+const thinking = () => 3000 + Math.random() * 5000;
 
 /** Show the steps waiting, each after the time it should take. */
 function pump(game) {
   if (game.busy || !game.queue.length) return;
   const data = game.queue.shift(); const prev = game.state; let delay = 0;
   if (prev && prev.id === data.id) {
-    if (moves(data, 'villain') > moves(prev, 'villain')) { delay = thinking(data); if (game.clock.who !== 'villain') runClock(game, 'villain', VILLAIN_SHOT); }
+    if (moves(data, 'villain') > moves(prev, 'villain')) { delay = thinking(); if (game.clock.who !== 'villain') runClock(game, 'villain', VILLAIN_SHOT); }
     else if (data.history.length > prev.history.length || (data.result && !prev.result)) delay = DEAL_MS;
   }
   game.busy = true;
