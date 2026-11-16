@@ -83,9 +83,13 @@ function queued(game, data) {
 /** How many flops are solved at once beside the table: two where the device has the cores, one on a phone. */
 const HELPERS = PHONE ? 1 : Math.max(1, Math.min(2, (globalThis.navigator?.hardwareConcurrency ?? 4) - 2));
 
+/** How many threads each flop worker solves on, where the page has them: the cores there are, less the page's and the
+ *  table's own, shared among the flop workers; four at most. */
+const THREADS = Math.max(1, Math.min(4, Math.floor(((globalThis.navigator?.hardwareConcurrency ?? 4) - 1) / HELPERS)));
+
 /** Give waiting flops to the flop workers that are free. */
 function assign(game) {
-  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', ...need }); }
+  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', threads: THREADS, ...need }); }
 }
 function fromHelper(game, h, data) {
   if (data.epoch !== game.epoch) return;   // a solve stopped with the setup it was for

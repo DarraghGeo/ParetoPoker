@@ -69,7 +69,7 @@
   <div class="rule"></div>
   <main class="table">
     <header>
-      <Logo />{#if game.seated}<span class="pool">{seatingLabel(game.seating)}</span><span class="session" class:down={game.session.lost >= 0.005} title="What your decisions gave up against the solver's play, in chips, this session. Chips won since the flop: {signed(game.session.net)}">{session}</span>{/if}<span class="grow"></span>
+      <Logo />{#if game.seated}<span class="pool">{st && names.tag ? names.tag : seatingLabel(game.seating)}</span><span class="session" class:down={game.session.lost >= 0.005} title="What your decisions gave up against the solver's play, in chips, this session. Chips won since the flop: {signed(game.session.net)}">{session}</span>{/if}<span class="grow"></span>
       {#if game.mistakes.length || reviewing}<button type="button" class="icon" aria-pressed={reviewing} aria-label="Hands with a mistake" title="Hands with a mistake" onclick={() => (reviewing = !reviewing)}><Icon name="flag" /></button>{/if}
       {#if game.seated}
         <button type="button" class="icon" aria-pressed={sitting} aria-label="Set up the table" title="Set up the table" onclick={() => { sitting = !sitting; reviewing = false; }}><Icon name="seats" /></button>
@@ -81,6 +81,7 @@
     {#if reviewing}<Mistakes hands={game.mistakes} onstudy={(href) => pane.open(href)} onclose={() => (reviewing = false)} />
     {:else if sitting}<Sitting seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
     {:else}
+      {#if st && names.line}<p class="pre" aria-label="Before the flop"><b>{names.pot}</b> {names.line}</p>{/if}
       <div class="arena">
         <div class="felt" aria-hidden="true"></div>
         <Seat name="Villain" tag={names[st ? other(st.seat) : 'oop']} cards={st?.villain ?? null} behind={st ? st.behind[1 - me] : config.stack} clock={clockOf('villain')} bank={game.bank.villain} dealer={st ? st.seat === 'oop' : false} />

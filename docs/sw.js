@@ -3,10 +3,14 @@
 // their names: this build's are fetched once, when the worker is installed, and answered from the cache from then on
 // (the ones of builds before are thrown away). The page itself and everything else go to the network first (skipping
 // the browser's cache), for two seconds at most before the copy kept is shown instead, and are kept for offline.
-// `53131f95d5` changes with every build, so a new build is a new worker, and it takes over at once.
-const CACHE = 'pareto-53131f95d5';
-const ASSETS = ["assets/Play-DtSocJ2X.js","assets/StudyPage-BRcmii9d.js","assets/bitval-B2XgIrqC.js","assets/evaluator-Cqsuz4O7.js","assets/evaluator-DzLyv7ye.js","assets/flop-DvmbyWLS.js","assets/game.svelte-C7UDuEIa.js","assets/index-B4cT8p-s.css","assets/index-B9tdq249.js","assets/play-DVbwPdsg.js","assets/rolldown-runtime-BWaJ3C7D.js","assets/study-CReMYlyh.js"];
-const KEPT = [CACHE, 'pareto-fonts', 'pareto-assets'];
+// `ae3f68fc57` changes with every build, so a new build is a new worker, and it takes over at once.
+// Everything of the app's own is answered with the headers that make the page cross-origin isolated, which GitHub Pages
+// cannot send itself: that is what lets a solve be split across threads (workers/flop.js). The typefaces, from elsewhere,
+// are asked for with CORS so that they still load on such a page.
+const CACHE = 'pareto-ae3f68fc57';
+const ASSETS = ["assets/Play-D5P0WXEL.js","assets/StudyPage-D_iTkqnm.js","assets/bitval-B2XgIrqC.js","assets/evaluator-DHuYwazS.js","assets/evaluator-DzLyv7ye.js","assets/flop-BFh9Jpis.js","assets/game.svelte-DMd4C5Ro.js","assets/index-DN9A_YSK.css","assets/index-DkAe_f61.js","assets/play-DVbwPdsg.js","assets/rolldown-runtime-BWaJ3C7D.js","assets/study-CReMYlyh.js"];
+const FONTS = 'pareto-fonts-2';
+const KEPT = [CACHE, FONTS, 'pareto-assets'];
 /** How long the page waits on the network before the copy kept is shown, in milliseconds. */
 const PATIENCE = 2000;
 const here = (name) => new URL(name, self.registration.scope).href;
@@ -28,9 +32,16 @@ self.addEventListener('activate', (event) => event.waitUntil(prune().then(() => 
 /** The typefaces come from elsewhere and never change: kept once seen, and with no network an empty answer at once, so
  *  that the page does not hang waiting for them. */
 async function typeface(request) {
-  const cache = await caches.open('pareto-fonts'); const kept = await cache.match(request);
+  const cache = await caches.open(FONTS); const kept = await cache.match(request);
   if (kept) return kept;
-  try { const fresh = await fetch(request); if (fresh.ok || fresh.type === 'opaque') cache.put(request, fresh.clone()); return fresh; } catch { return new Response('', { status: 200, headers: { 'content-type': 'text/css' } }); }
+  try { const fresh = await fetch(request); if (fresh.ok) cache.put(request, fresh.clone()); return fresh; } catch { return new Response('', { status: 200, headers: { 'content-type': 'text/css' } }); }
+}
+/** An answer with the headers of a cross-origin isolated page. */
+function isolated(response) {
+  if (!response || response.status === 0 || response.type === 'error') return response;
+  const headers = new Headers(response.headers);
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin'); headers.set('Cross-Origin-Embedder-Policy', 'require-corp'); headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 /** A built file: from the cache, or fetched and kept. */
 async function asset(request) {
@@ -51,5 +62,5 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') { event.respondWith(typeface(request)); return; }
   if (url.origin !== self.location.origin) return;
-  event.respondWith(/\/assets\/[^/]+-[\w-]{8,}\.\w+$/.test(url.pathname) ? asset(request) : newest(request));
+  event.respondWith((/\/assets\/[^/]+-[\w-]{8,}\.\w+$/.test(url.pathname) ? asset(request) : newest(request)).then(isolated));
 });

@@ -26,14 +26,15 @@ function timed(state, work) {
   return out;
 }
 
-/** The flop of `cards`, solved lite with the setup's ranges; `warm`: a nearby flop's run and the relabelling onto this one. */
-export function flopJob(config, cards, warm = null) {
+/** The flop of `cards`, solved lite with the setup's ranges; `warm`: a nearby flop's run and the relabelling onto this one;
+ *  `threads`: how many the solve is split across (where the page has them: workers/flop.js). `close()` gives them back. */
+export function flopJob(config, cards, warm = null, threads = 1) {
   const state = { spent: 0, run: null, settled: false };
   const open = (betting) => {
     state.used = betting;
     state.lite = fs.litePreset({ board: text(cards), pot: config.pot, stack: config.stack, oop: config.oop, ip: config.ip, ...bettingFor({ ...config, ...betting }, 3) });
     state.spot = fs.defineSpot(state.lite.config); state.settle = fs.trackSettle(state.lite.options.settle || {});
-    state.run = fs.createRun(state.spot, { ...state.lite.options, ...(warm ? { warmStart: warm.run, warmCards: warm.cards } : {}) });
+    state.run = fs.createRun(state.spot, { ...state.lite.options, ...(threads > 1 ? { workers: threads } : {}), ...(warm ? { warmStart: warm.run, warmCards: warm.cards } : {}) });
   };
   // wide ranges with many sizes can be too big to hold: the setup's betting first, then fewer sizes until it fits
   const begin = () => {
@@ -49,7 +50,7 @@ export function flopJob(config, cards, warm = null) {
     return { street: 'flop', cards, run: state.run, solution: state.run.snapshot(), nodes: treeOf(fs, state.spot), spot: state.spot, stack: config.stack, pot: config.pot, used: state.used };
   };
   const done = () => (state.settle && !Number.isNaN(state.settle.movement) ? along(0.35, state.settle.movement, state.lite.options.settle?.tolerance ?? 0.01) : 0);
-  return { street: 'flop', step, done };
+  return { street: 'flop', step, done, close: () => { try { state.run?.close?.(); } catch { /* closed already */ } } };
 }
 
 /** The two ranges as they arrive at the street that opens after `end` (a deal) of a solved street, on `cards`. */

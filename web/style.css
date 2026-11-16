@@ -394,6 +394,8 @@ body.paged{overflow:hidden;height:100dvh}
    below, each on a plate with a stack and a clock; the actions in a dock under the table. One screen, no scrolling. */
 .play main.table{max-width:520px;height:100dvh;min-height:0;gap:10px;padding-top:10px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
 .play header{flex:none}
+.table .pre{flex:none;margin:-4px 0 0;text-align:center;font:400 11px/14px var(--mono);color:var(--ink-3);z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.table .pre b{font-weight:500;color:var(--ink-2);margin-right:6px}
 .play header .session{font:400 13px/18px var(--mono);color:var(--ink-2)}
 .play header .pool{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .play header .session.down{color:var(--danger)}

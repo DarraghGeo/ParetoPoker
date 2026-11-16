@@ -4,9 +4,13 @@
 // (the ones of builds before are thrown away). The page itself and everything else go to the network first (skipping
 // the browser's cache), for two seconds at most before the copy kept is shown instead, and are kept for offline.
 // `__V__` changes with every build, so a new build is a new worker, and it takes over at once.
+// Everything of the app's own is answered with the headers that make the page cross-origin isolated, which GitHub Pages
+// cannot send itself: that is what lets a solve be split across threads (workers/flop.js). The typefaces, from elsewhere,
+// are asked for with CORS so that they still load on such a page.
 const CACHE = 'pareto-__V__';
 const ASSETS = __ASSETS__;
-const KEPT = [CACHE, 'pareto-fonts', 'pareto-assets'];
+const FONTS = 'pareto-fonts-2';
+const KEPT = [CACHE, FONTS, 'pareto-assets'];
 /** How long the page waits on the network before the copy kept is shown, in milliseconds. */
 const PATIENCE = 2000;
 const here = (name) => new URL(name, self.registration.scope).href;
@@ -28,9 +32,16 @@ self.addEventListener('activate', (event) => event.waitUntil(prune().then(() => 
 /** The typefaces come from elsewhere and never change: kept once seen, and with no network an empty answer at once, so
  *  that the page does not hang waiting for them. */
 async function typeface(request) {
-  const cache = await caches.open('pareto-fonts'); const kept = await cache.match(request);
+  const cache = await caches.open(FONTS); const kept = await cache.match(request);
   if (kept) return kept;
-  try { const fresh = await fetch(request); if (fresh.ok || fresh.type === 'opaque') cache.put(request, fresh.clone()); return fresh; } catch { return new Response('', { status: 200, headers: { 'content-type': 'text/css' } }); }
+  try { const fresh = await fetch(request); if (fresh.ok) cache.put(request, fresh.clone()); return fresh; } catch { return new Response('', { status: 200, headers: { 'content-type': 'text/css' } }); }
+}
+/** An answer with the headers of a cross-origin isolated page. */
+function isolated(response) {
+  if (!response || response.status === 0 || response.type === 'error') return response;
+  const headers = new Headers(response.headers);
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin'); headers.set('Cross-Origin-Embedder-Policy', 'require-corp'); headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 /** A built file: from the cache, or fetched and kept. */
 async function asset(request) {
@@ -51,5 +62,5 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') { event.respondWith(typeface(request)); return; }
   if (url.origin !== self.location.origin) return;
-  event.respondWith(/\/assets\/[^/]+-[\w-]{8,}\.\w+$/.test(url.pathname) ? asset(request) : newest(request));
+  event.respondWith((/\/assets\/[^/]+-[\w-]{8,}\.\w+$/.test(url.pathname) ? asset(request) : newest(request)).then(isolated));
 });

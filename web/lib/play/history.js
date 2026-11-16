@@ -1,7 +1,7 @@
 // The hand on the table as text, to paste somewhere else (a coach, a chat): who sat where with which ranges, the cards,
 // every action with its chips, and how it ended.
 import { chips } from '../actions.js';
-import { presetOf } from '../study/presets.js';
+import { ACTIONS, presetOf } from '../study/presets.js';
 import { gradeOf } from './grade.js';
 
 const SEAT = { oop: 'out of position', ip: 'in position' };
@@ -21,10 +21,12 @@ function told(actions) {
   return actions.map((a) => { const g = gradeOf(a); const text = `${said(a, put[a.who])}${g ? ` [${g.text}]` : ''}`; put[a.who] += a.add ?? 0; return text; }).join(', ');
 }
 
-/** Who a seat is: its position or player type where the ranges are a preset's. */
+const POT = { SRP: 'Single-raised pot', '3BP': '3-bet pot', '4BP': '4-bet pot', Squeeze: 'Squeezed pot', Limped: 'Limped pot', Live: 'Live, single-raised pot' };
+/** Who a seat is: its position or player type where the ranges are a preset's; and how the pot was made before the flop:
+ *  the kind of pot in a word (`tag`) and in full (`pot`), and the action itself (`line`). */
 export function seatNames(config) {
   const p = presetOf(String(config.oop).trim(), String(config.ip).trim());
-  return { oop: p?.oop ?? 'OOP', ip: p?.ip ?? 'IP', line: p?.line ?? '' };
+  return { oop: p?.oop ?? 'OOP', ip: p?.ip ?? 'IP', line: p?.line ?? '', tag: ACTIONS.find(([key]) => key === p?.action)?.[1] ?? '', pot: POT[p?.action] ?? '' };
 }
 
 export function handText(st, config) {
@@ -34,7 +36,7 @@ export function handText(st, config) {
   const end = st.result ? [`Result: ${st.result.how.replace(/^You\b/, 'Hero')}${st.result.mine ? ` (Hero ${st.result.mine}, Villain ${st.result.his})` : ''}. Hero ${signed(st.result.net)} from the flop on${st.result.lost != null ? `; his decisions gave up ${st.result.lost.toFixed(2)} in EV against the solver` : ''}.`] : ['(The hand is still being played.)'];
   return [
     `Pareto hand ${st.id}: heads-up no-limit hold'em, played from the flop. Chips are big blinds.`,
-    names.line ? `Before the flop: ${names.line}.` : 'Before the flop: ranges set by hand (below).',
+    names.line ? `Before the flop: ${names.pot ? `${names.pot}. ` : ''}${names.line}.` : 'Before the flop: ranges set by hand (below).',
     `Pot ${chips(config.pot)} on the flop, ${chips(st.stack ?? config.stack)} behind each.`,
     `Hero: ${names[st.seat]}, ${SEAT[st.seat]}, holds ${st.hero}.`,
     `Villain: ${names[villain]}, ${SEAT[villain]}${st.villain ? `, shows ${st.villain}` : ''}. He plays a solver's strategy for his range.`,
