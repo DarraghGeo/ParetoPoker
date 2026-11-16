@@ -5,7 +5,9 @@
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
 import { keepMistakes } from './mistakes.js';
+import { keepRules } from './rules.js';
 import { PHONE, configOf, keepSeating } from './seating.js';
+import { mark } from './trace.js';
 
 const KEY = 'pareto-play'; const DAYS_KEY = 'pareto-days';
 /** How many days of play are kept. */
@@ -59,7 +61,7 @@ function timedOut(game) {
 function counted(game, data) {
   const hand = `${data.epoch}|${data.id}`; if (!data.result || game.counted === hand) return;
   game.counted = hand; Object.assign(game.session, { net: game.session.net + data.result.net, lost: game.session.lost + (data.result.lost ?? 0), hands: game.session.hands + 1 });
-  keep(KEY, game.session); keepDay(game); keepMistakes(game, data);
+  keep(KEY, game.session); keepDay(game); keepMistakes(game, data); keepRules(game, data);
 }
 
 /** Put a step on the table, and start the clock it calls for. */
@@ -103,13 +105,17 @@ const HELPERS = PHONE ? 1 : Math.max(1, Math.min(2, (globalThis.navigator?.hardw
  *  table's own, shared among the flop workers; four at most. */
 const THREADS = Math.max(1, Math.min(4, Math.floor(((globalThis.navigator?.hardwareConcurrency ?? 4) - 1) / HELPERS)));
 
+/** A solved flop is kept on the device for the next start only up to this size: storing copies it once more. */
+const KEEP_UNDER = (PHONE ? 90 : 400) * 2 ** 20;
+
 /** Give waiting flops to the flop workers that are free. */
 function assign(game) {
-  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', threads: THREADS, ...need }); }
+  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', threads: THREADS, keepUnder: KEEP_UNDER, ...need }); mark('solving a flop'); }
 }
 function fromHelper(game, h, data) {
   if (data.epoch !== game.epoch) return;   // a solve stopped with the setup it was for
   if (data.type === 'progress') { if (!game.state && data.id === game.needs.first) game.progress = { done: data.done }; return; }
+  if (data.sums) mark(`a flop of ${Math.round(data.sums.byteLength / 2 ** 20)} MB just solved`);
   h.busy = null; game.worker.postMessage(data, data.sums ? [data.sums.buffer] : []); assign(game);
 }
 /** A flop worker that broke: its flop is told as failed, so the table does not wait for it for ever. */
@@ -134,12 +140,12 @@ export function startHelpers(game) {
 /** Study opens beside the table: on a phone the hands solved ahead and the flop being solved are let go of first, so that
  *  the two together are not more than it can hold; they are solved again on the way back. */
 export function studyOpened(game) {
-  if (!PHONE || game.holding) return; game.holding = true;
+  mark('Study open'); if (!PHONE || game.holding) return; game.holding = true;
   for (const h of game.helpers) h.worker.terminate(); game.helpers = []; game.needs = [];
   game.worker.postMessage({ type: 'hold' });
 }
 export function studyClosed(game) {
-  if (!game.holding) return; game.holding = false;
+  mark('back from Study'); if (!game.holding) return; game.holding = false;
   startHelpers(game); game.worker.postMessage({ type: 'resume' });
 }
 
@@ -157,7 +163,7 @@ export function act(game, label) { stopClock(game); game.worker.postMessage({ ty
 /** Sit down with a seating: kept for next time, the table cleared, and the worker set up with its spots and bet sizes. */
 export function sitDown(game, seating) {
   const config = configOf(seating); const same = sameSetup(config, game.config); keepSeating(seating); game.seating = seating;
-  const first = !game.seated; game.seated = true;
+  const first = !game.seated; game.seated = true; mark('sat down', true);
   if (same && first) deal(game); else if (!same) { resetup(game, config); game.worker.postMessage({ type: 'deal' }); }   // the same table again plays on with what is solved
 }
 /** Whether two setups are solved alike: the same spots in rotation and the same betting, however they were chosen. */

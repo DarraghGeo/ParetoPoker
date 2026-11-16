@@ -7,7 +7,7 @@ import { cardsOf, drawCards, drawCombo } from '../../solver/deck.js';
 export function dealHand(setup, id, given = null) {
   // one of the spots in rotation, where the setup has several
   const spot = given?.spot ?? (setup.spots?.length ? setup.spots[Math.floor(Math.random() * setup.spots.length)] : null);
-  const config = spot ? { ...setup, oop: spot.oop, ip: spot.ip, pot: spot.pot, stack: spot.stack } : setup;
+  const config = spot ? { ...setup, oop: spot.oop, ip: spot.ip, pot: spot.pot, stack: spot.stack, raiser: spot.raiser ?? null } : setup;
   const seat = Math.random() < 0.5 ? 'oop' : 'ip';
   const ranges = { oop: fs.parseRange(config.oop), ip: fs.parseRange(config.ip) };
   const dead = new Set(given?.flop ?? []);

@@ -3,7 +3,9 @@
 // played on in the solve before it; all in, the cards are dealt to the showdown).
 import * as fs from 'poker-flopsolve';
 import { actionValues, frameAt } from '../../../src/explain/account.js';
-import { text } from '../../solver/deck.js';
+import { ruleAt } from '../../../src/rules/at.js';
+import { follows } from '../../../src/rules/rules.js';
+import { onBoard, text } from '../../solver/deck.js';
 import { streetOf } from '../../solver/jobs.js';
 import { dealAhead, pump, status } from './schedule.js';
 import { current, play, slot } from './state.js';
@@ -58,12 +60,38 @@ function reachOf(p, node) {
   return p.hand.weight > 0 ? reach / p.hand.weight : 0;
 }
 
-/** What hero's action `k` gives up against the best action for his hand, in chips, by the solution's own values (each
- *  action followed by its solved play); null where the solution has none for the hand. */
-function costOf(seg, node, combo, k) {
+/** What each action at a decision is worth to hero's hand, in chips, by the solution's own values; null where it has none. */
+function worthOf(seg, node, combo) {
   try {
     const f = frameAt(fs, seg.solved.solution, seg.solved.nodes, node.id, seg.dealt); const worth = actionValues(f).map((v) => v[combo]);
-    return worth.some((x) => Number.isNaN(x)) ? null : Math.round(100 * (Math.max(...worth) - worth[k])) / 100;
+    return worth.some((x) => Number.isNaN(x)) ? null : worth;
+  } catch { return null; }
+}
+
+/** Whether hero faces a raise of his own bet: two or more bets before this decision on its street. */
+function raisedAt(nodes, node) {
+  let wagers = 0;
+  for (let at = node; at.parent >= 0 && nodes[at.parent].round === node.round; at = nodes[at.parent]) { const via = nodes[at.parent].edges[at.via]; if (nodes[at.parent].kind === 'decision' && !['check', 'call', 'fold'].includes(via.kind)) wagers++; }
+  return wagers >= 2;
+}
+
+/** A rule the solution plays along with at least this often with the hand has held; so has one whose advice costs less than `NEAR` chips. */
+const HELD = 0.5; const NEAR = 0.1;
+/**
+ * The player's rule at hero's decision (src/rules), what it says for his hand, and how it stands against the solution:
+ * how often the solution does what the rule says with this hand, what doing it gives up, and so whether the rule held.
+ */
+function ruleOf(p, node, mix, worth) {
+  try {
+    const seg = p.seg; const board = boardOf(seg).slice(0, seg.solved.cards.length + node.round); const found = seg.solved.spot.resolveBoard(board);
+    const range = (who) => onBoard(seg.solved.solution.reachAt(node.id, found.board, who), found, board);
+    const toCall = node.invested[1 - p.me] - node.invested[p.me];
+    const rule = ruleAt(fs, { board, mine: range(p.me), his: range(1 - p.me), combo: p.hand.hero, ip: p.me === 1, toCall, pot: node.pot, raised: raisedAt(seg.solved.nodes, node), raiser: p.hand.config.raiser ?? null });
+    if (!rule) return null;
+    const match = mix.map((x) => follows(rule.says, x.kind, toCall > 0)); if (!match.some(Boolean)) return null;   // the tree has no such action
+    const freq = mix.reduce((t, x, i) => t + (match[i] ? x.freq : 0), 0);
+    const cost = worth ? Math.max(...worth) - Math.max(...worth.filter((_, i) => match[i])) : null;
+    return { id: rule.id, says: rule.says, why: rule.why, freq: Math.round(1e3 * freq) / 1e3, cost: cost == null ? null : Math.round(100 * cost) / 100, held: freq >= HELD || (cost != null && cost < NEAR) };
   } catch { return null; }
 }
 
@@ -115,9 +143,10 @@ export function heroActs(label) {
   if (node.kind !== 'decision' || seatOf(node) !== p.me || k < 0) return;
   // off the solution's line (hero left it earlier in the hand) there is nothing to set the move against, and nothing is charged
   const off = reachOf(p, node) < OFF_LINE;
-  const mix = off ? null : mixOf(p.seg, node, p.hand.hero); const cost = mix ? costOf(p.seg, node, p.hand.hero, k) : null;
+  const mix = off ? null : mixOf(p.seg, node, p.hand.hero); const worth = mix ? worthOf(p.seg, node, p.hand.hero) : null;
+  const cost = worth ? Math.round(100 * (Math.max(...worth) - worth[k])) / 100 : null; const rule = mix ? ruleOf(p, node, mix, worth) : null;
   take(p, node, k);
-  if (mix) Object.assign(p.history[p.history.length - 1].actions.at(-1), { mix, cost }); else if (off) p.history[p.history.length - 1].actions.at(-1).off = true;   // for the page to say how the move stands against the solution
+  if (mix) Object.assign(p.history[p.history.length - 1].actions.at(-1), { mix, cost, rule }); else if (off) p.history[p.history.length - 1].actions.at(-1).off = true;   // for the page to say how the move stands against the solution
   // an error ends the hand where it was made (a fold has ended it already)
   if (mix && !p.done && (mix.find((x) => x.label === label)?.freq ?? 1) < ERROR) p.done = { stopped: true };
   post(p); proceed();

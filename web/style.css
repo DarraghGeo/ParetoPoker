@@ -420,6 +420,21 @@ body.paged{overflow:hidden;height:100dvh}
 .whyd h2{margin:0;font:500 24px/26px var(--mono);display:flex;gap:6px}
 .whyd .grade{pointer-events:none;box-shadow:none;max-width:100%;padding:5px 12px 5px 10px}
 .whyd p{margin:0}
+.whyd > *{flex:none}
+.mistakes .top .meta{font:400 11px/15px var(--mono);color:var(--ink-3);white-space:normal}
+.whyd .myrule{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
+.whyd .myrule .kind{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.whyd .myrule .rec{color:var(--ink);letter-spacing:.02em}
+.whyd .myrule .text{font:500 15px/21px var(--sans);color:var(--ink)}
+.whyd .myrule .says,.whyd .myrule .held{font:400 13px/19px var(--sans);color:var(--ink-2)}
+.whyd .myrule .says b{font-weight:600;color:var(--ink)}
+.whyd .myrule .held.not{color:var(--danger)}
+.mistakes .seg{align-self:flex-start}
+.mistakes .rrow{display:flex;gap:12px;align-items:baseline;width:100%;border:0;background:none;padding:0;text-align:left;color:var(--ink)}
+.mistakes .rrow .pct{flex:none;width:44px;font:500 17px/22px var(--mono)}
+.mistakes .rrow .pct.low{color:var(--danger)}
+.mistakes .rrow .rtext{font:400 13px/19px var(--sans);color:var(--ink)}
+.mistakes .miss b span{font-size:12px}
 .whyd .go{display:flex;justify-content:space-between;gap:16px;padding-top:4px}
 .whyd .go .link{border:0;background:none;padding:6px 2px;font:500 13px/18px var(--sans);color:var(--accent)}
 .peek .slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
@@ -494,6 +509,7 @@ body.paged{overflow:hidden;height:100dvh}
 .sitting .presets .line > span{width:52px}
 .sitting .presets .seg button{padding:7px 10px;font-size:12px}
 .sitting .presets{gap:12px}
+.sitting .stopped{margin:0;padding:10px 12px;border:1px solid var(--line-strong);border-radius:5px;color:var(--ink-2)}
 .sitting .count{margin:0;font:400 12px/16px var(--mono);color:var(--ink-2)}
 .sitting .count.none{color:var(--danger)}
 .sitting .go{display:flex;align-items:center;gap:16px;margin-top:auto}

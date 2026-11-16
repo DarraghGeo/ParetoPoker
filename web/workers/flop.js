@@ -13,7 +13,7 @@ const say = (message, transfer) => self.postMessage(message, transfer ?? []);
 const threadsFor = (wanted) => (threads ??= wanted > 1 ? enableThreads(wanted).catch(() => 1) : Promise.resolve(1));
 
 /** Solve one flop to the end, telling how far along it is; a newer task or a stop ends it early. */
-async function solve({ id, epoch, config, cards, threads: wanted = 1 }) {
+async function solve({ id, epoch, config, cards, threads: wanted = 1, keepUnder }) {
   const mine = ++task; let told = 0; let job = null;
   try {
     const n = await threadsFor(wanted); if (mine !== task) return;
@@ -26,7 +26,7 @@ async function solve({ id, epoch, config, cards, threads: wanted = 1 }) {
     const out = exportedFlop(result);
     if (!out) { say({ type: 'flop', id, epoch, failed: true, why: 'its storage cannot be handed over' }); return; }
     // kept on the device for the next start, then handed to the table
-    await keepFlop({ sig: sigOf(config), spot: { oop: config.oop, ip: config.ip, pot: config.pot, stack: config.stack }, cards: [...cards], used: out.betting, sums: out.sums });
+    await keepFlop({ sig: sigOf(config), spot: { oop: config.oop, ip: config.ip, pot: config.pot, stack: config.stack }, cards: [...cards], used: out.betting, sums: out.sums }, keepUnder);
     say({ type: 'flop', id, epoch, used: out.betting, sums: out.sums, threads: n }, [out.sums.buffer]);
   } catch (error) { say({ type: 'flop', id, epoch, failed: true, why: String(error?.message ?? error) }); } finally { job?.close(); }
 }

@@ -16,10 +16,11 @@ const open = () => (db ??= new Promise((done) => {
 /** What a kept flop was solved for: the two ranges, pot, stack and betting. */
 export const sigOf = (c) => JSON.stringify([c.oop, c.ip, c.pot, c.stack, c.bets, c.raises, c.maxRaises, c.allIn]);
 
-/** Keep a solved flop in place of the one kept. Resolved once the numbers have been copied for storing, so that their
+/** Keep a solved flop in place of the one kept, if it is no larger than `most` bytes (storing copies it once more, which
+ *  a phone short of memory cannot always afford). Resolved once the numbers have been copied for storing, so that their
  *  buffer may then be handed on. */
-export async function keepFlop(record) {
-  const d = await open(); if (!d || record.sums.byteLength > MOST) return;
+export async function keepFlop(record, most = MOST) {
+  const d = await open(); if (!d || record.sums.byteLength > Math.min(most, MOST)) return;
   try { d.transaction(STORE, 'readwrite').objectStore(STORE).put(record, SLOT); } catch { /* not kept */ }
 }
 

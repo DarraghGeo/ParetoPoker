@@ -2,7 +2,9 @@
 // clock running and both time banks, what is being solved and how far along, and the session's chips won from the flop
 // on. flow.js takes the worker's messages and paces them.
 import { loadMistakes } from './mistakes.js';
+import { loadRules } from './rules.js';
 import { configOf, loadSeating } from './seating.js';
+import { lastStop, startTrace } from './trace.js';
 import { BANK, broke, heard, loadDays, loadSession, setup, startHelpers } from './flow.js';
 
 class PlayState {
@@ -20,6 +22,8 @@ class PlayState {
   seated = $state(false);
   mistakes = $state.raw(loadMistakes());
   days = $state.raw(loadDays());
+  rules = $state.raw(loadRules());
+  stopped = $state.raw(lastStop());
   paused = false;
   queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {}; onExplained = () => {};
   helpers = []; needs = []; holding = false; epoch = 0; counted = ''; shownAt = 0;
@@ -28,7 +32,7 @@ class PlayState {
 /** A game with its worker. Hands for the seating last used are solved from the start, behind the set-up, so that Deal with
  *  it unchanged plays at once; nothing is dealt until then (flow.js, `sitDown`). */
 export function createPlayGame() {
-  const game = new PlayState();
+  const game = new PlayState(); startTrace();
   game.worker = new Worker(new URL('../../workers/play.js', import.meta.url), { type: 'module' });
   game.worker.onmessage = ({ data }) => heard(game, data);
   game.worker.onerror = (ev) => { ev.preventDefault?.(); broke(game); };

@@ -25,11 +25,14 @@ export const keepSeating = (seating) => keep(KEY, seating);
 /** The seats an online choice of actions offers on a side, in table order. */
 export const seatsFor = (actions, side) => SEATS.filter((seat) => ALL.some((p) => actions.includes(p.action) && p[side] === seat));
 
-/** Every pairing the seating puts in rotation: its ranges, pot and stack. */
+/** Who raised last before the flop in a preset, by seat: the name its line starts with (nobody in a limped pot). */
+const raiserOf = (p) => (/limps/.test(p.line) ? null : p.action === 'Live' ? 'ip' : p.line.startsWith(`${p.oop} `) ? 'oop' : p.line.startsWith(`${p.ip} `) ? 'ip' : null);
+
+/** Every pairing the seating puts in rotation: its ranges, pot and stack, and who raised before the flop. */
 export function spotsOf(seating) {
   if (seating.pool === 'own') { const c = savedSetup(); return [{ oop: c.oop, ip: c.ip, pot: c.pot, stack: c.stack }]; }
   const s = seating.pool === 'live' ? { actions: ['Live'], ...seating.live } : seating.online;
-  return ALL.filter((p) => s.actions.includes(p.action) && s.oop.includes(p.oop) && s.ip.includes(p.ip)).map((p) => ({ oop: p.ranges.oop, ip: p.ranges.ip, pot: p.pot, stack: p.stack }));
+  return ALL.filter((p) => s.actions.includes(p.action) && s.oop.includes(p.oop) && s.ip.includes(p.ip)).map((p) => ({ oop: p.ranges.oop, ip: p.ranges.ip, pot: p.pot, stack: p.stack, raiser: raiserOf(p) }));
 }
 
 /** The setup Play is dealt with: Study's betting with the table's bet sizes, and the spots in rotation. */

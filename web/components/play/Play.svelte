@@ -23,8 +23,10 @@
   import { pause, sitDown, studyClosed, studyOpened } from '../../lib/play/flow.js';
   import { createPlayGame } from '../../lib/play/game.svelte.js';
   import { gradeOf } from '../../lib/play/grade.js';
+  import { recordOf } from '../../lib/play/rules.js';
   import { handText, seatNames } from '../../lib/play/history.js';
   import { seatingLabel } from '../../lib/play/seating.js';
+  import { mark } from '../../lib/play/trace.js';
 
   const GRADE_MS = 4500;
   const game = createPlayGame();
@@ -51,7 +53,7 @@
   let seen = '';
   $effect(() => {
     const key = st ? `${st.id}|${mine.length}` : ''; if (key === seen) return; seen = key;
-    const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key, study: game.study, href } : null;   // the decision just made, for Study
+    const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key, study: game.study, href, rule: mine.at(-1).rule ?? null } : null;   // the decision just made, for Study
     if (g && !st?.result?.stopped) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);   // at an error that stopped the hand it stays, as the reason
   });
   $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
@@ -75,6 +77,7 @@
   function explainGraded() {
     const g = graded; clearTimeout(gradeTimer); graded = null; if (!g?.study) return;
     why = { ...g, hero: g.study.hero, told: null, failed: false };
+    mark('working out an explanation');
     if (g.level !== 'off') game.worker.postMessage({ type: 'explain', ask: g.key, solve: g.study.share, at: g.study.at, cards: g.study.cards });
   }
   /** On from the drawer to Study for the same decision, its street handed over as solved here. */
@@ -86,7 +89,7 @@
   <main class="table">
     <header>
       <Logo />{#if game.seated}<span class="pool">{st && names.tag ? names.tag : seatingLabel(game.seating)}</span><button type="button" class="session" class:down={perHand >= 0.005} aria-label="The last ten days" onclick={() => (scores = true)} title="What your decisions give up against the solver's play, in chips a hand, on average this session. In all: {game.session.lost.toFixed(2)}. Chips won since the flop: {signed(game.session.net)}">{session}</button>{/if}<span class="grow"></span>
-      {#if game.mistakes.length || reviewing}<button type="button" class="icon" aria-pressed={reviewing} aria-label="Hands with a mistake" title="Hands with a mistake" onclick={() => (reviewing = !reviewing)}><Icon name="flag" /></button>{/if}
+      {#if game.mistakes.length || Object.keys(game.rules.stats).length || reviewing}<button type="button" class="icon" aria-pressed={reviewing} aria-label="Mistakes and rules" title="Mistakes and rules" onclick={() => (reviewing = !reviewing)}><Icon name="flag" /></button>{/if}
       {#if game.seated}
         <button type="button" class="icon" aria-pressed={sitting} aria-label="Set up the table" title="Set up the table" onclick={() => { sitting = !sitting; reviewing = false; }}><Icon name="seats" /></button>
         {#if !sitting && !reviewing}
@@ -94,10 +97,10 @@
           {#if game.study}<a class="icon" id="study" {href} aria-label="Study this spot (or swipe left)" title="Study this spot" onclick={study}><Icon name="study" /></a>{/if}{/if}
       {/if}
     </header>
-    {#if why}<Why hero={why.hero} grade={why} told={why.told} failed={why.failed} onstudy={studyWhy} onclose={() => (why = null)} />{/if}
+    {#if why}<Why hero={why.hero} grade={why} told={why.told} failed={why.failed} rule={why.rule} record={why.rule ? recordOf(game.rules, why.rule.id) : null} onstudy={studyWhy} onclose={() => (why = null)} />{/if}
     {#if scores}<Days days={game.days} onclose={() => (scores = false)} />{/if}
-    {#if reviewing}<Mistakes hands={game.mistakes} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : null)} onclose={() => (reviewing = false)} />
-    {:else if sitting}<Sitting seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
+    {#if reviewing}<Mistakes hands={game.mistakes} rules={game.rules} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : null)} onclose={() => (reviewing = false)} />
+    {:else if sitting}<Sitting stopped={game.seated ? null : game.stopped} seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
     {:else}
       {#if st && names.line}<p class="pre" aria-label="Before the flop"><b>{names.pot}</b> {names.line}</p>{/if}
       <div class="arena">
