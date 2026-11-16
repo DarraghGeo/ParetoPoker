@@ -1,9 +1,9 @@
 // The app's service worker: the newest build whenever there is a network, the last one seen when there is not, and no
 // waiting on the network for what cannot have changed. The built files under assets/ carry a hash of their contents in
 // their names, so one seen once is answered from the cache at once; the page itself and everything else go to the
-// network first (skipping the browser's cache) and are kept for offline. `e989c77208` changes with every build, so a new
+// network first (skipping the browser's cache) and are kept for offline. `b84950135e` changes with every build, so a new
 // build is a new worker, and it takes over at once.
-const CACHE = 'pareto-e989c77208';
+const CACHE = 'pareto-b84950135e';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil((async () => {
   for (const key of await caches.keys()) if (key !== CACHE && key !== 'pareto-fonts' && key !== 'pareto-assets') await caches.delete(key);

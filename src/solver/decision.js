@@ -4,7 +4,7 @@
 import { frameAt } from '../explain/account.js';
 import { evaluator } from '../explain/best.js';
 import { cardsOf, facingOf } from '../combos.js';
-import { equityVs } from './equity.js';
+import { bothEquities } from './equity.js';
 
 
 /** Both players' reach on the real board (the solver may keep one board for several that mirror each other). */
@@ -61,7 +61,7 @@ function readingOf(fs, solution, nodes, id, board, dealt, me) {
   const found = solution.spot.resolveBoard(board); const at = found.board; const river = board.length === 5;
   const { mine, his } = reaches(fs, solution, id, at, found.combos, board, me);
   const values = river ? evaluator(fs, solution, nodes)(frameAt(fs, solution, nodes, id, dealt), 'best') : null;
-  const equity = river ? null : [equityVs(fs, board, mine, his), equityVs(fs, board, his, mine)];
+  const equity = river ? null : bothEquities(fs, board, mine, his);
   return { at, stored: found.combos, river, mine, his, values, equity, view: solution.strategyAt(id, at), made: (combo) => fs.evaluateCards([...board, ...cardsOf(fs, combo)]) };
 }
 

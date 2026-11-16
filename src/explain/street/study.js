@@ -57,7 +57,7 @@ export function study(fs, solution, nodes, id, dealt = []) {
   const closely = perKey((a) => best.closely(f, a, null));
   const equity = once(() => equityVs(fs, f.board, f.mine, f.his));
   const bands = once(() => fifthsOf({ fs, f, ...strategy, featuresOf, equity }));
-  const spread = once(() => nextCards(fs, f)); const parts = once(() => drawParts(fs, f));
+  const spread = once(() => nextCards(fs, f)); const parts = once(() => drawParts(fs, f, equity()));
   const toCall = f.node.invested[1 - f.me] - f.node.invested[f.me];
   return { fs, f, solution, dealt, pot: f.node.pot, toCall, actions: rangeActions(fs, f, nodes, strategy), lineReach: lineReachOf(fs, solution, f),
     sigma, featuresOf, closely, bands, spread, drawParts: parts, equity };
