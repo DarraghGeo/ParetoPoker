@@ -96,11 +96,11 @@ figcaption{font:400 12px/18px var(--sans);color:var(--ink-3)}
 
   <h2>Proposed</h2>
   <figure><div class="spot" id="spotB"></div><p class="note" id="adv"></p><div id="B"></div><div class="key" id="keyB"></div><div class="detail" id="detail">Tap a row to see its hands, each with its equity.</div><figcaption id="capB"></figcaption></figure>
-  <p>The same butterfly, stripped down. The rows are <b>short codes</b> and the two sides sit close together, so the shape of both ranges reads at a glance. No numbers on the rows. A threshold is drawn <b>only where it is exact</b>: the price of a call. Equity is one tap away: a row opens to show its hands, each with its own.</p>
+  <p>The same butterfly, stripped down. The rows are <b>short codes</b> and the two sides sit close together, so the shape of both ranges reads at a glance. No numbers on the chart at all. A threshold is drawn <b>only where it is exact</b>: the price of a call. The numbers are one tap away: a row opens to show its share of each range and its hands, each with its equity.</p>
   <p class="note">TR+ trips or better · 2P two pair · OP overpair · TP top pair · MP middle pair · LP low pair · DR draws · Air nothing</p>
 
   <div class="ask"><b>What I need from you</b><ol>
-    <li>Is this the right amount on the rows: a code and two bars, with the share at the outer ends?</li>
+    <li>Is this the right amount on the rows: a code and two bars, nothing else?</li>
     <li>Are you happy to lose the white lines and the two thin bars?</li>
     <li>When betting, should the chart draw no line (as here), or draw our rule's line and mark it as a rule, not the solver's?</li>
   </ol></div>
@@ -122,8 +122,8 @@ const words = (d) => (d.kinds.includes('bet') ? ['bets', 'checks'] : ['calls', '
 function draw(el, d, proposed) {
   const ROW = proposed ? 33 : 39; el.className = proposed ? 'tight' : '';
   const rows = rowsOf(d); const most = Math.max(...rows.flatMap((r) => [r.w, r.his])); const [loud] = words(d);
-  const bar = (r) => (r.w > 0.002 ? `<span class="side me"><b>${pct(r.w)}</b><span class="bar" style="width:${Math.max(3, (100 * r.w) / most)}%"><i style="width:${100 * (1 - r.loud)}%;background:var(--quiet)"></i><i style="width:${100 * r.loud}%;background:var(--loud)"></i></span></span>` : '<span class="side me"></span>');
-  const his = (r) => (r.his > 0.002 ? `<span class="side him"><span class="bar" style="width:${Math.max(3, (100 * r.his) / most)}%"></span><b>${pct(r.his)}</b></span>` : '<span class="side him"></span>');
+  const bar = (r) => (r.w > 0.002 ? `<span class="side me">${proposed ? '' : `<b>${pct(r.w)}</b>`}<span class="bar" style="width:${Math.max(3, (100 * r.w) / most)}%"><i style="width:${100 * (1 - r.loud)}%;background:var(--quiet)"></i><i style="width:${100 * r.loud}%;background:var(--loud)"></i></span></span>` : '<span class="side me"></span>');
+  const his = (r) => (r.his > 0.002 ? `<span class="side him"><span class="bar" style="width:${Math.max(3, (100 * r.his) / most)}%"></span>${proposed ? '' : `<b>${pct(r.his)}</b>`}</span>` : '<span class="side him"></span>');
   const name = (r) => `<span class="name" title="${r.name}">${proposed ? SHORT[r.lv] : r.name}</span>`;
   // the line: as built, counted up his side to a share of his range; proposed, drawn only for a price, between the rows it separates by their equity
   let line = '';
@@ -136,7 +136,7 @@ function draw(el, d, proposed) {
   const mine = top(rows, (r) => r.w), theirs = top(rows, (r) => r.his); $('adv').innerHTML = `<b>${Math.abs(mine - theirs) < 0.02 ? 'Ranges about even' : mine > theirs ? 'Your range is ahead' : 'His range is ahead'}:</b> top pair or better is ${pct(mine)} of yours and ${pct(theirs)} of his.`;
   el.querySelectorAll('.row').forEach((b) => { b.onclick = () => { open = +b.dataset.lv; render(); }; });
   const r = rows.find((x) => x.lv === open);
-  $('detail').innerHTML = !r ? 'Tap a row to see its hands, each with its equity.' : !r.hands.length ? `<b>${r.name}.</b> You have none; he has ${pct(r.his)} of his range here.` : `<b>${r.name}</b>, ${pct(r.lo)} to ${pct(r.hi)} equity. ${loud[0].toUpperCase() + loud.slice(1)} ${pct(r.loud)} of the time.<br>${r.hands.filter((h) => h.w >= 0.002).sort((a, b) => b.e - a.e).slice(0, 9).map((h) => `<span class="h">${h.cls} <small>${pct(h.e)}</small></span>`).join('')}`;
+  $('detail').innerHTML = !r ? 'Tap a row to see its hands, each with its equity.' : !r.hands.length ? `<b>${r.name}.</b> You have none; he has ${pct(r.his)} of his range here.` : `<b>${r.name}</b>: ${pct(r.w)} of your range, ${pct(r.his)} of his. ${pct(r.lo)} to ${pct(r.hi)} equity. ${loud[0].toUpperCase() + loud.slice(1)} ${pct(r.loud)} of the time.<br>${r.hands.filter((h) => h.w >= 0.002).sort((a, b) => b.e - a.e).slice(0, 9).map((h) => `<span class="h">${h.cls} <small>${pct(h.e)}</small></span>`).join('')}`;
 }
 function render() {
   const d = D[at]; const [loud, quiet] = words(d);
