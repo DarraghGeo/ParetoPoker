@@ -32,6 +32,9 @@ figcaption{font:400 12px/18px var(--sans);color:var(--ink-3)}
 .s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
 /* the butterfly */
 .heads,.bf .row,.thin{display:grid;grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr);gap:8px;align-items:center}
+.tight .heads,.tight .bf .row{grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr);gap:4px}
+.tight .name{font:500 12px/14px var(--mono);letter-spacing:.02em}
+.tight .bf .row{height:30px}.tight .bar{height:24px}
 .heads{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .heads span:first-child{text-align:right}
 .bf{position:relative;display:flex;flex-direction:column;gap:3px}
@@ -93,10 +96,11 @@ figcaption{font:400 12px/18px var(--sans);color:var(--ink-3)}
 
   <h2>Proposed</h2>
   <figure><div class="spot" id="spotB"></div><p class="note" id="adv"></p><div id="B"></div><div class="key" id="keyB"></div><div class="detail" id="detail">Tap a row to see its hands, each with its equity.</div><figcaption id="capB"></figcaption></figure>
-  <p>The same butterfly, with three changes. Each row carries <b>its equity against his range</b>, so the chart answers "how much do I beat" directly. The threshold is drawn <b>only where it is exact</b>: the price of a call. And a row opens to show its hands with their own equity, which is where a top pair with a weak kicker separates from one with a strong kicker.</p>
+  <p>The same butterfly, stripped down. The rows are <b>short codes</b> and the two sides sit close together, so the shape of both ranges reads at a glance. No numbers on the rows. A threshold is drawn <b>only where it is exact</b>: the price of a call. Equity is one tap away: a row opens to show its hands, each with its own.</p>
+  <p class="note">TR+ trips or better · 2P two pair · OP overpair · TP top pair · MP middle pair · LP low pair · DR draws · Air nothing</p>
 
   <div class="ask"><b>What I need from you</b><ol>
-    <li>Is the equity under each row's name the right place for it, or do you want it as a position (rows spaced by equity)?</li>
+    <li>Is this the right amount on the rows: a code and two bars, with the share at the outer ends?</li>
     <li>Are you happy to lose the white lines and the two thin bars?</li>
     <li>When betting, should the chart draw no line (as here), or draw our rule's line and mark it as a rule, not the solver's?</li>
   </ol></div>
@@ -106,7 +110,7 @@ figcaption{font:400 12px/18px var(--sans);color:var(--ink-3)}
 const D = /*DATA*/;
 const $ = (id) => document.getElementById(id); const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' }; const pct = (x) => `${Math.round(100 * x)}%`;
 const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join(' ');
-const LEVEL = ['Trash', 'Draws', 'Low pair', 'Middle pair', 'Top pair', 'Overpair', 'Two pair', 'Set or better']; const ROW = 39;
+const LEVEL = ['Trash', 'Draws', 'Low pair', 'Middle pair', 'Top pair', 'Overpair', 'Two pair', 'Trips or better']; const SHORT = ['Air', 'DR', 'LP', 'MP', 'TP', 'OP', '2P', 'TR+'];
 let at = 0, open = null;
 /** One decision by row: your share, mean equity and action split, his share. Strongest first. */
 function rowsOf(d) {
@@ -116,10 +120,11 @@ function rowsOf(d) {
 }
 const words = (d) => (d.kinds.includes('bet') ? ['bets', 'checks'] : ['calls', 'folds']);
 function draw(el, d, proposed) {
+  const ROW = proposed ? 33 : 39; el.className = proposed ? 'tight' : '';
   const rows = rowsOf(d); const most = Math.max(...rows.flatMap((r) => [r.w, r.his])); const [loud] = words(d);
   const bar = (r) => (r.w > 0.002 ? `<span class="side me"><b>${pct(r.w)}</b><span class="bar" style="width:${Math.max(3, (100 * r.w) / most)}%"><i style="width:${100 * (1 - r.loud)}%;background:var(--quiet)"></i><i style="width:${100 * r.loud}%;background:var(--loud)"></i></span></span>` : '<span class="side me"></span>');
   const his = (r) => (r.his > 0.002 ? `<span class="side him"><span class="bar" style="width:${Math.max(3, (100 * r.his) / most)}%"></span><b>${pct(r.his)}</b></span>` : '<span class="side him"></span>');
-  const name = (r) => `<span class="name">${r.name}${proposed && r.e != null ? `<small>${pct(r.e)} equity</small>` : ''}</span>`;
+  const name = (r) => `<span class="name" title="${r.name}">${proposed ? SHORT[r.lv] : r.name}</span>`;
   // the line: as built, counted up his side to a share of his range; proposed, drawn only for a price, between the rows it separates by their equity
   let line = '';
   if (!proposed) { const t = d.faced ? d.price : 0.70; let below = 0, y = 0; for (let k = rows.length - 1; k >= 0; k--) { const s = rows[k].his; if (below + s >= t) { y = k * ROW + (ROW - 3) * (1 - (s ? (t - below) / s : 0)); break; } below += s; } line = `<div class="cut" style="top:${y}px"><span>${d.faced ? `price: ${pct(t)} of his bets below` : `value: ${pct(t)} of his range below`}</span></div>`; }
