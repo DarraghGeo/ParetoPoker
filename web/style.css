@@ -423,6 +423,9 @@ header .board{min-width:0;flex:0 1 auto}
 .presets .seg button{padding:4px 7px;font:400 11px/14px var(--mono);letter-spacing:.02em}
 .presets .said{margin:2px 0 0;font:400 12px/17px var(--sans);color:var(--ink-3);text-wrap:pretty}
 .seatpick{width:min(340px,calc(100vw - 24px));padding:14px}
+.presets .sizes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:2px}
+.presets .sizes label{display:flex;flex-direction:column;gap:3px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);min-width:0}
+.presets .sizes input{min-width:0;width:100%;font:400 13px/18px var(--mono);padding:5px 7px;text-transform:none;letter-spacing:0}
 .presets .seg button.far{color:var(--ink-3);opacity:.55}
 
 /* a sentence with numbers behind it: they open under it on a tap */
@@ -465,7 +468,7 @@ body.paged{overflow:hidden;height:100dvh}
 .seat.hero .hole span{width:52px;height:70px;font-size:26px}
 .seat .hole .back{background:repeating-linear-gradient(135deg,var(--ink) 0 5px,#2B2F38 5px 6px);border-color:var(--ink)}
 .seat.villain .hole span{width:34px;height:46px;font-size:17px}
-.plate{position:relative;min-width:150px;padding:6px 12px 5px;border:1px solid var(--line-strong);border-radius:6px;background:var(--bg);display:grid;grid-template-columns:1fr auto;gap:0 12px;align-items:baseline}
+.plate{position:relative;min-width:168px;padding:6px 12px 5px;border:1px solid var(--line-strong);border-radius:6px;background:var(--bg);display:grid;grid-template-columns:1fr auto;gap:0 12px;align-items:baseline}
 .seat.acting .plate{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
 .plate .who{display:flex;gap:6px;align-items:baseline;min-width:0}
 .plate .name{font:500 14px/18px var(--sans);color:var(--ink)}

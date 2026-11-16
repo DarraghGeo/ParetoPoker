@@ -11,6 +11,7 @@
   import Presets from '../study/Presets.svelte';
   import Moves from './Moves.svelte';
   import Seat from './Seat.svelte';
+  import Sizes from './Sizes.svelte';
   import { chips } from '../../lib/actions.js';
   import { cellOf } from '../../lib/cards.js';
   import { studyUrl } from '../../lib/links.js';
@@ -43,6 +44,8 @@
   const session = $derived(game.session.hands ? `${signed(game.session.net)} · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : '');
   /** Study for the decision on screen, a turn or river handed over as solved here. */
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
+  /** Other bet sizes, a list for each street: kept as the setup, and the table dealt again. */
+  function sizes(bets) { const config = { ...game.config, bets }; keep(SETUP_KEY, { ...(load(SETUP_KEY) ?? {}), config }); ranges = null; resetup(game, config); }
   /** Other ranges by preflop action and seat (or player type): kept as the setup, and the table dealt again. */
   function seats(part, value) {
     const p = presetAfter(game.config.oop, game.config.ip, part, value); const config = { ...game.config, oop: p.ranges.oop, ip: p.ranges.ip, pot: p.pot, stack: p.stack };
@@ -61,7 +64,8 @@
     </header>
     <Popover bind:open={picking} {anchor} align="right" class="seatpick" label="Ranges by preflop action and seat"><div class="presets">
       <div class="line"><span>Against</span><div class="seg" role="group" aria-label="Live or online players"><button type="button" aria-pressed={pool === 'live'} onclick={() => { if (pool !== 'live') seats('action', 'Live'); }}>Live</button><button type="button" aria-pressed={pool === 'online'} onclick={() => { if (pool !== 'online') seats('action', 'SRP'); }}>Online</button></div></div>
-      <Presets {sel} {pool} onchoose={seats} /></div></Popover>
+      <Presets {sel} {pool} onchoose={seats} />
+      <Sizes config={game.config} onchange={sizes} /></div></Popover>
     <div class="arena">
       <div class="felt" aria-hidden="true"></div>
       <Seat name="Villain" tag={names[st ? other(st.seat) : 'oop']} cards={st?.villain ?? null} behind={st ? st.behind[1 - me] : game.config.stack} clock={clockOf('villain')} bank={game.bank.villain} dealer={st ? st.seat === 'oop' : false} />
