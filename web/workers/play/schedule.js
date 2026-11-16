@@ -3,6 +3,7 @@
 // streets, the most needed first (the street the hand on screen waits for, the rest of its next street, then the likeliest
 // turns of the hands ahead), stepped one chunk at a time.
 import { flopFrom, lineEnds, streetJob } from '../../solver/jobs.js';
+import { keptFlop, sigOf } from '../../solver/kept.js';
 import { pause } from '../../solver/progress.js';
 import { dealHand } from './deal.js';
 import { current, play, say, slot } from './state.js';
@@ -62,7 +63,7 @@ const GUESS = 150 * 2 ** 20;
 /** Whether another hand may be dealt ahead: fewer than the number kept, and (past the first) within what the device can hold. */
 function room() {
   const ahead = play.hands.filter((h) => h !== current());
-  if (play.held || ahead.length >= AHEAD || play.fails >= FAILS) return false;
+  if (play.held || play.loading || ahead.length >= AHEAD || play.fails >= FAILS) return false;
   const each = play.typical || GUESS; const kept = ahead.reduce((t, h) => t + (h.bytes ?? each), 0);
   return !ahead.length || kept + each <= (play.config.budget ?? Infinity);
 }
@@ -83,6 +84,25 @@ export function dealAhead() {
     const hand = dealHand(play.config, ++play.ids); play.hands.push(hand);
     say({ type: 'need', id: hand.id, epoch: play.epoch, config: hand.config, cards: hand.board.slice(0, 3) });
   }
+}
+
+/** The flop kept on the device from the last time, if it was solved for one of this setup's spots with its betting: a
+ *  hand is dealt onto it at once (its own hole cards, turn and river), ahead of anything solved now. */
+export async function takeKept() {
+  const epoch = play.epoch; play.loading = true; let kept = null;
+  try { kept = await keptFlop(); } catch { kept = null; }
+  if (epoch !== play.epoch) return;
+  play.loading = false;
+  const spots = play.config.spots?.length ? play.config.spots : [{ oop: play.config.oop, ip: play.config.ip, pot: play.config.pot, stack: play.config.stack }];
+  const spot = kept && spots.find((s) => sigOf({ ...play.config, ...s }) === kept.sig);
+  if (!spot) return;
+  try {
+    const hand = dealHand(play.config, ++play.ids, { spot, flop: kept.cards });
+    if (hand.hero < 0 || hand.villain < 0) return;
+    hand.flop = flopFrom(hand.config, kept.cards, kept.used, kept.sums); if (!hand.flop) return;
+    hand.bytes = kept.sums.byteLength; play.typical = hand.bytes; play.hands.push(hand);
+    status(); hooks.solved({ hand });
+  } catch { /* solved from scratch instead */ }
 }
 
 /** A flop back from a flop worker: read into its hand, or the hand dropped where it could not be solved. */

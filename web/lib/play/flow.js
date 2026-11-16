@@ -40,7 +40,7 @@ function runClock(game, who, total, onOut) {
   stopClock(game); const from = performance.now(); const bank = game.bank[who]; game.clock = { who, left: total, total, bank: false };
   let from0 = from;
   game.tick = setInterval(() => {
-    if (game.paused) { from0 += 250; return; }   // Study is open: nobody's time runs
+    if (game.paused) { from0 += 250; return; }   // Study or a card over the table is open: nobody's time runs
     const used = (performance.now() - from0) / 1000;
     if (used < total) { game.clock = { who, left: total - used, total, bank: false }; return; }
     const left = Math.max(0, bank - (used - total)); game.bank = { ...game.bank, [who]: left };
@@ -79,14 +79,15 @@ const thinking = (game) => Math.max(0, 3000 + Math.random() * 5000 - (performanc
 
 /** Show the steps waiting, each after the time it should take. */
 function pump(game) {
-  if (game.busy || !game.queue.length) return;
+  if (game.busy || game.paused || !game.queue.length) return;
   const data = game.queue.shift(); const prev = game.state; let delay = 0;
   if (prev && prev.id === data.id) {
     if (moves(data, 'villain') > moves(prev, 'villain')) { delay = thinking(game); if (game.clock.who !== 'villain') runClock(game, 'villain', VILLAIN_SHOT); }
     else if (data.history.length > prev.history.length || (data.result && !prev.result)) delay = DEAL_MS;
   }
   game.busy = true;
-  game.timer = setTimeout(() => { game.busy = false; show(game, data); pump(game); }, delay);
+  // a step that comes due while the table stands still waits at the front of the line
+  game.timer = setTimeout(() => { game.busy = false; if (game.paused) { game.queue.unshift(data); return; } show(game, data); pump(game); }, delay);
 }
 
 function queued(game, data) {
@@ -141,6 +142,9 @@ export function studyClosed(game) {
   if (!game.holding) return; game.holding = false;
   startHelpers(game); game.worker.postMessage({ type: 'resume' });
 }
+
+/** The table stands still (Study, or a card over it, is open), or moves on again: clocks stop and no step is shown meanwhile. */
+export function pause(game, on) { if (game.paused === on) return; game.paused = on; if (!on) pump(game); }
 
 function clear(game) { clearTimeout(game.timer); stopClock(game); Object.assign(game, { queue: [], busy: false, lastKey: '', state: null, timedOut: false, error: '' }); }
 

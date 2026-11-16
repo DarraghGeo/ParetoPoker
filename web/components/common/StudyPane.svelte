@@ -27,7 +27,7 @@
   export function handedOver(data) { if (data.ask === asked?.url) adopt(game, { ...data, line: asked.line }); }
 
   const close = () => { if (history.state?.study) history.back(); else studying = false; };
-  const mayTurn = (t, ev) => !busy() && !ev.target.closest('input, textarea, select');
+  const mayTurn = (t, ev) => !busy() && !ev.target.closest('input, textarea, select, .peek, .peek-out');   // a card over the page has its own slides
   onDestroy(() => game?.worker.terminate());
 </script>
 <svelte:window onpopstate={() => (studying = !!history.state?.study)} />

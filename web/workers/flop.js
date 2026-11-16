@@ -4,6 +4,7 @@
 // that share its memory, which is what makes a flop quick on a phone; where it is not, it runs on one, as before.
 import { enableThreads } from 'poker-flopsolve/threads';
 import { exportedFlop, flopJob } from '../solver/jobs.js';
+import { keepFlop, sigOf } from '../solver/kept.js';
 import { pause } from '../solver/progress.js';
 
 let task = 0; let threads = null;
@@ -24,6 +25,8 @@ async function solve({ id, epoch, config, cards, threads: wanted = 1 }) {
     }
     const out = exportedFlop(result);
     if (!out) { say({ type: 'flop', id, epoch, failed: true, why: 'its storage cannot be handed over' }); return; }
+    // kept on the device for the next start, then handed to the table
+    await keepFlop({ sig: sigOf(config), spot: { oop: config.oop, ip: config.ip, pot: config.pot, stack: config.stack }, cards: [...cards], used: out.betting, sums: out.sums });
     say({ type: 'flop', id, epoch, used: out.betting, sums: out.sums, threads: n }, [out.sums.buffer]);
   } catch (error) { say({ type: 'flop', id, epoch, failed: true, why: String(error?.message ?? error) }); } finally { job?.close(); }
 }

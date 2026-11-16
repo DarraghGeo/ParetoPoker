@@ -19,7 +19,7 @@
   import { cellOf } from '../../lib/cards.js';
   import { studyUrl } from '../../lib/links.js';
   import { route } from '../../lib/route.svelte.js';
-  import { sitDown, studyClosed, studyOpened } from '../../lib/play/flow.js';
+  import { pause, sitDown, studyClosed, studyOpened } from '../../lib/play/flow.js';
   import { createPlayGame } from '../../lib/play/game.svelte.js';
   import { gradeOf } from '../../lib/play/grade.js';
   import { handText, seatNames } from '../../lib/play/history.js';
@@ -52,7 +52,9 @@
     const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key, study: game.study, href } : null;   // the decision just made, for Study
     if (g) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);
   });
-  $effect(() => { game.paused = studying; if (studying) studyOpened(game); else studyClosed(game); });
+  $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
+  // nothing moves while Study or a card over the table is open: clocks stop, and villain's next action waits
+  $effect(() => pause(game, studying || !!peek || scores || reviewing || (sitting && game.seated)));
   // a newer build of the app may be taken up while nothing has been dealt
   $effect(() => { route.idle = !game.seated; return () => { route.idle = true; }; });
   const clockOf = (who) => (game.clock.who === who && !st?.result ? game.clock : null);

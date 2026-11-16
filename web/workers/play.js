@@ -1,7 +1,7 @@
 // Play: full hands against the solved villain, off the main thread (see play/: dealing, solving ahead, the hand). The
 // flops of the hands ahead are solved in the page's flop workers (workers/flop.js) and handed in here.
 import { exported, exportedFlop } from '../solver/jobs.js';
-import { dealAhead, gotFlop, hold, onSolved, pump, resume, status } from './play/schedule.js';
+import { dealAhead, gotFlop, hold, onSolved, pump, resume, status, takeKept } from './play/schedule.js';
 import { current, play, say } from './play/state.js';
 import { heroActs, proceed, start } from './play/table.js';
 
@@ -23,7 +23,7 @@ function share(solve) {
 }
 
 const handlers = {
-  setup(data) { Object.assign(play, { config: data.config, hands: [], playing: null, jobs: new Map(), epoch: data.epoch ?? play.epoch + 1, held: false, typical: 0, wants: false, fails: 0 }); dealAhead(); pump(); status(); },
+  setup(data) { Object.assign(play, { config: data.config, hands: [], playing: null, jobs: new Map(), epoch: data.epoch ?? play.epoch + 1, held: false, typical: 0, wants: false, fails: 0, loading: false }); status(); takeKept().finally(() => { if (data.epoch == null || data.epoch === play.epoch) { dealAhead(); pump(); status(); } }); },
   flop(data) { gotFlop(data); },
   hold() { hold(); },
   resume() { resume(); },

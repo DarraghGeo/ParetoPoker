@@ -3,12 +3,12 @@
 // their names: this build's are fetched once, when the worker is installed, and answered from the cache from then on
 // (the ones of builds before are thrown away). The page itself and everything else go to the network first (skipping
 // the browser's cache), for two seconds at most before the copy kept is shown instead, and are kept for offline.
-// `f3a33d80a6` changes with every build, so a new build is a new worker, and it takes over at once.
+// `f550a1c21e` changes with every build, so a new build is a new worker, and it takes over at once.
 // Everything of the app's own is answered with the headers that make the page cross-origin isolated, which GitHub Pages
 // cannot send itself: that is what lets a solve be split across threads (workers/flop.js). The typefaces, from elsewhere,
 // are asked for with CORS so that they still load on such a page.
-const CACHE = 'pareto-f3a33d80a6';
-const ASSETS = ["assets/Play-kUXPMESY.js","assets/StudyPage-BTWBuz_u.js","assets/bitval-B2XgIrqC.js","assets/evaluator-DLBKA-ow.js","assets/evaluator-DzLyv7ye.js","assets/flop-BFh9Jpis.js","assets/game.svelte-CKqmfVsq.js","assets/index-C27dGCtw.js","assets/index-CJIAyfNx.css","assets/play-DOyQpman.js","assets/rolldown-runtime-BWaJ3C7D.js","assets/study-CReMYlyh.js"];
+const CACHE = 'pareto-f550a1c21e';
+const ASSETS = ["assets/Play-DBsvJJO9.js","assets/StudyPage-DVzZ6Mq3.js","assets/bitval-B2XgIrqC.js","assets/evaluator-D4cGupCh.js","assets/evaluator-DzLyv7ye.js","assets/flop-DhdFjw0G.js","assets/game.svelte-Bq1gpRuM.js","assets/index-CJIAyfNx.css","assets/index-DYh15GSK.js","assets/play-Cs0t7prt.js","assets/rolldown-runtime-BWaJ3C7D.js","assets/study-CReMYlyh.js"];
 const FONTS = 'pareto-fonts-2';
 const KEPT = [CACHE, FONTS, 'pareto-assets'];
 /** How long the page waits on the network before the copy kept is shown, in milliseconds. */
