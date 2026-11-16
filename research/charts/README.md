@@ -161,3 +161,14 @@ On the flop the same: trash follows "he folds to this hand" at +0.41 (90%) and h
 - From the value study: once the hands are right, using one size in place of two gives up 0.02% of the pot on the turn.
 
 So the ladder shows which sizes are possible (slide the value line up: a bigger bet needs value above a higher line), not which one the solution takes; and which one it takes matters little.
+
+## Experiment 10. Does the bet frequency take a few shapes inside one bar? (`exp10.py`)
+
+4,213 bars of the strength ladder on 84 turn spots (betting decisions; a bar is a level holding 4% of the range or more). Each bar's hands sorted, cut in five equal parts, the bet frequency of each part named.
+
+- **Three shapes cover three quarters of bars** when a bar is sorted by its own line (ahead now for top pair and up, still to come below): all bet or none bet 31%, rising towards the high end 36%, flat mix 7%. Falling 8%, both ends 8%, middle 10%.
+- **Sorted by plain equity the shapes are muddier** (rising 25%, falling 16%): the level's own line is the better axis, most of all for other pair, draws and trash (rising 19 to 39%, 17 to 36%, 27 to 44%).
+- **Polar inside a bar is rare** (8%). The polar shape of a betting range lies across the bars, not inside one.
+- **The rise is a slope, not a step.** Mean frequency from the low end to the high end, mixed bars: top pair 28 to 60%, draws 46 to 85%, other pair 20 to 48%, trash 27 to 55%, two pair 35 to 64%. Sets and better are flat (54 to 53%). Only 43% of parts are all-or-nothing, and spreading a bar's frequency evenly along it rebuilds the five parts better (11 to 15 points out) than filling from the strong end (11 to 23).
+- **The shape of one bar is hard to call beforehand**: 31% from the level alone, 42% with how often the range bets, 54% knowing how often the bar itself bets (the commonest shape: 25%).
+- By level: draws are full in 42% of bars and bet 78% overall; other pair and trash are almost never full (1%) and empty in a quarter; top pair is the level most often rising (41%).
