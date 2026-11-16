@@ -10,8 +10,10 @@ function addReplies(out, x, c, pc) {
 }
 
 /** A bet or raise set against the quiet action (checking, or calling a bet): where its gain comes from, in % of the pot,
- *  by his answer: his folds, his calls, his raises. The three add to what the wager is worth more than the quiet action. */
+ *  by his answer: his folds, his calls, his raises. The three add to what the wager is worth more than the quiet action.
+ *  Worked out on the turn and the river only. */
 function addGains(out, s, x, c, a, pc) {
+  if (s.f.board.length < 4) return;   // not on the flop: it walks every turn and river four times over, the better part of a minute
   const q = s.actions.findIndex((y) => y.kind === 'check'); const quiet = q >= 0 ? q : s.actions.findIndex((y) => y.kind === 'call');
   const set = quiet >= 0 && !['check', 'call', 'fold'].includes(out.kind) ? s.against(a, quiet) : null; if (!set) return;
   const gains = { folds: 0, calls: 0, raises: 0, quiet };
