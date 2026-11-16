@@ -61,7 +61,9 @@
   const signed = (x) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${chips(Math.abs(x))}`;
   /** EV given up: always a loss, so shown with its minus and to the cent (a good decision costs nothing). */
   const ev = (x) => `EV ${x >= 0.005 ? '−' : ''}${x.toFixed(2)}`;
-  const session = $derived(game.session.hands ? `${ev(game.session.lost)} · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : '');
+  /** The session in a line: what a hand gives up on average (a total would only ever grow), and how many were played. */
+  const perHand = $derived(game.session.hands ? game.session.lost / game.session.hands : 0);
+  const session = $derived(game.session.hands ? `${ev(perHand)} a hand · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : '');
   /** Study for the decision on screen, its street handed over as solved here. */
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
   /** Study for the move just graded: its street handed over as solved here. */
@@ -72,7 +74,7 @@
   <div class="rule"></div>
   <main class="table">
     <header>
-      <Logo />{#if game.seated}<span class="pool">{st && names.tag ? names.tag : seatingLabel(game.seating)}</span><span class="session" class:down={game.session.lost >= 0.005} title="What your decisions gave up against the solver's play, in chips, this session. Chips won since the flop: {signed(game.session.net)}">{session}</span>{/if}<span class="grow"></span>
+      <Logo />{#if game.seated}<span class="pool">{st && names.tag ? names.tag : seatingLabel(game.seating)}</span><span class="session" class:down={perHand >= 0.005} title="What your decisions give up against the solver's play, in chips a hand, on average this session. In all: {game.session.lost.toFixed(2)}. Chips won since the flop: {signed(game.session.net)}">{session}</span>{/if}<span class="grow"></span>
       {#if game.mistakes.length || reviewing}<button type="button" class="icon" aria-pressed={reviewing} aria-label="Hands with a mistake" title="Hands with a mistake" onclick={() => (reviewing = !reviewing)}><Icon name="flag" /></button>{/if}
       {#if game.seated}
         <button type="button" class="icon" aria-pressed={sitting} aria-label="Set up the table" title="Set up the table" onclick={() => { sitting = !sitting; reviewing = false; }}><Icon name="seats" /></button>
