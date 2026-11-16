@@ -12,7 +12,7 @@ export function askOnce(game, key, message) {
 
 export function clearAnswers(game) {
   for (const map of [game.told, game.looked, game.ranged, game.whatif]) map.clear();
-  game.asked.clear();
+  game.asked.clear(); game.parts = null;   // a finer solve of the same decision has its own numbers
 }
 
 /** The worker's answers, kept where the panels look for them. */

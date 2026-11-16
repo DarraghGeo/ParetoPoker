@@ -1,6 +1,4 @@
 // Moving Study on: solving the version on screen, going between versions and decisions, showing a decision, picking a hand.
-import { RangeManager } from 'poker-rangeman';
-import { profile } from '../../../src/explain/profile.js';
 import { cellOf } from '../cards.js';
 import { surveyOf } from '../hands.js';
 import { START, boardCards, conf, placeOf, version, versionOf } from './versions.svelte.js';
@@ -24,9 +22,8 @@ function clearShown(game) {
 
 /** What the setup's ranges are on the board, in words (a re-solved street's ranges have none). */
 function describeSpot(game, v) {
-  const job = game.job;
   if (v.fixed) return;
-  profile(RangeManager, { oop: v.oop, ip: v.ip, board: boardCards(conf(game).board) }).then((p) => { if (job === game.job) game.spot = p; });
+  game.worker.postMessage({ type: 'profile', job: game.job, oop: v.oop, ip: v.ip, board: boardCards(conf(game).board) });
 }
 
 /** Solve the version on screen. `keep`: stay on the same decision and hand (another version of the same spot). */

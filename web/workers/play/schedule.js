@@ -7,6 +7,8 @@ import { pause } from '../../solver/progress.js';
 import { dealHand } from './deal.js';
 import { current, play, say, slot } from './state.js';
 
+/** A setup whose flops fail this many times running is given up on. */
+const FAILS = 3;
 /** Hands kept solved ahead of the one being played. */
 const AHEAD = 3;
 /** Turns solved for a hand still waiting: its likeliest lines. */
@@ -27,6 +29,14 @@ function rankOf(hand, k, end, i) {
   return play.playing.waiting === end.id ? 100 : 80 - i;
 }
 
+/** Whether a line's end can still be reached from the decision the hand on screen stands at. */
+function reachable(hand, base, end) {
+  if (hand !== current()) return true;
+  const nodes = base.solved.nodes; const from = play.playing.seg.node;
+  for (let at = end; at >= 0; at = nodes[at].parent) if (at === from) return true;
+  return false;
+}
+
 /** The solves one hand wants, each with how much it matters. */
 function wantedFor(hand, k) {
   if (hand === current() && play.playing.done) return [];
@@ -36,7 +46,7 @@ function wantedFor(hand, k) {
   base.solved.ends ??= lineEnds(base.solved, cards);
   return base.solved.ends.flatMap((end, i) => {
     const at = slot(base.key, end.id);
-    if (hand.next.has(at) || (hand !== current() && i >= WAITING_LINES)) return [];
+    if (hand.next.has(at) || (hand !== current() && i >= WAITING_LINES) || !reachable(hand, base, end.id)) return [];
     return [[rankOf(hand, k, end, i), keyed(`${hand.id}|${at}`, () => ({ hand, at, ...streetJob(hand.config, base.solved, end.id, cards) }))]];
   });
 }
@@ -52,7 +62,7 @@ const GUESS = 150 * 2 ** 20;
 /** Whether another hand may be dealt ahead: fewer than the number kept, and (past the first) within what the device can hold. */
 function room() {
   const ahead = play.hands.filter((h) => h !== current());
-  if (play.held || ahead.length >= AHEAD) return false;
+  if (play.held || ahead.length >= AHEAD || play.fails >= FAILS) return false;
   const each = play.typical || GUESS; const kept = ahead.reduce((t, h) => t + (h.bytes ?? each), 0);
   return !ahead.length || kept + each <= (play.config.budget ?? Infinity);
 }
@@ -79,15 +89,17 @@ export function dealAhead() {
 export function gotFlop(data) {
   const hand = data.epoch === play.epoch ? play.hands.find((h) => h.id === data.id) : null; if (!hand || hand.flop) return;
   let flop = null; if (!data.failed) { try { flop = flopFrom(hand.config, hand.board.slice(0, 3), data.used, data.sums); } catch { flop = null; } }
-  if (flop) { hand.flop = flop; hand.bytes = data.sums.byteLength; play.typical = hand.bytes; }
-  else { play.hands.splice(play.hands.indexOf(hand), 1); if (!play.hands.some((h) => h.flop) && !current()) say({ type: 'error', message: `This setup cannot be solved${data.why ? ` (${data.why})` : ''}.` }); }
+  if (flop) { hand.flop = flop; hand.bytes = data.sums.byteLength; play.typical = hand.bytes; play.fails = 0; }
+  else { play.fails++; play.hands.splice(play.hands.indexOf(hand), 1); if (!play.hands.some((h) => h.flop) && !current()) say({ type: 'error', message: `This setup cannot be solved${data.why ? ` (${data.why})` : ''}.` }); }
   status(); hooks.solved({ hand }); pump();
 }
 
 /** Step one solve: the most needed. False when nothing is wanted. */
 function stepOnce(shown) {
   dealAhead();
-  const job = wanted()[0]; if (!job) return false;
+  const list = wanted(); const job = list[0];
+  if (play.jobs.size > list.length) { const live = new Set(list); for (const [key, j] of play.jobs) if (!live.has(j)) play.jobs.delete(key); }   // lines the hand has left behind
+  if (!job) return false;
   let result; try { result = job.step(); } catch { result = { failed: true }; }
   if (result) { keep(job, result); status(); hooks.solved(job); return true; }
   if (Date.now() - shown.at > 200) { shown.at = Date.now(); say({ type: 'progress', street: job.street, ahead: job.hand !== current(), done: job.done() }); }

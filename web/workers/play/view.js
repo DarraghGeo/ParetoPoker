@@ -47,6 +47,8 @@ const choicesAt = (node, me) => node.edges.map((e) => ({ label: e.label, kind: e
 /** Tell the page where the hand stands. */
 export function post(p) {
   const node = p.done ? null : decisionOf(p.seg); const toAct = !!node && (node.seat === 'oop' ? 0 : 1) === p.me;
+  const key = [p.step, p.waiting != null, toAct, !!p.done].join('|'); if (key === p.posted) return;   // told already
+  p.posted = key;
   const shown = p.done?.showdown ? p.hand.board : boardOf(p.seg);
   say({
     type: 'state', id: p.hand.id, step: p.step, stack: p.hand.config.stack, spot: { oop: p.hand.config.oop, ip: p.hand.config.ip, pot: p.hand.config.pot, stack: p.hand.config.stack }, seat: p.hand.seat, hero: fs.formatCombo(p.hand.hero), villain: p.done?.showdown ? fs.formatCombo(p.hand.villain) : null,

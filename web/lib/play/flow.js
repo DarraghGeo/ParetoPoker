@@ -14,7 +14,7 @@ const NO_CLOCK = { who: null, left: 0, total: 1, bank: false };
 /** Today's session: chips won and hands played (a new day starts a new one). */
 export function loadSession() {
   const saved = load(KEY);
-  return saved?.day === dayKey() ? saved : { day: dayKey(), net: 0, hands: 0, last: 0 };
+  return saved?.day === dayKey() ? { day: saved.day, net: saved.net, hands: saved.hands } : { day: dayKey(), net: 0, hands: 0 };
 }
 
 function stopClock(game) { clearInterval(game.tick); game.tick = null; game.clock = NO_CLOCK; }
@@ -28,7 +28,7 @@ function runClock(game, who, total, onOut) {
     const left = Math.max(0, bank - (used - total)); game.bank = { ...game.bank, [who]: left };
     if (left > 0) { game.clock = { who, left, total: BANK, bank: true }; return; }
     stopClock(game); onOut?.();
-  }, 100);
+  }, 250);
 }
 
 /** Out of time: check if hero can, else fold. */
@@ -39,14 +39,14 @@ function timedOut(game) {
 
 /** A finished hand counted once. */
 function counted(game, data) {
-  if (!data.result || game.session.last === data.id) return;
-  Object.assign(game.session, { last: data.id, net: game.session.net + data.result.net, hands: game.session.hands + 1 });
+  const hand = `${data.epoch}|${data.id}`; if (!data.result || game.counted === hand) return;
+  game.counted = hand; Object.assign(game.session, { net: game.session.net + data.result.net, hands: game.session.hands + 1 });
   keep(KEY, game.session);
 }
 
 /** Put a step on the table, and start the clock it calls for. */
 function show(game, data) {
-  game.state = data; stopClock(game);
+  game.state = data; game.shownAt = performance.now(); stopClock(game);
   if (data.study) game.study = { ...data.study, hero: data.hero };
   counted(game, data);
   if (data.result) return;
@@ -55,15 +55,16 @@ function show(game, data) {
 }
 
 const moves = (st, who) => st.history.reduce((t, h) => t + h.actions.filter((a) => a.who === who).length, 0);
-/** How long villain takes over an action, in milliseconds: three to eight seconds, at random. */
-const thinking = () => 3000 + Math.random() * 5000;
+/** How much longer villain takes over an action, in milliseconds: three to eight seconds in all, at random, of which the
+ *  time the table has already stood waiting (a street being solved, say) is counted. */
+const thinking = (game) => Math.max(0, 3000 + Math.random() * 5000 - (performance.now() - (game.shownAt ?? 0)));
 
 /** Show the steps waiting, each after the time it should take. */
 function pump(game) {
   if (game.busy || !game.queue.length) return;
   const data = game.queue.shift(); const prev = game.state; let delay = 0;
   if (prev && prev.id === data.id) {
-    if (moves(data, 'villain') > moves(prev, 'villain')) { delay = thinking(); if (game.clock.who !== 'villain') runClock(game, 'villain', VILLAIN_SHOT); }
+    if (moves(data, 'villain') > moves(prev, 'villain')) { delay = thinking(game); if (game.clock.who !== 'villain') runClock(game, 'villain', VILLAIN_SHOT); }
     else if (data.history.length > prev.history.length || (data.result && !prev.result)) delay = DEAL_MS;
   }
   game.busy = true;
@@ -81,17 +82,30 @@ const HELPERS = PHONE ? 1 : Math.max(1, Math.min(2, (globalThis.navigator?.hardw
 
 /** Give waiting flops to the flop workers that are free. */
 function assign(game) {
-  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.worker.postMessage({ type: 'solve', ...need }); }
+  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', ...need }); }
 }
 function fromHelper(game, h, data) {
+  if (data.epoch !== game.epoch) return;   // a solve stopped with the setup it was for
   if (data.type === 'progress') { if (!game.state && data.id === game.needs.first) game.progress = { done: data.done }; return; }
   h.busy = null; game.worker.postMessage(data, data.sums ? [data.sums.buffer] : []); assign(game);
 }
-/** The flop workers, started afresh (any solve under way thrown away). */
+/** A flop worker that broke: its flop is told as failed, so the table does not wait for it for ever. */
+function helperBroke(game, h, why) {
+  const need = h.need; h.busy = null; h.need = null;
+  if (need?.epoch === game.epoch) game.worker.postMessage({ type: 'flop', id: need.id, epoch: need.epoch, failed: true, why });
+  assign(game);
+}
+function helper(game) {
+  const h = { worker: new Worker(new URL('../../workers/flop.js', import.meta.url), { type: 'module' }), busy: null, need: null };
+  h.worker.onmessage = ({ data }) => fromHelper(game, h, data);
+  h.worker.onerror = (ev) => { ev.preventDefault?.(); helperBroke(game, h, 'the solver stopped'); };
+  return h;
+}
+/** The flop workers ready for a new setup: any solve under way is stopped, and the workers are kept (or started). */
 export function startHelpers(game) {
-  for (const h of game.helpers) h.worker.terminate();
   game.needs = []; game.needs.first = null;
-  game.helpers = Array.from({ length: HELPERS }, () => { const h = { worker: new Worker(new URL('../../workers/flop.js', import.meta.url)), busy: null }; h.worker.onmessage = ({ data }) => fromHelper(game, h, data); return h; });
+  for (const h of game.helpers) { h.worker.postMessage({ type: 'stop' }); h.busy = null; h.need = null; }
+  while (game.helpers.length < HELPERS) game.helpers.push(helper(game));
 }
 
 /** Study opens beside the table: on a phone the hands solved ahead and the flop being solved are let go of first, so that
@@ -116,24 +130,29 @@ export function act(game, label) { stopClock(game); game.worker.postMessage({ ty
 
 /** Sit down with a seating: kept for next time, the table cleared, and the worker set up with its spots and bet sizes. */
 export function sitDown(game, seating) {
-  const same = JSON.stringify(seating) === JSON.stringify(game.seating); keepSeating(seating); game.seating = seating;
+  const config = configOf(seating); const same = sameSetup(config, game.config); keepSeating(seating); game.seating = seating;
   const first = !game.seated; game.seated = true;
-  if (same && first) deal(game); else if (!same) resetup(game, configOf(seating));   // the same table again plays on with what is solved
+  if (same && first) deal(game); else if (!same) { resetup(game, config); game.worker.postMessage({ type: 'deal' }); }   // the same table again plays on with what is solved
 }
+/** Whether two setups are solved alike: the same spots in rotation and the same betting, however they were chosen. */
+const sameSetup = (a, b) => { const of = (c) => JSON.stringify([c.spots, c.bets, c.raises, c.maxRaises, c.allIn]); return of(a) === of(b); };
 
 /** Play on with another setup: the table cleared, and the worker set up again. */
 export function resetup(game, config) {
   clear(game); game.study = null; game.config = config; game.status = null; game.progress = null; startHelpers(game);
-  game.worker.postMessage({ type: 'setup', config: JSON.parse(JSON.stringify(config)) });
+  setup(game);
 }
+/** Set the worker up with the game's setup: a new epoch, so that what the one before still says is dropped. */
+export function setup(game) { game.epoch++; game.worker.postMessage({ type: 'setup', epoch: game.epoch, config: JSON.parse(JSON.stringify(game.config)) }); }
+/** The worker broke: said plainly, with the clocks stopped. */
+export function broke(game) { clearTimeout(game.timer); stopClock(game); game.error = 'the solver stopped'; }
 
 const HEARD = {
   need: (game, data) => { game.needs.first ??= data.id; game.needs.push({ id: data.id, epoch: data.epoch, config: data.config, cards: data.cards }); assign(game); },
   export: (game, data) => game.onExport(data),
   status: (game, data) => { game.status = data; },
   progress: (game, data) => { game.progress = data; },
-  ready: (game) => { if (game.seated && !game.state && !game.queue.length && !game.busy) deal(game); },
   error: (game, data) => { game.error = data.message; },
   state: (game, data) => { if (game.seated) queued(game, data); },
 };
-export const heard = (game, data) => HEARD[data.type]?.(game, data);
+export const heard = (game, data) => { if (data.epoch === game.epoch || data.type === 'export') HEARD[data.type]?.(game, data); };

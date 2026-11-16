@@ -1,4 +1,4 @@
-// A spot handed over in the address (Train's or Play's "study this spot"): the setup it gives, and where to open in it.
+// A spot handed over in the address (Play's "study this spot"): the setup it gives, and where to open in it.
 import { betsOf, boardOf, goodBoard, maxRaisesOf, raisesOf } from './form.js';
 
 const CARDS = /[2-9TJQKA][shdc]/g;

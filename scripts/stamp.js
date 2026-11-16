@@ -1,5 +1,5 @@
 // The build's version: a hash of everything it emits, stamped where the page checks for a newer build (`__V__` in the
-// pages and the service worker) and written to version.json, which the pages fetch to compare.
+// pages and the service worker, which is also given the list of the build's files under assets/) and written to version.json, which the pages fetch to compare.
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 
@@ -20,9 +20,9 @@ export function stamp({ worker, moved = {} }) {
   return {
     name: 'pareto-stamp', enforce: 'post',
     generateBundle(_, bundle) {
-      const version = versionOf(bundle);
+      const version = versionOf(bundle); const assets = JSON.stringify(Object.keys(bundle).filter((name) => name.startsWith('assets/')).sort());
       for (const file of Object.values(bundle)) if (file.fileName.endsWith('.html')) file.source = String(file.source).replaceAll('__V__', version);
-      this.emitFile({ type: 'asset', fileName: 'sw.js', source: readFileSync(worker, 'utf8').replaceAll('__V__', version) });
+      this.emitFile({ type: 'asset', fileName: 'sw.js', source: readFileSync(worker, 'utf8').replaceAll('__V__', version).replace('__ASSETS__', assets) });
       this.emitFile({ type: 'asset', fileName: 'version.json', source: JSON.stringify({ version }) });
       for (const [page, to] of Object.entries(moved)) this.emitFile({ type: 'asset', fileName: page, source: redirect(to) });
     },

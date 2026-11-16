@@ -2,7 +2,7 @@
 // its result; `done()` says how far along it is (0 to 1). A flop is solved lite and stops when its first decisions stop
 // moving; a turn or river is a street solved again for the two ranges as they arrive at the end of a line.
 import * as fs from 'poker-flopsolve';
-import { treeOf } from '../../src/solver/flopsolve.js';
+import { treeOf } from '../../src/solver/tree.js';
 import { bettingFor } from './betting.js';
 import { mass, onBoard, text } from './deck.js';
 import { along } from './progress.js';

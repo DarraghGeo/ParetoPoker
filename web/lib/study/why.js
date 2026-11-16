@@ -6,7 +6,7 @@ const WORKING = (text) => ({ text: `Working out ${text}…`, quiet: true });
 export function handReasons(got, spot, decision, round) {
   const reasons = !got ? [WORKING('the reasons')] : got.silent ? [...got.reasons, { text: got.silent, quiet: true }] : [...got.reasons];
   // the spot sentence is about the ranges as they start, so it stays with the street they start on
-  if (spot?.text && !decision.abstract && !(round > 0)) reasons.push({ text: spot.text });
+  if (spot?.text && !(round > 0)) reasons.push({ text: spot.text });
   return reasons;
 }
 

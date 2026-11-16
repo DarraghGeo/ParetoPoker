@@ -14,7 +14,7 @@
   $effect(() => { if (!got) askOnce(game, `explain|${key}`, { type: 'explain', combo: row.hand.id }); });
   const reasons = $derived(handReasons(got, game.spot, d, game.nodes[game.node]?.round));
 </script>
-<h2>{#if d.abstract}{pct(row.equity)}%{:else}<Cards cards={row.hand.name} />{/if}</h2>
+<h2><Cards cards={row.hand.name} /></h2>
 <MixLine mix={row.hand.strategy} actions={d.actions} {strata} />
 <Tabs {game} first="Why" />
 {#if game.tab === 'look'}<Look {game} {row} {strata} />

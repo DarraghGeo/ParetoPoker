@@ -68,11 +68,13 @@ function foldsTo(hero, villain, a) {
 export function lined(rows, parts, decision) {
   const bet = decision.actions.findIndex((x) => ['bet', 'raise', 'allin'].includes(x.kind)); const river = decision.street === 'river';
   const folds = bet >= 0 ? foldsTo(rows.flatMap((r) => r.hero), decision.villain, bet) : null;
-  const measure = (kind, h) => { const p = parts[h.name] ?? [h.e, 0]; return kind === 'folds' && folds ? folds.get(h.name) : kind === 'come' && !river ? p[1] : p[0]; };
+  // with no bet to fold to, and on the river with nothing still to come, a row's line is how far ahead its hands are now
+  const shownAs = (kind) => ((kind === 'folds' && folds) || (kind === 'come' && !river) ? kind : 'now');
+  const measure = (kind, h) => { const p = parts[h.name] ?? [h.e, 0]; return kind === 'folds' ? folds.get(h.name) : kind === 'come' ? p[1] : p[0]; };
   return rows.map((r) => {
-    const kind = LINES[r.lv]; const hero = r.hero.map((h) => ({ h, v: measure(kind, h) })).sort((a, b) => a.v - b.v || a.h.e - b.h.e);
+    const kind = shownAs(LINES[r.lv]); const hero = r.hero.map((h) => ({ h, v: measure(kind, h) })).sort((a, b) => a.v - b.v || a.h.e - b.h.e);
     const total = hero.reduce((t, x) => t + x.h.w, 0) || 1; const lo = hero[0]?.v ?? 0; const hi = hero.at(-1)?.v ?? 0; const flat = hi - lo < 0.015; let seen = 0;
     const points = hero.map((x) => { const at = (100 * (seen + x.h.w / 2)) / total; seen += x.h.w; return `${at.toFixed(1)},${(flat ? 50 : 92 - (84 * (x.v - lo)) / (hi - lo)).toFixed(1)}`; });
-    return { ...r, hero: hero.map((x) => x.h), line: kind, points: points.length > 1 ? points.join(' ') : points.length ? '0,50 100,50' : '', from: lo, to: hi };
+    return { ...r, hero: hero.map((x) => x.h), line: LINES[r.lv], shown: kind, points: points.length > 1 ? points.join(' ') : points.length ? '0,50 100,50' : '', from: lo, to: hi };
   });
 }

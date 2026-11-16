@@ -3,7 +3,7 @@
   let { name, size = 16 } = $props();
   const PATHS = {
     tick: 'M3.5 8.5l3 3 6-7', cross: 'M4 4l8 8M12 4l-8 8', copy: 'M5.5 5.5v-3h8v8h-3M2.5 5.5h8v8h-8z',
-    study: 'M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5', chevron: 'M4 6l4 4 4-4',
+    study: 'M9 3h4v4M13 3L7.5 8.5M11 9.5V13H3V5h3.5',
     curve: 'M2 13c3 0 3-4 6-5s3-5 6-5', ladder: 'M2 5.5h6M10.5 5.5H14M2 10.5h2.5M7 10.5h7',
     grid: 'M2.5 2.5h11v11h-11zM6.2 2.5v11M9.8 2.5v11M2.5 6.2h11M2.5 9.8h11',
     ranges: 'M2.5 2.5h4.5v11H2.5zM9 2.5h4.5v11H9zM2.5 9h4.5M9 6.5h4.5',

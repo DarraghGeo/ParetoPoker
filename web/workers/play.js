@@ -8,8 +8,11 @@ import { heroActs, proceed, start } from './play/table.js';
 // a solve finished: the hand on screen plays on if it was waiting for it, or the page hears a hand is ready
 onSolved((job) => {
   if (job.hand === current()) { proceed(); return; }
-  if (!current() && play.hands.some((h) => h.flop)) say({ type: 'ready' });
+  if (play.wants && !current()) deal();
 });
+
+/** The next hand, as soon as one is solved: asked for before then, it starts by itself when its flop arrives. */
+function deal() { play.wants = !start(); }
 
 /** A street of the hand on the table, for Study: its flop, or a later street solved again here (by the key it is kept under). */
 function share(solve) {
@@ -20,11 +23,11 @@ function share(solve) {
 }
 
 const handlers = {
-  setup(data) { Object.assign(play, { config: data.config, hands: [], playing: null, jobs: new Map(), epoch: play.epoch + 1, held: false, typical: 0 }); dealAhead(); pump(); status(); },
+  setup(data) { Object.assign(play, { config: data.config, hands: [], playing: null, jobs: new Map(), epoch: data.epoch ?? play.epoch + 1, held: false, typical: 0, wants: false, fails: 0 }); dealAhead(); pump(); status(); },
   flop(data) { gotFlop(data); },
   hold() { hold(); },
   resume() { resume(); },
-  deal() { if (!start()) say({ type: 'waiting' }); },
+  deal,
   act(data) { heroActs(data.label); },
   export(data) {
     const solved = share(data.solve); const out = !solved ? null : solved.street === 'flop' ? exportedFlop(solved) : solved.oop ? exported(solved) : null;

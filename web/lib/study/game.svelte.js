@@ -22,7 +22,7 @@ class StudyState extends Shown {
 /** A Study with its worker. */
 export function createStudyGame() {
   const game = new StudyState();
-  game.worker = new Worker(new URL('../../workers/study.js', import.meta.url));
+  game.worker = new Worker(new URL('../../workers/study.js', import.meta.url), { type: 'module' });
   game.worker.onmessage = ({ data }) => heard(game, data);
   return game;
 }

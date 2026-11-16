@@ -200,7 +200,7 @@ button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px soli
 
 .why p.quiet{color:var(--ink-3);font-size:13px;line-height:19px}
 
-/* ---- the way in: Study or Train ---- */
+/* ---- the way in: Study or Play ---- */
 a{color:var(--accent)}
 a.icon{border:1px solid transparent;border-radius:3px}
 a:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
@@ -213,11 +213,8 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .choose .kind{font:500 20px/24px var(--sans)}
 .choose .what{font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
 
-/* ---- Train: the two ranges, then a question ---- */
+/* ---- the two ranges side by side (Play) ---- */
 .board span{font:500 28px/28px var(--mono);padding:2px 3px}
-.where{display:flex;align-items:center;gap:12px;min-height:30px;font:400 12px/16px var(--mono);color:var(--ink-3);white-space:nowrap}
-.where .who{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase}
-.where .stands{color:var(--ink);font:500 13px/18px var(--sans);overflow:hidden;text-overflow:ellipsis;min-width:0}
 .minis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
 .mini{margin:0;display:flex;flex-direction:column;gap:6px;min-width:0}
 .mini figcaption{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
@@ -226,27 +223,8 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 /* hero in ink, villain faded: the same as the two curves */
 .mini.villain .paint b i{opacity:.28}
 .mini .paint b.mark{outline:2px solid var(--accent);outline-offset:0;z-index:1;overflow:visible}
-.ask{display:flex;flex-direction:column;gap:14px;min-width:0;max-width:52ch}
-.ask .kind{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.ask h2{font:500 28px/28px var(--mono);margin:0;display:flex;gap:8px}
-.ask p{margin:0;font:400 15px/23px var(--sans);color:var(--ink-2);text-wrap:pretty}
-.ask .text,.ask .lead{font:500 20px/26px var(--sans);color:var(--ink)}
-.verdict.good{color:var(--ok)}.verdict.bad{color:var(--danger)}
-.ask .primary{align-self:flex-start;min-width:104px;padding:9px 14px}
-.ask .primary:disabled{opacity:.35;cursor:default}
 .track{height:6px;border-radius:3px;background:var(--surface);overflow:hidden;max-width:320px}
 .track i{display:block;height:100%;background:var(--accent);border-radius:3px;transition:width .3s ease}
-@media (prefers-reduced-motion:no-preference){
-  .verdict{animation:land .2s ease-out}
-  .opts.missed{animation:shake .28s ease-in-out}
-  @keyframes land{from{transform:translateY(4px);opacity:0}}
-  @keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
-}
-@media (min-width:900px){
-  .t-stage{grid-template-columns:minmax(0,560px) minmax(0,1fr);gap:56px;flex:1;min-height:0}
-  .train main{max-width:1200px}
-  .ask{padding-top:44px;overflow-y:auto;scrollbar-width:none}
-}
 /* settings and the last questions */
 .drawer h3{margin:14px 0 4px;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .drawer h3:first-child{margin-top:0}
@@ -279,10 +257,7 @@ main.home{max-width:720px;min-height:100dvh;justify-content:center;gap:28px;padd
 .error.fit{min-height:auto;flex:none;font-family:var(--sans);font-size:13px;line-height:18px;text-wrap:pretty}
 .error.fit:empty{display:none}
 
-.where a.icon{display:flex;padding:6px;color:var(--ink-2)}
-.where .icon + .icon{margin-left:-12px}
 /* a narrow screen: the seat is over the range already, and the line needs the room */
-@media (max-width:600px){.where .who{display:none}}
 .icon.done{color:var(--ok)}.icon.failed{color:var(--danger)}
 
 /* the explanation's two faces, and the analytical one */
@@ -359,11 +334,6 @@ header .board{min-width:0;flex:0 1 auto}
 /* a flat grey, not ink seen through: see-through columns that overlap by a hair draw dark lines */
 .ladder .strip .other{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
 @media (min-width:900px) and (min-height:520px){.ladder .row{max-height:none}.ladder .strip{flex:1;height:auto;min-height:0}}
-/* Train's ladder: hero in ink, villain faded, the hand asked about marked */
-.ladder .strip .hero{background:var(--ink)}
-.ladder .strip .mark{background:var(--accent);position:relative;z-index:1;box-shadow:0 0 0 1px var(--accent)}
-.ladder .strip .mark::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);border:5px solid transparent;border-top:7px solid var(--accent);border-bottom:0}
-@media (min-width:900px) and (min-height:520px){.train .ladder{height:160px}}
 /* a thumb slid along the action chart picks hands: sideways is the chart's, up and down still scrolls the page */
 /* The butterfly: both ranges back to back in rows by made hand; the range to act's hands as columns, the other's as a plain bar */
 .fly{display:flex;flex-direction:column;gap:3px;margin:10px 0}
@@ -446,6 +416,7 @@ body.paged{overflow:hidden;height:100dvh}
 .plate .stack{font:500 14px/18px var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
 .plate .clock{grid-column:1/3;height:3px;background:var(--line);margin-top:4px;overflow:hidden}
 .plate .clock i{display:block;height:100%;background:var(--accent)}
+.seat.acting .clock i{transition:width .25s linear}
 .plate .clock.bank i{background:var(--danger)}
 .seat:not(.acting) .clock i{width:0!important}
 .plate .time{grid-column:1/3;font:400 10px/13px var(--mono);color:var(--ink-3);text-align:right;font-variant-numeric:tabular-nums}
@@ -499,19 +470,5 @@ body.paged{overflow:hidden;height:100dvh}
 .play .minis.ranges{position:absolute;z-index:5;left:12px;right:12px;top:52px;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:12px}
 @media (max-height:640px){.seat.hero .hole span{width:44px;height:58px;font-size:22px}.felt{inset:50px 0 54px}}
 
-/* ---- Train: the drills on the ranges, and the counts behind an answer ---- */
-.ask .sub{font:400 12px/16px var(--mono);color:var(--ink-3)}
-.ask .more{font:400 14px/21px var(--sans);color:var(--ink-2)}
 
-/* ---- Train: the drills to choose from ---- */
 
-/* ---- Train: everything of an answer on one screen ---- */
-.ask .rest summary{cursor:pointer;font:500 13px/18px var(--sans);color:var(--ink-2);list-style:none;width:max-content;border-bottom:1px solid var(--line-strong)}
-.ask .rest summary::-webkit-details-marker{display:none}
-.ask .rest[open] summary{margin-bottom:10px}
-.ask .rest p + p{margin-top:10px}
-.ask .minis.shown{max-width:min(100%,46dvh)}
-@media (max-width:899px){
-  .ask #next{position:sticky;bottom:max(12px,env(safe-area-inset-bottom,0px));align-self:stretch;z-index:2;box-shadow:0 0 0 12px var(--bg),0 -20px 16px 0 var(--bg)}
-  .train main{padding-bottom:28px}
-}

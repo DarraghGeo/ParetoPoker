@@ -1,8 +1,8 @@
 <!-- The ladder: every hand of both ranges on one scale, lowest equity to highest, out of position's above and in position's
      below; a hand takes a column, hands with the same equity (to a tenth of a percent) share columns. `cell` draws a hand
-     of the range to act (plain, marked where `hand` sits, by default); the rest of the root's attributes pass through. -->
+     of the range to act; the rest of the root's attributes pass through. -->
 <script>
-  let { hero, villain, seat, hand = null, cell = null, ...rest } = $props();
+  let { hero, villain, seat, cell, ...rest } = $props();
   /** Both ranges' hands grouped by equity level, lowest first, hands of one level by name. */
   function levels() {
     const by = new Map(); const at = (e) => { const k = Math.round(1e3 * e); if (!by.has(k)) by.set(k, { hero: [], villain: [] }); return by.get(k); };
@@ -18,5 +18,5 @@
   });
 </script>
 <div class="rows ladder" {...rest}>{#each rows as [cells, acting, label]}<div class="row"><div class="strip" role="group" aria-label={label}>
-  {#each cells as h}{#if !h}<span></span>{:else if !acting}<span class="other" title={h.name}></span>{:else if cell}{@render cell(h)}{:else}<span class={h.name === hand ? 'hero mark' : 'hero'}></span>{/if}{/each}
+  {#each cells as h}{#if !h}<span></span>{:else if !acting}<span class="other" title={h.name}></span>{:else}{@render cell(h)}{/if}{/each}
 </div></div>{/each}</div>

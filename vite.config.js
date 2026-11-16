@@ -13,7 +13,7 @@ export default defineConfig({
   root: at('web'),
   base: './',
   plugins: [svelte(), stamp({ worker: at('web/sw.js'), moved })],
-  worker: { format: 'iife' },
+  worker: { format: 'es' },
   build: {
     outDir: at('docs'), emptyOutDir: true, target: 'es2022',
     rollupOptions: { input: Object.fromEntries(pages.map((page) => [page, at(`web/${page}.html`)])) },
