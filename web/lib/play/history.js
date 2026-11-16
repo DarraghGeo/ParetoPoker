@@ -8,11 +8,16 @@ const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');
 const signed = (x) => `${x > 0 ? '+' : x < 0 ? '-' : ''}${chips(Math.abs(x))}`;
 const STREET = { flop: 'Flop', turn: 'Turn', river: 'River' };
 
-/** An action in words: "Hero bets 2.1", "Villain calls 2.1". */
-function said(a) {
-  const who = a.who === 'hero' ? 'Hero' : 'Villain';
-  const what = { fold: 'folds', check: 'checks', call: `calls ${chips(a.add)}`, bet: `bets ${chips(a.add)}`, raise: `raises, putting in ${chips(a.add)} more`, allin: `goes all-in for ${chips(a.add)}` };
+/** An action in words, `put` being what its player had in on the street before it: "Hero bets 2.1", "Villain raises to 7.5". */
+function said(a, put) {
+  const who = a.who === 'hero' ? 'Hero' : 'Villain'; const to = chips(put + a.add);
+  const what = { fold: 'folds', check: 'checks', call: `calls ${chips(a.add)}`, bet: `bets ${chips(a.add)}`, raise: `raises to ${to}`, allin: `goes all-in for ${to}` };
   return `${who} ${what[a.kind] ?? a.label}`;
+}
+/** A street's actions in words. */
+function told(actions) {
+  const put = { hero: 0, villain: 0 };
+  return actions.map((a) => { const text = said(a, put[a.who]); put[a.who] += a.add ?? 0; return text; }).join(', ');
 }
 
 /** Who a seat is: its position or player type where the ranges are a preset's. */
@@ -24,8 +29,8 @@ export function seatNames(config) {
 export function handText(st, config) {
   if (!st) return '';
   const names = seatNames(config); const villain = other(st.seat); let board = [];
-  const streets = st.history.map((h) => { board = [...board, h.cards]; return `${STREET[h.street] ?? h.street} [${board.join(' ')}] pot ${chips(h.pot)}: ${h.actions.length ? h.actions.map(said).join(', ') : 'no betting'}`; });
-  const end = st.result ? [`Result: ${st.result.how}${st.result.mine ? ` (Hero ${st.result.mine}, Villain ${st.result.his})` : ''}. Hero ${signed(st.result.net)} from the flop on.`] : ['(The hand is still being played.)'];
+  const streets = st.history.map((h) => { board = [...board, h.cards]; return `${STREET[h.street] ?? h.street} [${board.join(' ')}] pot ${chips(h.pot)}: ${h.actions.length ? told(h.actions) : 'no betting'}`; });
+  const end = st.result ? [`Result: ${st.result.how.replace(/^You\b/, 'Hero')}${st.result.mine ? ` (Hero ${st.result.mine}, Villain ${st.result.his})` : ''}. Hero ${signed(st.result.net)} from the flop on.`] : ['(The hand is still being played.)'];
   return [
     `Pareto hand ${st.id}: heads-up no-limit hold'em, played from the flop. Chips are big blinds.`,
     names.line ? `Before the flop: ${names.line}.` : 'Before the flop: ranges set by hand (below).',
