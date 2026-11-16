@@ -11,10 +11,10 @@ const KEY = 'pareto-play';
 export const SHOT = 20; export const BANK = 60; const VILLAIN_SHOT = 15; const REFILL = 5; const DEAL_MS = 650;
 const NO_CLOCK = { who: null, left: 0, total: 1, bank: false };
 
-/** Today's session: chips won and hands played (a new day starts a new one). */
+/** Today's session: chips won, what hero's decisions gave up against the solver (`lost`) and hands played (a new day starts a new one). */
 export function loadSession() {
   const saved = load(KEY);
-  return saved?.day === dayKey() ? { day: saved.day, net: saved.net, hands: saved.hands } : { day: dayKey(), net: 0, hands: 0 };
+  return saved?.day === dayKey() ? { day: saved.day, net: saved.net, lost: saved.lost ?? 0, hands: saved.hands } : { day: dayKey(), net: 0, lost: 0, hands: 0 };
 }
 
 function stopClock(game) { clearInterval(game.tick); game.tick = null; game.clock = NO_CLOCK; }
@@ -40,7 +40,7 @@ function timedOut(game) {
 /** A finished hand counted once. */
 function counted(game, data) {
   const hand = `${data.epoch}|${data.id}`; if (!data.result || game.counted === hand) return;
-  game.counted = hand; Object.assign(game.session, { net: game.session.net + data.result.net, hands: game.session.hands + 1 });
+  game.counted = hand; Object.assign(game.session, { net: game.session.net + data.result.net, lost: game.session.lost + (data.result.lost ?? 0), hands: game.session.hands + 1 });
   keep(KEY, game.session);
 }
 

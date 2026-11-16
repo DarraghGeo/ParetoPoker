@@ -44,6 +44,9 @@ function studyOf(p, node) {
 /** Hero's choices at his decision: each action's label, kind and the chips it adds. */
 const choicesAt = (node, me) => node.edges.map((e) => ({ label: e.label, kind: e.kind, add: cents(e.to - node.invested[me]) }));
 
+/** What hero's decisions in the hand gave up against the solution's best, in chips. */
+const lostIn = (p) => cents(p.history.reduce((t, h) => t + h.actions.reduce((s, a) => s + (a.cost ?? 0), 0), 0));
+
 /** Tell the page where the hand stands. */
 export function post(p) {
   const node = p.done ? null : decisionOf(p.seg); const toAct = !!node && (node.seat === 'oop' ? 0 : 1) === p.me;
@@ -55,6 +58,6 @@ export function post(p) {
     board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(p.hand.config.stack - x)), history: p.history,
     toAct, waiting: p.waiting != null, actions: toAct ? choicesAt(node, p.me) : [], actor: node?.seat ?? null,
     ranges: toAct ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,   // read only where hero decides: every other step is told too
-    result: p.done ? resultOf(p) : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
+    result: p.done ? { ...resultOf(p), lost: lostIn(p) } : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
   });
 }

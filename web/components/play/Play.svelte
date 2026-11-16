@@ -55,7 +55,9 @@
   const href = $derived(game.study ? studyUrl(config, game.study.flop, { line: game.study.line, dealt: game.study.dealt, hand: game.study.hero, lite: true, resolve: true }) : '');
   const listOf = (seat) => ranges[seat].map(([name, w]) => ({ name, w }));
   const signed = (x) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${chips(Math.abs(x))}`;
-  const session = $derived(game.session.hands ? `${signed(game.session.net)} · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : '');
+  /** EV given up: always a loss, so shown with its minus and to the cent (a good decision costs nothing). */
+  const ev = (x) => `EV ${x >= 0.005 ? '−' : ''}${x.toFixed(2)}`;
+  const session = $derived(game.session.hands ? `${ev(game.session.lost)} · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : '');
   /** Study for the decision on screen, its street handed over as solved here. */
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
   function deal(seating) { ranges = null; graded = null; sitting = false; sitDown(game, seating); }
@@ -64,7 +66,7 @@
   <div class="rule"></div>
   <main class="table">
     <header>
-      <Logo />{#if game.seated}<span class="pool">{seatingLabel(game.seating)}</span><span class="session" class:down={game.session.net < 0} title="Chips won since the flop, this session">{session}</span>{/if}<span class="grow"></span>
+      <Logo />{#if game.seated}<span class="pool">{seatingLabel(game.seating)}</span><span class="session" class:down={game.session.lost >= 0.005} title="What your decisions gave up against the solver's play, in chips, this session. Chips won since the flop: {signed(game.session.net)}">{session}</span>{/if}<span class="grow"></span>
       {#if game.seated}
         <button type="button" class="icon" aria-pressed={sitting} aria-label="Set up the table" title="Set up the table" onclick={() => (sitting = !sitting)}><Icon name="seats" /></button>
         {#if !sitting}<button type="button" class="icon" aria-pressed={showRanges} aria-label="Both ranges" title="Both ranges" onclick={() => (showRanges = !showRanges)}><Icon name="ranges" /></button>
@@ -81,7 +83,7 @@
           <div class="wager" class:on={!!lastOf('villain')}>{#if lastOf('villain')}<b>{lastOf('villain')}</b>{#if front('villain') > 0}<span>{chips(front('villain'))}</span>{/if}{/if}</div>
           <div class="pot"><span>Pot</span> {st ? chips(st.pot) : chips(config.pot)}</div>
           <div class="p-board"><Cards cards={st?.board ?? ''} slots={5} /></div>
-          <div class="outcome" class:down={st?.result?.net < 0}>{#if st?.result}<b>{signed(st.result.net)}</b> {st.result.how}{#if st.result.mine}<span>{st.result.mine} against {st.result.his}</span>{/if}{:else if game.timedOut}<span>Out of time</span>{/if}</div>
+          <div class="outcome" class:down={st?.result?.net < 0}>{#if st?.result}<b>{signed(st.result.net)}</b> {st.result.how}{#if st.result.lost != null}{' · '}{ev(st.result.lost)}{/if}{#if st.result.mine}<span>{st.result.mine} against {st.result.his}</span>{/if}{:else if game.timedOut}<span>Out of time</span>{/if}</div>
           <div class="wager" class:on={!!lastOf('hero')}>{#if lastOf('hero')}<b>{lastOf('hero')}</b>{#if front('hero') > 0}<span>{chips(front('hero'))}</span>{/if}{/if}</div>
           <div class="grades">{#if graded}{#key graded.key}<Grade grade={graded} onclose={() => (graded = null)} />{/key}{/if}</div>
         </div>

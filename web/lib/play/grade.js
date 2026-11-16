@@ -15,5 +15,6 @@ export function gradeOf(action) {
     : level === 'ok' ? `the solver does this ${pct(mine.freq)}% of the time, and ${does(best)} ${pct(best.freq)}%`
       : `the solver does this ${pct(mine.freq)}% of the time, and ${does(best)} ${pct(best.freq)}%`;
   const detail = level === 'good' ? `Solver ${does(mine)} ${pct(mine.freq)}%` : level === 'ok' ? `Solver does this ${pct(mine.freq)}%, ${does(best)} ${pct(best.freq)}%` : `Solver ${does(best)} ${pct(best.freq)}%`;
-  return { level, text, detail, freq: mine.freq, best };
+  const cost = action.cost >= 0.005 ? ` · EV −${action.cost.toFixed(2)}` : '';
+  return { level, text: `${text}${action.cost != null ? `, EV lost ${action.cost.toFixed(2)}` : ''}`, detail: `${detail}${cost}`, freq: mine.freq, best, cost: action.cost ?? null };
 }

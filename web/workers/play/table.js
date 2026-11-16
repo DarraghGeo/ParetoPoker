@@ -1,6 +1,8 @@
 // The hand being played: villain's decisions drawn from his solved strategy for the hand he holds, hero's taken from the
 // page, and at each street's end the next street solved again for the ranges that arrive (or, where it could not be,
 // played on in the solve before it; all in, the cards are dealt to the showdown).
+import * as fs from 'poker-flopsolve';
+import { actionValues, frameAt } from '../../../src/explain/account.js';
 import { text } from '../../solver/deck.js';
 import { streetOf } from '../../solver/jobs.js';
 import { dealAhead, pump, status } from './schedule.js';
@@ -40,6 +42,15 @@ function mixOf(seg, node, combo) {
   const found = seg.solved.spot.resolveBoard(boardOf(seg).slice(0, seg.solved.cards.length + node.round));
   const view = seg.solved.solution.strategyAt(node.id, found.board); const n = view.actions.length; const i = view.combos.indexOf(found.combos[combo]);
   return i < 0 ? null : node.edges.map((e, a) => ({ label: e.label, kind: e.kind, freq: Math.round(1e3 * view.probs[i * n + a]) / 1e3 }));
+}
+
+/** What hero's action `k` gives up against the best action for his hand, in chips, by the solution's own values (each
+ *  action followed by its solved play); null where the solution has none for the hand. */
+function costOf(seg, node, combo, k) {
+  try {
+    const f = frameAt(fs, seg.solved.solution, seg.solved.nodes, node.id, seg.dealt); const worth = actionValues(f).map((v) => v[combo]);
+    return worth.some((x) => Number.isNaN(x)) ? null : Math.round(100 * (Math.max(...worth) - worth[k])) / 100;
+  } catch { return null; }
 }
 
 /** Take action `k` at a decision: the chips it puts in, the line, and a fold ends the hand. */
@@ -88,8 +99,8 @@ export function heroActs(label) {
   const p = play.playing; if (!p || p.done) return;
   const node = nodeOf(p.seg); const k = node.edges.findIndex((e) => e.label === label);
   if (node.kind !== 'decision' || seatOf(node) !== p.me || k < 0) return;
-  const mix = mixOf(p.seg, node, p.hand.hero);
+  const mix = mixOf(p.seg, node, p.hand.hero); const cost = mix ? costOf(p.seg, node, p.hand.hero, k) : null;
   take(p, node, k);
-  if (mix) p.history[p.history.length - 1].actions.at(-1).mix = mix;   // for the page to say how the move stands against the solution
+  if (mix) Object.assign(p.history[p.history.length - 1].actions.at(-1), { mix, cost });   // for the page to say how the move stands against the solution
   post(p); proceed();
 }
