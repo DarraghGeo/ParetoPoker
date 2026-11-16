@@ -80,6 +80,22 @@ function splitByNext(g, f, edge, hands, total) {
 }
 
 /**
+ * A wager set against a quiet action (a check, or a call), by his reply to the wager: what the quiet action is worth
+ * against the hands that give each reply, the hand's later play held to its best against his whole range, so that the
+ * parts add to the quiet action's worth. Wager less quiet, reply by reply, is then where the wager's gain comes from.
+ * @returns {null | { kind: string, value: Float64Array }[]} One for each of his replies; null when the wager ends the street.
+ */
+export function against(g, f, a, q) {
+  const { heroes, villains } = listsOf(g, f); const child = g.nodes[f.node.edges[a].child];
+  if (child.kind !== 'decision') return null;
+  const st = strategyAt(g, child.id, f.board); const quiet = f.node.edges[q].child;
+  g.plan = new Map(); walk(g, quiet, atFrame(f, heroes, villains, Float64Array.from(f.his)));
+  const out = child.edges.map((e, k) => ({ kind: e.kind, value: perHand(g, f, heroes, walk(g, quiet, atFrame(f, heroes, villains, replyReach(g, f, st, villains, k), 'fixed'))) }));
+  g.plan = null;
+  return out;
+}
+
+/**
  * @returns {{
  *   value: Float64Array,
  *   replies: null | { kind, label, share: Float64Array, value: Float64Array }[],   his reply, when the action hands him the move

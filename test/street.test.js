@@ -136,3 +136,20 @@ test('twins: the same ranks with a different flush draw, and nothing else differ
   }
   assert.ok(seen > 0);
 });
+
+test('a bet set against checking: what it gains from his folds, calls and raises adds to the difference between the two, and a merged bet gains from both folds and calls', async () => {
+  const { mergedBet } = await import('../src/explain/street/hand/merged.js');
+  const s = study(fs, solution, nodes, 0); const check = s.actions.findIndex((a) => a.kind === 'check'); let seen = 0;
+  for (let c = 0; c < fs.COMBOS; c++) {
+    const m = measure(s, c, { onlyOn: false }); if (!m) continue;
+    m.actions.forEach((a, i) => {
+      if (!a.gains) return; seen++;
+      assert.ok(Math.abs(a.gains.folds + a.gains.calls + a.gains.raises - (a.worth - m.actions[check].worth)) < 1e-6);
+      const merged = mergedBet({ m }, i); if (merged) assert.ok(merged.calls > 0 && merged.folds > 0);
+    });
+  }
+  assert.ok(seen > 0);
+  assert.equal(mergedBet({ m: { actions: [{ gains: { calls: 9, folds: 5, raises: -12 } }] } }, 0).folds, 5);
+  assert.equal(mergedBet({ m: { actions: [{ gains: { calls: 16, folds: -10, raises: -6 } }] } }, 0), null);   // a value bet: his folds cost it
+  assert.equal(mergedBet({ m: { actions: [{ gains: { calls: -31, folds: 43, raises: -11 } }] } }, 0), null);   // a bluff
+});

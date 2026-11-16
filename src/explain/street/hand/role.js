@@ -1,14 +1,17 @@
 // Why this hand: where it sits in your range, and what that part of the range does.
 import { percent, often, capitalize, isWager } from '../words.js';
+import { mergedBet } from './merged.js';
 
 const NAME = ['your weakest hands', 'your weaker hands', 'the hands in the middle of your range', 'your stronger hands', 'your strongest hands'];
 
 /** What separates the two groups is how much of his range each beats. */
-function separation({ m, facing }, role) {
+function separation(h, role) {
+  const { m, facing } = h;
   const weakSide = role.band < role.other; const own = m.actions.reduce((t, x) => t + ((facing ? x.kind !== 'fold' : isWager(x.kind)) ? x.sigma : 0), 0);
   const along = role.more ? own >= 0.25 : own <= 0.75;
   if (!along) return ' This hand goes the other way from its part of the range.';
   if (!facing && role.more && weakSide) return ' It has the least to lose by betting, which is why the bluffs come from down here.';
+  if (!facing && role.more && !weakSide && h.taken[0] != null && mergedBet(h, h.taken[0])) return ' It is strong enough to be paid by some worse hands, which they are not; and weak enough to gain from his folds as well.';
   if (!facing && role.more && !weakSide) return ' It is strong enough to be paid by worse hands, which they are not.';
   if (!facing && !role.more && weakSide) return ' It is not strong enough to bet for value the way they do.';
   if (!facing && !role.more && !weakSide) return ' It wins too often at showdown to be turned into a bluff the way they are.';

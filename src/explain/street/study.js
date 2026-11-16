@@ -55,10 +55,11 @@ export function study(fs, solution, nodes, id, dealt = []) {
   const best = evaluator(fs, solution, nodes);
   // (the split by what he holds is not asked for: it does not survive the proof, see PROOF.md)
   const closely = perKey((a) => best.closely(f, a, null));
+  const against = perKey((key) => best.against(f, ...key.split('|').map(Number)));
   const equity = once(() => equityVs(fs, f.board, f.mine, f.his));
   const bands = once(() => fifthsOf({ fs, f, ...strategy, featuresOf, equity }));
   const spread = once(() => nextCards(fs, f)); const parts = once(() => drawParts(fs, f, equity()));
   const toCall = f.node.invested[1 - f.me] - f.node.invested[f.me];
   return { fs, f, solution, dealt, pot: f.node.pot, toCall, actions: rangeActions(fs, f, nodes, strategy), lineReach: lineReachOf(fs, solution, f),
-    sigma, featuresOf, closely, bands, spread, drawParts: parts, equity };
+    sigma, featuresOf, closely, against: (a, q) => against(`${a}|${q}`), bands, spread, drawParts: parts, equity };
 }

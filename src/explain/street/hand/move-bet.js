@@ -1,9 +1,10 @@
 // A bet or raise, one move ahead: who folds, who calls, who raises, what it earns from, the folds it needs, and the next barrel.
 import { sayGroups } from '../groups.js';
 import { nextBarrel } from '../next-street.js';
-import { percent, often, inTen, capitalize } from '../words.js';
+import { percent, ofPot, often, inTen, capitalize } from '../words.js';
 import { isFold, isCall, isPush, shareOf, equityAgainst, groupsAmong, had, stand } from './replies.js';
 import { foldsNeeded } from './ahead.js';
+import { mergedBet } from './merged.js';
 
 /** His answers to the bet, with the hands that give each; `seen` keeps one example from being given twice. */
 function answersText(k, { folds, eFold, eCall, pushes }) {
@@ -14,6 +15,15 @@ function answersText(k, { folds, eFold, eCall, pushes }) {
   const callPart = gc.length ? ` He calls with ${sayGroups(gc, 2, 0.12, seen)}; against those this hand is ${stand(eCall ?? 0)}.` : '';
   const pushPart = pushes >= 0.08 && gp.length ? ` He raises with ${sayGroups(gp, 2, 0.12, seen)}.` : '';
   return { foldPart, rest: `${denial}${callPart}${pushPart}` };
+}
+
+/** A merged bet said plainly: set against the quiet action it gains from his calls and from his folds. */
+function mergedText(k, g, numbers) {
+  const quiet = k.label(g.quiet); const lost = g.raises <= -0.5 ? `, and gives back ${ofPot(g.raises)} to his raises` : '';
+  numbers.push(`Set against ${quiet}, the bet gains ${ofPot(g.calls)} of the pot from his calls and ${ofPot(g.folds)} from his folds${lost}.`);
+  const more = g.calls >= 1.5 * g.folds ? 'more from his calls' : g.folds >= 1.5 * g.calls ? 'more from his folds' : 'about as much from each';
+  return ` This is a merged bet, a value bet and a bluff at once. Set against ${quiet}, it gains when he calls, because worse hands pay it, and it gains `
+    + `when he folds too, because the hands that fold would have taken the pot some of the time${k.river ? ', at showdown or by betting' : ''}: ${more}.`;
 }
 
 function earnsFrom(eCall, folds) {
@@ -60,8 +70,10 @@ export function betMove(k) {
   const answers = { folds: shareOf(x, isFold), eFold: equityAgainst(x, isFold), eCall: equityAgainst(x, isCall), pushes: shareOf(x, isPush) };
   const best = other == null || (exact != null ? exact >= -0.3 : x.value >= mv.actions[other].value);
   const { foldPart, rest } = answersText(k, answers); const numbers = [answersNumbers(x, answers)];
-  let text = `${best ? `${capitalize(act)} comes out best. ` : ''}${foldPart}${best ? '' : ` to ${act}`}.${rest}${earnsFrom(answers.eCall, answers.folds)}`;
-  if (other != null && !((answers.eCall ?? 0) >= 0.5 && answers.folds < 0.5)) text += foldsItNeeds(k, best, numbers);
+  let text = `${best ? `${capitalize(act)} comes out best. ` : ''}${foldPart}${best ? '' : ` to ${act}`}.${rest}`;
+  const merged = mergedBet(k, k.top);
+  text += merged ? mergedText(k, merged, numbers) : earnsFrom(answers.eCall, answers.folds);
+  if (other != null && (merged || !((answers.eCall ?? 0) >= 0.5 && answers.folds < 0.5))) text += foldsItNeeds(k, best, numbers);
   if (!k.river && shareOf(x, (p) => p.kind === 'call') >= 0.15) text += barrelText(k, numbers);
   return { id: 'move', text, detail: numbers.join(' ') + k.versus };
 }

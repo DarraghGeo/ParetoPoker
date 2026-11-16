@@ -4,6 +4,7 @@
  * proven gates; `silent` says why nothing more is said when the decision is not one the proof covers.
  */
 import { claims, RARE, TAKES } from '../claims.js';
+import { oneMove } from '../one-move.js';
 import { NUMBERS_ONLY } from '../tolerance.js';
 import { describe } from '../hand-words.js';
 import { percent, capitalize } from '../words.js';
@@ -33,7 +34,7 @@ function firstDetail({ s, m, facing, river }) {
 function handContext(s, m, T) {
   const facing = s.toCall > 0;
   const taken = m.actions.map((a, i) => i).filter((i) => m.actions[i].sigma >= TAKES).sort((x, y) => m.actions[y].sigma - m.actions[x].sigma);
-  return { s, m, made: claims(s, m, T), label: actionLabel(m), facing, river: s.f.board.length === 5, taken, what: describe(m.features) };
+  return { s, m, mv: oneMove(s, m.combo), made: claims(s, m, T), label: actionLabel(m), facing, river: s.f.board.length === 5, taken, what: describe(m.features) };
 }
 
 /** Every reason, in the order they are said. */

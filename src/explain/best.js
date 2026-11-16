@@ -14,15 +14,15 @@
  * The walk is its own (best/walk.js): it reads the strategies, the tree and the cards, and nothing
  * of the solver's value code. Values are chips from splitting the pot the spot started with.
  *
- * Returns `values(frame, mode)`, with `values.closely(frame, a, groupOf)` (best/closely.js) and
+ * Returns `values(frame, mode)`, with `values.closely(frame, a, groupOf)` and `values.against(frame, a, q)` (best/closely.js) and
  * `values.gameValue(me, start)` (best/values.js).
  */
-import { closely } from './best/closely.js';
+import { against, closely } from './best/closely.js';
 import { gameValue, valuesAt } from './best/values.js';
 import { walkerOf } from './best/walker.js';
 
 export function evaluator(fs, solution, nodes) {
   const g = walkerOf(fs, solution, nodes);
   const valuesOf = (f, mode = 'best') => valuesAt(g, f, mode);
-  return Object.assign(valuesOf, { closely: (f, a, groupOf) => closely(g, f, a, groupOf), gameValue: (me, start) => gameValue(g, me, start) });
+  return Object.assign(valuesOf, { closely: (f, a, groupOf) => closely(g, f, a, groupOf), against: (f, a, q) => against(g, f, a, q), gameValue: (me, start) => gameValue(g, me, start) });
 }

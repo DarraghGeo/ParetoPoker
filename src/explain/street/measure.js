@@ -9,6 +9,16 @@ function addReplies(out, x, c, pc) {
   const folded = out.reply.find((r) => r.kind === 'fold'); out.folds = folded ? folded.share : 0; out.fromFolds = folded ? folded.part : 0;
 }
 
+/** A bet or raise set against the quiet action (checking, or calling a bet): where its gain comes from, in % of the pot,
+ *  by his answer: his folds, his calls, his raises. The three add to what the wager is worth more than the quiet action. */
+function addGains(out, s, x, c, a, pc) {
+  const q = s.actions.findIndex((y) => y.kind === 'check'); const quiet = q >= 0 ? q : s.actions.findIndex((y) => y.kind === 'call');
+  const set = quiet >= 0 && !['check', 'call', 'fold'].includes(out.kind) ? s.against(a, quiet) : null; if (!set) return;
+  const gains = { folds: 0, calls: 0, raises: 0, quiet };
+  x.replies.forEach((r, k) => { const d = pc(r.value[c] - set[k].value[c]); if (Number.isNaN(d)) return; gains[r.kind === 'fold' ? 'folds' : r.kind === 'call' ? 'calls' : 'raises'] += d; });
+  out.gains = gains;
+}
+
 /** On the river a call is a showdown: from what the called bet is worth, how often the hand is ahead of what calls. */
 function addShowdown(out, s, x, c, a) {
   const { f } = s; const ci = x.replies.findIndex((r) => r.kind === 'call');
@@ -36,7 +46,7 @@ function liftingCards(s, x, c, pc) {
 function measureAction(s, c, act, a, pc) {
   const x = s.closely(a);
   const out = { ...act, sigma: s.sigma(c, a), worth: pc(x.value[c]) };
-  if (x.replies) { addReplies(out, x, c, pc); addShowdown(out, s, x, c, a); }
+  if (x.replies) { addReplies(out, x, c, pc); addShowdown(out, s, x, c, a); addGains(out, s, x, c, a, pc); }
   out.holding = Object.fromEntries([...x.holdings.entries()].map(([g, r]) => [g, { share: r.share[c], part: pc(r.value[c]) }]));
   if (x.cards) out.cards = liftingCards(s, x, c, pc);
   return out;

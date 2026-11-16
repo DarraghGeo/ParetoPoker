@@ -1,5 +1,6 @@
 // The answer first: what the hand does, and what kind of play that is; and its actions named in a sentence.
 import { isWager } from '../words.js';
+import { mergedBet } from './merged.js';
 
 /** An action in words: checking, calling, the 33% bet, raising. */
 export function actionLabel(m) {
@@ -13,8 +14,10 @@ export function actionLabel(m) {
   };
 }
 
-/** What a bet or raise is for: value, a bluff, to make him fold, or nothing said. */
-function purpose({ m, made, river }, i) {
+/** What a bet or raise is for: value, a bluff, both at once (a merged bet), to make him fold, or nothing said. */
+function purpose(h, i) {
+  const { m, made, river } = h;
+  if (mergedBet(h, i)) return ', part for value and part as a bluff (a merged bet)';
   const needs = made.some((c) => c.kind === 'needs' && c.a === i); const builds = made.some((c) => c.kind === 'builds' && c.a === i);
   const ahead = m.actions[i].aheadWhenCalled;
   if (river) return ahead != null && ahead >= 0.5 ? ' for value' : needs && (ahead == null || ahead < 0.35) ? ' as a bluff' : builds ? ' for value' : '';
@@ -28,5 +31,6 @@ export function answerLine(h) {
   const verb = (i) => (kindOf(i) === 'check' ? 'check' : kindOf(i) === 'call' ? 'call' : kindOf(i) === 'fold' ? 'fold' : facing ? 'raise' : 'bet');
   const play = (i) => `${verb(i)}${isWager(kindOf(i)) ? purpose(h, i) : ''}`;
   const second = taken.find((i) => i !== top && verb(i) !== verb(top) && m.actions[i].sigma >= 0.25);
-  return (second != null ? `You ${play(top)}, and sometimes ${play(second)}. ` : `You ${play(top)}. `) + `It is ${what}.`;
+  const first = play(top); const and = first.endsWith(')') ? '; you sometimes' : ', and sometimes';
+  return (second != null ? `You ${first}${and} ${play(second)}. ` : `You ${first}. `) + `It is ${what}.`;
 }
