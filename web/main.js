@@ -6,4 +6,4 @@ import { route } from './lib/route.svelte.js';
 import './style.css';
 
 mount(App, { target: document.getElementById('app') });
-keepFresh(() => route.page === '');
+keepFresh(() => route.page === '' || (route.page === 'play' && route.idle));

@@ -52,7 +52,7 @@ export function post(p) {
     type: 'state', id: p.hand.id, step: p.step, stack: p.hand.config.stack, spot: { oop: p.hand.config.oop, ip: p.hand.config.ip, pot: p.hand.config.pot, stack: p.hand.config.stack }, seat: p.hand.seat, hero: fs.formatCombo(p.hand.hero), villain: p.done?.showdown ? fs.formatCombo(p.hand.villain) : null,
     board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(p.hand.config.stack - x)), history: p.history,
     toAct, waiting: p.waiting != null, actions: toAct ? choicesAt(node, p.me) : [], actor: node?.seat ?? null,
-    ranges: node ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,
+    ranges: toAct ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,   // read only where hero decides: every other step is told too
     result: p.done ? resultOf(p) : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
   });
 }

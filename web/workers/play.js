@@ -1,6 +1,7 @@
-// Play: full hands against the solved villain, off the main thread (see play/: dealing, solving ahead, the hand).
+// Play: full hands against the solved villain, off the main thread (see play/: dealing, solving ahead, the hand). The
+// flops of the hands ahead are solved in the page's flop workers (workers/flop.js) and handed in here.
 import { exported, exportedFlop } from '../solver/jobs.js';
-import { onSolved, pump, status } from './play/schedule.js';
+import { dealAhead, gotFlop, onSolved, pump, status } from './play/schedule.js';
 import { current, play, say } from './play/state.js';
 import { heroActs, proceed, start } from './play/table.js';
 
@@ -19,7 +20,8 @@ function share(solve) {
 }
 
 const handlers = {
-  setup(data) { Object.assign(play, { config: data.config, hands: [], playing: null, jobs: new Map() }); pump(); status(); },
+  setup(data) { Object.assign(play, { config: data.config, hands: [], playing: null, jobs: new Map(), epoch: play.epoch + 1 }); dealAhead(); pump(); status(); },
+  flop(data) { gotFlop(data); },
   deal() { if (!start()) say({ type: 'waiting' }); },
   act(data) { heroActs(data.label); },
   export(data) {

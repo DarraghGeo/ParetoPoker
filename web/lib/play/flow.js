@@ -1,4 +1,5 @@
-// How Play's game moves on. The worker tells every step of a hand as it happens; here they are shown one at a time, on
+// How Play's game moves on. The flops of the hands ahead are solved in flop workers beside the table (one or two at once)
+// and passed to Play's own worker. That worker tells every step of a hand as it happens; here they are shown one at a time, on
 // the clock: villain takes three to eight seconds over each action, a street takes a moment to deal, and hero has a shot clock and
 // then a time bank (out of time, he checks if he can and folds if not). A finished hand is counted once in the session.
 import { dayKey } from '../days.js';
@@ -75,31 +76,52 @@ function queued(game, data) {
   game.lastKey = key; game.error = ''; game.queue.push(data); pump(game);
 }
 
+/** How many flops are solved at once beside the table: two where the device has the cores, else one. */
+const HELPERS = Math.max(1, Math.min(2, (globalThis.navigator?.hardwareConcurrency ?? 4) - 2));
+
+/** Give waiting flops to the flop workers that are free. */
+function assign(game) {
+  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.worker.postMessage({ type: 'solve', ...need }); }
+}
+function fromHelper(game, h, data) {
+  if (data.type === 'progress') { if (!game.state && data.id === game.needs.first) game.progress = { done: data.done }; return; }
+  h.busy = null; game.worker.postMessage(data, data.sums ? [data.sums.buffer] : []); assign(game);
+}
+/** The flop workers, started afresh (any solve under way thrown away). */
+export function startHelpers(game) {
+  for (const h of game.helpers) h.worker.terminate();
+  game.needs = []; game.needs.first = null;
+  game.helpers = Array.from({ length: HELPERS }, () => { const h = { worker: new Worker(new URL('../../workers/flop.js', import.meta.url)), busy: null }; h.worker.onmessage = ({ data }) => fromHelper(game, h, data); return h; });
+}
+
 function clear(game) { clearTimeout(game.timer); stopClock(game); Object.assign(game, { queue: [], busy: false, lastKey: '', state: null, timedOut: false, error: '' }); }
 
 export function deal(game) {
-  clear(game); game.bank = { hero: Math.min(BANK, game.bank.hero + REFILL), villain: BANK };
+  clear(game); game.study = null; game.bank = { hero: Math.min(BANK, game.bank.hero + REFILL), villain: BANK };   // the hand before is gone from the worker, and from Study with it
   game.worker.postMessage({ type: 'deal' });
 }
 export function act(game, label) { stopClock(game); game.worker.postMessage({ type: 'act', label }); }
 
 /** Sit down with a seating: kept for next time, the table cleared, and the worker set up with its spots and bet sizes. */
 export function sitDown(game, seating) {
-  keepSeating(seating); game.seating = seating; game.seated = true; resetup(game, configOf(seating));
+  const same = JSON.stringify(seating) === JSON.stringify(game.seating); keepSeating(seating); game.seating = seating;
+  const first = !game.seated; game.seated = true;
+  if (same && first) deal(game); else if (!same) resetup(game, configOf(seating));   // the same table again plays on with what is solved
 }
 
 /** Play on with another setup: the table cleared, and the worker set up again. */
 export function resetup(game, config) {
-  clear(game); game.study = null; game.config = config; game.status = null; game.progress = null;
+  clear(game); game.study = null; game.config = config; game.status = null; game.progress = null; startHelpers(game);
   game.worker.postMessage({ type: 'setup', config: JSON.parse(JSON.stringify(config)) });
 }
 
 const HEARD = {
+  need: (game, data) => { game.needs.first ??= data.id; game.needs.push({ id: data.id, epoch: data.epoch, config: data.config, cards: data.cards }); assign(game); },
   export: (game, data) => game.onExport(data),
   status: (game, data) => { game.status = data; },
   progress: (game, data) => { game.progress = data; },
-  ready: (game) => { if (!game.state && !game.queue.length && !game.busy) deal(game); },
+  ready: (game) => { if (game.seated && !game.state && !game.queue.length && !game.busy) deal(game); },
   error: (game, data) => { game.error = data.message; },
-  state: queued,
+  state: (game, data) => { if (game.seated) queued(game, data); },
 };
 export const heard = (game, data) => HEARD[data.type]?.(game, data);

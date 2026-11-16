@@ -2,7 +2,7 @@
 // clock running and both time banks, what is being solved and how far along, and the session's chips won from the flop
 // on. flow.js takes the worker's messages and paces them.
 import { configOf, loadSeating } from './seating.js';
-import { BANK, heard, loadSession } from './flow.js';
+import { BANK, heard, loadSession, startHelpers } from './flow.js';
 
 class PlayState {
   state = $state.raw(null);
@@ -18,12 +18,16 @@ class PlayState {
   config = $state.raw(configOf(loadSeating()));
   seated = $state(false);
   queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {};
+  helpers = []; needs = [];
 }
 
-/** A game with its worker; nothing is dealt or solved until the table is set up (flow.js, `sitDown`). */
+/** A game with its worker. Hands for the seating last used are solved from the start, behind the set-up, so that Deal with
+ *  it unchanged plays at once; nothing is dealt until then (flow.js, `sitDown`). */
 export function createPlayGame() {
   const game = new PlayState();
   game.worker = new Worker(new URL('../../workers/play.js', import.meta.url));
   game.worker.onmessage = ({ data }) => heard(game, data);
+  startHelpers(game);
+  game.worker.postMessage({ type: 'setup', config: JSON.parse(JSON.stringify(game.config)) });
   return game;
 }

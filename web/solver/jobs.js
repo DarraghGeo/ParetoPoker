@@ -92,6 +92,16 @@ export function lineEnds(solved, cards) {
   return out.sort((a, b) => b.weight - a.weight);
 }
 
+/** A flop solved elsewhere, read back here from its strategy's numbers (`sums`) and the betting it was solved with: the
+ *  same spot defined again and filled in, never stepped. Null if the numbers do not fit it. */
+export function flopFrom(config, cards, used, sums) {
+  const lite = fs.litePreset({ board: text(cards), pot: config.pot, stack: config.stack, oop: config.oop, ip: config.ip, ...bettingFor({ ...config, ...used }, 3) });
+  const spot = fs.defineSpot(lite.config); const run = fs.createRun(spot, { ...lite.options, analysisOnly: true }); const into = run.solver.ctx.strategySum;
+  if (!(into instanceof Float32Array) || into.length !== sums.length) return null;
+  into.set(sums);
+  return { street: 'flop', cards, run, solution: run.snapshot(), nodes: treeOf(fs, spot), spot, stack: config.stack, pot: config.pot, used };
+}
+
 /** A flop solved lite as Study takes it over: its average strategy (copied) and the betting it was solved with, where that
  *  was not the setup's; null when its storage is not the plain kind that can be copied across. */
 export function exportedFlop(solved) {

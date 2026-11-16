@@ -1,10 +1,12 @@
-// The app's service worker. Its one job: the newest build whenever there is a network, the last one seen when there is not.
-// Every request for the app's own files goes to the network first and skips the browser's cache; what comes back is kept
-// for offline. `__V__` changes with every build, so a new build is a new worker, and it takes over at once.
+// The app's service worker: the newest build whenever there is a network, the last one seen when there is not, and no
+// waiting on the network for what cannot have changed. The built files under assets/ carry a hash of their contents in
+// their names, so one seen once is answered from the cache at once; the page itself and everything else go to the
+// network first (skipping the browser's cache) and are kept for offline. `__V__` changes with every build, so a new
+// build is a new worker, and it takes over at once.
 const CACHE = 'pareto-__V__';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil((async () => {
-  for (const key of await caches.keys()) if (key !== CACHE && key !== 'pareto-fonts') await caches.delete(key);
+  for (const key of await caches.keys()) if (key !== CACHE && key !== 'pareto-fonts' && key !== 'pareto-assets') await caches.delete(key);
   await self.clients.claim();
 })()));
 self.addEventListener('fetch', (event) => {
@@ -22,6 +24,14 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   if (new URL(request.url).origin !== self.location.origin) return;
+  if (/\/assets\/[^/]+-[\w-]{8,}\.\w+$/.test(new URL(request.url).pathname)) {
+    event.respondWith((async () => {
+      const kept = await caches.match(request); if (kept) return kept;
+      const fresh = await fetch(request); if (fresh.ok) (await caches.open('pareto-assets')).put(request, fresh.clone());
+      return fresh;
+    })());
+    return;
+  }
   event.respondWith((async () => {
     const cache = await caches.open(CACHE);
     try {

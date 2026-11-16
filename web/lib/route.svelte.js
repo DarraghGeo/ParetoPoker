@@ -5,6 +5,6 @@ const hash = () => location.hash.replace(/^#\/?/, '');
 const read = () => { const page = hash().split('?')[0]; return PAGES.has(page) ? page : ''; };
 const queryOf = () => { const at = hash().indexOf('?'); return at < 0 ? '' : hash().slice(at); };
 
-export const route = $state({ page: read(), query: queryOf() });
+export const route = $state({ page: read(), query: queryOf(), idle: true });   // idle: nothing on screen would be lost by a reload
 addEventListener('hashchange', () => { route.page = read(); route.query = queryOf(); });
 if (performance.getEntriesByType('navigation')[0]?.type === 'reload' && route.page) { location.replace('#/'); route.page = ''; route.query = ''; }

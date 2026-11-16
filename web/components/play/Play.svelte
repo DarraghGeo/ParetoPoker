@@ -2,6 +2,7 @@
      below, each on a clock. It opens on the table's set-up (who you play, which bet sizes); nothing is solved before Deal.
      Study sits beside it for the decision on screen, and the hand can be copied out as text. -->
 <script>
+  import { onDestroy } from 'svelte';
   import Cards from '../common/Cards.svelte';
   import CopyButton from '../common/CopyButton.svelte';
   import Icon from '../common/Icon.svelte';
@@ -15,6 +16,7 @@
   import { chips } from '../../lib/actions.js';
   import { cellOf } from '../../lib/cards.js';
   import { studyUrl } from '../../lib/links.js';
+  import { route } from '../../lib/route.svelte.js';
   import { sitDown } from '../../lib/play/flow.js';
   import { createPlayGame } from '../../lib/play/game.svelte.js';
   import { gradeOf } from '../../lib/play/grade.js';
@@ -25,6 +27,8 @@
   const game = createPlayGame();
   let pane = $state(); let showRanges = $state(false); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null;
   game.onExport = (data) => pane?.handedOver(data);
+  // leaving Play stops its solving
+  onDestroy(() => { clearTimeout(gradeTimer); clearTimeout(game.timer); clearInterval(game.tick); game.worker.terminate(); for (const h of game.helpers) h.worker.terminate(); });
   const st = $derived(game.state);
   const me = $derived(st?.seat === 'oop' ? 0 : 1);
   const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');
@@ -44,6 +48,8 @@
     const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key } : null;
     if (g) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);
   });
+  // a newer build of the app may be taken up while nothing has been dealt
+  $effect(() => { route.idle = !game.seated; return () => { route.idle = true; }; });
   const clockOf = (who) => (game.clock.who === who && !st?.result ? game.clock : null);
   const href = $derived(game.study ? studyUrl(config, game.study.flop, { line: game.study.line, dealt: game.study.dealt, hand: game.study.hero, lite: true, resolve: true }) : '');
   const listOf = (seat) => ranges[seat].map(([name, w]) => ({ name, w }));
