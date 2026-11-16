@@ -71,9 +71,25 @@ function rates(street, ip, adv, strong) {
   if (strong && !(ip && street === 5)) { value /= 2; bottom /= 2; } if (strong && street === 5 && !ip) middle /= 2;
   return [value, middle, bottom];
 }
+/** The rebuilt river rule, read off the chart. His strong hands: his share above the line 80% of my range sits under. His weak
+ *  hands: his share under the line 30% (or 20%) of my range sits under. First to act: check everything if over 30% of his range
+ *  is strong; else value above the 80% line (90% if most of his range is weak) and every hand more than a quarter below his weak
+ *  share. Checked to: value above the 80% line; bluffs only from under the 15% line, s/(1+s) per value bet, weakest first, and
+ *  none if he has next to nothing weak. */
+function riverBet(F, mine, me, him, s, ip, arm, rnd) {
+  const bet = new Float32Array(N); const jit = arm.lines ? (2 * rnd() - 1) * arm.lines : 0; const hisOver = (x) => aboveShare(him.share, lineAt(me.share, x));
+  const under = (c, l) => !(F.lv[c] > l.k || (F.lv[c] === l.k && me.place[c] >= l.frac));
+  if (!ip) { if (hisOver(0.8) > 0.3) return bet; const weak = 1 - hisOver(0.3); const v = lineAt(him.share, Math.min(0.97, (weak >= 0.6 ? 0.9 : 0.8) + jit)); const b = lineAt(him.share, Math.max(0, weak - 0.25 + jit));
+    for (const c of F.order) if (mine[c] > 0 && (!under(c, v) || under(c, b))) bet[c] = 1; return bet; }
+  const v = lineAt(him.share, Math.min(0.97, 0.8 + jit)); let room = 0; for (const c of F.order) if (mine[c] > 0 && !under(c, v)) { bet[c] = 1; room += mine[c]; }
+  room = 1 - hisOver(0.2) >= 0.1 ? room * (s / (1 + s)) : 0; const low = lineAt(him.share, 0.15);
+  for (const c of F.order) { if (room <= 1e-12) break; if (mine[c] > 0 && under(c, low)) { const part = Math.min(1, room / mine[c]); bet[c] = part; room -= mine[c] * part; } }
+  return bet;
+}
 /** How often each hand bets, when nothing is owed. */
 function betting(F, mine, his, s, street, ip, arm, rnd) {
   const me = onLadder(F, mine); const him = onLadder(F, his); const bet = new Float32Array(N); if (!(me.total > 0) || !(him.total > 0)) return bet;
+  if (arm.rebuilt && F.river) return riverBet(F, mine, me, him, s, ip, arm, rnd);
   const t = Math.min(0.95, Math.max(0.5, 1 - 1 / (2 * (1 + s)) + 0.08 + (arm.lines ? (2 * rnd() - 1) * arm.lines : 0))); const line = lineAt(him.share, t);
   const top = (sh) => sh[4] + sh[5] + sh[6] + sh[7]; const gap = top(me.share) - top(him.share); const adv = gap < -0.04 ? 0 : gap < 0.04 ? 1 : 2; const strong = aboveShare(him.share, lineAt(me.share, 0.8)) > 0.2;
   const zone = (c) => (F.lv[c] > line.k || (F.lv[c] === line.k && me.place[c] >= line.frac) ? 0 : F.lv[c] <= 1 ? 2 : 1); const size = [0, 0, 0]; for (const c of F.order) if (mine[c] > 0) size[zone(c)] += mine[c] / me.total;
@@ -95,11 +111,11 @@ function facing(F, mine, his, s, arm, rnd, canRaise) {
   return act;
 }
 
-const ARMS = { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
+const ARMS = process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
 const [count = '8', seed = '71'] = process.argv.slice(2);
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
 const pool = PRESETS.filter((p) => p.action !== 'Limped'); const TREE = { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
-const out = new URL('./out/play.jsonl', import.meta.url); writeFileSync(out, '', { flag: 'a' });
+const out = new URL(`./out/play${process.env.ARMS ? `-${process.env.ARMS}` : ''}.jsonl`, import.meta.url); writeFileSync(out, '', { flag: 'a' });
 for (let done = 0; done < +count;) {
   const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
   let spot; try { spot = fs.defineSpot({ board: b.join(''), pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; }
@@ -144,7 +160,7 @@ for (let done = 0; done < +count;) {
     };
     const b0 = Array.from(spot.board); walk(0, b0, 0, facts(b0), NAMES.map(() => start[hero]), start[1 - hero]);
     const lossOf = (r) => +(100 * (solved.ev(hero) - r.snapshot().ev(hero)) / pot - noise[hero]).toFixed(3); const side = hero ? 'ip' : 'oop';
-    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = { exact: +(100 * runs.exact.solver.exploitability() / pot * 2).toFixed(2), vague: +(100 * runs.vague.solver.exploitability() / pot * 2).toFixed(2) };
+    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries([NAMES[0], NAMES[2]].map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
     row.freq[side] = { solution: sol.map(([t, all]) => +(t / (all || 1)).toFixed(3)), ...Object.fromEntries(NAMES.map((n) => [n, tally[n].map(([t, all]) => +(t / (all || 1)).toFixed(3))])) };
   }
   row.seconds = Math.round((Date.now() - t0) / 1000); appendFileSync(out, JSON.stringify(row) + '\n');
