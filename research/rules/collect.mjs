@@ -21,7 +21,7 @@ for (let done = 0; done < +count;) {
   const mult = kind === 'turn' ? [0.5, 1, 1, 1.5][rand(4)] : 1; const stack = +(p.stack * mult).toFixed(1);
   let spot; try { spot = fs.defineSpot({ board: b.join(''), pot: p.pot, stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; }
   if (spot.estimate.bytes > +(process.env.MAXMB ?? (kind === 'flop' ? 2500 : 700)) * 2 ** 20) continue;
-  const t0 = Date.now(); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 2) }); let ex = 9; while (ex > 0.25 && run.completed < 1500) { run.step(10); ex = run.exploitabilityPercent(); }
+  const t0 = Date.now(); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 2) }); let ex = 9; while (ex > (kind === 'flop' ? 0.35 : 0.25) && run.completed < (kind === 'flop' ? 500 : 1500)) { run.step(10); ex = run.exploitabilityPercent(); }
   const solved = run.snapshot(); const nodes = treeOf(fs, spot); const board = Array.from(spot.board); const valuer = evaluator(fs, solved, nodes); done++; let rows = 0;
   const kindOf = (n) => { const acts = []; let at = n; while (at.parent >= 0 && nodes[at.parent].kind !== 'chance') { const par = nodes[at.parent]; acts.unshift(par.edges[at.via].kind); at = par; } const last = acts[acts.length - 1]; return !acts.length ? 'first' : last === 'check' ? 'checkedTo' : acts.filter((x) => x !== 'check').length === 1 ? 'facingBet' : 'facingRaise'; };
   for (const n of nodes) {
@@ -30,15 +30,19 @@ for (let done = 0; done < +count;) {
     for (const dealt of deals) {
       let st; try { st = study(fs, solved, nodes, n.id, dealt); } catch { st = null; } if (!st || Math.min(...st.lineReach) < (n.round === 1 ? 0.06 : 0.02)) continue;
       const f = st.f; let vals; try { vals = valuer(f, 'average'); } catch { continue; } const eq = st.equity(); const hisEq = equityVs(fs, f.board, f.his, f.mine); const F = facts(Array.from(f.board)); const k = n.edges.length;
+      // how much of the other range each hand beats as the board stands (ties half), in twenty steps: what the chart's bars show
+      const nowOf = (mine, his) => { const hs = []; let all = 0; for (let v = 0; v < N; v++) if (his[v] > 1e-9 && F.lv[v] >= 0) { hs.push(v); all += his[v]; } hs.sort((x, y) => F.str[x] - F.str[y]); const out = new Float32Array(N); let i = 0, below = 0; const ms = []; for (let c = 0; c < N; c++) if (mine[c] > 1e-9 && F.lv[c] >= 0) ms.push(c); ms.sort((x, y) => F.str[x] - F.str[y]);
+        let j = 0; for (const c of ms) { while (i < hs.length && F.str[hs[i]] < F.str[c]) below += his[hs[i++]]; let tie = 0; j = i; while (j < hs.length && F.str[hs[j]] === F.str[c]) tie += his[hs[j++]]; out[c] = (below + tie / 2) / all; } return out; };
+      const now = nowOf(f.mine, f.his); const hisNow = nowOf(f.his, f.mine); const step = (x) => Math.max(0, Math.min(19, Math.floor(20 * x)));
       const cells = new Map(); let tot = 0;
       for (let c = 0; c < N; c++) { const w = f.mine[c]; if (!(w > 1e-9) || Number.isNaN(eq[c]) || F.lv[c] < 0) continue; let best = -Infinity; const v = []; for (let a = 0; a < k; a++) { const x = vals[a][c]; v.push(x); if (!Number.isNaN(x) && x > best) best = x; } if (!Number.isFinite(best)) continue;
-        const key = F.lv[c] * 100 + Math.max(0, Math.min(19, Math.floor(20 * eq[c]))) + 10000 * (F.come[c] >= 8 ? 2 : F.come[c] >= 4 ? 1 : 0); let cell = cells.get(key); if (!cell) cells.set(key, cell = new Float64Array(1 + 2 * k)); cell[0] += w; tot += w;
+        const key = F.lv[c] * 100 + step(eq[c]) + 10000 * (F.come[c] >= 8 ? 2 : F.come[c] >= 4 ? 1 : 0) + 100000 * step(now[c]); let cell = cells.get(key); if (!cell) cells.set(key, cell = new Float64Array(1 + 2 * k)); cell[0] += w; tot += w;
         for (let a = 0; a < k; a++) { cell[1 + a] += w * st.sigma(c, a); cell[1 + k + a] += w * (Number.isNaN(v[a]) ? 0 : best - v[a]); } }
-      if (!(tot > 0)) continue; const hisLv = new Float64Array(8); const hisE = new Float64Array(20); let htot = 0; for (let v = 0; v < N; v++) { const w = f.his[v]; if (!(w > 1e-9) || Number.isNaN(hisEq[v]) || F.lv[v] < 0) continue; hisLv[F.lv[v]] += w; hisE[Math.max(0, Math.min(19, Math.floor(20 * hisEq[v])))] += w; htot += w; }
+      if (!(tot > 0)) continue; const hisLv = new Float64Array(8); const hisE = new Float64Array(20); const hisN = new Float64Array(20); let htot = 0; for (let v = 0; v < N; v++) { const w = f.his[v]; if (!(w > 1e-9) || Number.isNaN(hisEq[v]) || F.lv[v] < 0) continue; hisLv[F.lv[v]] += w; hisE[step(hisEq[v])] += w; hisN[step(hisNow[v])] += w; htot += w; }
       if (!(htot > 0)) continue; const toCall = st.toCall; const before = st.pot - toCall;
       appendFileSync(out, JSON.stringify({ spot: `${p.action}-${p.oop}-${p.ip} ${b.join('')}`, action: p.action, street: f.board.length, what, seat: me, reach: st.lineReach.map(r4), pot: r4(st.pot / nodes[0].pot), spr: r4((spot.stackUnits / spot.chipScale * (nodes[0].pot / p.pot) - n.invested[me]) / st.pot), faced: toCall > 0 ? r4(toCall / (st.pot - toCall)) : 0,
-        acts: n.edges.map((e) => [e.kind, r4((nodes[e.child].invested[me] - n.invested[me]) / st.pot)]), hisLv: Array.from(hisLv, (x) => r4(x / htot)), hisE: Array.from(hisE, (x) => r4(x / htot)),
-        cells: [...cells].map(([key, c]) => [Math.floor(key % 10000 / 100), key % 100, Math.floor(key / 10000), r4(c[0] / tot), ...Array.from(c.subarray(1, 1 + k), (x) => r4(x / c[0])), ...Array.from(c.subarray(1 + k), (x) => r4(x / c[0] / st.pot))]) }) + '\n'); rows++;
+        acts: n.edges.map((e) => [e.kind, r4((nodes[e.child].invested[me] - n.invested[me]) / st.pot)]), hisLv: Array.from(hisLv, (x) => r4(x / htot)), hisE: Array.from(hisE, (x) => r4(x / htot)), hisN: Array.from(hisN, (x) => r4(x / htot)),
+        cells: [...cells].map(([key, c]) => [Math.floor(key % 10000 / 100), key % 100, Math.floor(key % 100000 / 10000), Math.floor(key / 100000), r4(c[0] / tot), ...Array.from(c.subarray(1, 1 + k), (x) => r4(x / c[0])), ...Array.from(c.subarray(1 + k), (x) => r4(x / c[0] / st.pot))]) }) + '\n'); rows++;
     }
   }
   console.error(`${done}/${count} ${p.action} ${b.join('')} ex ${ex.toFixed(2)} ${rows} decisions ${Math.round((Date.now() - t0) / 1000)}s`);
