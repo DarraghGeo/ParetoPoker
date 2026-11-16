@@ -63,7 +63,38 @@ export function rulesets(T) {
     }
     return out;
   }
+  // ---- the turn: value above a line, then weak hands as a multiple of the value, chosen by a score -----------------------
+  const turn = (rule) => (H) => (H.round === 0 ? rule(H) : H.P);
+  const tbet = (H, { line = 0.8, mult = 0.43, pick = 'bottom', cap = 1 } = {}) => {
+    if (H.betAt < 0) return checkAll(H); const value = H.e.map((e) => e >= line); const out = H.ids.map((_, i) => one(H.k, value[i] ? H.betAt : H.check)); let room = mult * mass(H, (i) => value[i]);
+    const score = pick === 'come' ? H.come : pick === 'oracle' ? H.P.map((p) => 1 - p[H.check]) : H.e.map((e) => -e);
+    const pool = H.ids.map((_, i) => i).filter((i) => !value[i] && H.e[i] < cap).sort((x, y) => score[y] - score[x]);
+    for (const i of pool) { if (room <= 1e-9) break; out[i] = one(H.k, H.betAt); room -= H.w[i]; } return out; };
+  const tb = (o) => ({ first: turn((H) => tbet(H, o)), checkedTo: turn((H) => tbet(H, o)) });
+  const tface = (line, extra = 0) => turn((H) => { const price = H.faced / (1 + 2 * H.faced) + extra; const raise = H.kinds.indexOf('raise') >= 0 ? H.kinds.indexOf('raise') : H.kinds.indexOf('allin'); return H.e.map((e) => one(H.k, raise >= 0 && e >= line ? raise : e >= price ? H.call : H.fold)); });
+  const turnSet = {
+    'value 71%, 0.43 weak per value, from the bottom (first derivation)': tb({ line: 0.714 }),
+    'value 80%, none': tb({ mult: 0 }), 'value 80%, 0.43 bottom': tb({}), 'value 80%, 0.75 bottom': tb({ mult: 0.75 }), 'value 80%, 1.2 bottom': tb({ mult: 1.2 }), 'value 80%, 2.06 bottom': tb({ mult: 2.06 }),
+    'value 80%, 0.75 by still to come': tb({ mult: 0.75, pick: 'come' }), 'value 80%, 1.2 by still to come': tb({ mult: 1.2, pick: 'come' }), 'value 80%, 2.06 by still to come': tb({ mult: 2.06, pick: 'come' }),
+    'value 80%, 2.06 by still to come, under 50% only': tb({ mult: 2.06, pick: 'come', cap: 0.5 }), 'value 71%, 2.06 by still to come': tb({ line: 0.714, mult: 2.06, pick: 'come' }),
+    'value 80%, 1.2 as the solution picks': tb({ mult: 1.2, pick: 'oracle' }), 'value 80%, 2.06 as the solution picks': tb({ mult: 2.06, pick: 'oracle' }),
+    'first to act only: value 80%, 2.06 by still to come': { first: turn((H) => tbet(H, { mult: 2.06, pick: 'come' })) }, 'checked to only: value 80%, 2.06 by still to come': { checkedTo: turn((H) => tbet(H, { mult: 2.06, pick: 'come' })) },
+    'facing a bet: top 1/(1+s)': { facingBet: turn((H) => topCalls(H, 1 / (1 + H.faced))) }, 'facing a bet: the price': { facingBet: tface(2) }, 'facing a bet: five points under the price': { facingBet: tface(2, -0.05) },
+    'facing a bet: the price, raise from 85%': { facingBet: tface(0.85) }, 'facing a raise: the price': { facingRaise: tface(2) },
+  };
+  const tcome = (H, line, need, cap = 0.6) => (H.betAt < 0 ? checkAll(H) : H.ids.map((_, i) => one(H.k, H.e[i] >= line || (H.e[i] < cap && H.come[i] >= need) ? H.betAt : H.check)));
+  const tc = (line, need, cap) => ({ first: turn((H) => tcome(H, line, need, cap)), checkedTo: turn((H) => tcome(H, line, need, cap)) });
+  const turn2 = {
+    'value 75%, none': tb({ line: 0.75, mult: 0 }), 'value 80%, none': tb({ mult: 0 }), 'value 85%, none': tb({ line: 0.85, mult: 0 }),
+    'value 80%, 0.75 by still to come, under 50%': tb({ mult: 0.75, pick: 'come', cap: 0.5 }), 'value 80%, 1.0 by still to come, under 50%': tb({ mult: 1, pick: 'come', cap: 0.5 }),
+    'value 80%, and every hand with 10 points still to come': tc(0.8, 0.1), 'value 80%, and every hand with 15 points still to come': tc(0.8, 0.15), 'value 80%, and every hand with 20 points still to come': tc(0.8, 0.2), 'value 80%, and every hand with 25 points still to come': tc(0.8, 0.25),
+    'value 75%, and every hand with 15 points still to come': tc(0.75, 0.15), 'value 75%, and every hand with 20 points still to come': tc(0.75, 0.2),
+    'facing a bet: top 1/(1+s)': { facingBet: turn((H) => topCalls(H, 1 / (1 + H.faced))) }, 'facing a bet: eight points over the price': { facingBet: tface(2, 0.08) }, 'facing a bet: fifteen points over the price': { facingBet: tface(2, 0.15) },
+    'facing a bet: eight over the price, raise from 90%': { facingBet: tface(0.9, 0.08) },
+  };
   return {
+    turn2,
+    turn: turnSet,
     fourth: {
       'base (river betting only)': both({}),
       'fourth: checked to': { checkedTo: river((H) => fourth(H)) },

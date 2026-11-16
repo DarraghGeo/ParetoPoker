@@ -83,6 +83,7 @@ for (let done = 0; done < +count;) {
       const plain = sized('bet'); const sizes = Math.max(...plain) > 0 ? plain : sized('allin'); const betSize = Math.max(...sizes);
       const H = { ids, k, kinds, what, seat: me, round: n.round, board: f.board, mineFull: f.mine, his: f.his, hisEq, hisOrder, hisTotal, w: ids.map((c) => f.mine[c]), e: ids.map((c) => eq[c]), P: ids.map((c) => Array.from({ length: k }, (_, a) => st.sigma(c, a))),
         betSize, betAt: betSize > 0 ? sizes.indexOf(betSize) : -1, check: kinds.indexOf('check'), fold: kinds.indexOf('fold'), call: kinds.indexOf('call'), faced: st.toCall > 0 ? st.toCall / (st.pot - st.toCall) : 0, pot: st.pot, behind: (spot.stackUnits ?? 0), spr: null, feats: null, st };
+      if (n.round === 0) { const pr = st.drawParts(); H.come = ids.map((c) => pr.draw[c] || 0); H.now = ids.map((c) => pr.now[c] || 0); }
       H.total = H.w.reduce((t, x) => t + x, 0); H.byE = ids.map((_, i) => i).sort((x, y) => H.e[x] - H.e[y]);
       seen.push({ node: n.id, dealt, seat: me, round: n.round, bindex: n.round === 0 ? 0 : spot.resolveBoard([...board, dealt[0]]).board, H });
     }

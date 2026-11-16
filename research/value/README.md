@@ -114,6 +114,37 @@ A cleaner single-quantity version (one fold share f, value from (1+f)/2, bluffs 
 
 Not done: the same rebuild for the turn (first derivation: 0.9), and for the flop.
 
+## The turn: does the two-street count hold? (`RULES=turn`, `RULES=turn2`, 24 unseen spots, seed 55)
+
+The idea: with a bet still to come, the turn betting range can hold more weak hands than the river ratio allows. Applying the river ratio twice says 67% of a three-quarter-pot betting range is not value (one street: 43%).
+
+**What the solution's turn betting range is made of** (42 betting decisions): 32% from hands with 80% equity or more, 26% from 50 to 80%, 42% from under 50%. So 68% is under the value line: the two-street figure, not the one-street one. But the solution bets only two thirds of its 80%+ hands (13 of 20 points of range), so "every hand over the line, times two" bets 54% of the range where the solution bets 35 to 40%. The ratio holds; the base must be the value that bets, not all the value there is.
+
+Bet frequency by equity, in steps of ten points: 29, 36, 31, 31, 20, 13, 19, 48, 62, 66%. Weak hands bet about a third of the time, the middle a sixth, and value starts near 70%.
+
+**What each rule gives up on the turn** (% of the pot, turn decisions only; how much of the range it bets, the solution betting 35%)
+
+| Rule when betting | Loss | Bets |
+|---|---|---|
+| First derivation: value from 71%, bluffs from the bottom | 0.42 | 42% |
+| Value from 80%, nothing else | 0.19 | 18% |
+| Value from 80%, 0.75 weak per value, by most still to come | 0.30 | 33% |
+| Value from 80%, 2.06 weak per value (two streets), by most still to come | 0.67 | 54% |
+| The same, the weak hands as the solution picks them | 0.43 | 54% |
+| Value from 80%, and every hand with 20 points still to come | 0.27 | 24% |
+
+| Rule facing a bet | Loss | Continues (solution 62%) |
+|---|---|---|
+| Everything with the price | 0.36 | 84% |
+| The top 1/(1+s) | 0.23 | 67% |
+| Eight points over the price | 0.23 | 71% |
+
+- **This test cannot reward a bluff.** Against an opponent who does not adapt, a weak bet is at best break-even, so every rule that adds weak hands loses a little more than value alone. The count has to be judged by the make-up of the range (above), not by this loss.
+- **Value alone is nearly free on the turn** (0.19), and a higher line costs no more (0.18 at 85%).
+- **Picking by "still to come" beats picking from the bottom** at every count (0.30 against 0.36; 0.38 against 0.45), and the solution's own picks are better again (0.26 at 1.2 per value).
+- **Facing a turn bet, the price is too loose**: there is a river bet to come. Eight points over the price, or the top 1/(1+s), is right. Raising from 85% adds nothing.
+- The rules bet one size (three quarters) where the solution has two; that is part of every betting loss here.
+
 ## What sets the bet size (`sizes.mjs`, `sizes.py`)
 
 66 turn spots with three sizes on offer on both streets (a third of the pot, three quarters, one and a half), each at one of four stack depths (0.4, 0.7, 1 or 1.5 times the usual stack) so that depth is not tied to pot type. 7,947 betting decisions: 7,837 on the river, 110 on the turn. Size is the mean size of the range's bets, in pots.
