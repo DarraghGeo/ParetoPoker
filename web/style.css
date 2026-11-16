@@ -403,7 +403,25 @@ body.paged{overflow:hidden;height:100dvh}
 .felt{position:absolute;inset:58px 0 62px;border:1px solid var(--line-strong);border-radius:140px;background:var(--surface);box-shadow:inset 0 0 0 6px var(--bg),inset 0 0 0 7px var(--line)}
 .seat{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px}
 .seat.hero{flex-direction:column}
-.seat .hole{display:flex;gap:5px}
+.seat .hole{display:flex;gap:5px;border:0;background:none;padding:0;border-radius:6px;cursor:pointer}
+.peek-out{position:fixed;inset:0;width:100%;height:100%;z-index:8;border:0;border-radius:0;background:transparent;padding:0}
+.peek{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9;width:min(300px,calc(100% - 24px));padding:12px 12px 8px;border:1px solid var(--line-strong);border-radius:8px;background:var(--bg);box-shadow:0 10px 30px rgba(21,23,27,.16)}
+.peek .slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.peek .slides::-webkit-scrollbar{display:none}
+.peek .slide{flex:none;width:100%;scroll-snap-align:start;scroll-snap-stop:always;display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0}
+.peek .cap{margin:0;display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.pfly{display:flex;flex-direction:column;gap:4px;margin:6px 0}
+.pfly .wing{display:flex;height:100%;min-width:0}
+.pfly .wing.me{justify-content:flex-end}
+.pfly .wing i{display:block;height:100%}
+.pfly .wing.me i{background:var(--ink)}
+.pfly .wing.him i{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.pfly .code{font:500 12px/14px var(--mono);text-align:center;color:var(--ink-2);letter-spacing:.02em}
+.peek.villain .pfly .wing.me i{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.peek.villain .pfly .wing.him i{background:var(--ink)}
+.peek .dots{display:flex;justify-content:center;gap:6px;padding-top:8px}
+.peek .dots i{width:6px;height:6px;border-radius:50%;background:var(--line-strong)}
+.peek .dots i.on{background:var(--ink)}
 .seat .hole span,.p-board span{display:flex;align-items:center;justify-content:center;background:#FFFFFF;border:1px solid var(--line-strong);border-radius:5px;font:500 20px/1 var(--mono);width:40px;height:54px;letter-spacing:-.04em;box-shadow:0 1px 0 rgba(0,0,0,.06)}
 .seat.hero .hole span{width:52px;height:70px;font-size:26px}
 .seat .hole .back{background:repeating-linear-gradient(135deg,var(--ink) 0 5px,#2B2F38 5px 6px);border-color:var(--ink)}
