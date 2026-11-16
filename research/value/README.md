@@ -174,3 +174,23 @@ Bet frequency by equity, in steps of ten points: 29, 36, 31, 31, 20, 13, 19, 48,
 - What else goes with a bigger river bet: a polar range of your own (strong hands and air, little in the middle: +0.47), a lot of middling hands in his (+0.43), and few strong hands in his (-0.42).
 - On the turn (110 decisions) depth leads (+0.40) and having the range advantage goes with betting smaller (-0.27), as on the flop (experiment 9 of the charts study). The nut gap shows only when deep.
 - Value hands and weak hands use the same size (0.75 and 0.81 pots; value is the bigger in 6% of decisions): the size belongs to the range, not to the hand.
+
+## The bet frequency held as a word: what it gives up (`SET=words`, 30 unseen spots, seed 66)
+
+At every decision to bet, the range is moved (hands in the solution's order) until it bets as often as the player thinks it should; facing a bet the solution is played. The word is one of three (mostly check, mixed, mostly bet) and is played at its middle, or 10 or 20 points to one side. The rule is experiment 12 of the charts study. % of the pot:
+
+| What the player holds | Turn | River |
+|---|---|---|
+| Always 40% | 0.43 | 1.23 |
+| The rule's number | 0.21 | 0.71 |
+| The rule's word, at its middle | 0.21 | 0.73 |
+| The rule's word, 20 points low / high | 0.16 / 0.33 | 0.73 / 1.12 |
+| The rule's word, 10 points low / high | 0.16 / 0.26 | 0.65 / 0.90 |
+| The right word, at its middle | 0.15 | 0.51 |
+| The right word, 20 points low / high | 0.10 / 0.31 | 0.63 / 0.94 |
+| The right word, 10 points low / high | 0.10 / 0.23 | 0.47 / 0.67 |
+
+- A word costs nothing over the number it came from (0.21 and 0.73 against 0.21 and 0.71).
+- A meaning 20 points loose adds up to 0.1 on the turn and 0.4 on the river, and only on the high side: when betting, too often costs more than too seldom. (The errors study's "too passive is dearer" was mostly folding too much when facing a bet.)
+- The rule's word is about 0.1 to 0.2 behind the right word, and half of what always saying 40% gives up.
+- The figures in experiment 13 of the charts study (1.2 to 1.9) were read off the errors study's rates and are too high.

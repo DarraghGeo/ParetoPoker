@@ -5,7 +5,7 @@
 //   node worth.mjs [spots] [seed]    -> out/worth.jsonl   (turn spots with the preset ranges; the turn and the river scored apart)
 import { writeFileSync, appendFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
-import { treeOf } from '../../src/solver/flopsolve.js';
+import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/lib/study/presets.js';
 import { study } from '../../src/explain/street.js';
 
@@ -102,7 +102,26 @@ const DERIVED = {
   'the solution when betting, derived when facing a bet': (H) => (H.kinds.includes('fold') ? derived(H) : H.P),
   '3 bands by strength (for reference)': (H) => bestBands(H, H.byE, 3),
 };
-const SETS = { errors: [ERRORS, './out/errors.jsonl'], derived: [DERIVED, './out/derived.jsonl'] }; const [SET, FILE] = SETS[process.env.SET] ?? [SUMMARIES, './out/worth.jsonl'];
+/** The bet frequency held as a word. Only decisions to bet are changed (the solution facing a bet); the hands keep the
+ *  solution's order, the whole range moved until it bets as often as the player thinks it should. */
+const freqOf = (H) => { const q = H.kinds.indexOf('check'); let t = 0, all = 0; H.w.forEach((w, i) => { t += w * (1 - H.P[i][q]); all += w; }); return t / all; };
+function ruleFreq(H) {
+  const tot = H.w.reduce((t, x) => t + x, 0); const z = [0, 0, 0]; let eq = 0; H.w.forEach((w, i) => { z[H.e[i] >= 0.8 ? 0 : H.e[i] >= 0.4 ? 1 : 2] += w / tot; eq += (w * H.e[i]) / tot; });
+  const adv = eq - 0.5 < -0.04 ? 0 : eq - 0.5 < 0.04 ? 1 : 2; const ip = H.ip === 1; const river = H.round === 1; const hs = H.strong > 0.2;
+  let value = ip ? (river ? 1 : 0.8) : river ? 0.75 : 0.55; let middle = river ? (ip ? 0.25 : 0.4) : 1 / 3; let bottom = [0.25, 0.35, 0.55][adv] + (ip ? 0.05 : -0.05);
+  if (hs && !(ip && river)) { value /= 2; bottom /= 2; } if (hs && river && !ip) middle /= 2;
+  return z[0] * value + z[1] * middle + z[2] * bottom;
+}
+const mid3 = (f) => (Math.min(2, Math.floor(3 * Math.min(f, 0.999))) + 0.5) / 3;
+const at = (target) => (H) => (H.kinds.includes('fold') || !H.kinds.includes('check') ? H.P : shifted(H, Math.min(1, Math.max(0, target(H))) - freqOf(H)));
+const WORDS = {
+  'always 40%': at(() => 0.4),
+  'the rule\'s number': at(ruleFreq), 'the rule\'s word, at its middle': at((H) => mid3(ruleFreq(H))), 'the rule\'s word, 20 points low': at((H) => mid3(ruleFreq(H)) - 0.2), 'the rule\'s word, 20 points high': at((H) => mid3(ruleFreq(H)) + 0.2),
+  'the rule\'s word, 10 points low': at((H) => mid3(ruleFreq(H)) - 0.1), 'the rule\'s word, 10 points high': at((H) => mid3(ruleFreq(H)) + 0.1),
+  'the right word, at its middle': at((H) => mid3(freqOf(H))), 'the right word, 20 points low': at((H) => mid3(freqOf(H)) - 0.2), 'the right word, 20 points high': at((H) => mid3(freqOf(H)) + 0.2),
+  'the right word, 10 points low': at((H) => mid3(freqOf(H)) - 0.1), 'the right word, 10 points high': at((H) => mid3(freqOf(H)) + 0.1),
+};
+const SETS = { errors: [ERRORS, './out/errors.jsonl'], derived: [DERIVED, './out/derived.jsonl'], words: [WORDS, './out/words.jsonl'] }; const [SET, FILE] = SETS[process.env.SET] ?? [SUMMARIES, './out/worth.jsonl'];
 const [count = '12', seed = '21'] = process.argv.slice(2);
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
 const pool = PRESETS.filter((p) => p.action !== 'Limped'); const out = new URL(FILE, import.meta.url); writeFileSync(out, '', { flag: 'a' });
@@ -126,6 +145,7 @@ for (let done = 0; done < +count;) {
       // the bet a player would make here (the biggest plain bet on offer) and its size in pots; the bet he faces, in pots of the pot before it
       const me = seatOf(n); const sizes = n.edges.map((x, a) => (x.kind === 'bet' ? (nodes[x.child].invested[me] - n.invested[me]) / n.pot : -1)); H.betSize = Math.max(...sizes); H.betAt = H.betSize > 0 ? sizes.indexOf(H.betSize) : -1;
       H.faced = st.toCall > 0 ? st.toCall / (st.pot - st.toCall) : 0;
+      if (process.env.SET === 'words' && st.toCall <= 0) { const he = equityVs(fs, f.board, f.his, f.mine); let all = 0, strong = 0; for (let v = 0; v < N; v++) if (f.his[v] > 1e-9 && !Number.isNaN(he[v])) { all += f.his[v]; if (he[v] >= 0.8) strong += f.his[v]; } H.strong = strong / all; H.ip = me; H.round = n.round; }
       seen.push({ node: n.id, seat: seatOf(n), round: n.round, bindex: n.round === 0 ? 0 : spot.resolveBoard([...board, dealt[0]]).board, H });
     }
   }

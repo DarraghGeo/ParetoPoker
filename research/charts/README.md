@@ -209,4 +209,4 @@ The rule of experiment 12 gives a number; the player keeps only its word and pla
 - **The vagueness of a word costs 2 to 4 points; the rule naming the wrong word costs about 8.** A vague word from this rule is no closer than always saying the average.
 - A player who knew the right word and was 20 points vague about it would be 12 to 13 out: closer than the rule's exact number.
 - Five words gain nothing over three once the meaning is 20 points loose.
-- Cost, by the errors study's rates (a rough guide, every hand shifted alike): about 1.2 to 1.9% of the pot for the vague word from the rule, 0.8 to 1.2% for the right word held vaguely. Leaning ten points towards betting lowers the cost though it adds error (flop 1.23 to 0.95, turn 1.46 to 1.11).
+- Cost: measured directly in research/value ("The bet frequency held as a word"): 0.2 to 0.3% of the pot on the turn and 0.7 to 1.1% on the river for the rule's word held 20 points loosely.
