@@ -7,7 +7,7 @@
 //   node play.mjs [spots] [seed]   -> out/play.jsonl
 import { writeFileSync, appendFileSync } from 'node:fs';
 import * as fs from 'poker-flopsolve';
-import { treeOf } from '../../src/solver/flopsolve.js';
+import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/lib/study/presets.js';
 
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
@@ -49,7 +49,8 @@ function facts(board) {
   const live = []; for (let c = 0; c < N; c++) if (lv[c] >= 0) live.push(c);
   const own = (x, y) => (lv[x] >= 4 || river ? str[x] - str[y] : come[x] - come[y] || str[x] - str[y]);
   const order = Int16Array.from(live.sort((x, y) => lv[x] - lv[y] || own(x, y))); const byCome = Int16Array.from([...order].sort((x, y) => come[y] - come[x] || lv[y] - lv[x] || str[y] - str[x]));
-  return { lv, come, str, order, byCome, river, flop };
+  const byStr = Int16Array.from([...order].sort((x, y) => str[x] - str[y]));
+  return { lv, come, str, order, byCome, byStr, river, flop };
 }
 
 // ---- the method ---------------------------------------------------------------------------------------------------------
@@ -111,11 +112,50 @@ function facing(F, mine, his, s, arm, rnd, canRaise) {
   return act;
 }
 
-const ARMS = process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
+// ---- the rules of research/rules: thresholds on a hand's equity, which the player reads off the chart -----------------------
+/** How much of `his` each hand of `mine` beats as the board stands (ties half). With `removal`, his hands that share a card are left out: on the river that is the exact equity. */
+function beats(F, mine, his, removal) {
+  const out = new Float32Array(N); const cardBelow = new Float64Array(52); const cardAll = new Float64Array(52); let all = 0, below = 0, i = 0; const hs = []; for (const v of F.byStr) if (his[v] > 0) { hs.push(v); all += his[v]; if (removal) { cardAll[CA(v)] += his[v]; cardAll[CB(v)] += his[v]; } }
+  if (!(all > 0)) return out;
+  for (let j = 0; j < F.byStr.length;) {
+    const s0 = F.str[F.byStr[j]]; while (i < hs.length && F.str[hs[i]] < s0) { const v = hs[i++]; below += his[v]; if (removal) { cardBelow[CA(v)] += his[v]; cardBelow[CB(v)] += his[v]; } }
+    let tie = 0, k = i; const cardTie = removal ? new Map() : null; while (k < hs.length && F.str[hs[k]] === s0) { const v = hs[k++]; tie += his[v]; if (removal) { cardTie.set(CA(v), (cardTie.get(CA(v)) ?? 0) + his[v]); cardTie.set(CB(v), (cardTie.get(CB(v)) ?? 0) + his[v]); } }
+    for (; j < F.byStr.length && F.str[F.byStr[j]] === s0; j++) { const c = F.byStr[j]; if (!(mine[c] > 0)) continue; const a = CA(c), b = CB(c);
+      if (!removal) { out[c] = (below + tie / 2) / all; continue; }
+      const live = all - cardAll[a] - cardAll[b] + his[c]; const lo = below - cardBelow[a] - cardBelow[b]; const t = tie - (cardTie.get(a) ?? 0) - (cardTie.get(b) ?? 0) + his[c]; out[c] = live > 0 ? (lo + t / 2) / live : 0; }
+  }
+  return out;
+}
+const EST = { 3: [0.09, 0.73, 0.05, 0.18], 4: [0.05, 0.84, 0, 0.10], 5: [0, 1, 0, 0] };
+/** Each hand's equity as the player has it: read off the chart (what it beats now, more for a draw), or exact. */
+function equities(F, board, mine, his, arm, rnd) {
+  const street = board.length; const [a, b, g, d] = EST[street]; const read = (w, v) => { const now = beats(F, w, v, false); const e = new Float32Array(N); for (const c of F.order) if (w[c] > 0) e[c] = a + b * now[c] + (F.come[c] >= 8 ? d : F.come[c] >= 4 ? g : 0); return e; };
+  if (arm.eq === 'exact' || (arm.exactOn && arm.exactOn.includes(street))) { if (street === 5) return [beats(F, mine, his, true), beats(F, his, mine, true)]; const m = equityVs(fs, board, mine, his), h = equityVs(fs, board, his, mine); const fix = (x) => Float32Array.from(x, (y) => (Number.isNaN(y) ? 0 : y)); return [fix(m), fix(h)]; }
+  const m = read(mine, his); if (arm.noise) for (const c of F.order) if (mine[c] > 0) m[c] += (2 * rnd() - 1) * arm.noise; return [m, read(his, mine)];
+}
+const valueFrom = (s) => (s < 0.5 ? 0.75 : s < 1.1 ? 0.8 : 0.85);
+/** The final rules. Returns, for every hand, 0 the quiet action (check or fold), 1 call, 2 bet or raise. */
+function finalRule(F, board, mine, his, ctx, arm, rnd) {
+  const act = new Int8Array(N); let mt = 0, ht = 0; for (const c of F.order) { mt += mine[c]; ht += his[c]; } if (!(mt > 0) || !(ht > 0)) return act;
+  const street = board.length; const [e, he] = equities(F, board, mine, his, arm, rnd); const { ip, s, toCall, raised, canRaise } = ctx;
+  if (toCall > 0) {
+    const price = s / (1 + 2 * s); const extra = street === 5 ? 0 : raised ? 0.05 : street === 4 ? (ip ? 0 : s > 0.5 ? 0.15 : 0.10) : ip ? 0.05 : 0.15; const t = price + extra + (s > 1 ? 0.05 : 0); const rz = s > 1 ? 0.8 : 0.75;
+    for (const c of F.order) if (mine[c] > 0) act[c] = street === 5 && canRaise && !raised && e[c] >= rz ? 2 : e[c] >= t ? 1 : 0;
+    return act; }
+  let strong = 0, weak = 0, topMe = 0, topHim = 0; for (const c of F.order) { if (he[c] >= 0.8) strong += his[c]; if (he[c] < 0.3) weak += his[c]; if (F.lv[c] >= 4) { topMe += mine[c]; topHim += his[c]; } } strong /= ht; weak /= ht;
+  const ahead = topMe / mt - topHim / ht > 0.04;
+  if (street === 3) { for (const c of F.order) if (mine[c] > 0) act[c] = ip || (ahead && (e[c] >= 0.7 || F.come[c] >= 8)) ? 2 : 0; return act; }
+  if (street === 4) { if (ip || ahead) for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= 0.5 || F.come[c] >= 8 ? 2 : 0; return act; }
+  if (!ip && strong >= 0.2) return act;
+  const v = valueFrom(s); const bl = street === 5 ? Math.max(0, weak - (ip ? 0.2 : 0.25)) : 0;
+  for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= v || e[c] < bl ? 2 : 0;
+  return act;
+}
+const ARMS = process.env.ARMS === 'final' ? (process.env.DIAG === '2' ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} } : process.env.DIAG ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, estRiver: { rule: 'final', exactOn: [3, 4] }, finalNoisy: { rule: 'final', noise: 0.1 } } : { final: { rule: 'final' }, finalEq: { rule: 'final', eq: 'exact' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} }) : process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
 const [count = '8', seed = '71'] = process.argv.slice(2);
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
-const pool = PRESETS.filter((p) => p.action !== 'Limped'); const TREE = { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
-const out = new URL(`./out/play${process.env.ARMS ? `-${process.env.ARMS}` : ''}.jsonl`, import.meta.url); writeFileSync(out, '', { flag: 'a' });
+const pool = PRESETS.filter((p) => p.action !== 'Limped'); const TREE = process.env.TREE === 'small' ? { betSizes: [[0.33], [0.33, 0.75], [0.75]], maxRaises: 1 } : { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
+const out = new URL(`./out/play${process.env.ARMS ? `-${process.env.ARMS}` : ''}${process.env.TAG ? `-${process.env.TAG}` : ''}.jsonl`, import.meta.url); writeFileSync(out, '', { flag: 'a' });
 for (let done = 0; done < +count;) {
   const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
   let spot; try { spot = fs.defineSpot({ board: b.join(''), pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; }
@@ -149,6 +189,12 @@ for (let done = 0; done < +count;) {
       const toCall = n.invested[1 - seat] - n.invested[seat]; const street = board.length; const fi = kinds.indexOf('fold'), ci = kinds.indexOf('call'), xi = kinds.indexOf('check'); const bi = kinds.indexOf('bet') >= 0 ? kinds.indexOf('bet') : kinds.indexOf('allin'); const ri = kinds.indexOf('raise') >= 0 ? kinds.indexOf('raise') : toCall > 0 ? kinds.indexOf('allin') : -1;
       const probsBy = NAMES.map((name, j) => {
         const P = new Float32Array(N * k); const w = mine[j];
+        if (ARMS[name].rule === 'final') {
+          let raised = false; for (let at = n; at.parent >= 0 && nodes[at.parent].kind !== 'chance'; at = nodes[at.parent]) { const par = nodes[at.parent]; if (seatOf(par) === seat && ['bet', 'raise', 'allin'].includes(par.edges[at.via].kind)) raised = true; }
+          const bet = bi >= 0 ? (nodes[n.edges[bi].child].invested[seat] - n.invested[seat]) / n.pot : 0; const act = finalRule(F, board, w, his, { ip: seat === 1, s: toCall > 0 ? toCall / (n.pot - toCall) : bet, toCall, raised, canRaise: ri >= 0 }, ARMS[name], dice[name]);
+          let t = 0, all = 0; for (const c of F.order) { const a = toCall > 0 ? (act[c] === 2 ? ri : act[c] === 1 ? ci : fi >= 0 ? fi : ci) : act[c] === 2 && bi >= 0 ? bi : xi; P[c * k + a] = 1; if (toCall <= 0 && bi >= 0) { t += w[c] * (a === bi); all += w[c]; } }
+          if (toCall <= 0 && bi >= 0) { tally[name][street - 3][0] += t; tally[name][street - 3][1] += all; }
+          return P; }
         if (toCall > 0) { const act = facing(F, w, his, toCall / (n.pot - toCall), ARMS[name], dice[name], ri >= 0); for (const c of F.order) P[c * k + (act[c] === 2 ? ri : act[c] === 1 ? ci : fi >= 0 ? fi : ci)] = 1; }
         else if (bi < 0) { for (const c of F.order) P[c * k + xi] = 1; }
         else { const bet = betting(F, w, his, (nodes[n.edges[bi].child].invested[seat] - n.invested[seat]) / n.pot, street, seat === 1, ARMS[name], dice[name]); let t = 0, all = 0; for (const c of F.order) { P[c * k + bi] = bet[c]; P[c * k + xi] = 1 - bet[c]; t += w[c] * bet[c]; all += w[c]; } tally[name][street - 3][0] += t; tally[name][street - 3][1] += all; }

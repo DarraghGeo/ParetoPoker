@@ -40,6 +40,6 @@ def study(G, s, label, key=buckets, drs=(0,)):
         c = (w[m][:, None, None, None] * C[m]).sum(0)[:, :, list(drs)] / w[m].sum(); v, b, q = np.unravel_index(c.argmin(), c.shape); G2 = [T[j][0] for j in m]
         print(f'     his strong {["<10", "10-20", "20-30", "30+"][k[0]]:6s} his weak {["<15", "15-35", "35+"][k[1]]:6s} n {len(m):4d}: value from {100*VS[v]:3.0f}{" (none)" if VS[v] >= 1 else "":7s} bluff under {100*BS[b]:2.0f}{" +draws" if drs[q] == 1 else " +draws,gutshots" if drs[q] == 2 else ""}  cost {c[v, b, q]:.2f} (check all {c[NV - 1, 0, 0]:.2f}) | solution bets {100*wmean(G2, lambda d: 1 - d["freq"][d["kinds"].index("check")]):.0f}%')
 st = int(sys.argv[1]) if len(sys.argv) > 1 else 5
-for ip in (0, 1):
+for ip in ((0, 1) if __name__ == '__main__' else ()):
     G = [d for d in D if d['street'] == st and d['ip'] == ip]
     for s in ((0.33, 0.75, 1.25) if st == 3 else (0.33, 0.75, 1.5)): study(G, s, f'\n{names[st]} {"IN position" if ip else "OUT of position"}', drs=(0,) if st == 5 else (0, 1, 2))

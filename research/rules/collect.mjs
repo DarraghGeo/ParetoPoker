@@ -12,20 +12,20 @@ import { study } from '../../src/explain/street.js';
 import { evaluator } from '../../src/explain/best.js';
 import { facts } from './facts.mjs';
 const N = fs.COMBOS; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0); const r4 = (x) => +x.toFixed(4);
-const [kind = 'flop', count = '10', seed = '81'] = process.argv.slice(2); const cards = kind === 'flop' ? 3 : 4;
-const TREE = kind === 'flop' ? { betSizes: [[0.33, 0.75, 1.25], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: [2, 1, 1], allInThreshold: 0.67 } : { betSizes: [[0.33, 0.75, 1.5], [0.33, 0.75, 1.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 };
+const [kind = 'flop', count = '10', seed = '81'] = process.argv.slice(2); const cards = kind === 'turn' ? 4 : 3;
+const TREE = kind === 'turnctx' ? { betSizes: [[0.33], [0.33, 0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: [1, 1, 1], allInThreshold: 0.67 } : kind === 'flop' ? { betSizes: [[0.33, 0.75], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: [1, 1, 1], allInThreshold: 0.67 } : { betSizes: [[0.33, 0.75, 1.5], [0.33, 0.75, 1.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 };
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
 const pool = PRESETS.filter((p) => p.action !== 'Limped'); const out = new URL(`./out/cells-${kind}-${seed}.jsonl`, import.meta.url); writeFileSync(out, '');
 for (let done = 0; done < +count;) {
   const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < cards) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
   const mult = kind === 'turn' ? [0.5, 1, 1, 1.5][rand(4)] : 1; const stack = +(p.stack * mult).toFixed(1);
   let spot; try { spot = fs.defineSpot({ board: b.join(''), pot: p.pot, stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; }
-  if (spot.estimate.bytes > +(process.env.MAXMB ?? (kind === 'flop' ? 2500 : 700)) * 2 ** 20) continue;
-  const t0 = Date.now(); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 2) }); let ex = 9; while (ex > (kind === 'flop' ? 0.35 : 0.25) && run.completed < (kind === 'flop' ? 500 : 1500)) { run.step(10); ex = run.exploitabilityPercent(); }
+  if (spot.estimate.bytes > +(process.env.MAXMB ?? (kind === 'turn' ? 700 : 2500)) * 2 ** 20) continue;
+  const t0 = Date.now(); const run = fs.createRun(spot, { workers: +(process.env.WORKERS ?? 2) }); let ex = 9; while (ex > (kind !== 'turn' ? 0.35 : 0.25) && run.completed < (kind !== 'turn' ? 500 : 1500)) { run.step(10); ex = run.exploitabilityPercent(); }
   const solved = run.snapshot(); const nodes = treeOf(fs, spot); const board = Array.from(spot.board); const valuer = evaluator(fs, solved, nodes); done++; let rows = 0;
   const kindOf = (n) => { const acts = []; let at = n; while (at.parent >= 0 && nodes[at.parent].kind !== 'chance') { const par = nodes[at.parent]; acts.unshift(par.edges[at.via].kind); at = par; } const last = acts[acts.length - 1]; return !acts.length ? 'first' : last === 'check' ? 'checkedTo' : acts.filter((x) => x !== 'check').length === 1 ? 'facingBet' : 'facingRaise'; };
   for (const n of nodes) {
-    if (n.kind !== 'decision' || (kind === 'flop' && n.round > 0) || Date.now() - t0 > 240000) continue; const what = kindOf(n); const me = seatOf(n); if (n.round === 1 && what === 'facingRaise') continue;
+    if (n.kind !== 'decision' || (kind === 'flop' && n.round > 0) || (kind === 'turnctx' && n.round !== 1) || Date.now() - t0 > 240000) continue; const what = kindOf(n); const me = seatOf(n); if (kind === 'turn' && n.round === 1 && what === 'facingRaise') continue;
     const deals = n.round === 0 ? [[]] : Array.from({ length: 52 }, (_, c) => c).filter((c) => !board.includes(c) && c % 6 === 0).map((c) => [c]);
     for (const dealt of deals) {
       let st; try { st = study(fs, solved, nodes, n.id, dealt); } catch { st = null; } if (!st || Math.min(...st.lineReach) < (n.round === 1 ? 0.06 : 0.02)) continue;
