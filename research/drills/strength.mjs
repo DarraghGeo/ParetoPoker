@@ -19,6 +19,13 @@ function levelOf(x) {
   if (x.pair === 'overpair') return 5; if (x.pair === 'top pair') return 6; if (x.pair === 'middle pair') return 7; if (x.pair === 'bottom pair' || x.pair === 'underpair' || x.own >= 1) return 8;
   return x.draw ? 9 : 10;
 }
+/** A level's hands in slices of equal weight along `line` (lowest first): what each slice does, the line's value there, a hand from it. */
+function sliced(list, line, kinds, sigma, total, most) {
+  const order = [...list].sort((x, y) => line[x.c] - line[y.c]); const mass = order.reduce((t, h) => t + h.w, 0); const n = Math.max(1, Math.min(18, Math.round((28 * mass) / total / most)));
+  const out = Array.from({ length: n }, () => ({ w: 0, v: 0, mix: kinds.map(() => 0), top: null, topW: 0 })); let seen = 0;
+  for (const h of order) { const s = out[Math.min(n - 1, Math.floor((n * (seen + h.w / 2)) / mass))]; seen += h.w; s.w += h.w; s.v += h.w * line[h.c]; kinds.forEach((_, a) => { s.mix[a] += h.w * sigma(h.c, a); }); if (h.w > s.topW) { s.topW = h.w; s.top = h.c; } }
+  return out.filter((x) => x.w > 0).map((x) => ({ v: r3(x.v / x.w), mix: x.mix.map((m) => r3(m / x.w)), ex: fs.formatCombo(x.top) }));
+}
 function laid(st, range, eq, sigma, kinds) {
   const L = LEVELS.map(() => ({ w: 0, e: 0, mix: kinds ? kinds.map(() => 0) : null, by: new Map(), draws: 0 })); let total = 0;
   for (let c = 0; c < N; c++) { const w = range[c]; if (!(w > 1e-6) || Number.isNaN(eq[c])) continue; const x = st.featuresOf(c); const g = L[levelOf(x)]; g.w += w; g.e += w * eq[c]; total += w; if (x.draw && levelOf(x) < 9) g.draws += w;
@@ -29,6 +36,10 @@ const follow = (id, labels) => { let at = id; for (const l of labels) { let n = 
 function decision(id, dealt, title, who, stands, history) {
   const st = study(fs, solution, nodes, id, dealt); const f = st.f; const n = nodes[id]; const kinds = n.edges.map((e) => e.kind); const eq = st.equity(); const hisEq = equityVs(fs, f.board, f.his, f.mine);
   const mine = laid(st, f.mine, eq, (c, a) => st.sigma(c, a), kinds); const his = laid(st, f.his, hisEq, null, null); const facing = st.toCall > 0; const me = f.me;
+  // the line through each bar: from top pair up, how often the hand is ahead now; below, how much of its equity is still to come; on the river, its equity
+  const parts = st.drawParts(); const groups = LEVELS.map(() => []); let total = 0; for (let c = 0; c < N; c++) { const w = f.mine[c]; if (!(w > 1e-6) || Number.isNaN(eq[c])) continue; groups[levelOf(st.featuresOf(c))].push({ c, w }); total += w; }
+  const most = Math.max(...mine.map((m) => m.share), ...his.map((m) => m.share));
+  mine.forEach((m, i) => { const upper = i <= 6; const kind = !parts ? 'equity' : upper ? 'now' : 'draw'; const line = !parts ? eq : upper ? parts.now : parts.draw; m.line = kind; m.slices = groups[i].length ? sliced(groups[i], line, kinds, (c, a) => st.sigma(c, a), total, most) : []; });
   const sum = (range, e) => { let w = 0, t = 0; for (let c = 0; c < N; c++) if (range[c] > 1e-6 && !Number.isNaN(e[c])) { w += range[c]; t += range[c] * e[c]; } return t / w; };
   const bet = n.edges.find((e) => e.kind === 'bet'); const s = bet ? (nodes[bet.child].invested[me] - n.invested[me]) / n.pot : 0;
   return { title, who, stands, history, facing, board: fs.formatCards(f.board), actions: st.actions.map((a) => ({ label: a.label, kind: a.kind, freq: r3(a.freq) })), equity: [r3(sum(f.mine, eq)), r3(sum(f.his, hisEq))],
