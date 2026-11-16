@@ -1,0 +1,181 @@
+<title>Pareto revamp</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one phone-width column, one screen at a time, switched by a segmented bar. A drill keeps the question, the verdict and Next on one screen. Light only, in Pareto's own tokens. */
+:root{
+  --bg:#FAFAF7;--surface:#F1F0EB;--card:#FFFFFF;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
+  --good:#17803F;--bad:#C8281F;--close:#9A6700;--his:#B8B9BC;--bet:#F0896B;--quiet:#7CCDBE;
+  --suit-s:#15171B;--suit-h:#C8281F;--suit-d:#0B6FC2;--suit-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:400 15px/22px var(--sans);padding-block:14px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+h1{font:600 26px/31px var(--sans);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font:600 19px/25px var(--sans);letter-spacing:-.01em;margin:0;text-wrap:balance}
+p{margin:0;color:var(--ink-2);text-wrap:pretty}
+b{font-weight:600;color:var(--ink)}
+.kicker{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.note{font:400 12px/18px var(--sans);color:var(--ink-3)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.nav{display:flex;border:1px solid var(--line-strong);border-radius:4px;overflow:hidden;background:var(--card)}
+.nav button{flex:1 1 0;min-width:0;border:0;border-left:1px solid var(--line-strong);background:transparent;padding:8px 4px;font:500 13px/18px var(--sans);color:var(--ink-2)}
+.nav button:first-child{border-left:0}
+.nav button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+section{display:flex;flex-direction:column;gap:14px}
+.skills{display:flex;flex-direction:column;border:1px solid var(--line-strong);border-radius:6px;background:var(--card)}
+.skill{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;align-items:center;padding:13px 14px;border:0;border-top:1px solid var(--line);background:transparent;text-align:left;width:100%}
+.skill:first-child{border-top:0}
+.skill h2{font-size:17px;line-height:22px}
+.skill p{grid-column:1;font-size:13px;line-height:19px}
+.skill .go{grid-row:1/3;grid-column:2;font:500 12px/16px var(--mono);color:var(--accent);white-space:nowrap}
+.skill .soon{color:var(--ink-3)}
+.meter{grid-column:1/3;height:3px;background:var(--surface);margin-top:8px}.meter i{display:block;height:100%;background:var(--ink)}
+.dropped{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line-strong)}
+.dropped div{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:19px;color:var(--ink-2)}
+.dropped span:last-child{font-family:var(--mono);font-size:12px;color:var(--ink-3);white-space:nowrap}
+.primary{border:0;border-radius:4px;background:var(--ink);color:var(--bg);padding:12px 16px;font:500 15px/20px var(--sans);width:100%}
+/* a drill */
+.spot{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;font:400 12px/18px var(--mono);color:var(--ink-2)}
+.board{font:500 21px/26px var(--mono);white-space:nowrap;color:var(--ink)}
+.s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
+.ruler{border:1px solid var(--line-strong);border-radius:6px;background:var(--card);padding:10px 12px 8px;display:flex;flex-direction:column;gap:4px}
+.ruler .cap{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);color:var(--ink-3)}
+.plot{position:relative}
+.bars{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:2px;height:38px;align-items:end}
+.bars.mine{align-items:start}
+.bars i{display:block;background:var(--his);min-height:1px}
+.bars.mine i{background:var(--ink)}
+.bars.mine i.b{background:var(--bet)}.bars.mine i.q{background:var(--quiet)}
+.axis{height:1px;background:var(--line-strong);margin:2px 0}
+.mark{position:absolute;top:-2px;bottom:-2px;width:0;border-left:2px solid var(--accent);z-index:2}
+.mark span{position:absolute;top:-1px;left:5px;font:500 11px/14px var(--mono);color:var(--accent);background:var(--card);padding:0 3px;white-space:nowrap}
+.mark.flip span{left:auto;right:5px}
+.cut{position:absolute;top:-2px;bottom:-2px;width:0;border-left:1px dashed var(--ink);z-index:1}
+.cut span{position:absolute;bottom:-1px;left:5px;font:400 10px/13px var(--mono);color:var(--ink-2);background:var(--card);padding:0 3px;white-space:nowrap}
+.ticks{display:flex;justify-content:space-between;font:400 10px/13px var(--mono);color:var(--ink-3)}
+.ask{display:flex;align-items:center;gap:14px}
+.hand{font:500 30px/34px var(--mono);white-space:nowrap;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);padding:8px 12px}
+.ask h2{font-size:17px;line-height:23px}
+.opts{display:flex;gap:8px}
+.opts button{flex:1 1 0;min-width:0;border:1px solid var(--line-strong);border-radius:4px;background:var(--card);padding:11px 6px;font:500 14px/19px var(--sans)}
+.opts button[disabled]{cursor:default;color:var(--ink-3)}
+.opts button.right{border-color:var(--good);color:var(--good);box-shadow:inset 0 0 0 1px var(--good)}
+.opts button.wrong{border-color:var(--bad);color:var(--bad)}
+.verdict{border-left:3px solid var(--ink);padding:1px 0 1px 12px;display:flex;flex-direction:column;gap:3px;min-height:68px}
+.verdict.good{border-color:var(--good)}.verdict.bad{border-color:var(--bad)}.verdict.close{border-color:var(--close)}
+.verdict strong{font:600 15px/20px var(--sans)}
+.verdict.good strong{color:var(--good)}.verdict.bad strong{color:var(--bad)}.verdict.close strong{color:var(--close)}
+.verdict p{font-size:13px;line-height:19px}
+.verdict .mono{font-family:var(--mono);font-size:12px;color:var(--ink)}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.count{font:400 12px/16px var(--mono);color:var(--ink-3)}
+.key{display:flex;flex-wrap:wrap;gap:2px 12px;font:400 11px/15px var(--mono);color:var(--ink-2)}
+.key i{display:inline-block;width:8px;height:8px;margin-right:5px}
+.list{border-top:1px solid var(--line-strong)}
+.list div{display:grid;grid-template-columns:44px minmax(0,1fr) 40px 78px;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;line-height:18px;align-items:baseline}
+.list .c{font:500 13px/18px var(--mono)}.list .n{font:400 12px/18px var(--mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.list .l{color:var(--ink-2)}
+.pick{display:flex;gap:8px;flex-wrap:wrap}
+.pick button{border:1px solid var(--line-strong);border-radius:4px;background:var(--card);padding:6px 10px;font:500 13px/18px var(--sans);color:var(--ink-2)}
+.pick button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.plot button.hit{position:absolute;top:0;bottom:0;border:0;background:transparent;padding:0;z-index:3}
+.plot button.hit[aria-pressed="true"]{background:rgba(42,60,224,.10)}
+</style>
+<main>
+  <div class="nav" id="nav"></div>
+  <section id="home">
+    <div class="kicker">Pareto · proposed revamp</div>
+    <h1>Three skills, on solved spots.</h1>
+    <p>A day of testing says most of the money is in three things. The app trains those, shows the solver's answer, and stops asking for the rest.</p>
+    <div class="skills">
+      <button class="skill" data-go="stand"><h2>Stand</h2><span class="go">Start →</span><p>Where does this hand sit against his range? Worth five to ten times anything else we measured.</p><span class="meter"><i style="width:35%"></i></span></button>
+      <button class="skill" data-go="price"><h2>Price</h2><span class="go">Start →</span><p>What does a call need, and does this hand have it?</p><span class="meter"><i style="width:15%"></i></span></button>
+      <div class="skill"><h2>Seat</h2><span class="go soon">Not in this mock-up</span><p>The same hand and bet, in and out of position. Out of position needs 10 to 15 points more before the river.</p><span class="meter"><i style="width:0%"></i></span></div>
+      <button class="skill" data-go="spot"><h2>Spot</h2><span class="go">Open →</span><p>Look at a solved spot: both ranges on one equity ruler, and what the solver does at each point.</p></button>
+    </div>
+    <div>
+      <div class="kicker" style="margin-bottom:6px">What the app stops drilling, and what it was worth</div>
+      <div class="dropped">
+        <div><span>Exact bet frequencies</span><span>a rough word did as well</span></div>
+        <div><span>Mixing one hand</span><span>0.0% of the pot</span></div>
+        <div><span>Blockers</span><span>0.1 to 0.2%</span></div>
+        <div><span>Several bet sizes on flop and turn</span><span>no gain measured</span></div>
+        <div><span>Which exact hand inside a strength band</span><span>0.3 to 0.4% in all</span></div>
+      </div>
+    </div>
+    <p class="note">The two drills and the spot view below run on one real solved hand: single-raised pot, button against big blind.</p>
+  </section>
+  <section id="stand" hidden></section>
+  <section id="price" hidden></section>
+  <section id="spot" hidden></section>
+</main>
+<script>
+const D = [{"title":"Turn","who":"BU","line":"BB checks to you","board":"Ks 9d 4s 7h","seat":"in position","street":4,"faced":0,"price":0,"kinds":["check","bet"],"labels":["X","B33"],"hands":[{"cls":"99","ex":"9h9s","lv":7,"draw":false,"w":0.006,"e":0.973,"mix":[0,1]},{"cls":"KK","ex":"KdKh","lv":7,"draw":false,"w":0.006,"e":0.973,"mix":[0,1]},{"cls":"77","ex":"7d7s","lv":7,"draw":false,"w":0.006,"e":0.969,"mix":[0,1]},{"cls":"44","ex":"4d4h","lv":7,"draw":false,"w":0.006,"e":0.961,"mix":[0,1]},{"cls":"K9o","ex":"Kh9s","lv":6,"draw":false,"w":0.015,"e":0.942,"mix":[0,1]},{"cls":"K9s","ex":"Kh9h","lv":6,"draw":false,"w":0.004,"e":0.94,"mix":[0,1]},{"cls":"K7o","ex":"Kh7s","lv":6,"draw":false,"w":0.006,"e":0.929,"mix":[0,1]},{"cls":"K7s","ex":"Kd7d","lv":6,"draw":false,"w":0.004,"e":0.925,"mix":[0,1]},{"cls":"97s","ex":"9s7s","lv":6,"draw":true,"w":0.002,"e":0.924,"mix":[0,1]},{"cls":"K4s","ex":"Kh4h","lv":6,"draw":false,"w":0.006,"e":0.918,"mix":[0,1]},{"cls":"97s","ex":"9c7c","lv":6,"draw":false,"w":0.002,"e":0.901,"mix":[0.001,0.999]},{"cls":"A9s","ex":"As9s","lv":3,"draw":true,"w":0.002,"e":0.877,"mix":[0,1]},{"cls":"AKo","ex":"AsKh","lv":4,"draw":false,"w":0.019,"e":0.876,"mix":[0,1]},{"cls":"AKs","ex":"AhKh","lv":4,"draw":false,"w":0.006,"e":0.874,"mix":[0,1]},{"cls":"KJo","ex":"KhJs","lv":4,"draw":false,"w":0.019,"e":0.861,"mix":[0,1]},{"cls":"KQo","ex":"KhQs","lv":4,"draw":false,"w":0.019,"e":0.861,"mix":[0,1]},{"cls":"KTo","ex":"KhTs","lv":4,"draw":false,"w":0.019,"e":0.86,"mix":[0,1]},{"cls":"KTs","ex":"KhTh","lv":4,"draw":false,"w":0.006,"e":0.859,"mix":[0,1]},{"cls":"KJs","ex":"KhJh","lv":4,"draw":false,"w":0.006,"e":0.859,"mix":[0,1]},{"cls":"KQs","ex":"KhQh","lv":4,"draw":false,"w":0.006,"e":0.859,"mix":[0,1]},{"cls":"AA","ex":"AhAs","lv":5,"draw":false,"w":0.013,"e":0.856,"mix":[0,1]},{"cls":"K8o","ex":"Kh8s","lv":4,"draw":false,"w":0.017,"e":0.854,"mix":[0,1]},{"cls":"Q9s","ex":"Qs9s","lv":3,"draw":true,"w":0.002,"e":0.853,"mix":[0.001,0.999]},{"cls":"K8s","ex":"Kh8h","lv":4,"draw":false,"w":0.006,"e":0.852,"mix":[0,1]},{"cls":"K6s","ex":"Kh6h","lv":4,"draw":false,"w":0.006,"e":0.848,"mix":[0,1]},{"cls":"K2s","ex":"Kh2h","lv":4,"draw":false,"w":0.006,"e":0.846,"mix":[0,1]},{"cls":"K3s","ex":"Kh3h","lv":4,"draw":false,"w":0.006,"e":0.845,"mix":[0,1]},{"cls":"K5s","ex":"Kh5h","lv":4,"draw":false,"w":0.006,"e":0.845,"mix":[0,1]},{"cls":"J9s","ex":"Js9s","lv":3,"draw":true,"w":0.002,"e":0.841,"mix":[0.001,0.999]},{"cls":"T9s","ex":"Ts9s","lv":3,"draw":true,"w":0.002,"e":0.825,"mix":[0.003,0.997]},{"cls":"A9o","ex":"As9h","lv":3,"draw":false,"w":0.019,"e":0.824,"mix":[0.004,0.996]},{"cls":"A9s","ex":"Ah9h","lv":3,"draw":false,"w":0.004,"e":0.82,"mix":[0.002,0.998]},{"cls":"QQ","ex":"QhQs","lv":3,"draw":false,"w":0.013,"e":0.819,"mix":[0.069,0.931]},{"cls":"JJ","ex":"JhJs","lv":3,"draw":false,"w":0.013,"e":0.816,"mix":[0.004,0.996]},{"cls":"TT","ex":"ThTs","lv":3,"draw":false,"w":0.013,"e":0.81,"mix":[0,1]},{"cls":"98s","ex":"9s8s","lv":3,"draw":true,"w":0.002,"e":0.805,"mix":[0,1]},{"cls":"96s","ex":"9s6s","lv":3,"draw":true,"w":0.002,"e":0.803,"mix":[0,1]},{"cls":"Q9o","ex":"Qs9h","lv":3,"draw":false,"w":0.019,"e":0.798,"mix":[0.181,0.819]},{"cls":"Q9s","ex":"Qh9h","lv":3,"draw":false,"w":0.004,"e":0.794,"mix":[0.051,0.949]},{"cls":"J9o","ex":"Js9h","lv":3,"draw":false,"w":0.019,"e":0.786,"mix":[0.477,0.523]},{"cls":"J9s","ex":"Jh9h","lv":3,"draw":false,"w":0.004,"e":0.785,"mix":[0.498,0.502]},{"cls":"T9o","ex":"Ts9h","lv":3,"draw":false,"w":0.019,"e":0.767,"mix":[0.783,0.217]},{"cls":"T9s","ex":"Th9h","lv":3,"draw":false,"w":0.004,"e":0.766,"mix":[0.808,0.192]},{"cls":"A7s","ex":"As7s","lv":2,"draw":true,"w":0.002,"e":0.759,"mix":[0,1]},{"cls":"Q7s","ex":"Qs7s","lv":2,"draw":true,"w":0.002,"e":0.742,"mix":[0,1]},{"cls":"98s","ex":"9h8h","lv":3,"draw":false,"w":0.004,"e":0.738,"mix":[0.007,0.993]},{"cls":"J7s","ex":"Js7s","lv":2,"draw":true,"w":0.002,"e":0.737,"mix":[0,1]},{"cls":"T7s","ex":"Ts7s","lv":2,"draw":true,"w":0.002,"e":0.735,"mix":[0,1]},{"cls":"96s","ex":"9h6h","lv":3,"draw":false,"w":0.003,"e":0.733,"mix":[0.012,0.988]},{"cls":"87s","ex":"8s7s","lv":2,"draw":true,"w":0.002,"e":0.728,"mix":[0,1]},{"cls":"76s","ex":"7s6s","lv":2,"draw":true,"w":0.002,"e":0.718,"mix":[0,1]},{"cls":"75s","ex":"7s5s","lv":2,"draw":true,"w":0.002,"e":0.712,"mix":[0,1]},{"cls":"A7o","ex":"As7d","lv":2,"draw":false,"w":0.019,"e":0.678,"mix":[0.001,0.999]},{"cls":"A7s","ex":"Ad7d","lv":2,"draw":false,"w":0.004,"e":0.675,"mix":[0.001,0.999]},{"cls":"88","ex":"8h8s","lv":2,"draw":false,"w":0.013,"e":0.672,"mix":[0.141,0.859]},{"cls":"T7s","ex":"Td7d","lv":2,"draw":false,"w":0.004,"e":0.657,"mix":[0,1]},{"cls":"J7s","ex":"Jd7d","lv":2,"draw":false,"w":0.004,"e":0.657,"mix":[0,1]},{"cls":"Q7s","ex":"Qd7d","lv":2,"draw":false,"w":0.004,"e":0.655,"mix":[0,1]},{"cls":"87s","ex":"8d7d","lv":2,"draw":false,"w":0.004,"e":0.648,"mix":[0.258,0.742]},{"cls":"76s","ex":"7d6d","lv":2,"draw":false,"w":0.004,"e":0.63,"mix":[0,1]},{"cls":"75s","ex":"7d5d","lv":2,"draw":false,"w":0.004,"e":0.624,"mix":[0,1]},{"cls":"AQs","ex":"AsQs","lv":1,"draw":true,"w":0.002,"e":0.615,"mix":[0,1]},{"cls":"AJs","ex":"AsJs","lv":1,"draw":true,"w":0.002,"e":0.601,"mix":[0,1]},{"cls":"ATs","ex":"AsTs","lv":1,"draw":true,"w":0.002,"e":0.576,"mix":[0.001,0.999]},{"cls":"66","ex":"6h6s","lv":2,"draw":false,"w":0.013,"e":0.575,"mix":[0.001,0.999]},{"cls":"A4o","ex":"As4h","lv":2,"draw":false,"w":0.019,"e":0.56,"mix":[0,1]},{"cls":"A4s","ex":"Ah4h","lv":2,"draw":false,"w":0.006,"e":0.555,"mix":[0,1]},{"cls":"Q4s","ex":"Qh4h","lv":2,"draw":false,"w":0.006,"e":0.548,"mix":[0,1]},{"cls":"J4s","ex":"Jh4h","lv":2,"draw":false,"w":0.002,"e":0.546,"mix":[0,1]},{"cls":"54s","ex":"5h4h","lv":2,"draw":false,"w":0.006,"e":0.538,"mix":[0.136,0.864]},{"cls":"55","ex":"5h5s","lv":2,"draw":false,"w":0.013,"e":0.537,"mix":[0,1]},{"cls":"A8s","ex":"As8s","lv":1,"draw":true,"w":0.002,"e":0.525,"mix":[0,1]},{"cls":"QJs","ex":"QsJs","lv":1,"draw":true,"w":0.002,"e":0.498,"mix":[0,1]},{"cls":"QTs","ex":"QsTs","lv":1,"draw":true,"w":0.002,"e":0.485,"mix":[0,1]},{"cls":"AQo","ex":"AsQh","lv":0,"draw":false,"w":0.025,"e":0.482,"mix":[0.455,0.545]},{"cls":"A6s","ex":"As6s","lv":1,"draw":true,"w":0.002,"e":0.477,"mix":[0,1]},{"cls":"AQs","ex":"AhQh","lv":0,"draw":false,"w":0.006,"e":0.474,"mix":[0.534,0.466]},{"cls":"33","ex":"3h3s","lv":2,"draw":false,"w":0.013,"e":0.472,"mix":[0.111,0.889]},{"cls":"AJo","ex":"AsJh","lv":0,"draw":false,"w":0.025,"e":0.471,"mix":[0.263,0.737]},{"cls":"A5s","ex":"As5s","lv":1,"draw":true,"w":0.002,"e":0.469,"mix":[0,1]},{"cls":"AJs","ex":"AhJh","lv":0,"draw":false,"w":0.006,"e":0.466,"mix":[0.305,0.695]},{"cls":"A3s","ex":"As3s","lv":1,"draw":true,"w":0.002,"e":0.46,"mix":[0,1]},{"cls":"22","ex":"2h2s","lv":2,"draw":false,"w":0.011,"e":0.459,"mix":[0.004,0.996]},{"cls":"A2s","ex":"As2s","lv":1,"draw":true,"w":0.002,"e":0.457,"mix":[0,1]},{"cls":"ATo","ex":"AsTh","lv":0,"draw":false,"w":0.025,"e":0.441,"mix":[0.596,0.404]},{"cls":"ATs","ex":"AhTh","lv":0,"draw":false,"w":0.006,"e":0.437,"mix":[0.674,0.326]},{"cls":"Q8s","ex":"Qs8s","lv":1,"draw":true,"w":0.002,"e":0.411,"mix":[0,1]},{"cls":"J8s","ex":"Js8s","lv":1,"draw":true,"w":0.002,"e":0.409,"mix":[0,1]},{"cls":"T6s","ex":"Ts6s","lv":1,"draw":true,"w":0.002,"e":0.384,"mix":[0,1]},{"cls":"Q6s","ex":"Qs6s","lv":1,"draw":true,"w":0.002,"e":0.384,"mix":[0,1]},{"cls":"Q5s","ex":"Qs5s","lv":1,"draw":true,"w":0.002,"e":0.379,"mix":[0,1]},{"cls":"A8o","ex":"As8h","lv":0,"draw":false,"w":0.025,"e":0.378,"mix":[0.101,0.899]},{"cls":"JTs","ex":"JsTs","lv":1,"draw":true,"w":0.008,"e":0.373,"mix":[0,1]},{"cls":"Q3s","ex":"Qs3s","lv":1,"draw":true,"w":0.002,"e":0.372,"mix":[0,1]},{"cls":"A8s","ex":"Ah8h","lv":0,"draw":false,"w":0.006,"e":0.372,"mix":[0.141,0.859]},{"cls":"T8s","ex":"Ts8s","lv":1,"draw":true,"w":0.008,"e":0.342,"mix":[0,1]},{"cls":"QJo","ex":"QsJh","lv":0,"draw":false,"w":0.025,"e":0.341,"mix":[0.004,0.996]},{"cls":"JTo","ex":"JsTh","lv":1,"draw":true,"w":0.025,"e":0.339,"mix":[0,1]},{"cls":"J6s","ex":"Js6s","lv":1,"draw":true,"w":0.002,"e":0.337,"mix":[0,1]},{"cls":"J5s","ex":"Js5s","lv":1,"draw":true,"w":0.002,"e":0.333,"mix":[0,1]},{"cls":"QJs","ex":"QhJh","lv":0,"draw":false,"w":0.006,"e":0.333,"mix":[0.014,0.986]},{"cls":"QTo","ex":"QsTh","lv":0,"draw":false,"w":0.025,"e":0.33,"mix":[0.037,0.963]},{"cls":"QTs","ex":"QhTh","lv":0,"draw":false,"w":0.006,"e":0.325,"mix":[0.085,0.915]},{"cls":"86s","ex":"8s6s","lv":1,"draw":true,"w":0.008,"e":0.32,"mix":[0,1]},{"cls":"A6o","ex":"As6h","lv":0,"draw":false,"w":0.025,"e":0.32,"mix":[0.001,0.999]},{"cls":"A6s","ex":"Ah6h","lv":0,"draw":false,"w":0.006,"e":0.316,"mix":[0.001,0.999]},{"cls":"A5o","ex":"As5h","lv":0,"draw":false,"w":0.025,"e":0.308,"mix":[0.011,0.989]},{"cls":"T8o","ex":"Ts8h","lv":1,"draw":true,"w":0.012,"e":0.307,"mix":[0,1]},{"cls":"A5s","ex":"Ah5h","lv":0,"draw":false,"w":0.006,"e":0.303,"mix":[0.014,0.986]},{"cls":"A3o","ex":"As3h","lv":0,"draw":false,"w":0.025,"e":0.302,"mix":[0.029,0.971]},{"cls":"A2s","ex":"Ah2h","lv":0,"draw":false,"w":0.006,"e":0.299,"mix":[0.002,0.998]},{"cls":"A3s","ex":"Ah3h","lv":0,"draw":false,"w":0.006,"e":0.299,"mix":[0.021,0.979]},{"cls":"65s","ex":"6s5s","lv":1,"draw":true,"w":0.008,"e":0.297,"mix":[0.002,0.998]},{"cls":"J8o","ex":"Js8h","lv":0,"draw":false,"w":0.003,"e":0.243,"mix":[0,1]},{"cls":"J8s","ex":"Jh8h","lv":0,"draw":false,"w":0.006,"e":0.241,"mix":[0,1]},{"cls":"Q8s","ex":"Qh8h","lv":0,"draw":false,"w":0.006,"e":0.228,"mix":[0.366,0.634]},{"cls":"T6s","ex":"Th6h","lv":0,"draw":false,"w":0.006,"e":0.219,"mix":[0.002,0.998]},{"cls":"Q6s","ex":"Qh6h","lv":0,"draw":false,"w":0.006,"e":0.203,"mix":[0.421,0.579]},{"cls":"Q5s","ex":"Qh5h","lv":0,"draw":false,"w":0.006,"e":0.193,"mix":[0.446,0.554]},{"cls":"Q3s","ex":"Qh3h","lv":0,"draw":false,"w":0.006,"e":0.192,"mix":[0.363,0.637]},{"cls":"J6s","ex":"Jh6h","lv":0,"draw":false,"w":0.006,"e":0.152,"mix":[0.19,0.81]},{"cls":"J5s","ex":"Jh5h","lv":0,"draw":false,"w":0.006,"e":0.142,"mix":[0.243,0.757]}],"his":[0.495,0.04,0.225,0.139,0.026,0,0.064,0.011],"hisE":[0,0.012,0.131,0.048,0.042,0.118,0.127,0.063,0.042,0.068,0.085,0.016,0.111,0.031,0.005,0.021,0.017,0.03,0.03,0.003]},{"title":"River","who":"BU","line":"Turn checked through. BB bets three quarters of the pot","board":"Ks 9d 4s 7h 2c","seat":"in position","street":5,"faced":0.751,"price":0.3,"kinds":["fold","call"],"labels":["F","C"],"hands":[{"cls":"22","ex":"2d2h","lv":7,"draw":false,"w":0,"e":0.985,"mix":[0,1]},{"cls":"K9o","ex":"Kd9c","lv":6,"draw":false,"w":0,"e":0.975,"mix":[0,1]},{"cls":"K9s","ex":"Kc9c","lv":6,"draw":false,"w":0,"e":0.974,"mix":[0,1]},{"cls":"K7o","ex":"Kd7c","lv":6,"draw":false,"w":0,"e":0.954,"mix":[0,1]},{"cls":"K7s","ex":"Kc7c","lv":6,"draw":false,"w":0,"e":0.953,"mix":[0,1]},{"cls":"K4s","ex":"Kd4d","lv":6,"draw":false,"w":0,"e":0.949,"mix":[0,1]},{"cls":"K2s","ex":"Kh2h","lv":6,"draw":false,"w":0,"e":0.939,"mix":[0,1]},{"cls":"97s","ex":"9c7c","lv":6,"draw":false,"w":0,"e":0.918,"mix":[0,1]},{"cls":"AKo","ex":"AsKh","lv":4,"draw":false,"w":0,"e":0.897,"mix":[0,1]},{"cls":"AKs","ex":"AhKh","lv":4,"draw":false,"w":0,"e":0.897,"mix":[0,1]},{"cls":"KQo","ex":"KhQs","lv":4,"draw":false,"w":0,"e":0.895,"mix":[0,1]},{"cls":"KQs","ex":"KcQc","lv":4,"draw":false,"w":0,"e":0.893,"mix":[0,1]},{"cls":"KJo","ex":"KhJd","lv":4,"draw":false,"w":0,"e":0.892,"mix":[0,1]},{"cls":"KJs","ex":"KdJd","lv":4,"draw":false,"w":0,"e":0.891,"mix":[0,1]},{"cls":"KTo","ex":"KhTd","lv":4,"draw":false,"w":0,"e":0.889,"mix":[0,1]},{"cls":"KTs","ex":"KdTd","lv":4,"draw":false,"w":0,"e":0.889,"mix":[0,1]},{"cls":"K8o","ex":"Kh8s","lv":4,"draw":false,"w":0,"e":0.884,"mix":[0,1]},{"cls":"K8s","ex":"Kc8c","lv":4,"draw":false,"w":0,"e":0.884,"mix":[0,1]},{"cls":"K6s","ex":"Kh6h","lv":4,"draw":false,"w":0,"e":0.882,"mix":[0,1]},{"cls":"K5s","ex":"Kd5d","lv":4,"draw":false,"w":0,"e":0.878,"mix":[0,1]},{"cls":"K3s","ex":"Kh3h","lv":4,"draw":false,"w":0,"e":0.874,"mix":[0,1]},{"cls":"AA","ex":"AhAs","lv":5,"draw":false,"w":0,"e":0.873,"mix":[0,1]},{"cls":"A9o","ex":"As9c","lv":3,"draw":false,"w":0.001,"e":0.847,"mix":[0,1]},{"cls":"A9s","ex":"Ac9c","lv":3,"draw":false,"w":0,"e":0.846,"mix":[0,1]},{"cls":"TT","ex":"TdTs","lv":3,"draw":false,"w":0,"e":0.838,"mix":[0,1]},{"cls":"JJ","ex":"JdJs","lv":3,"draw":false,"w":0.001,"e":0.837,"mix":[0,1]},{"cls":"QQ","ex":"QcQs","lv":3,"draw":false,"w":0.009,"e":0.833,"mix":[0,1]},{"cls":"Q9o","ex":"Qs9c","lv":3,"draw":false,"w":0.034,"e":0.83,"mix":[0,1]},{"cls":"Q9s","ex":"Qc9c","lv":3,"draw":false,"w":0.002,"e":0.827,"mix":[0,1]},{"cls":"J9s","ex":"Jc9c","lv":3,"draw":false,"w":0.021,"e":0.803,"mix":[0,1]},{"cls":"J9o","ex":"Js9c","lv":3,"draw":false,"w":0.089,"e":0.801,"mix":[0,1]},{"cls":"T9s","ex":"Tc9c","lv":3,"draw":false,"w":0.034,"e":0.761,"mix":[0,1]},{"cls":"T9o","ex":"Ts9c","lv":3,"draw":false,"w":0.147,"e":0.76,"mix":[0,1]},{"cls":"98s","ex":"9c8c","lv":3,"draw":false,"w":0,"e":0.716,"mix":[0,1]},{"cls":"96s","ex":"9c6c","lv":3,"draw":false,"w":0,"e":0.694,"mix":[0,1]},{"cls":"88","ex":"8d8h","lv":2,"draw":false,"w":0.018,"e":0.616,"mix":[0,1]},{"cls":"A7o","ex":"As7d","lv":2,"draw":false,"w":0,"e":0.577,"mix":[0,1]},{"cls":"A7s","ex":"Ad7d","lv":2,"draw":false,"w":0,"e":0.576,"mix":[0,1]},{"cls":"Q7s","ex":"Qd7d","lv":2,"draw":false,"w":0,"e":0.546,"mix":[0,1]},{"cls":"T7s","ex":"Td7d","lv":2,"draw":false,"w":0,"e":0.543,"mix":[0,1]},{"cls":"J7s","ex":"Jd7d","lv":2,"draw":false,"w":0,"e":0.54,"mix":[0,1]},{"cls":"87s","ex":"8d7d","lv":2,"draw":false,"w":0.011,"e":0.533,"mix":[0,1]},{"cls":"76s","ex":"7d6d","lv":2,"draw":false,"w":0,"e":0.49,"mix":[0,1]},{"cls":"75s","ex":"7d5d","lv":2,"draw":false,"w":0,"e":0.472,"mix":[0,1]},{"cls":"66","ex":"6d6h","lv":2,"draw":false,"w":0,"e":0.412,"mix":[0,1]},{"cls":"A4o","ex":"As4h","lv":2,"draw":false,"w":0,"e":0.387,"mix":[0.002,0.998]},{"cls":"A4s","ex":"Ah4h","lv":2,"draw":false,"w":0,"e":0.385,"mix":[0.002,0.998]},{"cls":"55","ex":"5d5h","lv":2,"draw":false,"w":0,"e":0.384,"mix":[0.001,0.999]},{"cls":"Q4s","ex":"Qh4h","lv":2,"draw":false,"w":0,"e":0.372,"mix":[0.002,0.998]},{"cls":"J4s","ex":"Jh4h","lv":2,"draw":false,"w":0,"e":0.363,"mix":[0.001,0.999]},{"cls":"54s","ex":"5h4h","lv":2,"draw":false,"w":0.008,"e":0.35,"mix":[0.002,0.998]},{"cls":"A2s","ex":"Ah2h","lv":2,"draw":false,"w":0,"e":0.315,"mix":[0.015,0.985]},{"cls":"ATo","ex":"AdTh","lv":0,"draw":false,"w":0.149,"e":0.3,"mix":[0.582,0.418]},{"cls":"AQo","ex":"AsQh","lv":0,"draw":false,"w":0.114,"e":0.299,"mix":[0.692,0.308]},{"cls":"ATs","ex":"AhTh","lv":0,"draw":false,"w":0.042,"e":0.298,"mix":[0.594,0.406]},{"cls":"AJo","ex":"AsJc","lv":0,"draw":false,"w":0.066,"e":0.298,"mix":[0.608,0.392]},{"cls":"33","ex":"3d3h","lv":2,"draw":false,"w":0.014,"e":0.297,"mix":[0.233,0.767]},{"cls":"AQs","ex":"AhQh","lv":0,"draw":false,"w":0.033,"e":0.296,"mix":[0.714,0.286]},{"cls":"AJs","ex":"AcJc","lv":0,"draw":false,"w":0.019,"e":0.295,"mix":[0.646,0.354]},{"cls":"A8s","ex":"Ah8h","lv":0,"draw":false,"w":0.009,"e":0.293,"mix":[0.981,0.019]},{"cls":"A8o","ex":"Ac8h","lv":0,"draw":false,"w":0.025,"e":0.293,"mix":[0.979,0.021]},{"cls":"A6o","ex":"Ac6h","lv":0,"draw":false,"w":0,"e":0.276,"mix":[1,0]},{"cls":"A6s","ex":"Ah6h","lv":0,"draw":false,"w":0,"e":0.275,"mix":[0.999,0.001]},{"cls":"A5s","ex":"Ah5h","lv":0,"draw":false,"w":0.001,"e":0.265,"mix":[1,0]},{"cls":"A5o","ex":"Ac5h","lv":0,"draw":false,"w":0.003,"e":0.265,"mix":[1,0]},{"cls":"A3s","ex":"Ac3c","lv":0,"draw":false,"w":0.001,"e":0.256,"mix":[1,0]},{"cls":"A3o","ex":"Ah3c","lv":0,"draw":false,"w":0.007,"e":0.255,"mix":[1,0]},{"cls":"QJo","ex":"QcJd","lv":0,"draw":false,"w":0.001,"e":0.215,"mix":[1,0]},{"cls":"QJs","ex":"QcJc","lv":0,"draw":false,"w":0.001,"e":0.214,"mix":[1,0]},{"cls":"QTs","ex":"QcTc","lv":0,"draw":false,"w":0.005,"e":0.205,"mix":[1,0]},{"cls":"QTo","ex":"QcTd","lv":0,"draw":false,"w":0.009,"e":0.205,"mix":[1,0]},{"cls":"Q8s","ex":"Qd8d","lv":0,"draw":false,"w":0.023,"e":0.191,"mix":[1,0]},{"cls":"Q6s","ex":"Qh6h","lv":0,"draw":false,"w":0.026,"e":0.175,"mix":[1,0]},{"cls":"Q5s","ex":"Qh5h","lv":0,"draw":false,"w":0.028,"e":0.163,"mix":[1,0]},{"cls":"Q3s","ex":"Qc3c","lv":0,"draw":false,"w":0.022,"e":0.155,"mix":[1,0]},{"cls":"JTo","ex":"JcTd","lv":0,"draw":false,"w":0,"e":0.13,"mix":[1,0]},{"cls":"JTs","ex":"JdTd","lv":0,"draw":false,"w":0,"e":0.127,"mix":[1,0]},{"cls":"J8s","ex":"Jd8d","lv":0,"draw":false,"w":0,"e":0.113,"mix":[1,0]},{"cls":"J8o","ex":"Jc8d","lv":0,"draw":false,"w":0,"e":0.113,"mix":[1,0]},{"cls":"J6s","ex":"Jh6h","lv":0,"draw":false,"w":0.012,"e":0.094,"mix":[1,0]},{"cls":"J5s","ex":"Jh5h","lv":0,"draw":false,"w":0.015,"e":0.078,"mix":[1,0]},{"cls":"T8o","ex":"Tc8d","lv":0,"draw":false,"w":0,"e":0.075,"mix":[1,0]},{"cls":"T8s","ex":"Td8d","lv":0,"draw":false,"w":0,"e":0.074,"mix":[1,0]},{"cls":"T6s","ex":"Td6d","lv":0,"draw":false,"w":0,"e":0.067,"mix":[1,0]},{"cls":"86s","ex":"8d6d","lv":0,"draw":false,"w":0,"e":0.059,"mix":[1,0]},{"cls":"65s","ex":"6d5d","lv":0,"draw":false,"w":0,"e":0.035,"mix":[1,0]}],"his":[0.32,0,0.321,0.206,0.033,0,0.102,0.018],"hisE":[0.17,0.034,0.045,0.059,0,0.006,0,0.003,0.002,0,0,0.017,0.286,0.018,0.035,0.035,0.037,0,0.054,0.197]}];
+const $ = (id) => document.getElementById(id); const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' }; const pct = (x) => `${Math.round(100 * x)}%`;
+const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join(' ');
+const LEVEL = ['No pair', 'A draw', 'Low pair', 'Middle pair', 'Top pair', 'Overpair', 'Two pair', 'A set or better'];
+const SCREENS = [['home', 'Home'], ['stand', 'Stand'], ['price', 'Price'], ['spot', 'Spot']];
+function show(id) { SCREENS.forEach(([s]) => { $(s).hidden = s !== id; }); $('nav').innerHTML = SCREENS.map(([s, n]) => `<button type="button" data-go="${s}" aria-pressed="${s === id}">${n}</button>`).join(''); document.querySelectorAll('[data-go]').forEach((b) => { b.onclick = () => show(b.dataset.go); }); window.scrollTo(0, 0); }
+/** Both ranges on one equity ruler: his above the line, yours below; a marker for one hand and a dashed line for a threshold. */
+function ruler(d, { mark = null, cut = null, cutLabel = '', colour = false, hits = null } = {}) {
+  const mine = Array.from({ length: 20 }, () => [0, 0]); d.hands.forEach((h) => { const k = Math.min(19, Math.floor(20 * h.e)); mine[k][0] += h.w; mine[k][1] += h.w * h.mix[h.mix.length - 1]; });
+  const top = Math.max(...d.hisE, ...mine.map((m) => m[0]));
+  const tone = (m) => (!colour || !m[0] ? '' : m[1] / m[0] >= 0.5 ? ' class="b"' : ' class="q"');
+  return `<div class="ruler"><div class="cap"><span>His range</span><span>by equity against the other range</span></div><div class="plot">
+    <div class="bars">${d.hisE.map((x) => `<i style="height:${(100 * x) / top}%"></i>`).join('')}</div><div class="axis"></div>
+    <div class="bars mine">${mine.map((m) => `<i${tone(m)} style="height:${(100 * m[0]) / top}%"></i>`).join('')}</div>
+    ${cut == null ? '' : `<div class="cut" style="left:${100 * cut}%"><span>${cutLabel}</span></div>`}
+    ${mark == null ? '' : `<div class="mark${mark > 0.6 ? ' flip' : ''}" style="left:${100 * mark}%"><span>${pct(mark)}</span></div>`}
+    ${hits == null ? '' : Array.from({ length: 10 }, (_, k) => `<button type="button" class="hit" data-k="${k}" aria-pressed="${k === hits}" aria-label="Hands from ${k * 10} to ${k * 10 + 10} percent" style="left:${k * 10}%;width:10%"></button>`).join('')}
+  </div><div class="ticks"><span>0</span><span>25</span><span>50</span><span>75</span><span>100%</span></div><div class="cap"><span>Your range</span><span></span></div></div>`;
+}
+const spotLine = (d) => `<div class="spot"><span class="board">${cards(d.board)}</span><span>You are the button, ${d.seat}. ${d.line}.</span></div>`;
+function deck(d, keep, n) { const pool = d.hands.filter((h) => h.w >= 0.004 && keep(h)); const step = Math.max(1, Math.floor(pool.length / n)); const out = pool.filter((_, i) => i % step === Math.floor(step / 2)).slice(0, n); return out.map((h, i) => [((i * 7) % out.length), h]).sort((a, b) => a[0] - b[0]).map((x) => x[1]); }
+const why = (h) => `${LEVEL[h.lv]}${h.draw && h.lv !== 1 ? ', with a draw' : ''}`;
+// ---- Stand: which third of the ruler is this hand in? ----------------------------------------------------------------
+const T = D[0]; const standDeck = deck(T, () => true, 10); const S = { i: 0, pick: null, right: 0, done: 0 };
+function stand() {
+  const h = standDeck[S.i % standDeck.length]; const band = h.e < 0.4 ? 0 : h.e < 0.7 ? 1 : 2; const edge = Math.min(Math.abs(h.e - 0.4), Math.abs(h.e - 0.7)) < 0.03; const opts = ['Under 40%', '40 to 70%', 'Over 70%']; const bet = h.mix[1];
+  const tone = S.pick == null ? '' : S.pick === band ? 'good' : edge && Math.abs(S.pick - band) === 1 ? 'close' : 'bad';
+  $('stand').innerHTML = `<div class="row"><div class="kicker">Stand · turn</div><span class="count">${S.done} answered · ${S.right} right</span></div>${spotLine(T)}
+    ${ruler(T, { mark: S.pick == null ? null : h.e })}
+    <div class="ask"><span class="hand">${cards(h.ex)}</span><h2>What is its equity against his range?</h2></div>
+    <div class="opts">${opts.map((o, k) => `<button type="button" data-k="${k}" ${S.pick == null ? '' : 'disabled'} class="${S.pick == null ? '' : k === band ? 'right' : k === S.pick ? 'wrong' : ''}">${o}</button>`).join('')}</div>
+    <div class="verdict ${tone}">${S.pick == null ? '<p>Read his range on the ruler, then place the hand.</p>' : `<strong>${tone === 'good' ? 'Right' : tone === 'close' ? 'Close: it sits on the line' : 'Not quite'}: ${pct(h.e)}</strong><p>${why(h)}. It is ahead of the grey to its left and behind the grey to its right.</p><p class="mono">Solver here: bets a third ${pct(bet)}, checks ${pct(1 - bet)}</p>`}</div>
+    <button type="button" class="primary" id="s-next" ${S.pick == null ? 'hidden' : ''}>Next hand</button>`;
+  $('stand').querySelectorAll('.opts button').forEach((b) => { b.onclick = () => { S.pick = +b.dataset.k; S.done++; if (S.pick === band) S.right++; stand(); }; });
+  $('s-next').onclick = () => { S.i++; S.pick = null; stand(); };
+}
+// ---- Price: he bets, do you continue? -------------------------------------------------------------------------------
+const R = D[1]; const priceDeck = deck(R, (h) => h.e < 0.62, 10); const P = { i: 0, pick: null, right: 0, done: 0 };
+function price() {
+  const h = priceDeck[P.i % priceDeck.length]; const call = h.mix[1]; const best = call >= 0.5 ? 1 : 0; const mixed = call > 0.2 && call < 0.8; const opts = ['Fold', 'Call'];
+  const tone = P.pick == null ? '' : mixed ? 'close' : P.pick === best ? 'good' : 'bad';
+  $('price').innerHTML = `<div class="row"><div class="kicker">Price · river</div><span class="count">${P.done} answered · ${P.right} right</span></div>${spotLine(R)}
+    ${ruler(R, { mark: P.pick == null ? null : h.e, cut: R.price, cutLabel: `price ${pct(R.price)}` })}
+    <div class="ask"><span class="hand">${cards(h.ex)}</span><h2>He bets three quarters of the pot. A call needs ${pct(R.price)}.</h2></div>
+    <div class="opts">${opts.map((o, k) => `<button type="button" data-k="${k}" ${P.pick == null ? '' : 'disabled'} class="${P.pick == null ? '' : k === best && !mixed ? 'right' : k === P.pick && !mixed ? 'wrong' : ''}">${o}</button>`).join('')}</div>
+    <div class="verdict ${tone}">${P.pick == null ? '<p>The grey above the line is the range he bets with. The dashed line is the price.</p>' : `<strong>${tone === 'good' ? 'Right' : tone === 'close' ? 'Either: this one is on the line' : 'Not quite'}: it has ${pct(h.e)}</strong><p>${why(h)}. ${h.e >= R.price ? 'It beats enough of what he bets to pay for the call.' : 'It beats too little of what he bets.'}</p><p class="mono">Solver here: calls ${pct(call)}, folds ${pct(1 - call)}</p>`}</div>
+    <button type="button" class="primary" id="p-next" ${P.pick == null ? 'hidden' : ''}>Next hand</button>`;
+  $('price').querySelectorAll('.opts button').forEach((b) => { b.onclick = () => { P.pick = +b.dataset.k; P.done++; if (mixed || P.pick === best) P.right++; price(); }; });
+  $('p-next').onclick = () => { P.i++; P.pick = null; price(); };
+}
+// ---- Spot: the solved spot on the ruler ------------------------------------------------------------------------------
+const V = { at: 0, bin: 7 };
+function spotView() {
+  const d = D[V.at]; const loud = d.kinds[d.kinds.length - 1] === 'bet' ? 'bets' : 'calls'; const quiet = d.kinds[0] === 'check' ? 'checks' : 'folds';
+  const inBin = d.hands.filter((h) => Math.min(9, Math.floor(10 * h.e)) === V.bin && h.w >= 0.002).sort((a, b) => b.w - a.w).slice(0, 8);
+  $('spot').innerHTML = `<div class="kicker">Spot · solved</div><div class="pick">${D.map((x, k) => `<button type="button" data-k="${k}" aria-pressed="${k === V.at}">${x.title}${x.faced ? ', facing a bet' : ', checked to'}</button>`).join('')}</div>${spotLine(d)}
+    ${ruler(d, { colour: true, hits: V.bin, cut: d.faced ? d.price : null, cutLabel: d.faced ? `price ${pct(d.price)}` : '' })}
+    <div class="key"><span><i style="background:var(--his)"></i>his range</span><span><i style="background:var(--bet)"></i>yours: mostly ${loud}</span><span><i style="background:var(--quiet)"></i>yours: mostly ${quiet}</span></div>
+    <p class="note">Tap a part of the ruler to see the hands there.</p>
+    <div><div class="kicker" style="margin-bottom:4px">Your hands with ${V.bin * 10} to ${V.bin * 10 + 10}% equity</div><div class="list">${inBin.length ? inBin.map((h) => `<div><span class="c">${h.cls}</span><span class="l">${why(h)}</span><span class="n">${pct(h.e)}</span><span class="n">${loud} ${pct(h.mix[h.mix.length - 1])}</span></div>`).join('') : '<div><span class="l" style="grid-column:1/5">None of your range is here.</span></div>'}</div></div>`;
+  $('spot').querySelectorAll('.pick button').forEach((b) => { b.onclick = () => { V.at = +b.dataset.k; spotView(); }; });
+  $('spot').querySelectorAll('.hit').forEach((b) => { b.onclick = () => { V.bin = +b.dataset.k; spotView(); }; });
+}
+stand(); price(); spotView(); show('home');
+</script>
