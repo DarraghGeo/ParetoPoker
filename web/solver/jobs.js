@@ -15,6 +15,8 @@ export const PLAN = {
 };
 const STREET = ['flop', 'turn', 'river'];
 export const streetOf = (cards) => STREET[cards.length - 3];
+/** Betting to fall back on when a flop is too big to hold with the setup's: fewer sizes, then one a street. */
+const SIMPLER = [{ bets: [[0.33, 0.75], [0.33, 0.75], [0.75]] }, { bets: [[0.33], [0.33], [0.75]] }, { bets: [[0.33], [0.75], [0.75]], raises: [], maxRaises: 0 }];
 /** A street is solved again only when both ranges arriving hold at least this much. */
 const ENOUGH = 1;
 
@@ -27,10 +29,16 @@ function timed(state, work) {
 /** The flop of `cards`, solved lite with the setup's ranges; `warm`: a nearby flop's run and the relabelling onto this one. */
 export function flopJob(config, cards, warm = null) {
   const state = { spent: 0, run: null, settled: false };
-  const begin = () => {
-    state.lite = fs.litePreset({ board: text(cards), pot: config.pot, stack: config.stack, oop: config.oop, ip: config.ip, ...bettingFor(config, 3) });
+  const open = (betting) => {
+    state.lite = fs.litePreset({ board: text(cards), pot: config.pot, stack: config.stack, oop: config.oop, ip: config.ip, ...bettingFor({ ...config, ...betting }, 3) });
     state.spot = fs.defineSpot(state.lite.config); state.settle = fs.trackSettle(state.lite.options.settle || {});
     state.run = fs.createRun(state.spot, { ...state.lite.options, ...(warm ? { warmStart: warm.run, warmCards: warm.cards } : {}) });
+  };
+  // wide ranges with many sizes can be too big to hold: the setup's betting first, then fewer sizes until it fits
+  const begin = () => {
+    let failed;
+    for (const betting of [{}, ...SIMPLER]) { try { open(betting); return; } catch (e) { failed = e; state.run = null; } }
+    throw failed;
   };
   const step = () => {
     if (!state.run) begin();

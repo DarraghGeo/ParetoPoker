@@ -418,7 +418,7 @@ header .board{min-width:0;flex:0 1 auto}
 .why p small{display:none;margin-top:4px;font:400 12px/18px var(--mono);color:var(--ink-3)}
 .why p.open small{display:block}
 
-/* Train with Study beside it: two panes the width of the window, one shown; each keeps its own scroll and state */
+/* Play with Study beside it: two panes the width of the window, one shown; each keeps its own scroll and state */
 body.paged{overflow:hidden;height:100dvh}
 /* the panes lie over each other inside a box the width of the window, so the page never grows wider than it (a wider
    page lets a phone widen its layout, and things fixed to its right edge, the drawers, end up off screen) */
@@ -435,42 +435,61 @@ body.paged{overflow:hidden;height:100dvh}
 .back-bar{display:flex;align-items:center;height:36px;padding:0 max(12px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line);flex:none}
 .back-bar button{border:0;background:none;color:var(--ink-2);font:500 13px/18px var(--sans);padding:6px 4px;cursor:pointer}
 
-/* Play: a heads-up table kept plain. Villain above, the board and pot between, you below with your actions; the same
-   type, ink and suit colours as the rest. The seat to act is marked with the accent rule. */
-.table{max-width:560px;gap:22px;min-height:100dvh}
+/* Play: a heads-up poker table in the app's own ink and type. Villain across the felt, the board and pot between, you
+   below, each on a plate with a stack and a clock; the actions in a dock under the table. One screen, no scrolling. */
+.play main.table{max-width:520px;height:100dvh;min-height:0;gap:10px;padding-top:10px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
+.play header{flex:none}
 .play header .session{font:400 13px/18px var(--mono);color:var(--ink-2)}
 .play header .session.down{color:var(--danger)}
-.seat{display:grid;grid-template-columns:1fr auto;grid-template-areas:"who hole" "stack hole" "last hole";align-items:center;gap:2px 16px;padding:12px 0 12px 14px;border-left:2px solid var(--line)}
-.seat.acting{border-left-color:var(--accent)}
-.seat:empty{border-left-color:transparent}
-.seat .who{grid-area:who;display:flex;gap:8px;align-items:baseline}
-.seat .name{font:500 15px/20px var(--sans);color:var(--ink)}
-.seat .pos,.pot span{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
-.seat .stack{grid-area:stack;font:400 12px/16px var(--mono);color:var(--ink-3)}
-.seat .last{grid-area:last;font:500 13px/18px var(--mono);color:var(--ink-2);min-height:18px}
-.seat .hole{grid-area:hole;display:flex;gap:4px}
-.seat .hole span{font:500 24px/28px var(--mono);padding:2px 3px}
-.seat .hole.big span{font-size:34px;line-height:38px}
-.seat .back{display:block;width:24px;height:32px;border-radius:3px;background:repeating-linear-gradient(135deg,var(--surface) 0 4px,var(--line) 4px 5px);border:1px solid var(--line-strong)}
-.felt{display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 0}
-.p-board{display:flex;gap:6px;align-items:center;min-height:40px}
-.p-board span{font:500 30px/34px var(--mono);padding:2px 3px}
-.p-board .slot{width:26px;height:34px;padding:0;border:1px dashed var(--line-strong);border-radius:3px}
+.arena{position:relative;flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;justify-items:center;align-items:center}
+.felt{position:absolute;inset:58px 0 62px;border:1px solid var(--line-strong);border-radius:140px;background:var(--surface);box-shadow:inset 0 0 0 6px var(--bg),inset 0 0 0 7px var(--line)}
+.seat{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:6px}
+.seat.hero{flex-direction:column}
+.seat .hole{display:flex;gap:5px}
+.seat .hole span,.p-board span{display:flex;align-items:center;justify-content:center;background:#FFFFFF;border:1px solid var(--line-strong);border-radius:5px;font:500 20px/1 var(--mono);width:40px;height:54px;letter-spacing:-.04em;box-shadow:0 1px 0 rgba(0,0,0,.06)}
+.seat.hero .hole span{width:52px;height:70px;font-size:26px}
+.seat .hole .back{background:repeating-linear-gradient(135deg,var(--ink) 0 5px,#2B2F38 5px 6px);border-color:var(--ink)}
+.seat.villain .hole span{width:34px;height:46px;font-size:17px}
+.plate{position:relative;min-width:150px;padding:6px 12px 5px;border:1px solid var(--line-strong);border-radius:6px;background:var(--bg);display:grid;grid-template-columns:1fr auto;gap:0 12px;align-items:baseline}
+.seat.acting .plate{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}
+.plate .who{display:flex;gap:6px;align-items:baseline;min-width:0}
+.plate .name{font:500 14px/18px var(--sans);color:var(--ink)}
+.plate .pos,.pot span{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.plate .dealer{font:500 10px/15px var(--mono);width:15px;height:15px;text-align:center;border-radius:50%;background:var(--ink);color:var(--bg);align-self:center}
+.plate .stack{font:500 14px/18px var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.plate .clock{grid-column:1/3;height:3px;background:var(--line);margin-top:4px;overflow:hidden}
+.plate .clock i{display:block;height:100%;background:var(--accent)}
+.plate .clock.bank i{background:var(--danger)}
+.seat:not(.acting) .clock i{width:0!important}
+.plate .time{grid-column:1/3;font:400 10px/13px var(--mono);color:var(--ink-3);text-align:right;font-variant-numeric:tabular-nums}
+.seat.acting .time{color:var(--ink)}
+.middle{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:0;width:100%}
+.p-board{display:flex;gap:5px;align-items:center}
+.p-board .slot{background:transparent;border:1px dashed var(--line-strong);box-shadow:none}
 .pot{font:500 15px/20px var(--mono);color:var(--ink);display:flex;gap:8px;align-items:baseline}
-.felt .past{align-self:stretch;padding:0}
-.ranges{gap:16px}
-.moves{display:flex;flex-direction:column;gap:12px;min-height:96px}
-.moves .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:8px}
-.moves .act{padding:12px 10px;font:500 14px/18px var(--sans);color:var(--ink);border-color:var(--line-strong)}
-.moves .act.k-fold{color:var(--ink-3)}
-.moves .act:disabled{opacity:.4;cursor:default}
-.moves .lead{margin:0;font:500 20px/26px var(--sans);color:var(--ink)}
-.moves .note{margin:0;font:400 13px/18px var(--sans);color:var(--ink-3)}
-.moves .result{margin:0;display:flex;flex-wrap:wrap;gap:4px 10px;align-items:baseline;font:400 15px/22px var(--sans);color:var(--ink-2)}
-.moves .result b{font:500 24px/28px var(--mono);color:var(--ok)}
-.moves .result.down b{color:var(--danger)}
-.moves .result span{flex-basis:100%;font:400 13px/18px var(--sans);color:var(--ink-3)}
-.moves .primary{align-self:flex-start;min-width:120px;padding:10px 14px}
+.wager{min-height:24px;display:flex;gap:8px;align-items:center;font:500 12px/16px var(--mono);color:var(--ink-2)}
+.wager.on{padding:3px 10px;border-radius:999px;background:var(--bg);border:1px solid var(--line-strong)}
+.wager b{font-weight:500;color:var(--ink)}
+.outcome{min-height:22px;display:flex;flex-wrap:wrap;justify-content:center;gap:2px 8px;align-items:baseline;font:400 13px/18px var(--sans);color:var(--ink-2);text-align:center;padding:0 12px}
+.outcome b{font:500 20px/22px var(--mono);color:var(--ok)}
+.outcome.down b{color:var(--danger)}
+.outcome span{flex-basis:100%;font:400 12px/16px var(--sans);color:var(--ink-3)}
+.dock{flex:none;display:flex;flex-direction:column;gap:8px;min-height:64px;justify-content:center}
+.dock .acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(72px,1fr));gap:6px}
+.dock .act{min-height:56px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;border-radius:5px;border-color:var(--line-strong);color:var(--ink);background:var(--bg)}
+.dock .act b{font:500 14px/18px var(--sans)}
+.dock .act span{font:400 11px/14px var(--mono);color:var(--ink-3)}
+.dock .act.k-fold b{color:var(--ink-2)}
+.dock .act.k-bet,.dock .act.k-raise,.dock .act.k-allin{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.dock .act.k-bet span,.dock .act.k-raise span,.dock .act.k-allin span{color:var(--line-strong)}
+.dock .act:disabled{opacity:.4;cursor:default}
+.dock .note{margin:0;font:400 13px/18px var(--sans);color:var(--ink-3);text-align:center}
+.dock .after{display:flex;align-items:center;gap:14px}
+.dock .after .primary{flex:1;min-height:52px;padding:10px 14px;border-radius:5px}
+.dock .copy{display:flex;align-items:center;gap:2px;font:400 12px/16px var(--sans);color:var(--ink-2)}
+.dock .link{border:0;background:none;padding:6px 2px;font:500 13px/18px var(--sans);color:var(--accent)}
+.play .minis.ranges{position:absolute;z-index:5;left:12px;right:12px;top:52px;background:var(--bg);box-shadow:var(--float);border-radius:6px;padding:12px}
+@media (max-height:640px){.seat.hero .hole span{width:44px;height:58px;font-size:22px}.felt{inset:50px 0 54px}}
 
 /* ---- Train: the drills on the ranges, and the counts behind an answer ---- */
 .ask .sub{font:400 12px/16px var(--mono);color:var(--ink-3)}

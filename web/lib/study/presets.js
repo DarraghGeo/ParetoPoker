@@ -3,7 +3,7 @@
 // Single-raised, 3-bet and 4-bet pots are every pairing the owner's 100NL chart covers (poker-huerosolver: each call
 // with the open, 3-bet or 4-bet it answers); squeezed and limped pots are the starting ranges of napkinpoker's solves.
 /** The preflop actions, in the order they are offered: its key, and its name on a button. */
-export const ACTIONS = [['SRP', 'SRP'], ['3BP', '3-bet'], ['4BP', '4-bet'], ['Squeeze', 'Squeeze'], ['Limped', 'Limp']];
+export const ACTIONS = [['SRP', 'SRP'], ['3BP', '3-bet'], ['4BP', '4-bet'], ['Squeeze', 'Squeeze'], ['Limped', 'Limp'], ['Live', 'Live']];
 /** Seats in the order they act before the flop. */
 export const SEATS = ['UTG', 'HJ', 'CO', 'BU', 'SB', 'BB'];
 export const PRESETS = [
@@ -253,17 +253,30 @@ export const PRESETS = [
       ip: '88:0.61,77:0.68,66:0.94,55:0.81,44,33,22,ATs,A9s,A8s,A7s,A6s,A5s:0.65,A4s,A3s,A2s,KTs:0.92,K9s,K8s,K7s,K6s,K5s:0.98,K4s,K3s,K2s,QJs:0.96,QTs,Q9s,Q8s,Q7s,Q6s,Q5s,Q4s,Q3s,Q2s,JTs:0.57,J9s,J8s,J7s,J6s:0.82,J5s:0.59,J4s:0.78,J3s:0.28,J2s:0.47,T9s:0.63,T8s,T7s,T6s:0.99,T5s:0.17,T4s:0.22,T3s:0.01,T2s:0.15,98s:0.91,97s,96s,95s,94s,93s,92s,87s:0.93,86s,85s,84s,83s,82s,76s:0.55,75s,74s,73s,72s,65s:0.84,64s,63s,62s,54s:0.82,53s,52s,43s,42s,32s,AJo:0.96,ATo,A9o,A8o,A7o:0.46,A6o:0.24,A5o:0.84,A4o:0.54,KQo,KJo,KTo:0.83,K9o:0.49,K8o:0.48,K7o:0.22,K6o:0.5,K5o:0.89,K4o,K3o,K2o,QJo,QTo:0.71,Q9o:0.25,Q8o:0.25,Q7o,Q6o,Q5o,Q4o,Q3o,Q2o,JTo:0.89,J9o:0.63,J8o:0.28,J7o,J6o,J5o,J4o,J3o,J2o,T9o:0.83,T8o:0.62,T7o:0.99,T6o,T5o,T4o,T3o,T2o,98o:0.98,97o,96o,95o,94o,93o,92o,87o,86o,85o,84o,83o,82o,76o,75o,74o,73o,72o,65o,64o,63o,62o,54o,53o,52o,43o,42o,32o',
     } },
 ];
+/** Ed Miller's player types, as seats of a live single-raised pot: the range each raises with before the flop. A type that
+ *  calls holds the same range without the hands it would have raised again, the old man coffee's (JJ+, AK, AQs); the old
+ *  man coffee calls with his own. */
+export const TYPES = [
+  ['Nit', '22+,A2s+,KTs+,QTs+,JTs,T9s,98s,87s,76s,65s,54s,43s,32s,ATo+,KTo+,QTo+,JTo', 'TT-22,AJs-A2s,KTs+,QTs+,JTs,T9s,98s,87s,76s,65s,54s,43s,32s,AQo-ATo,KTo+,QTo+,JTo'],
+  ['Reg', '22+,A2s+,K9s+,Q9s+,J8s+,T7s+,96s+,86s+,75s+,65s,54s,A2o+,K9o+,QTo+,JTo', 'TT-22,AJs-A2s,K9s+,Q9s+,J8s+,T7s+,96s+,86s+,75s+,65s,54s,AQo-A2o,K9o+,QTo+,JTo'],
+  ['Rec', '22+,A2s+,K2s+,Q2s+,J2s+,T2s+,92s+,82s+,72s+,62s+,52s+,42s+,32s,A2o+,K8o+,Q8o+,J8o+,T8o+,98o', 'TT-22,AJs-A2s,K2s+,Q2s+,J2s+,T2s+,92s+,82s+,72s+,62s+,52s+,42s+,32s,AQo-A2o,K8o+,Q8o+,J8o+,T8o+,98o'],
+  ['Maniac', '22+,A2s+,K2s+,Q2s+,J2s+,T2s+,92s+,82s+,62s+,52s+,42s+,32s,A2o+,K2o+,Q2o+,J2o+,T2o+,96o+,86o+,76o,65o,52o+,42o+,32o', 'TT-22,AJs-A2s,K2s+,Q2s+,J2s+,T2s+,92s+,82s+,62s+,52s+,42s+,32s,AQo-A2o,K2o+,Q2o+,J2o+,T2o+,96o+,86o+,76o,65o,52o+,42o+,32o'],
+  ['OMC', 'JJ+,AKo,AKs,AQs', 'JJ+,AKo,AKs,AQs'],
+];
+/** Every pairing of the types: the one in position raises to 3bb, the one out of position calls. */
+export const LIVE = TYPES.flatMap(([oop, , calls]) => TYPES.map(([ip, raises]) => ({ action: 'Live', oop, ip, line: `${ip} raises to 3bb, ${oop} calls`, pot: 6.5, stack: 97, ranges: { oop: calls, ip: raises } })));
+const ALL = [...PRESETS, ...LIVE]; const NAMES = [...SEATS, ...TYPES.map(([name]) => name)];
 /** The preset for a choice of action and seats, if there is one. */
-export const presetFor = (sel) => PRESETS.find((p) => p.action === sel?.action && p.oop === sel?.oop && p.ip === sel?.ip) ?? null;
+export const presetFor = (sel) => ALL.find((p) => p.action === sel?.action && p.oop === sel?.oop && p.ip === sel?.ip) ?? null;
 /** The preset whose two ranges these are, if they are one's. */
-export const presetOf = (oop, ip) => PRESETS.find((p) => p.ranges.oop === oop && p.ranges.ip === ip) ?? null;
+export const presetOf = (oop, ip) => ALL.find((p) => p.ranges.oop === oop && p.ranges.ip === ip) ?? null;
 /**
  * A choice after one of its three parts changes: the action and seats asked for where a preset has
  * them, else the nearest that exists (the same action, and the seat just chosen kept).
  */
 export function choose(sel, part, value) {
   const want = { ...(sel ?? {}), [part]: value };
-  const same = PRESETS.filter((p) => p.action === (want.action ?? PRESETS[0].action));
+  const same = ALL.filter((p) => p.action === (want.action ?? ALL[0].action));
   const found = same.find((p) => p.oop === want.oop && p.ip === want.ip)
     ?? (part !== 'action' ? same.find((p) => p[part] === value) : null)
     ?? same.find((p) => p.oop === want.oop || p.ip === want.ip) ?? same[0];
@@ -274,8 +287,8 @@ const OTHER = { oop: 'ip', ip: 'oop' };
 /** The three rows of choices (action, out of position's seat, in position's seat) with `sel` on show, or none when the
  *  ranges are nobody's preset. A seat that does not sit with the other seat chosen is `far`: taking it moves that one too. */
 export function presetRows(sel) {
-  const action = sel?.action ?? ACTIONS[0][0]; const same = PRESETS.filter((p) => p.action === action);
-  const seats = (side) => SEATS.filter((seat) => same.some((p) => p[side] === seat)).map((x) => [x, x]);
+  const action = sel?.action ?? ACTIONS[0][0]; const same = ALL.filter((p) => p.action === action);
+  const seats = (side) => NAMES.filter((seat) => same.some((p) => p[side] === seat)).map((x) => [x, x]);
   const far = (part, value) => part !== 'action' && !!sel && !same.some((p) => p[part] === value && p[OTHER[part]] === sel[OTHER[part]]);
   const row = (name, part, list) => ({ name, part, options: list.map(([value, label]) => ({ value, label, on: sel?.[part] === value, far: far(part, value) })) });
   return [row('Action', 'action', ACTIONS), row('OOP', 'oop', seats('oop')), row('IP', 'ip', seats('ip'))];

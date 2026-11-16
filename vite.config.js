@@ -7,7 +7,7 @@ import { stamp } from './scripts/stamp.js';
 const at = (path) => fileURLToPath(new URL(path, import.meta.url));
 const pages = ['index'];
 /** Pages that moved into the app: their old addresses redirect. */
-const moved = { 'train.html': './#/train', 'play.html': './#/play', 'study.html': './#/study' };
+const moved = { 'train.html': './#/play', 'play.html': './#/play', 'study.html': './#/study' };
 
 export default defineConfig({
   root: at('web'),

@@ -48,14 +48,14 @@ function keep(job, result) {
   if (job.street !== 'flop') { job.hand.next.set(job.at, result); return; }
   if (!result.failed) { job.hand.flop = result; return; }
   play.hands.splice(play.hands.indexOf(job.hand), 1);
-  say({ type: 'error', message: 'This setup cannot be solved.' });
+  say({ type: 'error', message: `This setup cannot be solved${result.why ? ` (${result.why})` : ''}.` });
 }
 
 /** Step one solve: the most needed. False when nothing is wanted. */
 function stepOnce(shown) {
   while (play.hands.length < AHEAD + (current() ? 1 : 0)) play.hands.push(dealHand(play.config, ++play.ids));
   const job = wanted()[0]; if (!job) return false;
-  let result; try { result = job.step(); } catch { result = { failed: true }; }
+  let result; try { result = job.step(); } catch (e) { result = { failed: true, why: String(e?.message ?? e) }; }
   if (result) { keep(job, result); status(); hooks.solved(job); return true; }
   if (Date.now() - shown.at > 200) { shown.at = Date.now(); say({ type: 'progress', street: job.street, ahead: job.hand !== current(), done: job.done() }); }
   return true;

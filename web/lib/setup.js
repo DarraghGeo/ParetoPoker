@@ -1,7 +1,7 @@
 // The setup every page plays with: the ranges, pot, stack and bet sizes set up in Study (or the first visit's spot).
 import { load } from './storage.js';
 
-/** The spot a first visit opens on. Train and Play deal their own boards and take the rest from here. */
+/** The spot a first visit opens on. Play deals its own boards and takes the rest from here. */
 export const DEFAULTS = {
   board: 'Td 9d 6h Qc 7s', pot: 100, stack: 200, bets: [0.33, 0.75, 1.5], raises: [2.5], maxRaises: 1, allIn: false,
   oop: '66+,A8s+,A5s-A4s,AJo+,K9s+,KQo,QTs+,JTs,96s+,85s+,75s+,65s,54s',

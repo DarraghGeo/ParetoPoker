@@ -1,6 +1,7 @@
 // The hand being played: villain's decisions drawn from his solved strategy for the hand he holds, hero's taken from the
 // page, and at each street's end the next street solved again for the ranges that arrive (or, where it could not be,
 // played on in the solve before it; all in, the cards are dealt to the showdown).
+import { text } from '../../solver/deck.js';
 import { streetOf } from '../../solver/jobs.js';
 import { pump, status } from './schedule.js';
 import { current, play, slot } from './state.js';
@@ -18,7 +19,7 @@ export function start() {
   const hand = play.hands.find((h) => h.flop);
   if (!hand) { status(); pump(); return false; }
   play.hands.splice(play.hands.indexOf(hand), 1); play.hands.unshift(hand);
-  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [] }], put: [0, 0], pot0: play.config.pot, waiting: null, done: null };
+  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: play.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: play.config.pot, waiting: null, done: null };
   proceed();
   return true;
 }
@@ -36,9 +37,9 @@ function villainChoice(seg, node, combo) {
 
 /** Take action `k` at a decision: the chips it puts in, the line, and a fold ends the hand. */
 function take(p, node, k) {
-  const edge = node.edges[k]; const who = seatOf(node);
-  if (edge.kind !== 'fold' && edge.kind !== 'check') p.put[who] += edge.to - node.invested[who];
-  p.history[p.history.length - 1].actions.push({ who: who === p.me ? 'hero' : 'villain', label: edge.label, kind: edge.kind });
+  const edge = node.edges[k]; const who = seatOf(node); const add = edge.kind !== 'fold' && edge.kind !== 'check' ? edge.to - node.invested[who] : 0;
+  p.put[who] += add; p.step++;
+  p.history[p.history.length - 1].actions.push({ who: who === p.me ? 'hero' : 'villain', label: edge.label, kind: edge.kind, add: Math.round(add * 100) / 100 });
   if (edge.kind === 'fold') p.done = { folded: who === p.me ? 'hero' : 'villain' };
   else p.seg.node = edge.child;
 }
@@ -48,7 +49,7 @@ function deal(p, node) {
   const seg = p.seg; const at = slot(seg.key, node.id); const next = p.hand.next.get(at);
   const allIn = seg.solved.nodes[node.edges[0].child]?.kind !== 'decision';
   if (next === undefined && !seg.dealt.length && !allIn) { p.waiting = node.id; return false; }
-  p.history.push({ street: streetOf([...boardOf(seg), 0]), actions: [] });
+  p.step++; p.history.push({ street: streetOf([...boardOf(seg), 0]), actions: [], pot: Math.round((p.pot0 + p.put[0] + p.put[1]) * 100) / 100, cards: text([p.hand.board[boardOf(seg).length]]) });
   if (next && !next.failed && !allIn) { p.seg = { key: at, solved: next, node: 0, dealt: [] }; return true; }
   seg.dealt.push(p.hand.board[boardOf(seg).length]); seg.node = node.edges[0].child;
   return true;
@@ -68,7 +69,8 @@ function advance(p) {
 export function proceed() {
   const p = play.playing; if (!p) return;
   p.waiting = null;
-  for (let guard = 0; guard < 64 && !p.done && advance(p); guard++);
+  // every step is told to the page, which shows them one at a time, on the clock
+  for (let guard = 0; guard < 64 && !p.done && advance(p); guard++) post(p);
   post(p); status(); pump();
 }
 
@@ -77,5 +79,5 @@ export function heroActs(label) {
   const p = play.playing; if (!p || p.done) return;
   const node = nodeOf(p.seg); const k = node.edges.findIndex((e) => e.label === label);
   if (node.kind !== 'decision' || seatOf(node) !== p.me || k < 0) return;
-  take(p, node, k); proceed();
+  take(p, node, k); post(p); proceed();
 }
