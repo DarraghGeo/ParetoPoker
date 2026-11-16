@@ -181,3 +181,11 @@ So the ladder shows which sizes are possible (slide the value line up: a bigger 
 - **Range advantage sets how often the weak hands bet** (turn +0.43, river +0.74), and on the flop how often the whole range bets: 20% behind, 43% even, 76% ahead by 7 points or more.
 - **No formula from value gets the frequency.** Points out, flop | turn: always the average 20 | 19; value (80%+) with its one-street bluffs 29 | 21; one bet per street left 27 | 29; counting what weaker hands win from behind as value 23 | 20; fitted on range advantage and position 16 | 17; with his strong and weak shares 16 | 15. River: the average 19, value and its bluffs 20, fitted 13.
 - So frequency can be had to about 13 to 16 points from range advantage, position and his strong hands, and no closer from what the ladder shows.
+
+## Experiment 12. A rule for the bet frequency from the ladder (`exp12.py`)
+
+The range is cut in three zones (value: 80% equity or more; bottom: under 40%; the middle), each zone bets at a rate set by street, seat, range advantage and whether he holds many strong hands (over 20% of his range at 80%+), and the frequency is the sum. Rates taken from some spots and tested on others; 162 flop, 1,177 turn, 9,114 river decisions.
+
+- Always the average is 19 to 20 points out. The zones with rates by seat, advantage and his strong hands: flop 16, turn 16, river 13 (within 10 points in 41%, 38%, 51% of decisions). A version in round numbers, to carry: 16, 17, 14.
+- The round-number rule. Value: in position 80% (all of it on the river); out of position 55% on the turn, 75% on the river, and on the flop 35 / 45 / 90% behind / even / ahead. Middle: a third (river: a quarter in position, 40% out). Bottom: 25 / 35 / 55% behind / even / ahead, five more in position, five fewer out. He holds many strong hands: halve value and bottom (not in position on the river).
+- No set of inputs tried gets under about 13 points; the frequency is not fixed by what the ladder and its surroundings show.
