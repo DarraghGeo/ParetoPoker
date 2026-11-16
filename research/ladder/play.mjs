@@ -152,7 +152,32 @@ function finalRule(F, board, mine, his, ctx, arm, rnd) {
   for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= v || e[c] < bl ? 2 : 0;
   return act;
 }
-const ARMS = process.env.ARMS === 'final' ? (process.env.DIAG === '4' ? { finalEq: { rule: 'final', eq: 'exact' }, soft5: { rule: 'final', eq: 'exact', noise: 0.05 }, soft10: { rule: 'final', eq: 'exact', noise: 0.1 }, soft3: { rule: 'final', eq: 'exact', noise: 0.03 } } : process.env.DIAG === '3' ? { v2: { rule: 'final', eq: 'exact' }, turnAlways: { rule: 'final', eq: 'exact', turnOop: 'always' }, turnGate: { rule: 'final', eq: 'exact', turnOop: 'gate' }, turnFace5: { rule: 'final', eq: 'exact', turnFaceOop: 0.05 }, flopAll: { rule: 'final', eq: 'exact', flopOop: 'all' }, flopFace10: { rule: 'final', eq: 'exact', flopFaceOop: 0.10 }, exact: {} } : process.env.DIAG === '2' ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} } : process.env.DIAG ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, estRiver: { rule: 'final', exactOn: [3, 4] }, finalNoisy: { rule: 'final', noise: 0.1 } } : { final: { rule: 'final' }, finalEq: { rule: 'final', eq: 'exact' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} }) : process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
+/** The owner's written strategy (16 Nov), as read for this test. Returns, per hand, the chance of each of: small bet or raise, big bet, call.
+ *  First to act out of position: check, unless the range is well ahead (top pair or better 10 points over his); then every hand bets half the time but the middling ones with no draw.
+ *  Checked to in position: bet a third. The top two rows always; other value (75 / 80 / 85% by size) more often the more it can improve; bluffs by the ratio
+ *  s/(1+s), times 4 on the flop and 2 on the turn, taken from the weak hands by what is still to come, each half the time. With more two pair or better than
+ *  him the top two rows use the bigger size where there is one.
+ *  Facing a bet: raise the top row, and bluff-raise the biggest draws half the time; call with ten points over the price; then fill to 1/(1+s) of the range with draws. */
+function userRule(F, board, mine, his, ctx, arm, rnd) {
+  const small = new Float32Array(N), big = new Float32Array(N), call = new Float32Array(N); let mt = 0, ht = 0; for (const c of F.order) { mt += mine[c]; ht += his[c]; } if (!(mt > 0) || !(ht > 0)) return { small, big, call };
+  const street = board.length; const [e] = equities(F, board, mine, his, arm, rnd); const { ip, s, toCall, canRaise, hasBig } = ctx; const live = []; for (const c of F.order) if (mine[c] > 0) live.push(c);
+  const byCome = [...live].sort((x, y) => F.come[y] - F.come[x] || e[x] - e[y]);
+  if (toCall > 0) {
+    const price = s / (1 + 2 * s); let cont = 0, rz = 0;
+    for (const c of live) { if (canRaise && F.lv[c] === 7) { small[c] = 1; rz += mine[c]; cont += mine[c]; } else if (e[c] >= price + 0.1) { call[c] = 1; cont += mine[c]; } }
+    if (canRaise && street < 5) { let room = (s / (1 + s)) * rz; for (const c of byCome) { if (room <= 1e-9 || F.come[c] < 12) break; if (small[c] || call[c]) continue; small[c] = 0.5; room -= 0.5 * mine[c]; cont += 0.5 * mine[c]; } }
+    let need = mt / (1 + s) - cont; for (const c of byCome) { if (need <= 1e-9 || F.come[c] < 8) break; if (small[c] || call[c]) continue; const p = F.come[c] >= 9 ? 1 : 0.5; call[c] = p; need -= p * mine[c]; }
+    return { small, big, call }; }
+  let topMe = 0, topHim = 0, nutMe = 0, nutHim = 0; for (const c of F.order) { if (F.lv[c] >= 4) { topMe += mine[c]; topHim += his[c]; } if (F.lv[c] >= 6) { nutMe += mine[c]; nutHim += his[c]; } }
+  const v = valueFrom(s);
+  if (!ip) { if (topMe / mt - topHim / ht < 0.10) return { small, big, call }; for (const c of live) small[c] = e[c] >= 0.4 && e[c] < v && F.come[c] < 4 ? 0 : 0.5; return { small, big, call }; }
+  const useBig = hasBig && nutMe / mt > nutHim / ht; let value = 0;
+  for (const c of live) { if (F.lv[c] >= 6) { (useBig ? big : small)[c] = 1; value += mine[c]; } else if (e[c] >= v) { const p = street === 5 ? 0.75 : 0.6 + 0.4 * Math.min(1, F.come[c] / 9); small[c] = p; value += p * mine[c]; } }
+  let room = (s / (1 + s)) * (street === 3 ? 4 : street === 4 ? 2 : 1) * value; const pool = street === 5 ? [...live].sort((x, y) => e[x] - e[y]) : byCome;
+  for (const c of pool) { if (room <= 1e-9) break; if (small[c] || big[c] || e[c] >= 0.4) continue; small[c] = 0.5; room -= 0.5 * mine[c]; }
+  return { small, big, call };
+}
+const ARMS = process.env.ARMS === 'final' ? (process.env.DIAG === '5' ? { finalEq: { rule: 'final', eq: 'exact' }, user: { rule: 'user', eq: 'exact' }, userChart: { rule: 'user' }, final: { rule: 'final' } } : process.env.DIAG === '4' ? { finalEq: { rule: 'final', eq: 'exact' }, soft5: { rule: 'final', eq: 'exact', noise: 0.05 }, soft10: { rule: 'final', eq: 'exact', noise: 0.1 }, soft3: { rule: 'final', eq: 'exact', noise: 0.03 } } : process.env.DIAG === '3' ? { v2: { rule: 'final', eq: 'exact' }, turnAlways: { rule: 'final', eq: 'exact', turnOop: 'always' }, turnGate: { rule: 'final', eq: 'exact', turnOop: 'gate' }, turnFace5: { rule: 'final', eq: 'exact', turnFaceOop: 0.05 }, flopAll: { rule: 'final', eq: 'exact', flopOop: 'all' }, flopFace10: { rule: 'final', eq: 'exact', flopFaceOop: 0.10 }, exact: {} } : process.env.DIAG === '2' ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} } : process.env.DIAG ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, estRiver: { rule: 'final', exactOn: [3, 4] }, finalNoisy: { rule: 'final', noise: 0.1 } } : { final: { rule: 'final' }, finalEq: { rule: 'final', eq: 'exact' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} }) : process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
 const [count = '8', seed = '71'] = process.argv.slice(2);
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
 const pool = PRESETS.filter((p) => p.action !== 'Limped'); const TREE = process.env.TREE === 'small' ? { betSizes: [[0.33], [0.33, 0.75], [0.75]], maxRaises: 1 } : { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
@@ -190,6 +215,14 @@ for (let done = 0; done < +count;) {
       const toCall = n.invested[1 - seat] - n.invested[seat]; const street = board.length; const fi = kinds.indexOf('fold'), ci = kinds.indexOf('call'), xi = kinds.indexOf('check'); const bi = kinds.indexOf('bet') >= 0 ? kinds.indexOf('bet') : kinds.indexOf('allin'); const ri = kinds.indexOf('raise') >= 0 ? kinds.indexOf('raise') : toCall > 0 ? kinds.indexOf('allin') : -1;
       const probsBy = NAMES.map((name, j) => {
         const P = new Float32Array(N * k); const w = mine[j];
+        if (ARMS[name].rule === 'user') {
+          const bets = kinds.map((x, a) => (x === 'bet' ? a : -1)).filter((a) => a >= 0); const b1 = bets.length ? bets[0] : kinds.indexOf('allin'); const b2 = bets.length > 1 ? bets[bets.length - 1] : b1;
+          const size = toCall > 0 ? toCall / (n.pot - toCall) : b1 >= 0 ? (nodes[n.edges[b1].child].invested[seat] - n.invested[seat]) / n.pot : 0;
+          const u = userRule(F, board, w, his, { ip: seat === 1, s: size, toCall, canRaise: ri >= 0, hasBig: b2 !== b1 }, ARMS[name], dice[name]); let t = 0, all = 0;
+          for (const c of F.order) { if (toCall > 0) { const r = ri >= 0 ? u.small[c] : 0; const cl = Math.min(1 - r, u.call[c] + (ri >= 0 ? 0 : u.small[c])); if (ri >= 0) P[c * k + ri] = r; P[c * k + ci] = cl; if (fi >= 0) P[c * k + fi] = 1 - r - cl; else P[c * k + ci] += 1 - r - cl; }
+            else if (b1 < 0) P[c * k + xi] = 1; else { P[c * k + b1] += u.small[c]; P[c * k + b2] += u.big[c]; P[c * k + xi] = 1 - u.small[c] - u.big[c]; t += w[c] * (u.small[c] + u.big[c]); all += w[c]; } }
+          if (toCall <= 0 && b1 >= 0) { tally[name][street - 3][0] += t; tally[name][street - 3][1] += all; }
+          return P; }
         if (ARMS[name].rule === 'final') {
           let raised = false; for (let at = n; at.parent >= 0 && nodes[at.parent].kind !== 'chance'; at = nodes[at.parent]) { const par = nodes[at.parent]; if (seatOf(par) === seat && ['bet', 'raise', 'allin'].includes(par.edges[at.via].kind)) raised = true; }
           const bet = bi >= 0 ? (nodes[n.edges[bi].child].invested[seat] - n.invested[seat]) / n.pot : 0; const act = finalRule(F, board, w, his, { ip: seat === 1, s: toCall > 0 ? toCall / (n.pot - toCall) : bet, toCall, raised, canRaise: ri >= 0 }, ARMS[name], dice[name]);
