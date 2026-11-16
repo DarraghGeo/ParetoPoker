@@ -1,5 +1,6 @@
 // How a move of hero's stands against the solution for the hand he held: good where the solution takes it often,
-// acceptable where it takes it sometimes, an error where it (nearly) never does.
+// acceptable where it takes it sometimes, an error where it (nearly) never does; and not graded at all (`off`) at a
+// decision the solution never reaches with that hand, where it has no play to set the move against.
 import { pct } from '../cards.js';
 
 const GOOD = 0.2; const SOME = 0.03;
@@ -8,6 +9,7 @@ const does = (a) => (a.kind === 'bet' ? `bets ${a.label.replace(/^[A-Za-z]+/, ''
 
 /** The grade of an action that carries the solution's mix: its level (shown as a colour) and what the solution does. */
 export function gradeOf(action) {
+  if (action?.off) return { level: 'off', text: 'off the solver\'s line: it never gets here with this hand, so the move is not graded', detail: 'Off the solver\'s line: not graded', freq: null, best: null, cost: null };
   const mix = action?.mix; if (!mix) return null;
   const mine = mix.find((m) => m.label === action.label); const best = mix.reduce((b, m) => (m.freq > b.freq ? m : b), mix[0]); if (!mine) return null;
   const level = mine.freq >= GOOD ? 'good' : mine.freq >= SOME ? 'ok' : 'error';

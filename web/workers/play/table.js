@@ -44,6 +44,20 @@ function mixOf(seg, node, combo) {
   return i < 0 ? null : node.edges.map((e, a) => ({ label: e.label, kind: e.kind, freq: Math.round(1e3 * view.probs[i * n + a]) / 1e3 }));
 }
 
+/** A hand the solution brings to a decision less often than this, of the times it is dealt, has no play there to speak
+ *  of: the solution's strategy is an average over the times a hand gets somewhere, so where it (nearly) never does, what
+ *  it shows is filler, and so is anything worth worked out from it. */
+const OFF_LINE = 0.01;
+/** A move the solution makes with the hand less often than this is an error: the hand stops there, since past it the
+ *  solution has no play for the hand to be set against (the same bar as the red dot: lib/play/grade.js). */
+const ERROR = 0.03;
+/** How often the solution gets to a decision with hero's hand, of the times it is dealt. */
+function reachOf(p, node) {
+  const seg = p.seg; const found = seg.solved.spot.resolveBoard(boardOf(seg).slice(0, seg.solved.cards.length + node.round));
+  const reach = seg.solved.solution.reachAt(node.id, found.board, p.me)[found.combos[p.hand.hero]] ?? 0;
+  return p.hand.weight > 0 ? reach / p.hand.weight : 0;
+}
+
 /** What hero's action `k` gives up against the best action for his hand, in chips, by the solution's own values (each
  *  action followed by its solved play); null where the solution has none for the hand. */
 function costOf(seg, node, combo, k) {
@@ -99,8 +113,12 @@ export function heroActs(label) {
   const p = play.playing; if (!p || p.done) return;
   const node = nodeOf(p.seg); const k = node.edges.findIndex((e) => e.label === label);
   if (node.kind !== 'decision' || seatOf(node) !== p.me || k < 0) return;
-  const mix = mixOf(p.seg, node, p.hand.hero); const cost = mix ? costOf(p.seg, node, p.hand.hero, k) : null;
+  // off the solution's line (hero left it earlier in the hand) there is nothing to set the move against, and nothing is charged
+  const off = reachOf(p, node) < OFF_LINE;
+  const mix = off ? null : mixOf(p.seg, node, p.hand.hero); const cost = mix ? costOf(p.seg, node, p.hand.hero, k) : null;
   take(p, node, k);
-  if (mix) Object.assign(p.history[p.history.length - 1].actions.at(-1), { mix, cost });   // for the page to say how the move stands against the solution
+  if (mix) Object.assign(p.history[p.history.length - 1].actions.at(-1), { mix, cost }); else if (off) p.history[p.history.length - 1].actions.at(-1).off = true;   // for the page to say how the move stands against the solution
+  // an error ends the hand where it was made (a fold has ended it already)
+  if (mix && !p.done && (mix.find((x) => x.label === label)?.freq ?? 1) < ERROR) p.done = { stopped: true };
   post(p); proceed();
 }

@@ -52,7 +52,7 @@
   $effect(() => {
     const key = st ? `${st.id}|${mine.length}` : ''; if (key === seen) return; seen = key;
     const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key, study: game.study, href } : null;   // the decision just made, for Study
-    if (g) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);
+    if (g && !st?.result?.stopped) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);   // at an error that stopped the hand it stays, as the reason
   });
   $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
   // nothing moves while Study or a card over the table is open: clocks stop, and villain's next action waits
@@ -75,7 +75,7 @@
   function explainGraded() {
     const g = graded; clearTimeout(gradeTimer); graded = null; if (!g?.study) return;
     why = { ...g, hero: g.study.hero, told: null, failed: false };
-    game.worker.postMessage({ type: 'explain', ask: g.key, solve: g.study.share, at: g.study.at, cards: g.study.cards });
+    if (g.level !== 'off') game.worker.postMessage({ type: 'explain', ask: g.key, solve: g.study.share, at: g.study.at, cards: g.study.cards });
   }
   /** On from the drawer to Study for the same decision, its street handed over as solved here. */
   function studyWhy() { const g = why; why = null; pane.open(g.href, g.study.share ? { solve: g.study.share, line: g.study.streetLine } : null); }
@@ -107,9 +107,9 @@
           <div class="wager" class:on={!!lastOf('villain')}>{#if lastOf('villain')}<b>{lastOf('villain')}</b>{#if front('villain') > 0}<span>{chips(front('villain'))}</span>{/if}{/if}</div>
           <div class="pot"><span>Pot</span> {st ? chips(st.pot) : chips(config.pot)}</div>
           <div class="p-board"><Cards cards={st?.board ?? ''} slots={5} /></div>
-          <div class="outcome" class:down={st?.result?.net < 0}>{#if st?.result}<b>{signed(st.result.net)}</b> {st.result.how}{#if st.result.lost != null}{' · '}{ev(st.result.lost)}{/if}{#if st.result.mine}<span>{st.result.mine} against {st.result.his}</span>{/if}{:else if game.timedOut}<span>Out of time</span>{/if}</div>
+          <div class="outcome" class:down={st?.result?.net < 0 || st?.result?.stopped}>{#if st?.result}{#if st.result.stopped}<b>Error</b> the hand stops here{:else}<b>{signed(st.result.net)}</b> {st.result.how}{/if}{#if st.result.lost != null}{' · '}{ev(st.result.lost)}{/if}{#if st.result.mine}<span>{st.result.mine} against {st.result.his}</span>{/if}{:else if game.timedOut}<span>Out of time</span>{/if}</div>
           <div class="wager" class:on={!!lastOf('hero')}>{#if lastOf('hero')}<b>{lastOf('hero')}</b>{#if front('hero') > 0}<span>{chips(front('hero'))}</span>{/if}{/if}</div>
-          <div class="grades">{#if graded}{#key graded.key}<Grade grade={graded} onopen={explainGraded} />{/key}{/if}</div>
+          <div class="grades" class:over={!!st?.result}>{#if graded}{#key graded.key}<Grade grade={graded} onopen={explainGraded} />{/key}{/if}</div>
         </div>
         <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero onpeek={() => (peek = 'hero')} />
         {#if peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={listOf(peeked)} his={listOf(other(peeked))} board={held.board} marked={peek === 'hero' ? cellOf(held.hero) : null} villain={peek === 'villain'} onclose={() => (peek = null)} />{/if}

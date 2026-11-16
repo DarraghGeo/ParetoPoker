@@ -14,5 +14,5 @@ export function dealHand(setup, id, given = null) {
   const hero = drawCombo(ranges[seat], dead); cardsOf(hero).forEach((c) => dead.add(c));
   const villain = drawCombo(ranges[seat === 'oop' ? 'ip' : 'oop'], dead); cardsOf(villain).forEach((c) => dead.add(c));
   const board = given ? [...given.flop, ...drawCards(2, dead)] : drawCards(5, dead);
-  return { id, seat, hero, villain, board, flop: null, next: new Map(), config };
+  return { id, seat, hero, villain, board, flop: null, next: new Map(), config, weight: ranges[seat][hero] };   // `weight`: how much of the starting range hero's hand is
 }

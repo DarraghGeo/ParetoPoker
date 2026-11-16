@@ -18,6 +18,7 @@ function rangeAt(seg, node, who) {
 /** Chips won from the flop on by whoever takes the pot (hero's view), and how the hand ended. */
 function resultOf(p) {
   const won = (who) => (who === p.me ? p.pot0 + p.put[1 - p.me] : -p.put[p.me]);
+  if (p.done.stopped) return { how: 'Stopped at an error', net: 0, stopped: true };
   if (p.done.folded) return { how: `${p.done.folded === 'hero' ? 'You' : 'Villain'} folded`, net: cents(won(p.done.folded === 'hero' ? 1 - p.me : p.me)) };
   const strength = (combo) => fs.evaluateCards([...p.hand.board, ...cardsOf(combo)]);
   const [mine, his] = [strength(p.hand.hero), strength(p.hand.villain)];

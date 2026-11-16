@@ -33,7 +33,7 @@ export function handText(st, config) {
   if (!st) return '';
   const names = seatNames(config); const villain = other(st.seat); let board = [];
   const streets = st.history.map((h) => { board = [...board, h.cards]; return `${STREET[h.street] ?? h.street} [${board.join(' ')}] pot ${chips(h.pot)}: ${h.actions.length ? told(h.actions) : 'no betting'}`; });
-  const end = st.result ? [`Result: ${st.result.how.replace(/^You\b/, 'Hero')}${st.result.mine ? ` (Hero ${st.result.mine}, Villain ${st.result.his})` : ''}. Hero ${signed(st.result.net)} from the flop on${st.result.lost != null ? `; his decisions gave up ${st.result.lost.toFixed(2)} in EV against the solver` : ''}.`] : ['(The hand is still being played.)'];
+  const end = st.result?.stopped ? [`Result: the hand was stopped at Hero's error, a move the solver never makes with this hand${st.result.lost != null ? `; it gave up ${st.result.lost.toFixed(2)} in EV` : ''}.`] : st.result ? [`Result: ${st.result.how.replace(/^You\b/, 'Hero')}${st.result.mine ? ` (Hero ${st.result.mine}, Villain ${st.result.his})` : ''}. Hero ${signed(st.result.net)} from the flop on${st.result.lost != null ? `; his decisions gave up ${st.result.lost.toFixed(2)} in EV against the solver` : ''}.`] : ['(The hand is still being played.)'];
   return [
     `Pareto hand ${st.id}: heads-up no-limit hold'em, played from the flop. Chips are big blinds.`,
     names.line ? `Before the flop: ${names.pot ? `${names.pot}. ` : ''}${names.line}.` : 'Before the flop: ranges set by hand (below).',

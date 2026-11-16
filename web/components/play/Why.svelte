@@ -10,7 +10,8 @@
 <button type="button" class="peek-out" aria-label="Close" onclick={onclose}></button>
 <section class="whyd why" aria-label="Why this hand plays so" transition:fly={{ y: calm ? 0 : 60, duration: calm ? 0 : 220 }}>
   <header><h2><Cards cards={hero} /></h2><span class="grade g-{grade.level}"><i aria-hidden="true"></i><span>{grade.detail}</span></span></header>
-  {#if told}
+  {#if grade.level === 'off'}<p>The solver never gets to this decision with this hand, so it has no play for it here: what it would show is filler, not something it worked out. Nothing is charged for the move. The move that left its line came earlier in the hand, and was charged there.</p>
+  {:else if told}
     {#if told.line}<Said text={told.line} detail={told.detail} lead />{/if}
     {#each told.reasons as r}<Said {...r} />{/each}
     {#if told.silent}<p class="quiet">{told.silent}</p>{/if}
