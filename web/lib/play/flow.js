@@ -4,7 +4,7 @@
 // then a time bank (out of time, he checks if he can and folds if not). A finished hand is counted once in the session.
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
-import { configOf, keepSeating } from './seating.js';
+import { PHONE, configOf, keepSeating } from './seating.js';
 
 const KEY = 'pareto-play';
 /** Seconds: hero's shot clock, each player's time bank, villain's shot clock, the bank a new hand gives back. */
@@ -76,8 +76,8 @@ function queued(game, data) {
   game.lastKey = key; game.error = ''; game.queue.push(data); pump(game);
 }
 
-/** How many flops are solved at once beside the table: two where the device has the cores, else one. */
-const HELPERS = Math.max(1, Math.min(2, (globalThis.navigator?.hardwareConcurrency ?? 4) - 2));
+/** How many flops are solved at once beside the table: two where the device has the cores, one on a phone. */
+const HELPERS = PHONE ? 1 : Math.max(1, Math.min(2, (globalThis.navigator?.hardwareConcurrency ?? 4) - 2));
 
 /** Give waiting flops to the flop workers that are free. */
 function assign(game) {
@@ -92,6 +92,18 @@ export function startHelpers(game) {
   for (const h of game.helpers) h.worker.terminate();
   game.needs = []; game.needs.first = null;
   game.helpers = Array.from({ length: HELPERS }, () => { const h = { worker: new Worker(new URL('../../workers/flop.js', import.meta.url)), busy: null }; h.worker.onmessage = ({ data }) => fromHelper(game, h, data); return h; });
+}
+
+/** Study opens beside the table: on a phone the hands solved ahead and the flop being solved are let go of first, so that
+ *  the two together are not more than it can hold; they are solved again on the way back. */
+export function studyOpened(game) {
+  if (!PHONE || game.holding) return; game.holding = true;
+  for (const h of game.helpers) h.worker.terminate(); game.helpers = []; game.needs = [];
+  game.worker.postMessage({ type: 'hold' });
+}
+export function studyClosed(game) {
+  if (!game.holding) return; game.holding = false;
+  startHelpers(game); game.worker.postMessage({ type: 'resume' });
 }
 
 function clear(game) { clearTimeout(game.timer); stopClock(game); Object.assign(game, { queue: [], busy: false, lastKey: '', state: null, timedOut: false, error: '' }); }

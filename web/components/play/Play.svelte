@@ -17,7 +17,7 @@
   import { cellOf } from '../../lib/cards.js';
   import { studyUrl } from '../../lib/links.js';
   import { route } from '../../lib/route.svelte.js';
-  import { sitDown } from '../../lib/play/flow.js';
+  import { sitDown, studyClosed, studyOpened } from '../../lib/play/flow.js';
   import { createPlayGame } from '../../lib/play/game.svelte.js';
   import { gradeOf } from '../../lib/play/grade.js';
   import { handText, seatNames } from '../../lib/play/history.js';
@@ -25,7 +25,7 @@
 
   const GRADE_MS = 4500;
   const game = createPlayGame();
-  let pane = $state(); let showRanges = $state(false); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null;
+  let pane = $state(); let studying = $state(false); let showRanges = $state(false); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null;
   game.onExport = (data) => pane?.handedOver(data);
   // leaving Play stops its solving
   onDestroy(() => { clearTimeout(gradeTimer); clearTimeout(game.timer); clearInterval(game.tick); game.worker.terminate(); for (const h of game.helpers) h.worker.terminate(); });
@@ -48,6 +48,7 @@
     const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key } : null;
     if (g) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);
   });
+  $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
   // a newer build of the app may be taken up while nothing has been dealt
   $effect(() => { route.idle = !game.seated; return () => { route.idle = true; }; });
   const clockOf = (who) => (game.clock.who === who && !st?.result ? game.clock : null);
@@ -59,7 +60,7 @@
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
   function deal(seating) { ranges = null; graded = null; sitting = false; sitDown(game, seating); }
 </script>
-<StudyPane bind:this={pane} class="play" back="Play" onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
+<StudyPane bind:this={pane} bind:studying class="play" back="Play" onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
   <div class="rule"></div>
   <main class="table">
     <header>

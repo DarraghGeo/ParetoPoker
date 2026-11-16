@@ -47,9 +47,29 @@ export const wanted = () => play.hands.flatMap(wantedFor).sort((a, b) => b[0] - 
 /** A finished solve of a later street, kept with its hand. */
 function keep(job, result) { play.jobs.delete(job.key); job.hand.next.set(job.at, result); }
 
+/** What a hand's solved flop is taken to hold before one has come back: a wide range's. */
+const GUESS = 150 * 2 ** 20;
+/** Whether another hand may be dealt ahead: fewer than the number kept, and (past the first) within what the device can hold. */
+function room() {
+  const ahead = play.hands.filter((h) => h !== current());
+  if (play.held || ahead.length >= AHEAD) return false;
+  const each = play.typical || GUESS; const kept = ahead.reduce((t, h) => t + (h.bytes ?? each), 0);
+  return !ahead.length || kept + each <= (play.config.budget ?? Infinity);
+}
+
+/** Let go of the hands solved ahead (the one being played stays), and deal no more until `resume`: Study is about to
+ *  take a solve over, and a phone cannot hold both. */
+export function hold() {
+  play.held = true; const keep = current();
+  play.hands = play.hands.filter((h) => h === keep);
+  for (const [key, job] of play.jobs) if (job.hand !== keep) play.jobs.delete(key);
+  status();
+}
+export function resume() { play.held = false; dealAhead(); status(); pump(); }
+
 /** Hands dealt up to the number kept ahead, each one's flop asked of the flop workers. */
 export function dealAhead() {
-  while (play.hands.length < AHEAD + (current() ? 1 : 0)) {
+  while (room()) {
     const hand = dealHand(play.config, ++play.ids); play.hands.push(hand);
     say({ type: 'need', id: hand.id, epoch: play.epoch, config: hand.config, cards: hand.board.slice(0, 3) });
   }
@@ -59,7 +79,7 @@ export function dealAhead() {
 export function gotFlop(data) {
   const hand = data.epoch === play.epoch ? play.hands.find((h) => h.id === data.id) : null; if (!hand || hand.flop) return;
   let flop = null; if (!data.failed) { try { flop = flopFrom(hand.config, hand.board.slice(0, 3), data.used, data.sums); } catch { flop = null; } }
-  if (flop) hand.flop = flop;
+  if (flop) { hand.flop = flop; hand.bytes = data.sums.byteLength; play.typical = hand.bytes; }
   else { play.hands.splice(play.hands.indexOf(hand), 1); if (!play.hands.some((h) => h.flop) && !current()) say({ type: 'error', message: `This setup cannot be solved${data.why ? ` (${data.why})` : ''}.` }); }
   status(); hooks.solved({ hand }); pump();
 }

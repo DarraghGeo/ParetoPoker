@@ -18,7 +18,7 @@ class PlayState {
   config = $state.raw(configOf(loadSeating()));
   seated = $state(false);
   queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {};
-  helpers = []; needs = [];
+  helpers = []; needs = []; holding = false;
 }
 
 /** A game with its worker. Hands for the seating last used are solved from the start, behind the set-up, so that Deal with

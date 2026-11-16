@@ -5,6 +5,11 @@ import { keep, load } from '../storage.js';
 import { ACTIONS, EVERY, SEATS, TYPES } from '../study/presets.js';
 
 const KEY = 'pareto-table';
+const MIB = 2 ** 20;
+/** A phone: a small touch screen, where a web app is closed without warning once it holds too much. */
+export const PHONE = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches && Math.min(globalThis.screen?.width ?? 999, globalThis.screen?.height ?? 999) <= 500;
+/** How much the hands solved ahead may hold together: a phone keeps to a few hundred megabytes. */
+export const BUDGET = (PHONE ? 260 : 1024) * MIB;
 const FAST = [[0.33], [0.33], [0.75]];
 export const POOLS = [['live', 'Live'], ['online', 'Online'], ['own', "Study's ranges"]];
 export const TYPE_NAMES = TYPES.map(([name]) => name);
@@ -30,7 +35,7 @@ export function spotsOf(seating) {
 /** The setup Play is dealt with: Study's betting with the table's bet sizes, and the spots in rotation. */
 export function configOf(seating) {
   const spots = spotsOf(seating); const first = spots[0] ?? {};
-  return { ...savedSetup(), ...first, bets: seating.bets, spots };
+  return { ...savedSetup(), ...first, bets: seating.bets, spots, budget: BUDGET };
 }
 
 /** The three lists of bet sizes a setup holds, one a street. */
