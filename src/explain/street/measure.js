@@ -9,6 +9,9 @@ function addReplies(out, x, c, pc) {
   const folded = out.reply.find((r) => r.kind === 'fold'); out.folds = folded ? folded.share : 0; out.fromFolds = folded ? folded.part : 0;
 }
 
+/** Read quickly, an action's worth is told only for a hand that takes it at least this often. */
+const TAKEN = 0.1;
+
 /** A bet or raise set against the quiet action (checking, or calling a bet): where its gain comes from, in % of the pot,
  *  by his answer: his folds, his calls, his raises. The three add to what the wager is worth more than the quiet action.
  *  Worked out on the turn and the river only. */
@@ -59,7 +62,9 @@ export function measure(s, c, { onlyOn = true, worth = true } = {}) {
   const { f, fs } = s;
   if (!(f.mine[c] > 0) || !(f.mass[c] > 0)) return null;
   const pc = (chips) => (100 * chips) / s.pot;
-  const acts = s.actions.map((act, a) => (!worth || (onlyOn && !act.on) ? { ...act, sigma: s.sigma(c, a), worth: null } : measureAction(s, c, act, a, pc)));
+  // read quickly (a flop), an action the hand does not take has no worth to rely on: it is left to the count one move ahead
+  const untold = (act, a) => !worth || (onlyOn && !act.on) || (s.fast && s.sigma(c, a) < TAKEN);
+  const acts = s.actions.map((act, a) => (untold(act, a) ? { ...act, sigma: s.sigma(c, a), worth: null } : measureAction(s, c, act, a, pc)));
   const fifths = worth ? s.bands() : null;
   return { combo: c, name: fs.formatCombo(c), features: s.featuresOf(c), equity: worth ? s.equity()[c] : null, reach: f.mine[c], actions: acts,
     band: fifths ? fifths.of[c] : null, bands: fifths ? fifths.list : null, near: fifths ? fifths.near(c) : null };

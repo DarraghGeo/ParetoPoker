@@ -1,5 +1,6 @@
 // A decision, studied: everything an explanation of one of its hands may quote, gathered once and read per hand.
 import { frameAt } from '../account.js';
+import { quickly } from '../account/quick.js';
 import { evaluator } from '../best.js';
 import { features } from '../features.js';
 import { equityVs } from '../../solver/flopsolve.js';
@@ -54,12 +55,15 @@ export function study(fs, solution, nodes, id, dealt = []) {
   const featuresOf = perKey((c) => features(fs, f.board, c));
   const best = evaluator(fs, solution, nodes);
   // (the split by what he holds is not asked for: it does not survive the proof, see PROOF.md)
-  const closely = perKey((a) => best.closely(f, a, null));
+  // a flop is read quickly, from the solver's own values (seconds); a turn or river carefully, with the hand's best
+  // play after each action (what the proofs were made with, and quick enough there)
+  const fast = f.board.length === 3;
+  const closely = perKey((a) => (fast ? quickly(f, a) : best.closely(f, a, null)));
   const against = perKey((key) => best.against(f, ...key.split('|').map(Number)));
   const equity = once(() => equityVs(fs, f.board, f.mine, f.his));
   const bands = once(() => fifthsOf({ fs, f, ...strategy, featuresOf, equity }));
   const spread = once(() => nextCards(fs, f)); const parts = once(() => drawParts(fs, f, equity()));
   const toCall = f.node.invested[1 - f.me] - f.node.invested[f.me];
-  return { fs, f, solution, dealt, pot: f.node.pot, toCall, actions: rangeActions(fs, f, nodes, strategy), lineReach: lineReachOf(fs, solution, f),
+  return { fs, f, fast, solution, dealt, pot: f.node.pot, toCall, actions: rangeActions(fs, f, nodes, strategy), lineReach: lineReachOf(fs, solution, f),
     sigma, featuresOf, closely, against: (a, q) => against(`${a}|${q}`), bands, spread, drawParts: parts, equity };
 }

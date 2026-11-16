@@ -16,6 +16,6 @@
     {#each told.reasons as r}<Said {...r} />{/each}
     {#if told.silent}<p class="quiet">{told.silent}</p>{/if}
   {:else if failed}<p class="quiet">The reasons could not be worked out here. Study has the whole decision.</p>
-  {:else}<p class="quiet">Working out the reasons… A flop decision can take half a minute; later streets are quick.</p>{/if}
+  {:else}<p class="quiet">Working out the reasons…</p>{/if}
   <div class="go"><button type="button" class="link" onclick={onstudy}>Open in Study</button><button type="button" class="link" onclick={onclose}>Back to the table</button></div>
 </section>
