@@ -15,7 +15,9 @@ The price of a call is bet ÷ (pot + 2 × bet).
 
 ### Out of Position
 
-Your default here is to check. Given the disadvantage that OOP has we always play a little bit more cautious from this position.
+As the preflop raiser, your default on the flop is to bet B33 with your whole range.
+
+Otherwise your default is to check. Given the disadvantage that OOP has we always play a little bit more cautious from this position.
 
 The exception is when we have any range advantage (our share of top pair or better is at least 1 point above villain's). Then on the flop bet value and draws, and on the turn bet anything with 50% equity or a draw. They can mix. The hands that certainly can't bet are the middling ones with no draw.
 
