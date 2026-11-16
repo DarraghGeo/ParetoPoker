@@ -1,0 +1,146 @@
+<title>Butterfly chart review</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one reading column. The chart as built, what a day of testing says about each of its layers, then a proposed revision of the same chart on the same hand. Light only, in Pareto's tokens. */
+:root{
+  --bg:#FAFAF7;--surface:#F1F0EB;--card:#FFFFFF;--line:#E6E4DD;--line-strong:#CFCDC4;--ink:#15171B;--ink-2:#4F535B;--ink-3:#6B6F77;--accent:#2A3CE0;
+  --keep:#17803F;--drop:#C8281F;--change:#9A6700;--his:#B8B9BC;--loud:#F0896B;--quiet:#7CCDBE;
+  --suit-s:#15171B;--suit-h:#C8281F;--suit-d:#0B6FC2;--suit-c:#17803F;
+  --sans:"Geist",system-ui,sans-serif;--mono:"Geist Mono",ui-monospace,monospace;color-scheme:light;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--ink);font:400 15px/23px var(--sans);padding-block:28px 72px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+main{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+h1{font:600 28px/34px var(--sans);letter-spacing:-.02em;margin:0;text-wrap:balance}
+h2{font:600 20px/26px var(--sans);letter-spacing:-.01em;margin:18px 0 0;padding-top:20px;border-top:1px solid var(--line-strong);text-wrap:balance}
+p{margin:0;color:var(--ink-2);text-wrap:pretty}
+b{font-weight:600;color:var(--ink)}
+.kicker{font:500 11px/16px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.note{font:400 12px/18px var(--sans);color:var(--ink-3)}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.seg{display:flex}
+.seg button{border:1px solid var(--line-strong);background:var(--card);padding:7px 12px;font:500 13px/18px var(--sans);color:var(--ink-2);margin-left:-1px}
+.seg button:first-child{margin-left:0;border-radius:4px 0 0 4px}.seg button:last-child{border-radius:0 4px 4px 0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink);position:relative}
+figure{margin:0;border:1px solid var(--line-strong);border-radius:6px;background:var(--card);padding:14px 12px;display:flex;flex-direction:column;gap:10px}
+figcaption{font:400 12px/18px var(--sans);color:var(--ink-3)}
+.spot{display:flex;flex-wrap:wrap;gap:2px 12px;align-items:baseline;font:400 12px/18px var(--mono);color:var(--ink-2)}
+.board{font:500 19px/24px var(--mono);white-space:nowrap;color:var(--ink)}
+.s-s{color:var(--suit-s)}.s-h{color:var(--suit-h)}.s-d{color:var(--suit-d)}.s-c{color:var(--suit-c)}
+/* the butterfly */
+.heads,.bf .row,.thin{display:grid;grid-template-columns:minmax(0,1fr) 104px minmax(0,1fr);gap:8px;align-items:center}
+.heads{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.heads span:first-child{text-align:right}
+.bf{position:relative;display:flex;flex-direction:column;gap:3px}
+.bf .row{height:36px;border:0;background:none;padding:0;width:100%;text-align:left}
+.bf .row[aria-pressed="true"] .name{color:var(--accent)}
+.side{display:flex;align-items:center;gap:6px;height:100%;min-width:0}
+.side.me{justify-content:flex-end}
+.side b{font:400 11px/14px var(--mono);color:var(--ink-3);flex:none;width:28px}
+.side.me b{text-align:right}
+.bar{display:flex;height:26px;min-width:1px;background:var(--ink)}
+.bar i{display:block;height:100%}
+.side.him .bar{background:var(--his)}
+.name{text-align:center;font:500 12px/14px var(--sans);white-space:nowrap;display:flex;flex-direction:column;align-items:center;gap:1px}
+.name small{font:400 11px/13px var(--mono);color:var(--ink-3)}
+.cut{position:absolute;left:0;right:0;height:0;border-top:2px solid var(--ink);pointer-events:none}
+.cut span{position:absolute;right:0;bottom:2px;font:500 10px/13px var(--mono);background:var(--card);padding:0 0 0 6px}
+.cut.dash{border-top-style:dashed;border-top-width:1px}
+.cut.dash span{right:auto;left:0;padding:0 6px 0 0}
+.thin{height:16px}
+.thin .l{display:flex;justify-content:flex-end;align-items:center;gap:6px}.thin .r{display:flex;align-items:center;gap:6px}
+.thin u{flex:1 1 0;display:flex;text-decoration:none;min-width:0}.thin .l u{justify-content:flex-end}
+.thin i{display:block;height:3px;background:var(--ink)}.thin .r i{background:var(--his)}
+.thin b{font:400 11px/14px var(--mono);color:var(--ink-3)}
+.thin .mid{font:400 10px/12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:center}
+.key{display:flex;flex-wrap:wrap;gap:2px 12px;font:400 11px/15px var(--mono);color:var(--ink-2)}
+.key i{display:inline-block;width:8px;height:8px;margin-right:5px}
+.detail{border-top:1px solid var(--line);padding-top:8px;font:400 13px/19px var(--sans);color:var(--ink-2);min-height:44px}
+.detail .h{display:inline-block;font:500 12px/18px var(--mono);color:var(--ink);margin-right:10px;white-space:nowrap}
+.detail .h small{font-weight:400;color:var(--ink-3)}
+/* the verdicts */
+.layers{border-top:1px solid var(--line-strong)}
+.layer{display:grid;grid-template-columns:64px minmax(0,1fr);gap:2px 12px;padding:11px 0;border-bottom:1px solid var(--line)}
+.tag{font:500 11px/18px var(--mono);letter-spacing:.06em;text-transform:uppercase;grid-row:1/3}
+.tag.keep{color:var(--keep)}.tag.drop{color:var(--drop)}.tag.change{color:var(--change)}
+.layer h3{margin:0;font:600 15px/20px var(--sans)}
+.layer p{font-size:13px;line-height:20px;grid-column:2}
+.ask{border-left:3px solid var(--ink);padding:2px 0 2px 14px;display:flex;flex-direction:column;gap:6px}
+.ask li{color:var(--ink-2);font-size:14px;line-height:21px}
+.ask ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+</style>
+<main>
+  <div class="kicker">Pareto · design review</div>
+  <h1>The butterfly chart: what to keep</h1>
+  <p>This is the chart we built: both ranges back to back, sorted by what each hand has made, yours on the left and his on the right. Below it is what the testing since says about each of its layers, and then the same chart reworked on the same solved hand.</p>
+  <div class="seg" id="pick" role="group" aria-label="Decision shown"></div>
+
+  <h2>As built</h2>
+  <figure><div class="spot" id="spotA"></div><div id="A"></div><div class="key" id="keyA"></div><figcaption>The bars, the solver's actions as colour, the two thin advantage lines, and the line counted down his side. The white line through each bar is left out here.</figcaption></figure>
+
+  <h2>Layer by layer</h2>
+  <div class="layers">
+    <div class="layer"><span class="tag keep">Keep</span><h3>Hand-strength rows, two sides</h3><p>Three well-placed strength bands held as much of a strategy as the whole 13×13 grid (0.7 and 0.8% of the pot lost, against 0.8 and 0.9). Players already think in these rows. This is the part of the chart that works.</p></div>
+    <div class="layer"><span class="tag keep">Keep</span><h3>Draws as their own row</h3><p>Splitting hands by whether they have a draw cut the turn loss from 0.69 to 0.43%. It does nothing on the river, where the row disappears anyway.</p></div>
+    <div class="layer"><span class="tag keep">Keep</span><h3>Colour by the solver's action</h3><p>Shows the shape at a glance. Playing each hand's commonest action lost nothing, so two colours per bar are enough; finer mixes are not worth showing.</p></div>
+    <div class="layer"><span class="tag change">Change</span><h3>The line counted down his side</h3><p>Reading a threshold by counting his bars cost about 1.3 points of the pot over a full hand (3.2% against 1.9% with true equity). A row is not an equity: your top pair and his sit in the same row. Put each row's equity on the chart and draw the line where it is exact.</p></div>
+    <div class="layer"><span class="tag change">Change</span><h3>The thin advantage lines</h3><p>Range advantage by top pair or better is sound (right on 96 to 99% of flops where the gap is real) and it drives the flop. But it is one comparison, and two extra bars are a heavy way to show it. Say it in a line of text. Nut advantage only mattered for river sizing; fold it into the same line.</p></div>
+    <div class="layer"><span class="tag drop">Drop</span><h3>The white line through each bar</h3><p>Which exact hand inside a row bets was worth 0.3 to 0.4% in total, and blockers 0.1 to 0.2%. The line's link to the action was real but loose (0.3 to 0.5), and it is the hardest part of the chart to read.</p></div>
+  </div>
+
+  <h2>Proposed</h2>
+  <figure><div class="spot" id="spotB"></div><p class="note" id="adv"></p><div id="B"></div><div class="key" id="keyB"></div><div class="detail" id="detail">Tap a row to see its hands, each with its equity.</div><figcaption id="capB"></figcaption></figure>
+  <p>The same butterfly, with three changes. Each row carries <b>its equity against his range</b>, so the chart answers "how much do I beat" directly. The threshold is drawn <b>only where it is exact</b>: the price of a call. And a row opens to show its hands with their own equity, which is where a top pair with a weak kicker separates from one with a strong kicker.</p>
+
+  <div class="ask"><b>What I need from you</b><ol>
+    <li>Is the equity under each row's name the right place for it, or do you want it as a position (rows spaced by equity)?</li>
+    <li>Are you happy to lose the white lines and the two thin bars?</li>
+    <li>When betting, should the chart draw no line (as here), or draw our rule's line and mark it as a rule, not the solver's?</li>
+  </ol></div>
+  <p class="note">Both charts are drawn from one solved hand: single-raised pot, button against big blind, K♠ 9♦ 4♠ 7♥ then 2♣. Every percentage on them is from that solve.</p>
+</main>
+<script>
+const D = /*DATA*/;
+const $ = (id) => document.getElementById(id); const GLYPH = { s: '♠', h: '♥', d: '♦', c: '♣' }; const pct = (x) => `${Math.round(100 * x)}%`;
+const cards = (t) => t.replace(/ /g, '').match(/[2-9TJQKA][shdc]/g).map((c) => `<span class="s-${c[1]}">${c[0]}${GLYPH[c[1]]}</span>`).join(' ');
+const LEVEL = ['Trash', 'Draws', 'Low pair', 'Middle pair', 'Top pair', 'Overpair', 'Two pair', 'Set or better']; const ROW = 39;
+let at = 0, open = null;
+/** One decision by row: your share, mean equity and action split, his share. Strongest first. */
+function rowsOf(d) {
+  const rows = LEVEL.map((name, lv) => ({ name, lv, w: 0, e: 0, loud: 0, lo: 1, hi: 0, hands: [], his: d.his[lv] }));
+  d.hands.forEach((h) => { const r = rows[h.lv]; r.w += h.w; r.e += h.w * h.e; r.loud += h.w * h.mix[h.mix.length - 1]; r.lo = Math.min(r.lo, h.e); r.hi = Math.max(r.hi, h.e); r.hands.push(h); });
+  return rows.filter((r) => r.w > 0.002 || r.his > 0.002).map((r) => ({ ...r, e: r.w ? r.e / r.w : null, loud: r.w ? r.loud / r.w : 0 })).reverse();
+}
+const words = (d) => (d.kinds.includes('bet') ? ['bets', 'checks'] : ['calls', 'folds']);
+function draw(el, d, proposed) {
+  const rows = rowsOf(d); const most = Math.max(...rows.flatMap((r) => [r.w, r.his])); const [loud] = words(d);
+  const bar = (r) => (r.w > 0.002 ? `<span class="side me"><b>${pct(r.w)}</b><span class="bar" style="width:${Math.max(3, (100 * r.w) / most)}%"><i style="width:${100 * (1 - r.loud)}%;background:var(--quiet)"></i><i style="width:${100 * r.loud}%;background:var(--loud)"></i></span></span>` : '<span class="side me"></span>');
+  const his = (r) => (r.his > 0.002 ? `<span class="side him"><span class="bar" style="width:${Math.max(3, (100 * r.his) / most)}%"></span><b>${pct(r.his)}</b></span>` : '<span class="side him"></span>');
+  const name = (r) => `<span class="name">${r.name}${proposed && r.e != null ? `<small>${pct(r.e)} equity</small>` : ''}</span>`;
+  // the line: as built, counted up his side to a share of his range; proposed, drawn only for a price, between the rows it separates by their equity
+  let line = '';
+  if (!proposed) { const t = d.faced ? d.price : 0.70; let below = 0, y = 0; for (let k = rows.length - 1; k >= 0; k--) { const s = rows[k].his; if (below + s >= t) { y = k * ROW + (ROW - 3) * (1 - (s ? (t - below) / s : 0)); break; } below += s; } line = `<div class="cut" style="top:${y}px"><span>${d.faced ? `price: ${pct(t)} of his bets below` : `value: ${pct(t)} of his range below`}</span></div>`; }
+  else if (d.faced) { const k = rows.findIndex((r) => r.e != null && r.e < d.price); const y = (k < 0 ? rows.length : k) * ROW - 2; line = `<div class="cut dash" style="top:${y}px"><span>a call needs ${pct(d.price)} equity</span></div>`; }
+  const top = (rows2, f) => rows2.filter((r) => r.lv >= 4).reduce((t, r) => t + f(r), 0); const big = Math.max(top(rows, (r) => r.w), top(rows, (r) => r.his), 0.001);
+  const thin = proposed ? '' : `<div class="thin"><span class="l"><b>${pct(top(rows, (r) => r.w))}</b><u><i style="width:${(100 * top(rows, (r) => r.w)) / big}%"></i></u></span><span class="mid">top pair +</span><span class="r"><u><i style="width:${(100 * top(rows, (r) => r.his)) / big}%"></i></u><b>${pct(top(rows, (r) => r.his))}</b></span></div>`;
+  el.innerHTML = `<div class="heads"><span>You</span><span></span><span>Him</span></div><div class="bf">${rows.map((r) => `<${proposed ? 'button type="button"' : 'div'} class="row" data-lv="${r.lv}" ${proposed ? `aria-pressed="${open === r.lv}"` : ''}>${bar(r)}${name(r)}${his(r)}</${proposed ? 'button' : 'div'}>`).join('')}${line}</div>${thin}`;
+  if (!proposed) return;
+  const mine = top(rows, (r) => r.w), theirs = top(rows, (r) => r.his); $('adv').innerHTML = `<b>${Math.abs(mine - theirs) < 0.02 ? 'Ranges about even' : mine > theirs ? 'Your range is ahead' : 'His range is ahead'}:</b> top pair or better is ${pct(mine)} of yours and ${pct(theirs)} of his.`;
+  el.querySelectorAll('.row').forEach((b) => { b.onclick = () => { open = +b.dataset.lv; render(); }; });
+  const r = rows.find((x) => x.lv === open);
+  $('detail').innerHTML = !r ? 'Tap a row to see its hands, each with its equity.' : !r.hands.length ? `<b>${r.name}.</b> You have none; he has ${pct(r.his)} of his range here.` : `<b>${r.name}</b>, ${pct(r.lo)} to ${pct(r.hi)} equity. ${loud[0].toUpperCase() + loud.slice(1)} ${pct(r.loud)} of the time.<br>${r.hands.filter((h) => h.w >= 0.002).sort((a, b) => b.e - a.e).slice(0, 9).map((h) => `<span class="h">${h.cls} <small>${pct(h.e)}</small></span>`).join('')}`;
+}
+function render() {
+  const d = D[at]; const [loud, quiet] = words(d);
+  $('pick').innerHTML = D.map((x, k) => `<button type="button" data-k="${k}" aria-pressed="${k === at}">${x.title}${x.faced ? ', facing a bet' : ', checked to'}</button>`).join('');
+  $('pick').querySelectorAll('button').forEach((b) => { b.onclick = () => { at = +b.dataset.k; open = null; render(); }; });
+  const spot = `<span class="board">${cards(d.board)}</span><span>You are the button. ${d.line}.</span>`; $('spotA').innerHTML = spot; $('spotB').innerHTML = spot;
+  const key = `<span><i style="background:var(--loud)"></i>yours: ${loud}</span><span><i style="background:var(--quiet)"></i>yours: ${quiet}</span><span><i style="background:var(--his)"></i>his range</span>`; $('keyA').innerHTML = key; $('keyB').innerHTML = key;
+  draw($('A'), d, false); draw($('B'), d, true);
+  $('capB').textContent = d.faced ? 'The dashed line is the price, placed between the rows whose equity it separates. It is exact, so it is drawn.' : 'No line is drawn here. When betting, no simple threshold matched the solver closely enough to draw as fact; the colours show what it does.';
+}
+render();
+</script>
