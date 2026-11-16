@@ -1,13 +1,15 @@
 <!-- The strategy along the range, lowest equity to highest, one column a hand: one bar, a row for each made hand (each in its
-     place on the same scale), or the ladder of both ranges. Slide a thumb along it and the hand under it is picked. -->
+     place on the same scale), the ladder of both ranges, or the butterfly (both ranges back to back in rows by made hand).
+     Slide a thumb along it and the hand under it is picked. -->
 <script>
   import Ladder from '../common/Ladder.svelte';
   import { bands } from '../../lib/actions.js';
   import { pct } from '../../lib/cards.js';
+  import { butterflyRows } from '../../lib/study/butterfly.js';
   import { splitRows } from '../../lib/study/charts.js';
   import { pickHand, setHand } from '../../lib/study/solving.js';
   let { game, strata, hands } = $props();
-  const form = $derived(game.views.chart === 'ladder' ? 'ladder' : game.views.chart === 'split' && game.decision?.categories ? 'split' : 'single');
+  const form = $derived(game.views.chart === 'butterfly' ? 'butterfly' : game.views.chart === 'ladder' ? 'ladder' : game.views.chart === 'split' && game.decision?.categories ? 'split' : 'single');
   const scrub = { on: false, moved: false, x: 0 };
   const columnAt = (x, y) => document.elementFromPoint(x, y)?.closest?.('#strip [data-hand]');
 
@@ -42,6 +44,9 @@
 </script>
 {#snippet column(h)}<button type="button" data-hand={h.name} aria-pressed={h.name === game.hand} aria-label={h.name}><b style="height:100%;background:{bands(h.row.hand.strategy, strata)}"></b></button>{/snippet}
 {#if !hands}<div class="strip" {...events}></div>
+{:else if form === 'butterfly'}<div class="fly" {...events}>{#each butterflyRows(hands, game.decision.boardText) as r (r.lv)}
+  <div class="frow"><div class="wing me"><div class="strip" style="width:{r.mine.toFixed(2)}%">{#each r.hero as h}<button type="button" data-hand={h.name} aria-pressed={h.name === game.hand} aria-label={h.name} style="flex:{h.w} 1 0"><b style="height:100%;background:{bands(h.row.hand.strategy, strata)}"></b></button>{/each}</div></div><span class="code" title="{r.name}: {pct(r.share)}% of the range to act, {pct(r.hisShare)}% of the other">{r.code}</span><div class="wing him"><i style="width:{r.his.toFixed(2)}%"></i></div></div>
+{/each}</div>
 {:else if form === 'ladder'}<Ladder hero={hands.hero} villain={hands.villain} seat={game.decision.seat} cell={column} {...events} />
 {:else if form === 'split'}<div class="rows" {...events}>{#each splitRows(hands.hero, game.decision.categories) as r (r.category)}
   <div class="row"><div class="strip">{#each r.hands as h}{#if h}{@render column(h)}{:else}<span></span>{/if}{/each}</div><span class="name" style={r.place}><span class="long">{r.name}</span><span class="short">{r.short}</span> {pct(r.share)}</span></div>

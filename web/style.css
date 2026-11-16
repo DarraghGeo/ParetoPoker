@@ -397,6 +397,17 @@ header .board{min-width:0;flex:0 1 auto}
 .ladder .strip .mark::before{content:"";position:absolute;left:50%;top:-9px;transform:translateX(-50%);border:5px solid transparent;border-top:7px solid var(--accent);border-bottom:0}
 @media (min-width:900px) and (min-height:520px){.train .ladder{height:160px}}
 /* a thumb slid along the action chart picks hands: sideways is the chart's, up and down still scrolls the page */
+/* The butterfly: both ranges back to back in rows by made hand; the range to act's hands as columns, the other's as a plain bar */
+.fly{display:flex;flex-direction:column;gap:3px;margin:10px 0}
+.frow{display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1fr);gap:4px;align-items:center;height:22px}
+.fly .wing{display:flex;height:100%;min-width:0}
+.fly .wing.me{justify-content:flex-end}
+.fly .strip{height:100%;margin:0;min-width:0;flex:none}
+.fly .wing.him i{display:block;height:100%;background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.fly .code{font:500 12px/14px var(--mono);text-align:center;color:var(--ink-2);letter-spacing:.02em}
+.fly .strip button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:0}
+.fly .strip button[aria-pressed="true"]::before,.fly .strip button[aria-pressed="true"]::after{content:none}
+.stripbox:has(.fly){height:auto}
 #strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 /* under the cards to pick from: the street dealt at random */
 .deal button.random{aspect-ratio:auto;width:100%;margin-top:6px;padding:9px 12px;font:500 13px/18px var(--sans);color:var(--ink-2);background:transparent;border:1px solid var(--line-strong);border-radius:3px}

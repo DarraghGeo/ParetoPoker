@@ -14,7 +14,7 @@
   let { game, strata } = $props();
   const here = $derived(game.nodes && game.decision ? game.nodes[game.node] : null);
   const path = $derived(here ? trail(game.nodes, game.node, game.dealt) : []);
-  const CHART = { single: ['split', 'Action chart, split by made hand'], split: ['ladder', 'Action chart, ladder: both ranges on one scale'], ladder: ['bar', 'Action chart, one bar'] };
+  const CHART = { single: ['split', 'Action chart, split by made hand'], split: ['ladder', 'Action chart, ladder: both ranges on one scale'], ladder: ['butterfly', 'Action chart, butterfly: both ranges by made hand'], butterfly: ['bar', 'Action chart, one bar'] };
   let theirs = $state(false); let anchor = $state();
   function take(edge) { const to = leadsTo(game.nodes, edge); if (to?.go != null) go(game, to.go); else if (to) game.pick = to.deal; }
   function turn(view, value) { game.views[view] = value; remember(game); }

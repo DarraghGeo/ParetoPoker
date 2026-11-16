@@ -32,7 +32,7 @@ function subgame(game, { spot }) {
 
 function solved(game, data) {
   loaded(game); game.nodes = data.nodes; clearAnswers(game);
-  game.status = data.provisional ? `Quick solve, ${data.exploit.toFixed(2)}%; refining` : `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`;
+  game.status = data.provisional ? `Quick solve, ${data.exploit.toFixed(2)}%; refining` : data.exploit == null ? 'lite, from Play' : `${data.lite ? 'lite ' : ''}${data.exploit.toFixed(2)}%`;
   game.busy = !!data.provisional;
   // the finer solve of a street shown from a handover: stay where the walk has got to since
   if (game.refining && !data.provisional && !game.open) version(game).pos = placeOf(game);

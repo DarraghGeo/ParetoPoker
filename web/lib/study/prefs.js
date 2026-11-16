@@ -2,8 +2,9 @@
 import { keep, load } from '../storage.js';
 import { SETUP_KEY } from '../setup.js';
 
-/** The action chart's forms, in turn: one bar; a row for each made hand; a ladder of both ranges on one scale. */
-export const CHARTS = ['single', 'split', 'ladder'];
+/** The action chart's forms, in turn: one bar; a row for each made hand; a ladder of both ranges on one scale; the butterfly,
+ *  both ranges back to back in rows by made hand. */
+export const CHARTS = ['single', 'split', 'ladder', 'butterfly'];
 
 export function loadViews() {
   const saved = load(SETUP_KEY) ?? {};

@@ -33,12 +33,12 @@ function lineIn(seg) {
   return line;
 }
 
-/** Study's view of the decision: the flop, the whole line, the cards dealt, and the street's solve when it can be handed over. */
+/** Study's view of the decision: the flop, the whole line, the cards dealt, and the street's solve to hand over. */
 function studyOf(p, node) {
   if (!node) return null;
   const inStreet = lineIn(p.seg); const before = p.history.slice(0, -1).flatMap((h) => h.actions.map((a) => a.label));
   const own = p.seg.key === 'flop';
-  return { flop: text(p.hand.board.slice(0, 3)), line: own ? inStreet : [...before, ...inStreet], streetLine: inStreet, dealt: boardOf(p.seg).slice(3).map((c) => fs.formatCard(c)), share: own ? null : `${p.hand.id}|${p.seg.key}` };
+  return { flop: text(p.hand.board.slice(0, 3)), line: own ? inStreet : [...before, ...inStreet], streetLine: inStreet, dealt: boardOf(p.seg).slice(3).map((c) => fs.formatCard(c)), share: `${p.hand.id}|${p.seg.key}` };
 }
 
 /** Hero's choices at his decision: each action's label, kind and the chips it adds. */

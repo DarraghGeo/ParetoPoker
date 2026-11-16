@@ -54,11 +54,21 @@ export function openAddress(game, query, awaitHandover = false) {
   game.awaiting = setTimeout(() => { game.awaiting = null; begin(game); }, PATIENCE);
 }
 
+/** A flop handed over as it was solved lite elsewhere: shown as it is, with the betting it was solved with, and not solved again. */
+function adoptFlop(game, h) {
+  game.config = { ...game.config, ...h.betting, lite: true };
+  game.versions = [versionOf(game, { oop: game.config.oop, ip: game.config.ip })]; game.at = 0;
+  game.open = { ...game.open, resolve: false };
+  game.worker.postMessage({ type: 'adopt', key: version(game).id, sums: h.sums, exploit: h.exploit, lite: true }, [h.sums.buffer]);
+  solve(game);
+}
+
 /** A turn or river handed over: shown at once, then solved finer here (the flop before it only if it is asked for). */
 export function handedOver(game, h) {
   if (!game.awaiting) return;
   clearTimeout(game.awaiting); game.awaiting = null;
   if (!h.found) { begin(game); return; }
+  if (h.lite) { adoptFlop(game, h); return; }
   const own = boardCards(h.board); const c = configOf(game);
   const base = { board: own.join(' '), pot: h.pot, stack: h.stack, ...subBetting(c, own.length), lite: false };
   game.versions = [versionOf(game, { oop: c.oop, ip: c.ip }), versionOf(game, { oop: h.oop, ip: h.ip, base, fixed: true })]; game.at = 1;

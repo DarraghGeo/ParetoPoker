@@ -30,6 +30,7 @@ function timed(state, work) {
 export function flopJob(config, cards, warm = null) {
   const state = { spent: 0, run: null, settled: false };
   const open = (betting) => {
+    state.used = betting;
     state.lite = fs.litePreset({ board: text(cards), pot: config.pot, stack: config.stack, oop: config.oop, ip: config.ip, ...bettingFor({ ...config, ...betting }, 3) });
     state.spot = fs.defineSpot(state.lite.config); state.settle = fs.trackSettle(state.lite.options.settle || {});
     state.run = fs.createRun(state.spot, { ...state.lite.options, ...(warm ? { warmStart: warm.run, warmCards: warm.cards } : {}) });
@@ -45,7 +46,7 @@ export function flopJob(config, cards, warm = null) {
     timed(state, () => state.run.step(PLAN.flop.chunk));
     if (state.run.completed % (state.lite.options.settle?.every ?? 20) === 0) state.settled = state.settle.check(state.run.snapshot(), state.run.completed);
     if (!state.settled && state.run.completed < state.lite.options.iterations && state.spent < PLAN.flop.patience) return null;
-    return { street: 'flop', cards, run: state.run, solution: state.run.snapshot(), nodes: treeOf(fs, state.spot), spot: state.spot, stack: config.stack, pot: config.pot };
+    return { street: 'flop', cards, run: state.run, solution: state.run.snapshot(), nodes: treeOf(fs, state.spot), spot: state.spot, stack: config.stack, pot: config.pot, used: state.used };
   };
   const done = () => (state.settle && !Number.isNaN(state.settle.movement) ? along(0.35, state.settle.movement, state.lite.options.settle?.tolerance ?? 0.01) : 0);
   return { street: 'flop', step, done };
@@ -89,6 +90,13 @@ export function lineEnds(solved, cards) {
     out.push({ id: node.id, oop, ip, weight: oop * ip });
   }
   return out.sort((a, b) => b.weight - a.weight);
+}
+
+/** A flop solved lite as Study takes it over: its average strategy (copied) and the betting it was solved with, where that
+ *  was not the setup's; null when its storage is not the plain kind that can be copied across. */
+export function exportedFlop(solved) {
+  const sums = solved.run.solver.ctx.strategySum; if (!(sums instanceof Float32Array)) return null;
+  return { board: text(solved.cards), pot: solved.pot, stack: solved.stack, lite: true, betting: solved.used ?? {}, exploit: null, sums: sums.slice() };
 }
 
 /** A solved street as Study takes it over: the spot as defined and its average strategy (copied), to send with its buffer. */

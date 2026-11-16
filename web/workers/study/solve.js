@@ -33,18 +33,20 @@ function defined(c, board) {
   return { spot: fs.defineSpot(preset ? preset.config : whole), preset };
 }
 
-/** A solve handed over for this version, read as it is (never stepped) and shown at once; whether it was. */
+/** A solve handed over for this version, read as it is (never stepped) and shown at once: 'shown' for a street that is then
+ *  solved finer here, 'final' for a lite flop, which is kept as it came; false when there is none or it does not fit. */
 function showAdopted(data, spot, preset) {
   const adopted = held.adopted?.key === data.key ? held.adopted : null;
   if (adopted) held.adopted = null;
-  if (!adopted || preset) return false;
+  if (!adopted || !!preset !== adopted.lite) return false;
   try {
-    const read = fs.createRun(spot, { analysisOnly: true });
-    if (read.solver.ctx.strategySum.length !== adopted.sums.length) return false;
-    read.solver.ctx.strategySum.set(adopted.sums);
-    use({ solution: read.snapshot(), nodes: treeOf(fs, spot), run: null, board: data.config.board, exploit: adopted.exploit, lite: false, bytes: spot.estimate.bytes });
-    say({ type: 'solved', job: data.job, nodes: tree(), exploit: adopted.exploit, lite: false, provisional: true });
-    return true;
+    const read = fs.createRun(spot, { ...(preset?.options ?? {}), analysisOnly: true }); const sums = read.solver.ctx.strategySum;
+    if (!(sums instanceof Float32Array) || sums.length !== adopted.sums.length) return false;
+    sums.set(adopted.sums);
+    const entry = { solution: read.snapshot(), nodes: treeOf(fs, spot), run: null, board: data.config.board, exploit: adopted.exploit, lite: adopted.lite, bytes: spot.estimate.bytes, config: data.config };
+    use(entry); if (adopted.lite) keep(data.key, entry);
+    say({ type: 'solved', job: data.job, nodes: tree(), exploit: adopted.exploit, lite: adopted.lite, provisional: !adopted.lite });
+    return adopted.lite ? 'final' : 'shown';
   } catch { return false; }
 }
 
@@ -55,9 +57,10 @@ function prepare(data, mine) {
   const { spot, preset } = defined(c, board);
   const warm = held.last && held.last.board === c.board && !!held.last.lite === !!c.lite ? held.last.run : undefined;
   const shown = showAdopted(data, spot, preset);
+  if (shown === 'final') return { final: true };
   const run = fs.createRun(spot, { ...(preset?.options ?? {}), ...(warm ? { warmStart: warm } : {}) });
   const plan = PLAN[streetName(board)];
-  const progress = (extra) => say({ type: 'progress', job: data.job, refine: shown, street: streetName(board), ...extra });
+  const progress = (extra) => say({ type: 'progress', job: data.job, refine: !!shown, street: streetName(board), ...extra });
   return { mine, spot, preset, warm, run, plan, progress, chunk: warm ? plan.warmChunk : plan.chunk, started: Date.now() };
 }
 
@@ -90,6 +93,7 @@ function finish(data, s, exploit) {
 
 async function fromScratch(data, mine) {
   const s = prepare(data, mine);
+  if (s.final) return;
   s.progress({ iterations: 0, exploit: Infinity, target: s.plan.target });
   await pause();
   let exploit = s.preset ? await solveLite(s) : await solveFine(s);

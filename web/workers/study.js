@@ -6,7 +6,7 @@ import { solve } from './study/solve.js';
 
 const handlers = {
   stop: () => { held.halt = true; },
-  adopt: (data) => { held.adopted = { key: data.key, sums: data.sums, exploit: data.exploit }; },
+  adopt: (data) => { held.adopted = { key: data.key, sums: data.sums, exploit: data.exploit, lite: !!data.lite }; },
   solve, fits, preview,
   ...Object.fromEntries(QUESTIONS.map((type) => [type, ask])),
 };
