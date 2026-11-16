@@ -113,3 +113,33 @@ For comparison, on the river: the best three bands found from the solution give 
 A cleaner single-quantity version (one fold share f, value from (1+f)/2, bluffs under f(1+s)-s, solved by going round) was tried and did no better (`fourth`), so the thresholds above stay as found.
 
 Not done: the same rebuild for the turn (first derivation: 0.9), and for the flop.
+
+## What sets the bet size (`sizes.mjs`, `sizes.py`)
+
+66 turn spots with three sizes on offer on both streets (a third of the pot, three quarters, one and a half), each at one of four stack depths (0.4, 0.7, 1 or 1.5 times the usual stack) so that depth is not tied to pot type. 7,947 betting decisions: 7,837 on the river, 110 on the turn. Size is the mean size of the range's bets, in pots.
+
+**It is a combination.** How much of the size each explains on spots not seen (a rule of three questions | a flexible model):
+
+| What is known | Share of the size explained |
+|---|---|
+| Street alone | 0% |
+| Range advantage alone | 4% \| 2% |
+| Stack depth alone | 13% \| 11% |
+| Nut advantage alone (shares at 90% equity) | 21% \| 21% |
+| Depth, street, nuts | 35% \| 44% |
+| The same, and first to act or checked to | 36% \| 49% |
+| Everything about the two ranges | 41% \| 74% |
+
+**River: mean size by depth and by who has the nuts**
+
+| Stack behind, in pots | He has them | Even | I have them |
+|---|---|---|---|
+| under 1.5 | 0.61 | 0.73 | 0.80 |
+| 1.5 to 4 | 0.52 | 0.74 | 0.95 |
+| 4 to 10 | 0.49 | 0.64 | 0.84 |
+| over 10 | 0.48 | 0.67 | 0.77 |
+
+- On the river the nuts set the size at every depth: about half a pot when he has them, about two thirds when even, 0.8 to 0.95 when you do.
+- What else goes with a bigger river bet: a polar range of your own (strong hands and air, little in the middle: +0.47), a lot of middling hands in his (+0.43), and few strong hands in his (-0.42).
+- On the turn (110 decisions) depth leads (+0.40) and having the range advantage goes with betting smaller (-0.27), as on the flop (experiment 9 of the charts study). The nut gap shows only when deep.
+- Value hands and weak hands use the same size (0.75 and 0.81 pots; value is the bigger in 6% of decisions): the size belongs to the range, not to the hand.
