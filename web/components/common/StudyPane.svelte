@@ -5,17 +5,22 @@
   import { onDestroy } from 'svelte';
   import Study from '../study/Study.svelte';
   import { createStudyGame } from '../../lib/study/game.svelte.js';
-  import { handedOver as adopt, openAddress } from '../../lib/study/opening.js';
+  import { handedOver as adopt, openAddress, openStreet } from '../../lib/study/opening.js';
   import { queryOf } from '../../lib/study/address.js';
   import { swipe } from '../../lib/swipe.js';
   let { back = 'Back', class: cls = '', busy = () => false, onSwipeLeft, requestExport, studying = $bindable(false), children } = $props();
   let game = $state.raw(null); let shown = null; let asked = null;
 
-  /** Open Study on a spot's address; `spot.solve` (with `spot.line`) hands over the page's own solve of its street. */
+  /** Open Study on a spot's address; `spot.solve` (with `spot.line`) hands over the page's own solve of its street, and
+   *  `spot.street` (a turn or river with the ranges that arrived) opens that street on its own. */
   export function open(href, spot = null) {
     const url = new URL(href, location.href).href; const handing = spot?.solve != null;
     game ??= createStudyGame();
-    if (shown !== url) { shown = url; asked = handing ? { url, line: spot.line } : null; openAddress(game, queryOf(url), handing); if (handing) requestExport(spot.solve, url); }
+    if (shown !== url) {
+      shown = url; asked = handing ? { url, line: spot.line } : null;
+      if (spot?.street) openStreet(game, queryOf(url), spot.street); else openAddress(game, queryOf(url), handing);
+      if (handing) requestExport(spot.solve, url);
+    }
     if (!studying) { history.pushState({ study: true }, ''); studying = true; }
   }
   /** The worker's answer to `requestExport`, for the spot asked for. */

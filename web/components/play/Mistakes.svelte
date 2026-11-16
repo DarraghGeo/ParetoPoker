@@ -13,8 +13,8 @@
   {:else}<ul>{#each hands as h (h.at)}
     <li>
       <div class="top"><span class="hole"><Cards cards={h.hero} /></span><span class="brd"><Cards cards={h.board} /></span><span class="grow"></span><span class="when">{day(h.at)}</span><CopyButton text={() => h.text} label="Copy the hand history" /></div>
-      {#each h.mistakes as m}<button type="button" class="miss" onclick={() => onstudy(m.href)}><i aria-hidden="true"></i><span><b>{m.street}: you {m.move}</b> {m.solver}{#if m.cost >= 0.005}{' · '}EV −{m.cost.toFixed(2)}{/if}</span><span class="go" aria-hidden="true">›</span></button>{/each}
+      {#each h.mistakes as m}<button type="button" class="miss" onclick={() => onstudy(m)}><i aria-hidden="true"></i><span><b>{m.street}: you {m.move}</b> {m.solver}{#if m.cost >= 0.005}{' · '}EV −{m.cost.toFixed(2)}{/if}</span><span class="go" aria-hidden="true">›</span></button>{/each}
     </li>{/each}</ul>
-    <p class="said">Tap a mistake to open that decision in Study (it is solved again there). The last {KEPT} hands are kept on this device.</p>{/if}
+    <p class="said">Tap a mistake to open that decision in Study, solved again there: a turn or river in seconds, a flop in about a minute. The last {KEPT} hands are kept on this device.</p>{/if}
   <div class="go"><button type="button" class="link" onclick={onclose}>Back to the table</button></div>
 </section>

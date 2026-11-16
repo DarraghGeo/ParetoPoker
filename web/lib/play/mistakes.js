@@ -24,14 +24,16 @@ export const loadMistakes = () => { const kept = load(KEY); return Array.isArray
 function mistakesIn(st, config) {
   const out = []; const line = []; const flop = st.history[0].cards.replace(/\s+/g, '');
   st.history.forEach((h, k) => {
+    const inStreet = []; const street = st.result.streets?.[k];
     const dealt = st.history.slice(1, k + 1).map((x) => x.cards);
     for (const a of h.actions) {
       const g = a.who === 'hero' ? gradeOf(a) : null;
       if (g && ((g.level === 'error' && (a.cost ?? SMALL) >= SMALL) || (a.cost ?? 0) >= COSTLY)) {
         out.push({ street: STREET[h.street] ?? h.street, move: moved(a), solver: g.detail.replace(/ · EV.*$/, ''), cost: a.cost ?? null,
-          href: studyUrl(config, flop, { line: [...line], dealt, hand: st.hero, lite: true, resolve: dealt.length > 0 }) });
+          href: studyUrl(config, flop, { line: [...line], dealt, hand: st.hero, lite: true, resolve: dealt.length > 0 }),
+          spot: street ? { ...street, line: [...inStreet] } : null });   // a later street opens on its own, without its flop
       }
-      line.push(a.label);
+      line.push(a.label); inStreet.push(a.label);
     }
   });
   return out;

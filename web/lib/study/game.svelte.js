@@ -24,5 +24,7 @@ export function createStudyGame() {
   const game = new StudyState();
   game.worker = new Worker(new URL('../../workers/study.js', import.meta.url), { type: 'module' });
   game.worker.onmessage = ({ data }) => heard(game, data);
+  // a solver that breaks (out of memory, most often) says so, where it would otherwise leave the page waiting for ever
+  game.worker.onerror = (ev) => { ev.preventDefault?.(); heard(game, { type: 'error', job: game.job, message: 'The solver stopped, most likely out of memory. Go back and open it again.' }); };
   return game;
 }

@@ -21,7 +21,7 @@ export function start() {
   const hand = play.hands.find((h) => h.flop);
   if (!hand) { dealAhead(); status(); pump(); return false; }
   play.hands.splice(play.hands.indexOf(hand), 1); play.hands.unshift(hand);
-  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: hand.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: hand.config.pot, waiting: null, done: null };
+  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: hand.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: hand.config.pot, waiting: null, done: null, streets: {} };
   proceed();
   return true;
 }
@@ -68,7 +68,7 @@ function deal(p, node) {
   const allIn = seg.solved.nodes[node.edges[0].child]?.kind !== 'decision';
   if (next === undefined && !seg.dealt.length && !allIn) { p.waiting = node.id; return false; }
   p.step++; p.history.push({ street: streetOf([...boardOf(seg), 0]), actions: [], pot: Math.round((p.pot0 + p.put[0] + p.put[1]) * 100) / 100, cards: text([p.hand.board[boardOf(seg).length]]) });
-  if (next && !next.failed && !allIn) { p.seg = { key: at, solved: next, node: 0, dealt: [] }; return true; }
+  if (next && !next.failed && !allIn) { p.seg = { key: at, solved: next, node: 0, dealt: [] }; p.streets[p.history.length - 1] = next; return true; }   // the street as solved again, by its place in the history
   seg.dealt.push(p.hand.board[boardOf(seg).length]); seg.node = node.edges[0].child;
   return true;
 }

@@ -54,6 +54,21 @@ export function openAddress(game, query, awaitHandover = false) {
   game.awaiting = setTimeout(() => { game.awaiting = null; begin(game); }, PATIENCE);
 }
 
+/** Open a later street on its own: the address's setup, and the street as kept (`s`: its board, pot, stack, the two ranges
+ *  that arrived as `[[combination, weight]]`, and the line within it), solved here without its flop. The flop is the
+ *  version before it, solved only if it is turned to. */
+export function openStreet(game, query, s) {
+  const read = readAddress(query); clearTimeout(game.awaiting); game.awaiting = null; game.panel = '';
+  if (!read) { openSetup(game); return; }
+  game.config = { ...savedSetup(), ...read.config };
+  const whole = (list) => { const w = new Float64Array(1326); for (const [c, x] of list) w[c] = x; return w; };
+  const own = boardCards(s.board); const c = configOf(game);
+  const base = { board: own.join(' '), pot: s.pot, stack: s.stack, ...subBetting(c, own.length), lite: false };
+  game.versions = [versionOf(game, { oop: c.oop, ip: c.ip }), versionOf(game, { oop: whole(s.oop), ip: whole(s.ip), base, fixed: true })]; game.at = 1;
+  game.open = { line: s.line ?? [], dealt: [], hand: read.open.hand, resolve: false };
+  solve(game);
+}
+
 /** A flop handed over as it was solved lite elsewhere: shown as it is, with the betting it was solved with, and not solved again. */
 function adoptFlop(game, h) {
   game.config = { ...game.config, ...h.betting, lite: true };

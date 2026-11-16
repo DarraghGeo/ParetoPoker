@@ -85,7 +85,7 @@
       {/if}
     </header>
     {#if scores}<Days days={game.days} onclose={() => (scores = false)} />{/if}
-    {#if reviewing}<Mistakes hands={game.mistakes} onstudy={(href) => pane.open(href)} onclose={() => (reviewing = false)} />
+    {#if reviewing}<Mistakes hands={game.mistakes} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : null)} onclose={() => (reviewing = false)} />
     {:else if sitting}<Sitting seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
     {:else}
       {#if st && names.line}<p class="pre" aria-label="Before the flop"><b>{names.pot}</b> {names.line}</p>{/if}
