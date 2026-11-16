@@ -36,3 +36,7 @@ His strong hands are his share above the line 80% of the player's range sits und
 - It bets the river too seldom: 21% out of position and 38% in, where the solution bets 37% and 54% and the rates 36% and 58%.
 - So river betting was not where the river's 2.1 points went. What is left to look at: facing a river bet, and the ranges the player brings to the river after its own flop and turn.
 - Against a perfect answer it is as exploitable as before (about 32% of the pot).
+
+## Mixing at the edge of the thresholds (`DIAG=4`, the same 14 flops, exact equities)
+
+Each hand's equity is moved by up to 3, 5 or 10 points either way before the thresholds are applied, so hands near a threshold go either way. Given up, % of the pot: clean thresholds, then the three widths, are in `out/play-final-soft.jsonl` (`report2.py`).

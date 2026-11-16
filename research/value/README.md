@@ -116,9 +116,9 @@ Not done: the same rebuild for the turn (first derivation: 0.9), and for the flo
 
 ## The turn: does the two-street count hold? (`RULES=turn`, `RULES=turn2`, 24 unseen spots, seed 55)
 
-The idea: with a bet still to come, the turn betting range can hold more weak hands than the river ratio allows. Applying the river ratio twice says 67% of a three-quarter-pot betting range is not value (one street: 43%).
+The idea: with a bet still to come, the turn betting range can hold more weak hands than the river ratio allows. The river's bluff share of a three-quarter-pot betting range is s/(1+2s) = 30%; applied over two streets, 1 - 0.7 x 0.7 = 51%. (An earlier version of this note used s/(1+s) = 43% as the share, and so 67% for two streets: that is the number of bluffs per value bet, not the share, and the comparison below was wrong.)
 
-**What the solution's turn betting range is made of** (42 betting decisions): 32% from hands with 80% equity or more, 26% from 50 to 80%, 42% from under 50%. So 68% is under the value line: the two-street figure, not the one-street one. But the solution bets only two thirds of its 80%+ hands (13 of 20 points of range), so "every hand over the line, times two" bets 54% of the range where the solution bets 35 to 40%. The ratio holds; the base must be the value that bets, not all the value there is.
+**What the solution's turn betting range is made of** (42 betting decisions): 32% from hands with 80% equity or more, 26% from 50 to 80%, 42% from under 50%. So 68% is under the value line, but 26 points of that are middling hands that are not bluffs; the weak hands are 42% of the bets, between the one-street share (30%) and the two-street one (51%). But the solution bets only two thirds of its 80%+ hands (13 of 20 points of range), so "every hand over the line, times two" bets 54% of the range where the solution bets 35 to 40%. The ratio holds; the base must be the value that bets, not all the value there is.
 
 Bet frequency by equity, in steps of ten points: 29, 36, 31, 31, 20, 13, 19, 48, 62, 66%. Weak hands bet about a third of the time, the middle a sixth, and value starts near 70%.
 
