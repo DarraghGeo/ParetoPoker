@@ -15,6 +15,7 @@
   import Moves from './Moves.svelte';
   import Seat from './Seat.svelte';
   import Sitting from './Sitting.svelte';
+  import Why from './Why.svelte';
   import { chips } from '../../lib/actions.js';
   import { cellOf } from '../../lib/cards.js';
   import { studyUrl } from '../../lib/links.js';
@@ -27,8 +28,9 @@
 
   const GRADE_MS = 4500;
   const game = createPlayGame();
-  let pane = $state(); let studying = $state(false); let peek = $state(null); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null; let reviewing = $state(false); let scores = $state(false);
+  let pane = $state(); let studying = $state(false); let peek = $state(null); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null; let reviewing = $state(false); let scores = $state(false); let why = $state.raw(null);
   game.onExport = (data) => pane?.handedOver(data);
+  game.onExplained = (data) => { if (why && data.ask === why.key) why = { ...why, told: data.told, failed: !data.told }; };
   // leaving Play stops its solving
   onDestroy(() => { clearTimeout(gradeTimer); clearTimeout(game.timer); clearInterval(game.tick); game.worker.terminate(); for (const h of game.helpers) h.worker.terminate(); });
   const st = $derived(game.state);
@@ -54,7 +56,7 @@
   });
   $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
   // nothing moves while Study or a card over the table is open: clocks stop, and villain's next action waits
-  $effect(() => pause(game, studying || !!peek || scores || reviewing || (sitting && game.seated)));
+  $effect(() => pause(game, studying || !!peek || !!why || scores || reviewing || (sitting && game.seated)));
   // a newer build of the app may be taken up while nothing has been dealt
   $effect(() => { route.idle = !game.seated; return () => { route.idle = true; }; });
   const clockOf = (who) => (game.clock.who === who && !st?.result ? game.clock : null);
@@ -69,9 +71,15 @@
   const session = $derived(game.session.hands ? `${ev(perHand)} a hand · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : game.days.length ? 'Scores' : '');
   /** Study for the decision on screen, its street handed over as solved here. */
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
-  /** Study for the move just graded: its street handed over as solved here. */
-  function studyGraded() { const g = graded; clearTimeout(gradeTimer); graded = null; if (g?.study) pane.open(g.href, g.study.share ? { solve: g.study.share, line: g.study.streetLine } : null); }
-  function deal(seating) { ranges = null; peek = null; graded = null; sitting = false; sitDown(game, seating); }
+  /** Why, for the move just graded: a drawer with the hand's explanation, worked out from the solve the table holds. */
+  function explainGraded() {
+    const g = graded; clearTimeout(gradeTimer); graded = null; if (!g?.study) return;
+    why = { ...g, hero: g.study.hero, told: null, failed: false };
+    game.worker.postMessage({ type: 'explain', ask: g.key, solve: g.study.share, at: g.study.at, cards: g.study.cards });
+  }
+  /** On from the drawer to Study for the same decision, its street handed over as solved here. */
+  function studyWhy() { const g = why; why = null; pane.open(g.href, g.study.share ? { solve: g.study.share, line: g.study.streetLine } : null); }
+  function deal(seating) { ranges = null; peek = null; why = null; graded = null; sitting = false; sitDown(game, seating); }
 </script>
 <StudyPane bind:this={pane} bind:studying class="play" back="Play" onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
   <div class="rule"></div>
@@ -86,6 +94,7 @@
           {#if game.study}<a class="icon" id="study" {href} aria-label="Study this spot (or swipe left)" title="Study this spot" onclick={study}><Icon name="study" /></a>{/if}{/if}
       {/if}
     </header>
+    {#if why}<Why hero={why.hero} grade={why} told={why.told} failed={why.failed} onstudy={studyWhy} onclose={() => (why = null)} />{/if}
     {#if scores}<Days days={game.days} onclose={() => (scores = false)} />{/if}
     {#if reviewing}<Mistakes hands={game.mistakes} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : null)} onclose={() => (reviewing = false)} />
     {:else if sitting}<Sitting seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
@@ -100,7 +109,7 @@
           <div class="p-board"><Cards cards={st?.board ?? ''} slots={5} /></div>
           <div class="outcome" class:down={st?.result?.net < 0}>{#if st?.result}<b>{signed(st.result.net)}</b> {st.result.how}{#if st.result.lost != null}{' · '}{ev(st.result.lost)}{/if}{#if st.result.mine}<span>{st.result.mine} against {st.result.his}</span>{/if}{:else if game.timedOut}<span>Out of time</span>{/if}</div>
           <div class="wager" class:on={!!lastOf('hero')}>{#if lastOf('hero')}<b>{lastOf('hero')}</b>{#if front('hero') > 0}<span>{chips(front('hero'))}</span>{/if}{/if}</div>
-          <div class="grades">{#if graded}{#key graded.key}<Grade grade={graded} onopen={studyGraded} />{/key}{/if}</div>
+          <div class="grades">{#if graded}{#key graded.key}<Grade grade={graded} onopen={explainGraded} />{/key}{/if}</div>
         </div>
         <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero onpeek={() => (peek = 'hero')} />
         {#if peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={listOf(peeked)} his={listOf(other(peeked))} board={held.board} marked={peek === 'hero' ? cellOf(held.hero) : null} villain={peek === 'villain'} onclose={() => (peek = null)} />{/if}

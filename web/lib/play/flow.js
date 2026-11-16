@@ -176,9 +176,10 @@ export function broke(game) { clearTimeout(game.timer); stopClock(game); game.er
 const HEARD = {
   need: (game, data) => { game.needs.first ??= data.id; game.needs.push({ id: data.id, epoch: data.epoch, config: data.config, cards: data.cards }); assign(game); },
   export: (game, data) => game.onExport(data),
+  explained: (game, data) => game.onExplained(data),
   status: (game, data) => { game.status = data; },
   progress: (game, data) => { game.progress = data; },
   error: (game, data) => { game.error = data.message; },
   state: (game, data) => { if (game.seated) queued(game, data); },
 };
-export const heard = (game, data) => { if (data.epoch === game.epoch || data.type === 'export') HEARD[data.type]?.(game, data); };
+export const heard = (game, data) => { if (data.epoch === game.epoch || data.type === 'export' || data.type === 'explained') HEARD[data.type]?.(game, data); };

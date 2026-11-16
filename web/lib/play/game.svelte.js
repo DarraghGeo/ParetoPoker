@@ -21,7 +21,7 @@ class PlayState {
   mistakes = $state.raw(loadMistakes());
   days = $state.raw(loadDays());
   paused = false;
-  queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {};
+  queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {}; onExplained = () => {};
   helpers = []; needs = []; holding = false; epoch = 0; counted = ''; shownAt = 0;
 }
 

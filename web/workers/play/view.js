@@ -38,7 +38,7 @@ function studyOf(p, node) {
   if (!node) return null;
   const inStreet = lineIn(p.seg); const before = p.history.slice(0, -1).flatMap((h) => h.actions.map((a) => a.label));
   const own = p.seg.key === 'flop';
-  return { flop: text(p.hand.board.slice(0, 3)), line: own ? inStreet : [...before, ...inStreet], streetLine: inStreet, dealt: boardOf(p.seg).slice(3).map((c) => fs.formatCard(c)), share: `${p.hand.id}|${p.seg.key}` };
+  return { flop: text(p.hand.board.slice(0, 3)), line: own ? inStreet : [...before, ...inStreet], streetLine: inStreet, dealt: boardOf(p.seg).slice(3).map((c) => fs.formatCard(c)), share: `${p.hand.id}|${p.seg.key}`, at: node.id, cards: [...p.seg.dealt] };   // `at`, `cards`: the decision in its own solve, for its explanation
 }
 
 /** Hero's choices at his decision: each action's label, kind and the chips it adds. */
