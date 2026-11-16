@@ -189,3 +189,24 @@ The range is cut in three zones (value: 80% equity or more; bottom: under 40%; t
 - Always the average is 19 to 20 points out. The zones with rates by seat, advantage and his strong hands: flop 16, turn 16, river 13 (within 10 points in 41%, 38%, 51% of decisions). A version in round numbers, to carry: 16, 17, 15.
 - The round-number rule. Value: in position 80% (all of it on the river); out of position 55% on the turn, 75% on the river, and on the flop 35 / 45 / 90% behind / even / ahead. Middle: a third (river: a quarter in position, 40% out). Bottom: 25 / 35 / 55% behind / even / ahead, five more in position, five fewer out. He holds many strong hands: halve value and bottom (not in position on the river).
 - No set of inputs tried gets under about 13 points; the frequency is not fixed by what the ladder and its surroundings show.
+
+## Experiment 13. The frequency taught as a word (`exp13.py`)
+
+The rule of experiment 12 gives a number; the player keeps only its word and plays what the word means to them, up to 20 points either side of the word's middle. Points out from the solution's frequency, flop | turn | river:
+
+| What the player has | Points out |
+|---|---|
+| Always the average | 20 \| 19 \| 19 |
+| The rule's number, exactly | 16 \| 17 \| 15 |
+| The rule's word of three, at its middle | 17 \| 18 \| 16 |
+| The rule's word of three, 20 points either way | 20 \| 20 \| 19 |
+| The right word of three, at its middle | 9 \| 9 \| 8 |
+| The right word of three, 20 points either way | 13 \| 13 \| 12 |
+| The right word of five, 20 points either way | 11 \| 11 \| 11 |
+| The right number, 20 points either way | 9 \| 9 \| 9 |
+
+- The rule names the solution's word of three in 70%, 58%, 66% of decisions, is one word out in 27 to 40%, and names the opposite in 2%. With five words: right 38 to 43%, two or more out 11 to 13%.
+- **The vagueness of a word costs 2 to 4 points; the rule naming the wrong word costs about 8.** A vague word from this rule is no closer than always saying the average.
+- A player who knew the right word and was 20 points vague about it would be 12 to 13 out: closer than the rule's exact number.
+- Five words gain nothing over three once the meaning is 20 points loose.
+- Cost, by the errors study's rates (a rough guide, every hand shifted alike): about 1.2 to 1.9% of the pot for the vague word from the rule, 0.8 to 1.2% for the right word held vaguely. Leaning ten points towards betting lowers the cost though it adds error (flop 1.23 to 0.95, turn 1.46 to 1.11).
