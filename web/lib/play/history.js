@@ -2,6 +2,7 @@
 // every action with its chips, and how it ended.
 import { chips } from '../actions.js';
 import { presetOf } from '../study/presets.js';
+import { gradeOf } from './grade.js';
 
 const SEAT = { oop: 'out of position', ip: 'in position' };
 const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');
@@ -17,7 +18,7 @@ function said(a, put) {
 /** A street's actions in words. */
 function told(actions) {
   const put = { hero: 0, villain: 0 };
-  return actions.map((a) => { const text = said(a, put[a.who]); put[a.who] += a.add ?? 0; return text; }).join(', ');
+  return actions.map((a) => { const g = gradeOf(a); const text = `${said(a, put[a.who])}${g ? ` [${g.text}]` : ''}`; put[a.who] += a.add ?? 0; return text; }).join(', ');
 }
 
 /** Who a seat is: its position or player type where the ranges are a preset's. */

@@ -35,6 +35,13 @@ function villainChoice(seg, node, combo) {
   return n - 1;
 }
 
+/** How the solution plays hero's hand at a decision: each action's label and how often, or null if the hand is not there. */
+function mixOf(seg, node, combo) {
+  const found = seg.solved.spot.resolveBoard(boardOf(seg).slice(0, seg.solved.cards.length + node.round));
+  const view = seg.solved.solution.strategyAt(node.id, found.board); const n = view.actions.length; const i = view.combos.indexOf(found.combos[combo]);
+  return i < 0 ? null : node.edges.map((e, a) => ({ label: e.label, kind: e.kind, freq: Math.round(1e3 * view.probs[i * n + a]) / 1e3 }));
+}
+
 /** Take action `k` at a decision: the chips it puts in, the line, and a fold ends the hand. */
 function take(p, node, k) {
   const edge = node.edges[k]; const who = seatOf(node); const add = edge.kind !== 'fold' && edge.kind !== 'check' ? edge.to - node.invested[who] : 0;
@@ -79,5 +86,8 @@ export function heroActs(label) {
   const p = play.playing; if (!p || p.done) return;
   const node = nodeOf(p.seg); const k = node.edges.findIndex((e) => e.label === label);
   if (node.kind !== 'decision' || seatOf(node) !== p.me || k < 0) return;
-  take(p, node, k); post(p); proceed();
+  const mix = mixOf(p.seg, node, p.hand.hero);
+  take(p, node, k);
+  if (mix) p.history[p.history.length - 1].actions.at(-1).mix = mix;   // for the page to say how the move stands against the solution
+  post(p); proceed();
 }

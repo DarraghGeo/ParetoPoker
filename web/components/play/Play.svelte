@@ -17,6 +17,7 @@
   import { studyUrl } from '../../lib/links.js';
   import { resetup } from '../../lib/play/flow.js';
   import { createPlayGame } from '../../lib/play/game.svelte.js';
+  import { gradeOf } from '../../lib/play/grade.js';
   import { handText, seatNames } from '../../lib/play/history.js';
   import { SETUP_KEY } from '../../lib/setup.js';
   import { keep, load } from '../../lib/storage.js';
@@ -37,6 +38,8 @@
   const front = (who) => (street?.actions ?? []).filter((a) => a.who === who).reduce((t, a) => t + (a.add ?? 0), 0);
   const WORD = { fold: 'Fold', check: 'Check', call: 'Call', bet: 'Bet', raise: 'Raise', allin: 'All-in' };
   const lastOf = (who) => { const a = (street?.actions ?? []).filter((x) => x.who === who).at(-1); return a ? WORD[a.kind] ?? a.label : ''; };
+  /** How hero's last move stands against the solution. */
+  const grade = $derived(gradeOf((st?.history ?? []).flatMap((h) => h.actions).filter((a) => a.who === 'hero').at(-1)));
   const clockOf = (who) => (game.clock.who === who && !st?.result ? game.clock : null);
   const href = $derived(game.study ? studyUrl(game.config, game.study.flop, { line: game.study.line, dealt: game.study.dealt, hand: game.study.hero, lite: true, resolve: true }) : '');
   const listOf = (seat) => ranges[seat].map(([name, w]) => ({ name, w }));
@@ -75,6 +78,7 @@
         <div class="p-board"><Cards cards={st?.board ?? ''} slots={5} /></div>
         <div class="outcome" class:down={st?.result?.net < 0}>{#if st?.result}<b>{signed(st.result.net)}</b> {st.result.how}{#if st.result.mine}<span>{st.result.mine} against {st.result.his}</span>{/if}{:else if game.timedOut}<span>Out of time</span>{/if}</div>
         <div class="wager" class:on={!!lastOf('hero')}>{#if lastOf('hero')}<b>{lastOf('hero')}</b>{#if front('hero') > 0}<span>{chips(front('hero'))}</span>{/if}{/if}</div>
+        <div class="grade g-{grade?.level ?? ''}" aria-live="polite">{#if grade && !st?.toAct}<i></i>{grade.text}{/if}</div>
       </div>
       <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : game.config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero />
     </div>
