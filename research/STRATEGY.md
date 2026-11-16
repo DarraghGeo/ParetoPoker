@@ -6,7 +6,7 @@ Bluffs:
 | --- | --- | --- |
 | Any hand, when you bet B33 | Draws | s ÷ (1 + s) per value bet, from hands that can't win a showdown |
 
-| **Value threshold by bet size** | B33: flop 70%, turn 50%, river 75%. B75: 80%. B150: 85%. |
+| **Value threshold by bet size** | Flop (B33) 70%, turn (B33) 50%. River: B33 75%, B75 80%, B150 85%. |
 | --- | --- |
 
 The price of a call is bet ÷ (pot + 2 × bet).
@@ -27,13 +27,13 @@ Out of position, simplify to one bet size: B33 on flop and turn, B75 on the rive
 
 Your default here is to bet B33.
 
-On the flop bet your whole range. On the turn bet anything with 50% equity or a draw, and check the rest. On the river, bet value and add bluffs by the ratio, with no bluffs if villain has few weak hands to fold.
+On the flop bet your whole range. On the turn bet anything with 50% equity or a draw, and check the rest. Flop and turn are B33 only.
 
-If you have nut advantage (top 2 rows) you can add a B75 size, if you've a strength advantage (top 3 rows) you can add B150.
+On the river, bet value and add bluffs by the ratio, with no bluffs if villain has few weak hands to fold. If you have nut advantage (top 2 rows) you can add a B75 size, if you've a strength advantage (top 3 rows) you can add B150.
 
-Top row bets up to the B150 if available, second row bets up to the B75 if available, and other value rows bet B33. They only bet pure their biggest size if they've strong blockers to hands that beat them and unblock villain's strong hands that they beat.
+On the river, top row bets up to the B150 if available, second row bets up to the B75 if available, and other value rows bet B33. They only bet pure their biggest size if they've strong blockers to hands that beat them and unblock villain's strong hands that they beat.
 
-All bluffs mix, with the best bluffs (by draw equity and blockers) including the larger bets.
+All river bluffs mix, with the best bluffs (by blockers) including the larger bets.
 
 ## Facing Aggression
 
