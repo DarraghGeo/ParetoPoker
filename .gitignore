@@ -34,3 +34,5 @@ research/value/out/values.jsonl
 research/value/out/dump.jsonl
 research/ladder/out/*.log
 research/ladder/out/*.jsonl
+research/rules/out/*.log
+research/rules/out/*.jsonl
