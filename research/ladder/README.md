@@ -39,4 +39,4 @@ His strong hands are his share above the line 80% of the player's range sits und
 
 ## Mixing at the edge of the thresholds (`DIAG=4`, the same 14 flops, exact equities)
 
-Each hand's equity is moved by up to 3, 5 or 10 points either way before the thresholds are applied, so hands near a threshold go either way. Given up, % of the pot: clean thresholds, then the three widths, are in `out/play-final-soft.jsonl` (`report2.py`).
+Each hand's equity is moved by up to 3, 5 or 10 points either way before the thresholds are applied, so hands near a threshold go either way. Given up, % of the pot: clean thresholds 1.88; 3 points 2.07; 5 points 2.22; 10 points 2.83. Against a perfect answer: clean 33.4, 10 points 31.8. Mixing at the edge costs a little against the solution and barely lowers what a perfect answer wins.
