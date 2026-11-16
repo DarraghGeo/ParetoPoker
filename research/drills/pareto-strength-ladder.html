@@ -601,6 +601,12 @@ main.home{min-height:0;justify-content:flex-start;gap:18px}
 .sl .bar svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
 .sl .bar polyline{fill:none;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .sl .tag{font:400 10px/12px var(--mono);color:var(--ink-3);flex:none;width:30px;text-align:right}
+.adv{display:grid;grid-template-columns:minmax(0,1.5fr) 84px minmax(0,1fr);gap:8px;align-items:center;height:18px}
+.adv .l{display:flex;justify-content:flex-end;align-items:center;gap:6px;min-width:0}.adv .r{display:flex;align-items:center;gap:6px;min-width:0}
+.adv u{flex:1 1 0;min-width:0;display:flex;text-decoration:none}.adv .l u{justify-content:flex-end}
+.adv i{display:block;height:3px;background:var(--ink)}.adv .r i{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.adv b{font:400 11px/14px var(--mono);color:var(--ink-3);flex:none}.adv .win b{color:var(--ink);font-weight:500}
+.adv .mid{font:400 10px/12px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);text-align:center;white-space:nowrap}
 .toggle{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .sl .him .bar{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
 .sl .none .bar{background:none;border-left:1px solid var(--line-strong);min-width:0;width:0!important}
@@ -631,9 +637,13 @@ const app = document.getElementById('app'); let at = 0; let picked = null; let a
 const LINE = { now: 'ahead now', draw: 'to come', equity: 'equity' };
 function show() {
   const d = D[at]; const rows = d.levels.map((name, i) => ({ name, i, me: d.mine[i], him: d.his[i] })).filter((r) => r.me.share > 0.001 || r.him.share > 0.001); const most = Math.max(...rows.flatMap((r) => [r.me.share, r.him.share]));
-  // the line: for a bet, value must beat four fifths of his range; facing one, a call needs the price against what he bets
+  // the line: for a bet, value must beat 80% of his range; facing one, a call needs the price against what he bets
   const t = d.facing ? d.price : 0.8; let cum = 0; let y = rows.length * ROW; let above = [0, 0];
   for (let k = rows.length - 1; k >= 0; k--) { const s = rows[k].him.share; if (cum + s >= t) { const frac = s > 0 ? (t - cum) / s : 0; y = k * ROW + (ROW - 3) * (1 - frac); above = [rows.slice(0, k).reduce((u, r) => u + r.me.share, 0) + rows[k].me.share * (1 - frac), 1 - t]; break; } cum += s; }
+  const upTo = (side, k) => side.slice(0, k + 1).reduce((t, m) => t + m.share, 0);
+  const nutAt = d.levels.findIndex((_, k) => (upTo(d.mine, k) + upTo(d.his, k)) / 2 >= 0.03); const nutName = d.levels[Math.max(0, nutAt)].toLowerCase();
+  const nuts = [upTo(d.mine, Math.max(0, nutAt)), upTo(d.his, Math.max(0, nutAt))]; const tops = [upTo(d.mine, 6), upTo(d.his, 6)];
+  const adv = (label, [a, b]) => { const big = Math.max(a, b, 0.001); const even = Math.abs(a - b) < 0.02; return `<div class="adv"><span class="l${!even && a > b ? ' win' : ''}"><b>${pct(a)}</b><u><i style="width:${Math.max(2, (100 * a) / big)}%"></i></u></span><span class="mid">${label}</span><span class="r${!even && b > a ? ' win' : ''}"><u><i style="width:${Math.max(2, (100 * b) / big)}%"></i></u><b>${pct(b)}</b></span></div>`; };
   const bar = (r) => { const m = r.me; if (!(m.share > 0.001)) return `<span class="side me none"><span class="bar"></span></span>`;
     const v = m.slices.map((x) => x.v); const lo = Math.min(...v), hi = Math.max(...v); const flat = hi - lo < 0.015; const n = v.length;
     const pts = n > 1 ? v.map((y, k) => `${((k + 0.5) / n) * 100},${flat ? 50 : 92 - 84 * ((y - lo) / (hi - lo))}`).join(' ') : `0,50 100,50`;
@@ -648,7 +658,7 @@ function show() {
   const ratio = d.bet / (1 + d.bet); const trash = rows.find((r) => r.name === 'Trash'); const draws = rows.find((r) => r.name === 'Draws');
   const reads = d.facing
     ? [`<b>The line is the price.</b> A call has to beat ${pct(d.price)} of the hands he bets. Count up from the bottom of his side to ${pct(d.price)}: your hands level with that or above continue.`, `Above the line you have <b>${pct(above[0])}</b> of your range. The top of it, where you beat nearly everything he bets, raises.`]
-    : [`<b>The line is value.</b> A bet of ${pct(d.bet)} of the pot should beat four fifths of his range. Count down from the top of his side to a fifth: your hands level with that or above bet for value.`, `Above the line you have <b>${pct(above[0])}</b> of your range and he has ${pct(above[1])} of his. Bluffs come from the bottom of your side: about ${pct(ratio * above[0])} of your range${draws && draws.me.share > 0.01 ? ', draws first, then trash' : ', from the trash'}.`];
+    : [`<b>The line is value.</b> A bet of ${pct(d.bet)} of the pot should beat 80% of his range. Count down from the top of his side until you have passed 20% of it: your hands level with that or above bet for value.`, `Above the line you have <b>${pct(above[0])}</b> of your range and he has ${pct(above[1])} of his. Bluffs come from the bottom of your side: about ${pct(ratio * above[0])} of your range${draws && draws.me.share > 0.01 ? ', draws first, then trash' : ', from the trash'}.`];
   const legend = d.actions.filter((a) => a.freq >= 0.01).map((a) => `<span><i class="sw" style="background:var(${COL[a.kind]})"></i>${a.label} ${pct(a.freq)}</span>`).join('');
   app.className = 'train';
   app.innerHTML = `<div class="rule"></div><main class="one"><header><a class="logo">${MARK}</a><div class="board">${cards(d.board)}</div><span class="grow"></span></header>
@@ -656,9 +666,10 @@ function show() {
     <div class="left"><div class="past">${d.history.map(([st, acts]) => `<div><span class="street">${st}</span>${acts.map(([w, l]) => `<span><i>${w}</i> ${l}</span>`).join('')}</div>`).join('')}</div>
       <div class="where"><span class="who">Hero ${d.who}</span><span class="stands">${d.stands}</span><span class="grow"></span><span class="chips">Single-raised pot</span></div>
       <div class="tally"><span><b>${pct(d.equity[0])}</b>your equity</span><span><b>${pct(d.equity[1])}</b>his</span><span><b>${pct(above[0])}</b>of your range above the line</span></div>
-      <div><div class="heads"><span>You (${d.who})</span><span>Strongest</span><span>Him</span></div>
-        <div class="sl${actions ? '' : ' plain'}">${ladder}<div class="cut" style="top:${y}px"><span>${d.facing ? `price: beats ${pct(d.price)} of his bets` : 'value: beats 80% of his range'}</span></div></div>
-        <div class="heads" style="margin-top:4px"><span></span><span>Weakest</span><span></span></div></div>
+      <div><div class="heads"><span>You (${d.who})</span><span></span><span>Him</span></div>
+        ${adv('nuts', nuts)}<div class="sl${actions ? '' : ' plain'}">${ladder}<div class="cut" style="top:${y}px"><span>${d.facing ? `price: beats ${pct(d.price)} of his bets` : 'value: beats 80% of his range'}</span></div></div>
+        ${adv('range', tops)}</div>
+      <p class="hint" style="margin:0;font:400 13px/18px var(--sans);color:var(--ink-3);max-width:56ch">Top line, nut advantage: who has more of the best hands around (${nutName} or better). Bottom line, range advantage: who has more top pair or better. Each is a share of the range.</p>
       <div class="toggle"><span class="keyrow">${actions ? legend : `<span><i class="sw" style="background:var(--ink)"></i>your range</span>`}<span><i class="sw" style="background:color-mix(in srgb,var(--ink) 28%,var(--bg))"></i>his range</span></span><div class="seg"><button type="button" id="acts" aria-pressed="${actions}">${actions ? 'Hide actions' : 'Show actions'}</button></div></div>
       <p class="hint" style="margin:0;font:400 13px/18px var(--sans);color:var(--ink-3);max-width:56ch">Each bar is sorted along its white line, low on the left to high on the right. ${d.board.replace(/ /g, '').length / 2 < 5 ? 'From top pair up the line is how often the hand is ahead now; below that it is how much of its equity is still to come.' : 'On the river the line is the hand\'s equity against his range.'} Guess where the bets sit, then show the actions.</p>
       <div class="detail">${detail}</div>
