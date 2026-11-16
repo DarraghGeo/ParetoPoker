@@ -14,5 +14,6 @@ export function gradeOf(action) {
   const text = level === 'good' ? `Good: the solver ${does(mine)} ${pct(mine.freq)}% of the time`
     : level === 'ok' ? `Acceptable: the solver does this ${pct(mine.freq)}% of the time, and ${does(best)} ${pct(best.freq)}%`
       : `Error: the solver does this ${pct(mine.freq)}% of the time, and ${does(best)} ${pct(best.freq)}%`;
-  return { level, word: { good: 'Good', ok: 'Acceptable', error: 'Error' }[level], text, freq: mine.freq, best };
+  const detail = level === 'good' ? `Solver ${does(mine)} ${pct(mine.freq)}%` : level === 'ok' ? `Solver does this ${pct(mine.freq)}%, ${does(best)} ${pct(best.freq)}%` : `Solver ${does(best)} ${pct(best.freq)}%`;
+  return { level, word: { good: 'Good', ok: 'Acceptable', error: 'Error' }[level], text, detail, freq: mine.freq, best };
 }

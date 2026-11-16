@@ -3,6 +3,7 @@
 // then a time bank (out of time, he checks if he can and folds if not). A finished hand is counted once in the session.
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
+import { configOf, keepSeating } from './seating.js';
 
 const KEY = 'pareto-play';
 /** Seconds: hero's shot clock, each player's time bank, villain's shot clock, the bank a new hand gives back. */
@@ -82,7 +83,12 @@ export function deal(game) {
 }
 export function act(game, label) { stopClock(game); game.worker.postMessage({ type: 'act', label }); }
 
-/** Play on with other ranges: the table cleared, and the worker set up again. */
+/** Sit down with a seating: kept for next time, the table cleared, and the worker set up with its spots and bet sizes. */
+export function sitDown(game, seating) {
+  keepSeating(seating); game.seating = seating; game.seated = true; resetup(game, configOf(seating));
+}
+
+/** Play on with another setup: the table cleared, and the worker set up again. */
 export function resetup(game, config) {
   clear(game); game.study = null; game.config = config; game.status = null; game.progress = null;
   game.worker.postMessage({ type: 'setup', config: JSON.parse(JSON.stringify(config)) });

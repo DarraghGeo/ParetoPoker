@@ -265,7 +265,9 @@ export const TYPES = [
 ];
 /** Every pairing of the types: the one in position raises to 3bb, the one out of position calls. */
 export const LIVE = TYPES.flatMap(([oop, , calls]) => TYPES.map(([ip, raises]) => ({ action: 'Live', oop, ip, line: `${ip} raises to 3bb, ${oop} calls`, pot: 6.5, stack: 97, ranges: { oop: calls, ip: raises } })));
-const ALL = [...PRESETS, ...LIVE]; const NAMES = [...SEATS, ...TYPES.map(([name]) => name)];
+const ALL = [...PRESETS, ...LIVE];
+/** Every preset there is: the online ones and the live pairings. */
+export const EVERY = ALL; const NAMES = [...SEATS, ...TYPES.map(([name]) => name)];
 /** The preset for a choice of action and seats, if there is one. */
 export const presetFor = (sel) => ALL.find((p) => p.action === sel?.action && p.oop === sel?.oop && p.ip === sel?.ip) ?? null;
 /** The preset whose two ranges these are, if they are one's. */

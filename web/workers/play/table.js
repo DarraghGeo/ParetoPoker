@@ -19,7 +19,7 @@ export function start() {
   const hand = play.hands.find((h) => h.flop);
   if (!hand) { status(); pump(); return false; }
   play.hands.splice(play.hands.indexOf(hand), 1); play.hands.unshift(hand);
-  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: play.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: play.config.pot, waiting: null, done: null };
+  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: hand.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: hand.config.pot, waiting: null, done: null };
   proceed();
   return true;
 }

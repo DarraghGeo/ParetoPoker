@@ -49,8 +49,8 @@ export function post(p) {
   const node = p.done ? null : decisionOf(p.seg); const toAct = !!node && (node.seat === 'oop' ? 0 : 1) === p.me;
   const shown = p.done?.showdown ? p.hand.board : boardOf(p.seg);
   say({
-    type: 'state', id: p.hand.id, step: p.step, stack: play.config.stack, seat: p.hand.seat, hero: fs.formatCombo(p.hand.hero), villain: p.done?.showdown ? fs.formatCombo(p.hand.villain) : null,
-    board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(play.config.stack - x)), history: p.history,
+    type: 'state', id: p.hand.id, step: p.step, stack: p.hand.config.stack, spot: { oop: p.hand.config.oop, ip: p.hand.config.ip, pot: p.hand.config.pot, stack: p.hand.config.stack }, seat: p.hand.seat, hero: fs.formatCombo(p.hand.hero), villain: p.done?.showdown ? fs.formatCombo(p.hand.villain) : null,
+    board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(p.hand.config.stack - x)), history: p.history,
     toAct, waiting: p.waiting != null, actions: toAct ? choicesAt(node, p.me) : [], actor: node?.seat ?? null,
     ranges: node ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,
     result: p.done ? resultOf(p) : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them

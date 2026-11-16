@@ -5,7 +5,7 @@
   import { chips, spelled } from '../../lib/actions.js';
   import { act, deal } from '../../lib/play/flow.js';
   import { handText } from '../../lib/play/history.js';
-  let { game, onstudy } = $props();
+  let { game, config, onstudy } = $props();
   let sent = $state(null);
   const st = $derived(game.state);
   const solving = $derived(game.status?.solving ? `Solving the ${game.status.solving.replace(' ahead', '')}` : '');
@@ -13,11 +13,11 @@
   $effect(() => { st; sent = null; });
 </script>
 <section class="dock" aria-live="polite">
-  {#if game.error}<p class="note">This setup cannot be played: {game.error}</p><p class="note">Pick other ranges with the seats button above, or change the setup in <a href="#/study">Study</a>.</p>
+  {#if game.error}<p class="note">This setup cannot be played: {game.error}</p><p class="note">Change the table with the seats button above.</p>
   {:else if !st}<p class="note">Shuffling up. {solving || 'Solving the first flop'}: a flop takes up to a minute, then the next hands are solved while you play.</p><Track done={game.progress?.done ?? 0} />
   {:else if st.result}
     <div class="after"><button type="button" class="primary" id="next" onclick={() => deal(game)}>Next hand</button>
-      <span class="copy"><CopyButton text={() => handText(st, game.config)} label="Copy the hand history" /><span>Copy hand</span></span>
+      <span class="copy"><CopyButton text={() => handText(st, config)} label="Copy the hand history" /><span>Copy hand</span></span>
       {#if game.study}<button type="button" class="link" onclick={onstudy}>Study it</button>{/if}</div>
     {#if game.status && !game.status.ready}<Track done={game.progress?.done ?? 0} />{/if}
   {:else if st.toAct}
