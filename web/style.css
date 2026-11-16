@@ -440,6 +440,7 @@ body.paged{overflow:hidden;height:100dvh}
 .play main.table{max-width:520px;height:100dvh;min-height:0;gap:10px;padding-top:10px;padding-bottom:max(12px,env(safe-area-inset-bottom,0px))}
 .play header{flex:none}
 .play header .session{font:400 13px/18px var(--mono);color:var(--ink-2)}
+.play header .pool{font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .play header .session.down{color:var(--danger)}
 .arena{position:relative;flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;justify-items:center;align-items:center}
 .felt{position:absolute;inset:58px 0 62px;border:1px solid var(--line-strong);border-radius:140px;background:var(--surface);box-shadow:inset 0 0 0 6px var(--bg),inset 0 0 0 7px var(--line)}

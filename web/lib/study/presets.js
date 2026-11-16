@@ -284,14 +284,16 @@ export function choose(sel, part, value) {
 }
 
 const OTHER = { oop: 'ip', ip: 'oop' };
-/** The three rows of choices (action, out of position's seat, in position's seat) with `sel` on show, or none when the
+/** The rows of choices (action, out of position's seat, in position's seat; `pool` narrows them for Play) with `sel` on show, or none when the
  *  ranges are nobody's preset. A seat that does not sit with the other seat chosen is `far`: taking it moves that one too. */
-export function presetRows(sel) {
+export function presetRows(sel, pool = '') {
   const action = sel?.action ?? ACTIONS[0][0]; const same = ALL.filter((p) => p.action === action);
   const seats = (side) => NAMES.filter((seat) => same.some((p) => p[side] === seat)).map((x) => [x, x]);
   const far = (part, value) => part !== 'action' && !!sel && !same.some((p) => p[part] === value && p[OTHER[part]] === sel[OTHER[part]]);
   const row = (name, part, list) => ({ name, part, options: list.map(([value, label]) => ({ value, label, on: sel?.[part] === value, far: far(part, value) })) });
-  return [row('Action', 'action', ACTIONS), row('OOP', 'oop', seats('oop')), row('IP', 'ip', seats('ip'))];
+  // Play picks live or online first: live is the player types alone, online every preflop action but that one
+  if (pool === 'live') return [row('Caller', 'oop', seats('oop')), row('Raiser', 'ip', seats('ip'))];
+  return [row('Action', 'action', pool === 'online' ? ACTIONS.filter(([key]) => key !== 'Live') : ACTIONS), row('OOP', 'oop', seats('oop')), row('IP', 'ip', seats('ip'))];
 }
 
 /** What the choice on show is, in words. */

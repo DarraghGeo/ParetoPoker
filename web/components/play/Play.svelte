@@ -28,6 +28,9 @@
   const me = $derived(st?.seat === 'oop' ? 0 : 1);
   const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');
   const names = $derived(seatNames(game.config));
+  const sel = $derived(presetOf(String(game.config.oop).trim(), String(game.config.ip).trim()));
+  /** Who the table is against: live player types, or online ranges by position. */
+  const pool = $derived(sel?.action === 'Live' ? 'live' : 'online');
   const street = $derived(st?.history.at(-1));
   $effect(() => { if (st?.ranges) ranges = { seat: st.seat, hero: st.hero, ...st.ranges }; });
   const front = (who) => (street?.actions ?? []).filter((a) => a.who === who).reduce((t, a) => t + (a.add ?? 0), 0);
@@ -50,13 +53,15 @@
   <div class="rule"></div>
   <main class="table">
     <header>
-      <Logo /><span class="session" class:down={game.session.net < 0} title="Chips won since the flop, this session">{session}</span><span class="grow"></span>
+      <Logo /><span class="pool">{sel ? (pool === 'live' ? 'Live' : 'Online') : 'Own ranges'}</span><span class="session" class:down={game.session.net < 0} title="Chips won since the flop, this session">{session}</span><span class="grow"></span>
       <button bind:this={anchor} type="button" class="icon" aria-label="Who is at the table" title="Seats and player types" onclick={() => (picking = !picking)}><Icon name="seats" /></button>
       <button type="button" class="icon" aria-pressed={showRanges} aria-label="Both ranges" title="Both ranges" onclick={() => (showRanges = !showRanges)}><Icon name="ranges" /></button>
       {#if st}<CopyButton text={() => handText(st, game.config)} label="Copy the hand history" />{/if}
       {#if game.study}<a class="icon" id="study" {href} aria-label="Study this spot (or swipe left)" title="Study this spot" onclick={study}><Icon name="study" /></a>{/if}
     </header>
-    <Popover bind:open={picking} {anchor} align="right" class="seatpick" label="Ranges by preflop action and seat"><div class="presets"><Presets sel={presetOf(String(game.config.oop).trim(), String(game.config.ip).trim())} onchoose={seats} /></div></Popover>
+    <Popover bind:open={picking} {anchor} align="right" class="seatpick" label="Ranges by preflop action and seat"><div class="presets">
+      <div class="line"><span>Against</span><div class="seg" role="group" aria-label="Live or online players"><button type="button" aria-pressed={pool === 'live'} onclick={() => { if (pool !== 'live') seats('action', 'Live'); }}>Live</button><button type="button" aria-pressed={pool === 'online'} onclick={() => { if (pool !== 'online') seats('action', 'SRP'); }}>Online</button></div></div>
+      <Presets {sel} {pool} onchoose={seats} /></div></Popover>
     <div class="arena">
       <div class="felt" aria-hidden="true"></div>
       <Seat name="Villain" tag={names[st ? other(st.seat) : 'oop']} cards={st?.villain ?? null} behind={st ? st.behind[1 - me] : game.config.stack} clock={clockOf('villain')} bank={game.bank.villain} dealer={st ? st.seat === 'oop' : false} />
