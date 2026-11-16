@@ -27,9 +27,10 @@ export function foldMove(k) {
   return { id: 'move', text: foldText(k, call, nx), detail: callDetail(call, nx) };
 }
 
-function callFirst(x) {
+function callFirst(x, river) {
   if (x.equity >= 0.5) return `It calls: it is ${against(x.equity)} the hands that bet.`;
   if (x.equity >= x.price) return `It has the price to call: it is ${against(x.equity)} the hands that bet, and the price asks for less.`;
+  if (river) return 'Against the hands that bet it is just short of the price, so the call is close: the cards it holds, and what they take out of his range, decide it.';
   return 'On equity alone it is short of the price, and calls for what the cards to come can still bring.';
 }
 
@@ -45,6 +46,6 @@ function sizeWord(e) {
 /** A call: its equity against the hands that bet, and the street after. */
 export function callMove(k) {
   const { x } = k; const nx = later(k, k.top);
-  const text = `${callFirst(x)}${betting(x)}${nx ? ` ${nx.text}` : ''}${nx ? '' : sizeWord(x.equity)}`;
+  const text = `${callFirst(x, k.river)}${betting(x)}${nx ? ` ${nx.text}` : ''}${nx ? '' : sizeWord(x.equity)}`;
   return { id: 'move', text, detail: `${callDetail(x, nx)}${k.versus}` };
 }

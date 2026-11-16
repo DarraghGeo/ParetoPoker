@@ -29,9 +29,9 @@ export function describe(feature) {
   return feature.own >= 1 ? `${made} with ${draw}` : `${draw}, ${made}`;
 }
 
-/** Full houses down to two pair, named alike for a blocker and for a coach; null below two pair. */
+/** Straight flushes down to two pair, named alike for a blocker and for a coach; null below two pair. */
 function strongName(x) {
-  if (x.made >= 6) return 'full houses'; if (x.made === 5) return 'flushes'; if (x.made === 4) return 'straights';
+  if (x.made >= 8) return 'straight flushes'; if (x.made === 7) return 'quads'; if (x.made === 6) return 'full houses'; if (x.made === 5) return 'flushes'; if (x.made === 4) return 'straights';
   if (x.made === 3 && x.own > 0) return x.pocket ? 'sets' : 'trips';
   return x.own >= 2 || (x.made === 2 && x.own >= 1 && x.boardMade === 0) ? 'two pair' : null;
 }
