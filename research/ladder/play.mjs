@@ -139,19 +139,20 @@ function finalRule(F, board, mine, his, ctx, arm, rnd) {
   const act = new Int8Array(N); let mt = 0, ht = 0; for (const c of F.order) { mt += mine[c]; ht += his[c]; } if (!(mt > 0) || !(ht > 0)) return act;
   const street = board.length; const [e, he] = equities(F, board, mine, his, arm, rnd); const { ip, s, toCall, raised, canRaise } = ctx;
   if (toCall > 0) {
-    const price = s / (1 + 2 * s); const extra = street === 5 ? 0 : raised ? 0.05 : street === 4 ? (ip ? 0 : s > 0.5 ? 0.15 : 0.10) : ip ? 0.05 : 0.15; const t = price + extra + (s > 1 ? 0.05 : 0); const rz = s > 1 ? 0.8 : 0.75;
+    const price = s / (1 + 2 * s); const extra = street === 5 ? 0 : raised ? 0.05 : street === 4 ? (ip ? 0 : (arm.turnFaceOop ?? 0.10) + (s > 0.5 ? 0.05 : 0)) : ip ? 0.05 : (arm.flopFaceOop ?? 0.15); const t = price + extra + (s > 1 ? 0.05 : 0); const rz = s > 1 ? 0.8 : 0.75;
     for (const c of F.order) if (mine[c] > 0) act[c] = street === 5 && canRaise && !raised && e[c] >= rz ? 2 : e[c] >= t ? 1 : 0;
     return act; }
   let strong = 0, weak = 0, topMe = 0, topHim = 0; for (const c of F.order) { if (he[c] >= 0.8) strong += his[c]; if (he[c] < 0.3) weak += his[c]; if (F.lv[c] >= 4) { topMe += mine[c]; topHim += his[c]; } } strong /= ht; weak /= ht;
   const ahead = topMe / mt - topHim / ht > 0.04;
-  if (street === 3) { for (const c of F.order) if (mine[c] > 0) act[c] = ip || (ahead && (e[c] >= 0.7 || F.come[c] >= 8)) ? 2 : 0; return act; }
-  if (street === 4) { if (ip || ahead) for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= 0.5 || F.come[c] >= 8 ? 2 : 0; return act; }
+  if (street === 3) { for (const c of F.order) if (mine[c] > 0) act[c] = ip || (ahead && (arm.flopOop === 'all' || e[c] >= 0.7 || F.come[c] >= 8)) ? 2 : 0; return act; }
+  if (street === 4) { const mode = ip ? 'always' : arm.turnOop ?? 'ahead'; if (mode === 'gate') { if (strong < 0.2) for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= valueFrom(s) ? 2 : 0; return act; }
+    if (mode === 'always' || ahead) for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= 0.5 || F.come[c] >= 8 ? 2 : 0; return act; }
   if (!ip && strong >= 0.2) return act;
   const v = valueFrom(s); const bl = street === 5 ? Math.max(0, weak - (ip ? 0.2 : 0.25)) : 0;
   for (const c of F.order) if (mine[c] > 0) act[c] = e[c] >= v || e[c] < bl ? 2 : 0;
   return act;
 }
-const ARMS = process.env.ARMS === 'final' ? (process.env.DIAG === '2' ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} } : process.env.DIAG ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, estRiver: { rule: 'final', exactOn: [3, 4] }, finalNoisy: { rule: 'final', noise: 0.1 } } : { final: { rule: 'final' }, finalEq: { rule: 'final', eq: 'exact' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} }) : process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
+const ARMS = process.env.ARMS === 'final' ? (process.env.DIAG === '3' ? { v2: { rule: 'final', eq: 'exact' }, turnAlways: { rule: 'final', eq: 'exact', turnOop: 'always' }, turnGate: { rule: 'final', eq: 'exact', turnOop: 'gate' }, turnFace5: { rule: 'final', eq: 'exact', turnFaceOop: 0.05 }, flopAll: { rule: 'final', eq: 'exact', flopOop: 'all' }, flopFace10: { rule: 'final', eq: 'exact', flopFaceOop: 0.10 }, exact: {} } : process.env.DIAG === '2' ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} } : process.env.DIAG ? { finalEq: { rule: 'final', eq: 'exact' }, final: { rule: 'final' }, estRiver: { rule: 'final', exactOn: [3, 4] }, finalNoisy: { rule: 'final', noise: 0.1 } } : { final: { rule: 'final' }, finalEq: { rule: 'final', eq: 'exact' }, finalNoisy: { rule: 'final', noise: 0.1 }, exact: {} }) : process.env.ARMS === 'river' ? { exact: {}, vague: { word: true, vague: 0.2 }, rebuilt: { rebuilt: true }, rebuiltVague: { rebuilt: true, word: true, vague: 0.2, lines: 0.1 } } : { exact: {}, word: { word: true }, vague: { word: true, vague: 0.2 }, loose: { word: true, vague: 0.2, lines: 0.1 } }; const NAMES = Object.keys(ARMS);
 const [count = '8', seed = '71'] = process.argv.slice(2);
 let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) >>> 0; let t = a0; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
 const pool = PRESETS.filter((p) => p.action !== 'Limped'); const TREE = process.env.TREE === 'small' ? { betSizes: [[0.33], [0.33, 0.75], [0.75]], maxRaises: 1 } : { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
