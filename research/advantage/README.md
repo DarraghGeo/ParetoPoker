@@ -36,3 +36,19 @@ Names the right player: under 1.5 points 53%, 1.5 to 4 points 68%, 4 to 8 points
 - **Facing a bet, the action is the answer**: the player who bet has the advantage, and the line alone names the right player 91 to 100% of the time once the advantage is over 1.5 points. The count adds nothing.
 - **Before a bet**, the count plus any pair is what works: 84% at 4 to 8 points, 95% over 8.
 - **On the river, top pair is no longer the right bar.** Two pair or better matters as much (0.64 against 0.43 on the turn); with all three counts the river reaches 85% and 96%.
+
+## Nut advantage (`nuts.py`)
+
+Nut advantage here is who has the bigger share of hands with 90% equity or more. 5,081 decisions (not facing a bet) on 132 flops, ranges as the action leaves them. Names the right player when the gap is 1 to 3 points / 3 to 8 / over 8:
+
+| Who has more... | Flop | Turn | River |
+|---|---|---|---|
+| sets and better (sets, straights, flushes, full houses) | **81 / 86 / 92%** | 62 / 79 / 87% | 57 / 63 / 81% |
+| two pair or better | 77 / 87 / 92% | 59 / 76 / 84% | 54 / 60 / 81% |
+| overpair or better | 56 / 70 / 76% | 52 / 65 / 69% | 54 / 61 / 76% |
+| top pair or better | 66 / 70 / 76% | 55 / 54 / 63% | 46 / 53 / 67% |
+| the best kind of hand around (held by 3%+ of the two ranges), or better | 71 / 81 / 86% | **68 / 83 / 89%** | **64 / 70 / 87%** |
+
+- On the flop: **who has more sets and two pair**. Top pair, the count for range advantage, is the wrong one for the nuts (76% at best).
+- On the turn and river the bar moves with the board: find the best kind of hand that is actually held in some number (a flush on a flush board, a straight, a full house on a paired one) and count who has more of that or better.
+- It is a weaker rule than the one for range advantage: 86 to 92% when the gap is big, 62 to 81% when it is small.

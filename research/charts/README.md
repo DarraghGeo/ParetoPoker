@@ -133,3 +133,20 @@ Flop and turn betting decisions with real mixing; inside each kind of hand, the 
 - **Yes, and the kind of equity changes down the ladder.** From top pair up, the hands that bet are the ones ahead now (showdown, or equity against his best hands), and having a draw goes against betting. From middle pair down, the hands that bet are the ones with more still to come, and showdown goes against betting among the trash.
 - The switch is at the value line: above it, bet what is strongest now; below it, bet what can still change.
 - Sets and better need no line: they bet or trap as a group.
+
+## 8. What sorts the bars the equity lines leave unsorted? (`exp8.py`)
+
+Inside a bar, the correlation between how often a hand bets and things a player can see in the hand (turn; share of decisions with the same sign):
+
+| Bar | Best line | Others |
+|---|---|---|
+| Top pair | against his best hands +0.43 (82%) | ahead now +0.40; kicker +0.31 (77%) |
+| Middle pair | still to come +0.30 (78%), outs +0.30 | he folds to this hand +0.26 (76%) |
+| Low pair | **he folds to this hand +0.41 (85%)** | outs +0.33 |
+| Draws | still to come +0.48 (92%), outs +0.45 | he folds to this hand +0.40; a gutshot alone -0.39 |
+| Trash | **he folds to this hand +0.47 (89%)** | holds a card of the board's suit +0.18 (70%); high card -0.17 |
+
+On the flop the same: trash follows "he folds to this hand" at +0.41 (90%) and holding a card of the board's suit at +0.35 (85%); low pair +0.31 (77%).
+
+- The bottom bars are sorted by **blockers**: how much of his range folds once this hand's cards are taken out of it. Equity cannot sort them because they have almost none.
+- So the ladder has three lines: ahead now (top pair and up), still to come (middle pair and draws), and how often he folds to this hand (low pair and trash).
