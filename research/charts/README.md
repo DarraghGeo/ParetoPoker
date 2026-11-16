@@ -172,3 +172,12 @@ So the ladder shows which sizes are possible (slide the value line up: a bigger 
 - **The rise is a slope, not a step.** Mean frequency from the low end to the high end, mixed bars: top pair 28 to 60%, draws 46 to 85%, other pair 20 to 48%, trash 27 to 55%, two pair 35 to 64%. Sets and better are flat (54 to 53%). Only 43% of parts are all-or-nothing, and spreading a bar's frequency evenly along it rebuilds the five parts better (11 to 15 points out) than filling from the strong end (11 to 23).
 - **The shape of one bar is hard to call beforehand**: 31% from the level alone, 42% with how often the range bets, 54% knowing how often the bar itself bets (the commonest shape: 25%).
 - By level: draws are full in 42% of bars and bet 78% overall; other pair and trash are almost never full (1%) and empty in a quarter; top pair is the level most often rising (41%).
+
+## Experiment 11. How often the range bets, and how often its value bets (`exp11.py`)
+
+172 flop and 1,177 turn betting decisions (per hand), 9,114 river ones (by equity step, from the size study).
+
+- **Value does not always bet, and position decides how often.** Hands at 80% equity or more bet: turn, in position 67 to 85%, out of position 31 to 50%; river, checked to 91%, first to act about 50%. His share of strong hands is the other driver (-0.49 turn, -0.61 river). Stack depth matters little (turn +0.26, lower only under 1.5 pots behind; river +0.06). Range advantage does not move it (-0.03, -0.08).
+- **Range advantage sets how often the weak hands bet** (turn +0.43, river +0.74), and on the flop how often the whole range bets: 20% behind, 43% even, 76% ahead by 7 points or more.
+- **No formula from value gets the frequency.** Points out, flop | turn: always the average 20 | 19; value (80%+) with its one-street bluffs 29 | 21; one bet per street left 27 | 29; counting what weaker hands win from behind as value 23 | 20; fitted on range advantage and position 16 | 17; with his strong and weak shares 16 | 15. River: the average 19, value and its bluffs 20, fitted 13.
+- So frequency can be had to about 13 to 16 points from range advantage, position and his strong hands, and no closer from what the ladder shows.
