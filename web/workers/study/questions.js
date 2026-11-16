@@ -48,10 +48,19 @@ function told(data) {
   return { combo: data.combo, told: t && { name: t.name, strategy: t.strategy, line: t.line, detail: t.detail, reasons: t.reasons, silent: t.silent } };
 }
 
+/** Every hand of the range to act, by name: how much of his range it beats as the board stands, and how much of its equity
+ *  it wins from behind (nothing on the river, where the first is its equity). */
+function partsOf(st) {
+  const parts = st.drawParts(); const eq = st.equity(); const out = {}; const r3 = (x) => (Number.isNaN(x) ? 0 : Math.round(1e3 * x) / 1e3);
+  for (let c = 0; c < fs.COMBOS; c++) if (st.f.mine[c] > 1e-6) out[fs.formatCombo(c)] = parts ? [r3(parts.now[c]), r3(parts.draw[c])] : [r3(eq[c]), 0];
+  return out;
+}
+
 const asked = {
   subgame: (data) => { try { say({ type: 'subgame', job: data.job, ...subgameOf(data) }); } catch (error) { say({ type: 'error', job: data.job, message: firstLine(error) }); } },
   analysis: (data) => answer(data, 'looked', () => ({ combo: data.combo ?? null, look: analysis(studied(data), data.combo ?? null) }), { combo: data.combo, look: null }),
   whatif: (data) => answer(data, 'whatif', () => ({ said: whatIf(fs, { solution: held.solution, nodes: held.nodes, config: held.current?.config }, data.id, dealtOf(data)) }), { said: null }),
+  parts: (data) => answer(data, 'parts', () => ({ key: data.key, parts: partsOf(studied(data)) }), { key: data.key, parts: null }),
   range: (data) => answer(data, 'ranged', () => ({ said: explainRange(studied(data)) }), { said: null }),
   explain: (data) => answer(data, 'told', () => told(data), { combo: data.combo, told: null }),
   decision: (data) => say({ type: 'decision', job: data.job, id: data.id, decision: decisionAt(fs, held.solution, held.nodes, data.id, dealtOf(data)) }),

@@ -7,7 +7,7 @@ import { loadViews } from './prefs.js';
 
 class Shown {
   nodes = $state.raw(null); node = $state(0); decision = $state.raw(null); survey = $state.raw(null); spot = $state.raw(null);
-  hand = $state(null); cell = $state(null); dealt = $state.raw([]); pick = $state(null); scrub = $state(false);
+  hand = $state(null); cell = $state(null); parts = $state.raw(null); dealt = $state.raw([]); pick = $state(null); scrub = $state(false);
   versions = $state.raw([]); at = $state(0); slide = $state(''); status = $state(''); busy = $state(false); load = $state.raw(null);
 }
 

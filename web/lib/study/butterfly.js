@@ -44,3 +44,35 @@ export function butterflyRows(hands, boardText) {
   const most = Math.max(0.0001, ...shown.flatMap((r) => [r.mine, r.his]));
   return shown.reverse().map((r) => ({ ...r, share: r.mine, hisShare: r.his, mine: (100 * r.mine) / most, his: (100 * r.his) / most }));
 }
+
+/** The line a row shows through its bar, by row (weakest first): from top pair up, how much of his range the hand beats now;
+ *  for middle pair and draws, how much of its equity is still to come; for low pair and nothing, how often he folds to it. */
+export const LINES = ['folds', 'come', 'folds', 'come', 'now', 'now', 'now', 'now'];
+export const LINE_NAMES = { now: 'ahead of his range now', come: 'equity still to come', folds: 'how often he folds to this hand' };
+
+/** How often his range folds to action `a`, seen from each hand to act: his hands that share a card with it are left out. */
+function foldsTo(hero, villain, a) {
+  const card = new Map(); let all = 0, folds = 0;
+  for (const v of villain) { const f = v.weight * (v.answers?.[a]?.fold ?? 0); all += v.weight; folds += f; for (const c of v.cards) { const k = card.get(c) ?? [0, 0]; k[0] += v.weight; k[1] += f; card.set(c, k); } }
+  const own = new Map(villain.map((v) => [v.name, v]));
+  return new Map(hero.map((h) => {
+    const cards = h.row.hand.cards; let w = all, f = folds;
+    for (const c of cards) { const k = card.get(c); if (k) { w -= k[0]; f -= k[1]; } }
+    for (const v of villain) if (v.cards.includes(cards[0]) && v.cards.includes(cards[1])) { w += v.weight; f += v.weight * (v.answers?.[a]?.fold ?? 0); }   // taken off twice
+    return [h.name, w > 0 ? f / w : 0];
+  }));
+}
+
+/** The rows with their lines: each row's hands sorted along its own measure (lowest outermost), and the line as points
+ *  across the bar (x by weight, y from the row's lowest to its highest); a row whose measure barely moves gets a flat one. */
+export function lined(rows, parts, decision) {
+  const bet = decision.actions.findIndex((x) => ['bet', 'raise', 'allin'].includes(x.kind)); const river = decision.street === 'river';
+  const folds = bet >= 0 ? foldsTo(rows.flatMap((r) => r.hero), decision.villain, bet) : null;
+  const measure = (kind, h) => { const p = parts[h.name] ?? [h.e, 0]; return kind === 'folds' && folds ? folds.get(h.name) : kind === 'come' && !river ? p[1] : p[0]; };
+  return rows.map((r) => {
+    const kind = LINES[r.lv]; const hero = r.hero.map((h) => ({ h, v: measure(kind, h) })).sort((a, b) => a.v - b.v || a.h.e - b.h.e);
+    const total = hero.reduce((t, x) => t + x.h.w, 0) || 1; const lo = hero[0]?.v ?? 0; const hi = hero.at(-1)?.v ?? 0; const flat = hi - lo < 0.015; let seen = 0;
+    const points = hero.map((x) => { const at = (100 * (seen + x.h.w / 2)) / total; seen += x.h.w; return `${at.toFixed(1)},${(flat ? 50 : 92 - (84 * (x.v - lo)) / (hi - lo)).toFixed(1)}`; });
+    return { ...r, hero: hero.map((x) => x.h), line: kind, points: points.length > 1 ? points.join(' ') : points.length ? '0,50 100,50' : '', from: lo, to: hi };
+  });
+}

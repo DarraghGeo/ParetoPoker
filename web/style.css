@@ -407,6 +407,9 @@ header .board{min-width:0;flex:0 1 auto}
 .fly .code{font:500 12px/14px var(--mono);text-align:center;color:var(--ink-2);letter-spacing:.02em}
 .fly .strip button[aria-pressed="true"]{outline:2px solid var(--ink);outline-offset:0}
 .fly .strip button[aria-pressed="true"]::before,.fly .strip button[aria-pressed="true"]::after{content:none}
+.fly .strip{position:relative}
+.fly .eq{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:3}
+.fly .eq polyline{fill:none;stroke:var(--ink);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .stripbox:has(.fly){height:auto}
 #strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 /* under the cards to pick from: the street dealt at random */

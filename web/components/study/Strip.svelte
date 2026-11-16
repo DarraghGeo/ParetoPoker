@@ -5,11 +5,21 @@
   import Ladder from '../common/Ladder.svelte';
   import { bands } from '../../lib/actions.js';
   import { pct } from '../../lib/cards.js';
-  import { butterflyRows } from '../../lib/study/butterfly.js';
+  import { LINE_NAMES, butterflyRows, lined } from '../../lib/study/butterfly.js';
   import { splitRows } from '../../lib/study/charts.js';
   import { pickHand, setHand } from '../../lib/study/solving.js';
   let { game, strata, hands } = $props();
   const form = $derived(game.views.chart === 'butterfly' ? 'butterfly' : game.views.chart === 'ladder' ? 'ladder' : game.views.chart === 'split' && game.decision?.categories ? 'split' : 'single');
+  // the butterfly's equity lines need each hand's equity in its parts: asked of the worker once for the decision on screen
+  const partsKey = $derived(game.decision ? `${game.job}|${game.node}|${game.dealt.join(',')}` : '');
+  const wantLines = $derived(form === 'butterfly' && !!game.views.lines);
+  $effect(() => { if (wantLines && hands && partsKey && game.parts?.key !== partsKey && asking !== partsKey) { asking = partsKey; game.worker.postMessage({ type: 'parts', job: game.job, id: game.node, dealt: [...game.dealt], key: partsKey }); } });
+  let asking = '';
+  const fly = $derived.by(() => {
+    if (form !== 'butterfly' || !hands) return [];
+    const rows = butterflyRows(hands, game.decision.boardText);
+    return wantLines && game.parts?.key === partsKey && game.parts.by ? lined(rows, game.parts.by, game.decision) : rows;
+  });
   const scrub = { on: false, moved: false, x: 0 };
   const columnAt = (x, y) => document.elementFromPoint(x, y)?.closest?.('#strip [data-hand]');
 
@@ -44,8 +54,8 @@
 </script>
 {#snippet column(h)}<button type="button" data-hand={h.name} aria-pressed={h.name === game.hand} aria-label={h.name}><b style="height:100%;background:{bands(h.row.hand.strategy, strata)}"></b></button>{/snippet}
 {#if !hands}<div class="strip" {...events}></div>
-{:else if form === 'butterfly'}<div class="fly" {...events}>{#each butterflyRows(hands, game.decision.boardText) as r (r.lv)}
-  <div class="frow"><div class="wing me"><div class="strip" style="width:{r.mine.toFixed(2)}%">{#each r.hero as h}<button type="button" data-hand={h.name} aria-pressed={h.name === game.hand} aria-label={h.name} style="flex:{h.w} 1 0"><b style="height:100%;background:{bands(h.row.hand.strategy, strata)}"></b></button>{/each}</div></div><span class="code" title="{r.name}: {pct(r.share)}% of the range to act, {pct(r.hisShare)}% of the other">{r.code}</span><div class="wing him"><i style="width:{r.his.toFixed(2)}%"></i></div></div>
+{:else if form === 'butterfly'}<div class="fly" {...events}>{#each fly as r (r.lv)}
+  <div class="frow"><div class="wing me"><div class="strip" style="width:{r.mine.toFixed(2)}%">{#each r.hero as h}<button type="button" data-hand={h.name} aria-pressed={h.name === game.hand} aria-label={h.name} style="flex:{h.w} 1 0"><b style="height:100%;background:{bands(h.row.hand.strategy, strata)}"></b></button>{/each}{#if r.points}<svg class="eq" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points={r.points} /></svg>{/if}</div></div><span class="code" title="{r.name}: {pct(r.share)}% of the range to act, {pct(r.hisShare)}% of the other{r.line ? `. Line: ${LINE_NAMES[r.line]}, ${pct(r.from)} to ${pct(r.to)}%` : ''}">{r.code}</span><div class="wing him"><i style="width:{r.his.toFixed(2)}%"></i></div></div>
 {/each}</div>
 {:else if form === 'ladder'}<Ladder hero={hands.hero} villain={hands.villain} seat={game.decision.seat} cell={column} {...events} />
 {:else if form === 'split'}<div class="rows" {...events}>{#each splitRows(hands.hero, game.decision.categories) as r (r.category)}

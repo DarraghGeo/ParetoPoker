@@ -8,13 +8,15 @@
   import { COLORS, seatName } from '../../lib/actions.js';
   import { villainShares } from '../../lib/study/charts.js';
   import { leadsTo, trail } from '../../lib/study/line.js';
-  import { nextChart } from '../../lib/study/prefs.js';
+  import { nextView } from '../../lib/study/prefs.js';
   import { go } from '../../lib/study/solving.js';
   import { remember } from '../../lib/study/versions.svelte.js';
   let { game, strata } = $props();
   const here = $derived(game.nodes && game.decision ? game.nodes[game.node] : null);
   const path = $derived(here ? trail(game.nodes, game.node, game.dealt) : []);
-  const CHART = { single: ['split', 'Action chart, split by made hand'], split: ['ladder', 'Action chart, ladder: both ranges on one scale'], ladder: ['butterfly', 'Action chart, butterfly: both ranges by made hand'], butterfly: ['bar', 'Action chart, one bar'] };
+  const CHART = { single: ['split', 'Action chart, split by made hand'], split: ['ladder', 'Action chart, ladder: both ranges on one scale'], ladder: ['butterfly', 'Action chart, butterfly: both ranges by made hand'], butterfly: ['lines', 'Butterfly with equity lines'], lined: ['bar', 'Action chart, one bar'] };
+  const next = $derived(CHART[game.views.chart === 'butterfly' && game.views.lines ? 'lined' : game.views.chart]);
+  function turnChart() { Object.assign(game.views, nextView(game.views)); remember(game); }
   let theirs = $state(false); let anchor = $state();
   function take(edge) { const to = leadsTo(game.nodes, edge); if (to?.go != null) go(game, to.go); else if (to) game.pick = to.deal; }
   function turn(view, value) { game.views[view] = value; remember(game); }
@@ -24,7 +26,7 @@
   <div class="acts">{#each here.edges as e, k}<button type="button" class="act" disabled={!leadsTo(game.nodes, e)} onclick={() => take(e)}><i class="sw" style="background:var({COLORS[strata[k]]})"></i>{e.label}</button>{/each}</div>
   <div class="tools">
     <button bind:this={anchor} type="button" class="icon" aria-label={here.seat === 'oop' ? "In position's range" : "Out of position's range"} onclick={() => (theirs = !theirs)}><Icon name="villain" /></button>
-    <button type="button" class="icon" aria-label={CHART[game.views.chart][1]} onclick={() => turn('chart', nextChart(game.views.chart))}><Icon name={CHART[game.views.chart][0]} /></button>
+    <button type="button" class="icon" aria-label={next[1]} title={next[1]} onclick={turnChart}><Icon name={next[0]} /></button>
     <button type="button" class="icon" aria-label={game.views.view === 'grid' ? 'Equity distribution' : 'Grid'} onclick={() => turn('view', game.views.view === 'grid' ? 'curve' : 'grid')}><Icon name={game.views.view === 'grid' ? 'curve' : 'grid'} /></button>
   </div>
 {/if}</nav>

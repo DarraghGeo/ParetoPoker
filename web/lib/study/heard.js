@@ -42,7 +42,7 @@ function solved(game, data) {
   if (game.onward) solveOnward(game);
 }
 
-const HANDLERS = { progress, error: failed, subgame, solved, decision: (game, data) => show(game, data.decision), ...ANSWERS };
+const HANDLERS = { progress, error: failed, subgame, solved, decision: (game, data) => show(game, data.decision), parts: (game, data) => { game.parts = { key: data.key, by: data.parts }; }, ...ANSWERS };
 
 export function heard(game, data) {
   if (data.type === 'preview') { onPreview(game, data); return; }
