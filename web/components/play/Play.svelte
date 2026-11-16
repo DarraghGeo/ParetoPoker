@@ -10,6 +10,7 @@
   import RangeChart from '../common/RangeChart.svelte';
   import StudyPane from '../common/StudyPane.svelte';
   import Grade from './Grade.svelte';
+  import Mistakes from './Mistakes.svelte';
   import Moves from './Moves.svelte';
   import Seat from './Seat.svelte';
   import Sitting from './Sitting.svelte';
@@ -25,7 +26,7 @@
 
   const GRADE_MS = 4500;
   const game = createPlayGame();
-  let pane = $state(); let studying = $state(false); let showRanges = $state(false); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null;
+  let pane = $state(); let studying = $state(false); let showRanges = $state(false); let ranges = $state.raw(null); let sitting = $state(true); let graded = $state.raw(null); let gradeTimer = null; let reviewing = $state(false);
   game.onExport = (data) => pane?.handedOver(data);
   // leaving Play stops its solving
   onDestroy(() => { clearTimeout(gradeTimer); clearTimeout(game.timer); clearInterval(game.tick); game.worker.terminate(); for (const h of game.helpers) h.worker.terminate(); });
@@ -45,10 +46,10 @@
   let seen = '';
   $effect(() => {
     const key = st ? `${st.id}|${mine.length}` : ''; if (key === seen) return; seen = key;
-    const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key } : null;
+    const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key, study: game.study, href } : null;   // the decision just made, for Study
     if (g) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);
   });
-  $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
+  $effect(() => { game.paused = studying; if (studying) studyOpened(game); else studyClosed(game); });
   // a newer build of the app may be taken up while nothing has been dealt
   $effect(() => { route.idle = !game.seated; return () => { route.idle = true; }; });
   const clockOf = (who) => (game.clock.who === who && !st?.result ? game.clock : null);
@@ -60,6 +61,8 @@
   const session = $derived(game.session.hands ? `${ev(game.session.lost)} · ${game.session.hands} ${game.session.hands === 1 ? 'hand' : 'hands'}` : '');
   /** Study for the decision on screen, its street handed over as solved here. */
   function study(ev) { ev?.preventDefault(); if (!game.study) return; pane.open(href, game.study.share ? { solve: game.study.share, line: game.study.streetLine } : null); }
+  /** Study for the move just graded: its street handed over as solved here. */
+  function studyGraded() { const g = graded; clearTimeout(gradeTimer); graded = null; if (g?.study) pane.open(g.href, g.study.share ? { solve: g.study.share, line: g.study.streetLine } : null); }
   function deal(seating) { ranges = null; graded = null; sitting = false; sitDown(game, seating); }
 </script>
 <StudyPane bind:this={pane} bind:studying class="play" back="Play" onSwipeLeft={study} requestExport={(solve, ask) => game.worker.postMessage({ type: 'export', solve, ask })}>
@@ -67,14 +70,16 @@
   <main class="table">
     <header>
       <Logo />{#if game.seated}<span class="pool">{seatingLabel(game.seating)}</span><span class="session" class:down={game.session.lost >= 0.005} title="What your decisions gave up against the solver's play, in chips, this session. Chips won since the flop: {signed(game.session.net)}">{session}</span>{/if}<span class="grow"></span>
+      {#if game.mistakes.length || reviewing}<button type="button" class="icon" aria-pressed={reviewing} aria-label="Hands with a mistake" title="Hands with a mistake" onclick={() => (reviewing = !reviewing)}><Icon name="flag" /></button>{/if}
       {#if game.seated}
-        <button type="button" class="icon" aria-pressed={sitting} aria-label="Set up the table" title="Set up the table" onclick={() => (sitting = !sitting)}><Icon name="seats" /></button>
-        {#if !sitting}<button type="button" class="icon" aria-pressed={showRanges} aria-label="Both ranges" title="Both ranges" onclick={() => (showRanges = !showRanges)}><Icon name="ranges" /></button>
+        <button type="button" class="icon" aria-pressed={sitting} aria-label="Set up the table" title="Set up the table" onclick={() => { sitting = !sitting; reviewing = false; }}><Icon name="seats" /></button>
+        {#if !sitting && !reviewing}<button type="button" class="icon" aria-pressed={showRanges} aria-label="Both ranges" title="Both ranges" onclick={() => (showRanges = !showRanges)}><Icon name="ranges" /></button>
           {#if st}<CopyButton text={() => handText(st, config)} label="Copy the hand history" />{/if}
           {#if game.study}<a class="icon" id="study" {href} aria-label="Study this spot (or swipe left)" title="Study this spot" onclick={study}><Icon name="study" /></a>{/if}{/if}
       {/if}
     </header>
-    {#if sitting}<Sitting seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
+    {#if reviewing}<Mistakes hands={game.mistakes} onstudy={(href) => pane.open(href)} onclose={() => (reviewing = false)} />
+    {:else if sitting}<Sitting seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
     {:else}
       <div class="arena">
         <div class="felt" aria-hidden="true"></div>
@@ -85,12 +90,12 @@
           <div class="p-board"><Cards cards={st?.board ?? ''} slots={5} /></div>
           <div class="outcome" class:down={st?.result?.net < 0}>{#if st?.result}<b>{signed(st.result.net)}</b> {st.result.how}{#if st.result.lost != null}{' · '}{ev(st.result.lost)}{/if}{#if st.result.mine}<span>{st.result.mine} against {st.result.his}</span>{/if}{:else if game.timedOut}<span>Out of time</span>{/if}</div>
           <div class="wager" class:on={!!lastOf('hero')}>{#if lastOf('hero')}<b>{lastOf('hero')}</b>{#if front('hero') > 0}<span>{chips(front('hero'))}</span>{/if}{/if}</div>
-          <div class="grades">{#if graded}{#key graded.key}<Grade grade={graded} onclose={() => (graded = null)} />{/key}{/if}</div>
+          <div class="grades">{#if graded}{#key graded.key}<Grade grade={graded} onopen={studyGraded} />{/key}{/if}</div>
         </div>
         <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero />
       </div>
       {#if showRanges && ranges}<section class="minis ranges" aria-label="Both ranges at this decision"><RangeChart title="You {names[ranges.seat]}" hands={listOf(ranges.seat)} marked={cellOf(ranges.hero)} /><RangeChart title="Villain {names[other(ranges.seat)]}" hands={listOf(other(ranges.seat))} villain /></section>{/if}
-      <Moves {game} {config} onstudy={study} />
+      <Moves {game} {config} />
     {/if}
   </main>
 </StudyPane>

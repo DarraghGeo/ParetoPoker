@@ -3,9 +3,9 @@
 // their names: this build's are fetched once, when the worker is installed, and answered from the cache from then on
 // (the ones of builds before are thrown away). The page itself and everything else go to the network first (skipping
 // the browser's cache), for two seconds at most before the copy kept is shown instead, and are kept for offline.
-// `a2595890eb` changes with every build, so a new build is a new worker, and it takes over at once.
-const CACHE = 'pareto-a2595890eb';
-const ASSETS = ["assets/Play-Bo7ryAfA.js","assets/StudyPage-knuduRp-.js","assets/bitval-B2XgIrqC.js","assets/evaluator-BzyH967p.js","assets/evaluator-DzLyv7ye.js","assets/flop-DvmbyWLS.js","assets/game.svelte-DHLFP_pH.js","assets/index-cyIlBoBs.js","assets/index-ehFHuAPi.css","assets/play-DVbwPdsg.js","assets/rolldown-runtime-BWaJ3C7D.js","assets/study-CReMYlyh.js"];
+// `53131f95d5` changes with every build, so a new build is a new worker, and it takes over at once.
+const CACHE = 'pareto-53131f95d5';
+const ASSETS = ["assets/Play-DtSocJ2X.js","assets/StudyPage-BRcmii9d.js","assets/bitval-B2XgIrqC.js","assets/evaluator-Cqsuz4O7.js","assets/evaluator-DzLyv7ye.js","assets/flop-DvmbyWLS.js","assets/game.svelte-C7UDuEIa.js","assets/index-B4cT8p-s.css","assets/index-B9tdq249.js","assets/play-DVbwPdsg.js","assets/rolldown-runtime-BWaJ3C7D.js","assets/study-CReMYlyh.js"];
 const KEPT = [CACHE, 'pareto-fonts', 'pareto-assets'];
 /** How long the page waits on the network before the copy kept is shown, in milliseconds. */
 const PATIENCE = 2000;

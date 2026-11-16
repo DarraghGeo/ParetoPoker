@@ -434,7 +434,21 @@ body.paged{overflow:hidden;height:100dvh}
 .grade{pointer-events:auto;display:flex;align-items:center;gap:10px;max-width:calc(100% - 32px);padding:8px 14px 8px 12px;border:1px solid var(--line-strong);border-radius:999px;background:var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.12);text-align:left;color:var(--ink)}
 .grade i{flex:none;width:10px;height:10px;border-radius:50%;background:var(--ink-3)}
 .grade span{font:400 12px/16px var(--mono);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.grade b{flex:none;font:400 16px/16px var(--sans);color:var(--ink-3)}
 .grade.g-good i{background:var(--ok)}
+.mistakes ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.mistakes li{display:flex;flex-direction:column;gap:6px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.mistakes .top{display:flex;align-items:center;gap:10px;min-width:0}
+.mistakes .top .grow{flex:1}
+.mistakes .top span{font:500 15px/18px var(--mono)}
+.mistakes .brd{color:var(--ink-2)}
+.mistakes .when{font:400 11px/14px var(--mono);color:var(--ink-3)}
+.mistakes .miss{display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border:1px solid var(--line-strong);border-radius:5px;background:var(--bg);text-align:left;color:var(--ink)}
+.mistakes .miss i{flex:none;width:8px;height:8px;border-radius:50%;background:var(--danger)}
+.mistakes .miss span{flex:1;min-width:0;font:400 12px/17px var(--mono);color:var(--ink-2)}
+.mistakes .miss b{font-weight:500;color:var(--ink)}
+.mistakes .miss .go{flex:none;font:400 16px/16px var(--sans);color:var(--ink-3)}
+.mistakes .said{margin:0;font:400 13px/19px var(--sans);color:var(--ink-3)}
 .grade.g-ok i{background:#C99A1E}
 .grade.g-error i{background:var(--danger)}
 /* Sitting down: the table's set-up, before anything is solved */

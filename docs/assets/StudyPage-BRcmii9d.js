@@ -1,0 +1,1 @@
+import{Q as e,Z as t,c as n,i as r,r as i}from"./index-B9tdq249.js";import{a,r as o,t as s}from"./game.svelte-C7UDuEIa.js";function c(c,l){e(l,!1);let u=s();o(u,i.query),r(()=>u.worker.terminate()),n(),a(c,{get game(){return u}}),t()}export{c as default};

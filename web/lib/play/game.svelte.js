@@ -1,6 +1,7 @@
 // Play's game: the hand on the table as the worker describes it (workers/play.js), the steps still to be shown, the
 // clock running and both time banks, what is being solved and how far along, and the session's chips won from the flop
 // on. flow.js takes the worker's messages and paces them.
+import { loadMistakes } from './mistakes.js';
 import { configOf, loadSeating } from './seating.js';
 import { BANK, broke, heard, loadSession, setup, startHelpers } from './flow.js';
 
@@ -17,6 +18,8 @@ class PlayState {
   seating = $state.raw(loadSeating());
   config = $state.raw(configOf(loadSeating()));
   seated = $state(false);
+  mistakes = $state.raw(loadMistakes());
+  paused = false;
   queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {};
   helpers = []; needs = []; holding = false; epoch = 0; counted = ''; shownAt = 0;
 }

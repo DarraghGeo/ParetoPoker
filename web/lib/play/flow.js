@@ -4,6 +4,7 @@
 // then a time bank (out of time, he checks if he can and folds if not). A finished hand is counted once in the session.
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
+import { keepMistakes } from './mistakes.js';
 import { PHONE, configOf, keepSeating } from './seating.js';
 
 const KEY = 'pareto-play';
@@ -22,8 +23,10 @@ function stopClock(game) { clearInterval(game.tick); game.tick = null; game.cloc
 /** Run a clock for `who`: the shot clock, then the time bank; `onOut` when both are gone. */
 function runClock(game, who, total, onOut) {
   stopClock(game); const from = performance.now(); const bank = game.bank[who]; game.clock = { who, left: total, total, bank: false };
+  let from0 = from;
   game.tick = setInterval(() => {
-    const used = (performance.now() - from) / 1000;
+    if (game.paused) { from0 += 250; return; }   // Study is open: nobody's time runs
+    const used = (performance.now() - from0) / 1000;
     if (used < total) { game.clock = { who, left: total - used, total, bank: false }; return; }
     const left = Math.max(0, bank - (used - total)); game.bank = { ...game.bank, [who]: left };
     if (left > 0) { game.clock = { who, left, total: BANK, bank: true }; return; }
@@ -41,7 +44,7 @@ function timedOut(game) {
 function counted(game, data) {
   const hand = `${data.epoch}|${data.id}`; if (!data.result || game.counted === hand) return;
   game.counted = hand; Object.assign(game.session, { net: game.session.net + data.result.net, lost: game.session.lost + (data.result.lost ?? 0), hands: game.session.hands + 1 });
-  keep(KEY, game.session);
+  keep(KEY, game.session); keepMistakes(game, data);
 }
 
 /** Put a step on the table, and start the clock it calls for. */
