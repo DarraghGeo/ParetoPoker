@@ -1,0 +1,7010 @@
+{
+ "flop, out of position, first to act": {
+  "table": {
+   "names": [
+    "equity"
+   ],
+   "hand": [
+    "equity"
+   ],
+   "spot": [],
+   "labels": {
+    "equity": [
+     "under 20%",
+     "20-35%",
+     "35-50%",
+     "50-65%",
+     "65-80%",
+     "80%+"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "under 20%"
+     ],
+     "share": 0.06596897368662688,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.6902725167660038,
+     "solver": 0.17546391599290537,
+     "hands": 532
+    },
+    {
+     "key": [
+      "20-35%"
+     ],
+     "share": 0.21675236291813302,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.9786298522953679,
+     "solver": 0.2219529619494473,
+     "hands": 1752
+    },
+    {
+     "key": [
+      "35-50%"
+     ],
+     "share": 0.2952625626816485,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.645991421006096,
+     "solver": 0.23267456859503952,
+     "hands": 1795
+    },
+    {
+     "key": [
+      "50-65%"
+     ],
+     "share": 0.17516437890592026,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.4532306799839439,
+     "solver": 0.2893407866347373,
+     "hands": 1130
+    },
+    {
+     "key": [
+      "65-80%"
+     ],
+     "share": 0.15525284187941746,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.29255141316885663,
+     "solver": 0.4175136564057023,
+     "hands": 992
+    },
+    {
+     "key": [
+      "80%+"
+     ],
+     "share": 0.09159887992825384,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.3297197681901227,
+     "solver": 0.501237534730807,
+     "hands": 552
+    }
+   ],
+   "score": {
+    "mean": 0.11425485989332858,
+    "p50": 0.020156349324016342,
+    "p90": 0.25451653649819966,
+    "p95": 0.33483870090969325,
+    "over1": 0.024390243902439025,
+    "opposite": 0.08690653516479381,
+    "cells": 6
+   },
+   "n": 41
+  },
+  "examples": [
+   {
+    "spot": "SRP-UTG-BU 5hAhJd",
+    "pot_type": "SRP",
+    "pre": "SRP-UTG-BU",
+    "board": "5h Ah Jd",
+    "line": "first",
+    "pot": 6.5,
+    "toCall": 0,
+    "behind": 97.5,
+    "spr": 15.0,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.13835434713712233,
+    "my_eq": 0.536861546587788,
+    "reads": {
+     "stack to pot": "over 6",
+     "top pair or better": "I have more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "45-55%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": 0.058502186607215345,
+     "polar": 0.2683287555461652,
+     "his_weak": 0.29851799576570215
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.03866469469680964,
+      "his": 0.04869442484121382,
+      "solver": 0.2643704920906757
+     },
+     {
+      "row": "two pair",
+      "mine": 0.06338474540460597,
+      "his": 0.05598682662902846,
+      "solver": 0.24936666836341223
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.3010775406718783,
+      "his": 0.23994354269583623,
+      "solver": 0.10957543768387967
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.1779526727234312,
+      "his": 0.11079745942131264,
+      "solver": 0.04501917437301704
+     },
+     {
+      "row": "low pair",
+      "mine": 0.16115571519121064,
+      "his": 0.37896965419901196,
+      "solver": 0.10789537903119677
+     },
+     {
+      "row": "draw",
+      "mine": 0.039562645256708225,
+      "his": 0.037167725241119734,
+      "solver": 0.2907315075509516
+     },
+     {
+      "row": "air",
+      "mine": 0.21820198605535604,
+      "his": 0.12844036697247704,
+      "solver": 0.19447325285964662
+     }
+    ],
+    "hands": [
+     {
+      "hand": "JcJh",
+      "row": "trips or better",
+      "equity": 0.9466999769210815,
+      "draw": "no draw",
+      "margin": 0.9466999769210815,
+      "key": [
+       "80%+"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.17520000040531158,
+      "cost_act": 0.4506906494498253,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AdKh",
+      "row": "top pair",
+      "equity": 0.7922000288963318,
+      "draw": "no draw",
+      "margin": 0.7922000288963318,
+      "key": [
+       "65-80%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.3853999972343445,
+      "cost_act": 0.2642890438437462,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Ad2d",
+      "row": "top pair",
+      "equity": 0.6496000289916992,
+      "draw": "no draw",
+      "margin": 0.6496000289916992,
+      "key": [
+       "50-65%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.004000000189989805,
+      "cost_act": 0.0,
+      "cost_no": 0.10999999940395355
+     },
+     {
+      "hand": "ThTs",
+      "row": "low pair",
+      "equity": 0.4975999891757965,
+      "draw": "no draw",
+      "margin": 0.4975999891757965,
+      "key": [
+       "35-50%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0010000000474974513,
+      "cost_act": 0.3599999938160181,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "8d8h",
+      "row": "low pair",
+      "equity": 0.3472000062465668,
+      "draw": "no draw",
+      "margin": 0.3472000062465668,
+      "key": [
+       "20-35%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.08760000020265579,
+      "cost_act": 0.08337899344041944,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Qd9d",
+      "row": "air",
+      "equity": 0.188400000333786,
+      "draw": "no draw",
+      "margin": 0.188400000333786,
+      "key": [
+       "under 20%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.07940000295639038,
+      "cost_act": 0.1500000013038516,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.020156349324016342,
+    "who": "I did"
+   },
+   {
+    "spot": "3BP-HJ-CO 8dAhQd",
+    "pot_type": "3BP",
+    "pre": "3BP-HJ-CO",
+    "board": "8d Ah Qd",
+    "line": "first",
+    "pot": 16.5,
+    "toCall": 0,
+    "behind": 92.5,
+    "spr": 5.606060606060606,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.04458642250101174,
+    "my_eq": 0.3513627276406313,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "polar (65%+ at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "he did"
+    },
+    "values": {
+     "tp_lead": -0.24404301472352347,
+     "polar": 0.660461351679482,
+     "his_weak": 0.03839657696205381
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.06738162687171184,
+      "his": 0.08411214953271028,
+      "solver": 0.13824714486801296
+     },
+     {
+      "row": "two pair",
+      "mine": 0.04896802913800081,
+      "his": 0.10404233757459745,
+      "solver": 0.056029751817291536
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.1402266288951841,
+      "his": 0.31246481252111247,
+      "solver": 0.031160461570611645
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.05402670983407527,
+      "his": 0.23139286116428331,
+      "solver": 0.049043445079068104
+     },
+     {
+      "row": "low pair",
+      "mine": 0.4838122217725618,
+      "his": 0.18106069136358516,
+      "solver": 0.019413634271689396
+     },
+     {
+      "row": "draw",
+      "mine": 0.1048158640226629,
+      "his": 0.025447584731449157,
+      "solver": 0.10172799248853576
+     },
+     {
+      "row": "air",
+      "mine": 0.10076891946580334,
+      "his": 0.06147956311226212,
+      "solver": 0.05411385351362582
+     }
+    ],
+    "hands": [
+     {
+      "hand": "8c8h",
+      "row": "trips or better",
+      "equity": 0.8331999778747559,
+      "draw": "no draw",
+      "margin": 0.8331999778747559,
+      "key": [
+       "80%+"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.16699999570846558,
+      "cost_act": 0.29077844228595495,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AsQs",
+      "row": "two pair",
+      "equity": 0.7997999787330627,
+      "draw": "no draw",
+      "margin": 0.7997999787330627,
+      "key": [
+       "65-80%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.05719999969005585,
+      "cost_act": 0.273496494628489,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AcTc",
+      "row": "top pair",
+      "equity": 0.5895000100135803,
+      "draw": "no draw",
+      "margin": 0.5895000100135803,
+      "key": [
+       "50-65%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.018699999898672104,
+      "cost_act": 0.26000000070780516,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KdTd",
+      "row": "draw",
+      "equity": 0.4546999931335449,
+      "draw": "flush draw",
+      "margin": 0.4546999931335449,
+      "key": [
+       "35-50%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.08619999885559082,
+      "cost_act": 0.08916473598219454,
+      "cost_no": 0.019999999494757503
+     },
+     {
+      "hand": "5d4d",
+      "row": "draw",
+      "equity": 0.3434999883174896,
+      "draw": "flush draw",
+      "margin": 0.3434999883174896,
+      "key": [
+       "20-35%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.17900000512599945,
+      "cost_act": 0.5322569981217384,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "9c9d",
+      "row": "low pair",
+      "equity": 0.19660000503063202,
+      "draw": "no draw",
+      "margin": 0.19660000503063202,
+      "key": [
+       "under 20%"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 9.999999747378752e-05,
+      "cost_act": 1.119999960064888,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.011462970249170066,
+    "who": "he did"
+   }
+  ],
+  "n": 41,
+  "solver_acts": 0.28979927047766235,
+  "always": 0.7836290899783873,
+  "never": 0.11425485989332858,
+  "model": [
+   0.16,
+   0.34
+  ]
+ },
+ "flop, in position, first to act": {
+  "table": {
+   "names": [
+    "row",
+    "stack to pot"
+   ],
+   "hand": [
+    "row"
+   ],
+   "spot": [
+    "stack to pot"
+   ],
+   "labels": {
+    "row": [
+     "air",
+     "draw",
+     "low pair",
+     "middle pair",
+     "top pair",
+     "overpair",
+     "two pair",
+     "trips or better"
+    ],
+    "stack to pot": [
+     "under 2",
+     "2 to 6",
+     "over 6"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "air",
+      "under 2"
+     ],
+     "share": 0.1278417636562825,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.093974605740868,
+     "solver": 0.3600667534840141,
+     "hands": 686
+    },
+    {
+     "key": [
+      "air",
+      "2 to 6"
+     ],
+     "share": 0.14624047289753878,
+     "call": "either",
+     "lean": "act",
+     "gap": 0.1652107996097054,
+     "solver": 0.6220714967072284,
+     "hands": 1048
+    },
+    {
+     "key": [
+      "air",
+      "over 6"
+     ],
+     "share": 0.09635212474235766,
+     "call": "either",
+     "lean": "act",
+     "gap": 0.002199341029886219,
+     "solver": 0.5404934601004867,
+     "hands": 1333
+    },
+    {
+     "key": [
+      "draw",
+      "under 2"
+     ],
+     "share": 0.02047139235047839,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.5080116936778116,
+     "solver": 0.3679640392349788,
+     "hands": 86
+    },
+    {
+     "key": [
+      "draw",
+      "2 to 6"
+     ],
+     "share": 0.019093275495882307,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.4839188265378017,
+     "solver": 0.6448133765927571,
+     "hands": 128
+    },
+    {
+     "key": [
+      "draw",
+      "over 6"
+     ],
+     "share": 0.017401202835184006,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.9671334089157169,
+     "solver": 0.7090970062119566,
+     "hands": 227
+    },
+    {
+     "key": [
+      "low pair",
+      "under 2"
+     ],
+     "share": 0.02720526863747226,
+     "call": "no",
+     "lean": "no",
+     "gap": 4.059023410600599,
+     "solver": 0.11708281196839417,
+     "hands": 123
+    },
+    {
+     "key": [
+      "low pair",
+      "2 to 6"
+     ],
+     "share": 0.047585902893978155,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.48204488394294565,
+     "solver": 0.42114763845281666,
+     "hands": 339
+    },
+    {
+     "key": [
+      "low pair",
+      "over 6"
+     ],
+     "share": 0.04107365431799443,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.22422739901385424,
+     "solver": 0.37253974741192136,
+     "hands": 501
+    },
+    {
+     "key": [
+      "middle pair",
+      "under 2"
+     ],
+     "share": 0.02660979240941741,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.29765900643348997,
+     "solver": 0.33134369635315786,
+     "hands": 138
+    },
+    {
+     "key": [
+      "middle pair",
+      "2 to 6"
+     ],
+     "share": 0.05066083331486548,
+     "call": "either",
+     "lean": "act",
+     "gap": 0.053349420077907474,
+     "solver": 0.4676484088974666,
+     "hands": 348
+    },
+    {
+     "key": [
+      "middle pair",
+      "over 6"
+     ],
+     "share": 0.04380837363526619,
+     "call": "either",
+     "lean": "no",
+     "gap": 0.056438876341239015,
+     "solver": 0.3354011346111267,
+     "hands": 498
+    },
+    {
+     "key": [
+      "top pair",
+      "under 2"
+     ],
+     "share": 0.03382357947787015,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.3340295681948772,
+     "solver": 0.4813896032148641,
+     "hands": 183
+    },
+    {
+     "key": [
+      "top pair",
+      "2 to 6"
+     ],
+     "share": 0.052539862142753864,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.2449320471109171,
+     "solver": 0.5715453091629377,
+     "hands": 297
+    },
+    {
+     "key": [
+      "top pair",
+      "over 6"
+     ],
+     "share": 0.0481599994733941,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.44466894540044216,
+     "solver": 0.4360878328711154,
+     "hands": 549
+    },
+    {
+     "key": [
+      "overpair",
+      "under 2"
+     ],
+     "share": 0.08109293516063967,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.42305103545135264,
+     "solver": 0.5948028250196541,
+     "hands": 198
+    },
+    {
+     "key": [
+      "overpair",
+      "2 to 6"
+     ],
+     "share": 0.04875012483054614,
+     "call": "act",
+     "lean": "act",
+     "gap": 3.293038610172159,
+     "solver": 0.7735493828146578,
+     "hands": 234
+    },
+    {
+     "key": [
+      "overpair",
+      "over 6"
+     ],
+     "share": 0.00593350509266481,
+     "call": "act",
+     "lean": "act",
+     "gap": 7.412203548731272,
+     "solver": 0.9447162386500227,
+     "hands": 66
+    },
+    {
+     "key": [
+      "two pair",
+      "under 2"
+     ],
+     "share": 0.00026519745910487727,
+     "call": "either",
+     "lean": "no",
+     "gap": 0.01268566244756573,
+     "solver": 0.42414317400940915,
+     "hands": 5
+    },
+    {
+     "key": [
+      "two pair",
+      "2 to 6"
+     ],
+     "share": 0.0058747149828672395,
+     "call": "act",
+     "lean": "act",
+     "gap": 3.359102244999878,
+     "solver": 0.7432939132135429,
+     "hands": 48
+    },
+    {
+     "key": [
+      "two pair",
+      "over 6"
+     ],
+     "share": 0.007514060339066037,
+     "call": "act",
+     "lean": "act",
+     "gap": 13.288509045177992,
+     "solver": 0.9562801174722649,
+     "hands": 95
+    },
+    {
+     "key": [
+      "trips or better",
+      "under 2"
+     ],
+     "share": 0.02415348506808657,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.6844977032896242,
+     "solver": 0.23712130098524867,
+     "hands": 100
+    },
+    {
+     "key": [
+      "trips or better",
+      "2 to 6"
+     ],
+     "share": 0.01949871482068753,
+     "call": "act",
+     "lean": "act",
+     "gap": 11.270067396174545,
+     "solver": 0.8728027474973026,
+     "hands": 108
+    },
+    {
+     "key": [
+      "trips or better",
+      "over 6"
+     ],
+     "share": 0.008049763965601425,
+     "call": "act",
+     "lean": "act",
+     "gap": 31.686401899465913,
+     "solver": 0.9999997960719168,
+     "hands": 94
+    }
+   ],
+   "score": {
+    "mean": 0.1762702713907975,
+    "p50": 0.11414659364043597,
+    "p90": 0.4353651068966165,
+    "p95": 0.5119378120182838,
+    "over1": 0.0,
+    "opposite": 0.09402019831284678,
+    "cells": 24
+   },
+   "n": 41
+  },
+  "examples": [
+   {
+    "spot": "4BP-UTG-HJ Th6h4c",
+    "pot_type": "4BP",
+    "pre": "4BP-UTG-HJ",
+    "board": "Th 6h 4c",
+    "line": "x",
+    "pot": 41.5,
+    "toCall": 0,
+    "behind": 80,
+    "spr": 1.927710843373494,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.33246023789294826,
+    "my_eq": 0.5848175587652225,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "I have more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "over 55%",
+     "who bet last street": "he did"
+    },
+    "values": {
+     "tp_lead": 0.16970223162586934,
+     "polar": 0.2628150665533843,
+     "his_weak": 0.34442418521248486
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.04672897196261683,
+      "his": 0.01173742311190424,
+      "solver": 0.004006060548691136
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.3551401869158879,
+      "his": 0.2347527727129698,
+      "solver": 0.4391866866506613
+     },
+     {
+      "row": "top pair",
+      "mine": 0.031435853865760414,
+      "his": 0.017112585293521786,
+      "solver": 0.17522613079966726
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.16567544604927784,
+      "his": 0.020431650954985715,
+      "solver": 0.3792314515090906
+     },
+     {
+      "row": "low pair",
+      "mine": 0.023789294817332204,
+      "his": 0.003163888565603273,
+      "solver": 0.2485000011511147
+     },
+     {
+      "row": "draw",
+      "mine": 0.06796941376380629,
+      "his": 0.06164410133064361,
+      "solver": 0.3768079143900176
+     },
+     {
+      "row": "air",
+      "mine": 0.30926083262531867,
+      "his": 0.6511575780303717,
+      "solver": 0.24716813320156086
+     }
+    ],
+    "hands": [
+     {
+      "hand": "TcTs",
+      "row": "trips or better",
+      "equity": 0.9359999895095825,
+      "draw": "no draw",
+      "margin": 0.9359999895095825,
+      "key": [
+       "trips or better",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0038999998942017555,
+      "cost_act": 1.7000000923871994,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AcAh",
+      "row": "overpair",
+      "equity": 0.9258999824523926,
+      "draw": "no draw",
+      "margin": 0.9258999824523926,
+      "key": [
+       "overpair",
+       "under 2"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.006099999882280827,
+      "cost_act": 1.3700000010430813,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "5h4h",
+      "row": "low pair",
+      "equity": 0.728600025177002,
+      "draw": "flush draw",
+      "margin": 0.728600025177002,
+      "key": [
+       "low pair",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.004100000020116568,
+      "cost_act": 0.9800000116229057,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AcTc",
+      "row": "top pair",
+      "equity": 0.6687999963760376,
+      "draw": "no draw",
+      "margin": 0.6687999963760376,
+      "key": [
+       "top pair",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.06750000268220901,
+      "cost_act": 0.23757037706673145,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AhQh",
+      "row": "draw",
+      "equity": 0.6323999762535095,
+      "draw": "flush draw",
+      "margin": 0.6323999762535095,
+      "key": [
+       "draw",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.3785000145435333,
+      "cost_act": 0.002665786087163724,
+      "cost_no": 0.009999999747378752
+     },
+     {
+      "hand": "6c5c",
+      "row": "middle pair",
+      "equity": 0.6029000282287598,
+      "draw": "no draw",
+      "margin": 0.6029000282287598,
+      "key": [
+       "middle pair",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.029400000348687172,
+      "cost_act": 0.26598640251904726,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AhKc",
+      "row": "air",
+      "equity": 0.5983999967575073,
+      "draw": "no draw",
+      "margin": 0.5983999967575073,
+      "key": [
+       "air",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.026499999687075615,
+      "cost_act": 0.8381132036447525,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.10410027617686471,
+    "who": "he did"
+   },
+   {
+    "spot": "3BP-HJ-CO 8dAhQd",
+    "pot_type": "3BP",
+    "pre": "3BP-HJ-CO",
+    "board": "8d Ah Qd",
+    "line": "x",
+    "pot": 16.5,
+    "toCall": 0,
+    "behind": 92.5,
+    "spr": 5.606060606060606,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.5712948879630673,
+    "my_eq": 0.6691612205832677,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "I have more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "over 45%",
+     "range equity": "over 55%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": 0.24926278518222955,
+     "polar": 0.25796644522013285,
+     "his_weak": 0.5963220562259883
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.08411214953271028,
+      "his": 0.060775235828077416,
+      "solver": 0.9999953138137263
+     },
+     {
+      "row": "two pair",
+      "mine": 0.10404233757459744,
+      "his": 0.048381289631189026,
+      "solver": 0.6424411221021422
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.3124648125211124,
+      "his": 0.14219998898692413,
+      "solver": 0.45400050565547395
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.23139286116428326,
+      "his": 0.053775578927749985,
+      "solver": 0.5181346466116906
+     },
+     {
+      "row": "low pair",
+      "mine": 0.18106069136358519,
+      "his": 0.4965584137782051,
+      "solver": 0.6088168515919362
+     },
+     {
+      "row": "draw",
+      "mine": 0.025447584731449157,
+      "his": 0.09854585040007117,
+      "solver": 0.7437597326414462
+     },
+     {
+      "row": "air",
+      "mine": 0.06147956311226213,
+      "his": 0.09976364244778321,
+      "solver": 0.47870421617160047
+     }
+    ],
+    "hands": [
+     {
+      "hand": "AcAd",
+      "row": "trips or better",
+      "equity": 0.944100022315979,
+      "draw": "no draw",
+      "margin": 0.944100022315979,
+      "key": [
+       "trips or better",
+       "2 to 6"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.007558999641332775,
+      "cost_no": 13.539999723434448
+     },
+     {
+      "hand": "AdKd",
+      "row": "top pair",
+      "equity": 0.8476999998092651,
+      "draw": "flush draw",
+      "margin": 0.8476999998092651,
+      "key": [
+       "top pair",
+       "2 to 6"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9973999857902527,
+      "cost_act": 0.004097653800272383,
+      "cost_no": 0.31999999191612005
+     },
+     {
+      "hand": "AdQc",
+      "row": "two pair",
+      "equity": 0.8313999772071838,
+      "draw": "no draw",
+      "margin": 0.8313999772071838,
+      "key": [
+       "two pair",
+       "2 to 6"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.5950999855995178,
+      "cost_act": 0.10654848301783204,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KdKh",
+      "row": "middle pair",
+      "equity": 0.7046999931335449,
+      "draw": "no draw",
+      "margin": 0.7046999931335449,
+      "key": [
+       "middle pair",
+       "2 to 6"
+      ],
+      "call": "either",
+      "lean": "act",
+      "solver": 0.46399998664855957,
+      "cost_act": 0.0006724138074787334,
+      "cost_no": 0.019999999494757503
+     },
+     {
+      "hand": "JcJd",
+      "row": "low pair",
+      "equity": 0.6370000243186951,
+      "draw": "no draw",
+      "margin": 0.6370000243186951,
+      "key": [
+       "low pair",
+       "2 to 6"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.31859999895095825,
+      "cost_act": 0.0630382914096117,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KdJd",
+      "row": "draw",
+      "equity": 0.58160001039505,
+      "draw": "flush draw",
+      "margin": 0.58160001039505,
+      "key": [
+       "draw",
+       "2 to 6"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.47540000081062317,
+      "cost_act": 0.027551536913961172,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KhJh",
+      "row": "air",
+      "equity": 0.38929998874664307,
+      "draw": "gutshot",
+      "margin": 0.38929998874664307,
+      "key": [
+       "air",
+       "2 to 6"
+      ],
+      "call": "either",
+      "lean": "act",
+      "solver": 0.5389000177383423,
+      "cost_act": 0.003572091372916475,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.10165244233518263,
+    "who": "I did"
+   }
+  ],
+  "n": 41,
+  "solver_acts": 0.5083180244618061,
+  "always": 0.5101517933975332,
+  "never": 1.0755953018004263,
+  "model": [
+   0.31,
+   0.53
+  ]
+ },
+ "turn, out of position, first to act": {
+  "table": {
+   "names": [
+    "row",
+    "who bet last street"
+   ],
+   "hand": [
+    "row"
+   ],
+   "spot": [
+    "who bet last street"
+   ],
+   "labels": {
+    "row": [
+     "air",
+     "draw",
+     "low pair",
+     "middle pair",
+     "top pair",
+     "overpair",
+     "two pair",
+     "trips or better"
+    ],
+    "who bet last street": [
+     "nobody",
+     "I did",
+     "he did"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "air",
+      "nobody"
+     ],
+     "share": 0.12219893223766011,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.6925770568488274,
+     "solver": 0.20599800063419216,
+     "hands": 5839
+    },
+    {
+     "key": [
+      "air",
+      "I did"
+     ],
+     "share": 0.052528364251799214,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.932796217828394,
+     "solver": 0.35389634824759275,
+     "hands": 2822
+    },
+    {
+     "key": [
+      "air",
+      "he did"
+     ],
+     "share": 0.06505296103044506,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.767675768319866,
+     "solver": 0.046436738591539954,
+     "hands": 1926
+    },
+    {
+     "key": [
+      "draw",
+      "nobody"
+     ],
+     "share": 0.030756772384070326,
+     "call": "act",
+     "lean": "act",
+     "gap": 2.0359471552524724,
+     "solver": 0.8043373198727001,
+     "hands": 1911
+    },
+    {
+     "key": [
+      "draw",
+      "I did"
+     ],
+     "share": 0.022705872140502913,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.4225588825180124,
+     "solver": 0.7689695597180145,
+     "hands": 1002
+    },
+    {
+     "key": [
+      "draw",
+      "he did"
+     ],
+     "share": 0.028941460228914997,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.017998097013701,
+     "solver": 0.3403235184952271,
+     "hands": 969
+    },
+    {
+     "key": [
+      "low pair",
+      "nobody"
+     ],
+     "share": 0.07168849228754089,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.40670996671848,
+     "solver": 0.173793252139735,
+     "hands": 3277
+    },
+    {
+     "key": [
+      "low pair",
+      "I did"
+     ],
+     "share": 0.015347093224029579,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.1123538850617805,
+     "solver": 0.3685530341655907,
+     "hands": 1107
+    },
+    {
+     "key": [
+      "low pair",
+      "he did"
+     ],
+     "share": 0.04871078901291293,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.937260151835003,
+     "solver": 0.08687001786432327,
+     "hands": 1685
+    },
+    {
+     "key": [
+      "middle pair",
+      "nobody"
+     ],
+     "share": 0.05198606508860076,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.6870180716756027,
+     "solver": 0.210621990675856,
+     "hands": 2301
+    },
+    {
+     "key": [
+      "middle pair",
+      "I did"
+     ],
+     "share": 0.021055548403774823,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.621632879770136,
+     "solver": 0.23196966434285468,
+     "hands": 1077
+    },
+    {
+     "key": [
+      "middle pair",
+      "he did"
+     ],
+     "share": 0.07139517227552822,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.3618123204488906,
+     "solver": 0.09723350365131214,
+     "hands": 1803
+    },
+    {
+     "key": [
+      "top pair",
+      "nobody"
+     ],
+     "share": 0.049272674743859615,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.5909684283888059,
+     "solver": 0.427606378297265,
+     "hands": 2632
+    },
+    {
+     "key": [
+      "top pair",
+      "I did"
+     ],
+     "share": 0.03593262116415921,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.5906557473931455,
+     "solver": 0.5831112222905067,
+     "hands": 1511
+    },
+    {
+     "key": [
+      "top pair",
+      "he did"
+     ],
+     "share": 0.07865815994976282,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.3899694068087391,
+     "solver": 0.16521346973094836,
+     "hands": 2121
+    },
+    {
+     "key": [
+      "overpair",
+      "nobody"
+     ],
+     "share": 0.026018092042087004,
+     "call": "either",
+     "lean": "act",
+     "gap": 0.1205157981237618,
+     "solver": 0.5445069909679005,
+     "hands": 939
+    },
+    {
+     "key": [
+      "overpair",
+      "I did"
+     ],
+     "share": 0.05006257998860019,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.5505534496856271,
+     "solver": 0.8097303136674312,
+     "hands": 820
+    },
+    {
+     "key": [
+      "overpair",
+      "he did"
+     ],
+     "share": 0.027000330358539895,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.203347679849465,
+     "solver": 0.1500598952869426,
+     "hands": 498
+    },
+    {
+     "key": [
+      "two pair",
+      "nobody"
+     ],
+     "share": 0.007814908779955488,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.2937709078593287,
+     "solver": 0.5254133055371353,
+     "hands": 575
+    },
+    {
+     "key": [
+      "two pair",
+      "I did"
+     ],
+     "share": 0.005242888181701242,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.1569085914674266,
+     "solver": 0.6214333448821059,
+     "hands": 298
+    },
+    {
+     "key": [
+      "two pair",
+      "he did"
+     ],
+     "share": 0.012997651875308724,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.8350198834075323,
+     "solver": 0.20701298908622315,
+     "hands": 493
+    },
+    {
+     "key": [
+      "trips or better",
+      "nobody"
+     ],
+     "share": 0.03630366611229217,
+     "call": "either",
+     "lean": "act",
+     "gap": 0.16335027180496145,
+     "solver": 0.5280842290200638,
+     "hands": 1529
+    },
+    {
+     "key": [
+      "trips or better",
+      "I did"
+     ],
+     "share": 0.024847804935840927,
+     "call": "either",
+     "lean": "no",
+     "gap": 0.16400361360640073,
+     "solver": 0.5204487978779244,
+     "hands": 795
+    },
+    {
+     "key": [
+      "trips or better",
+      "he did"
+     ],
+     "share": 0.04348109930211291,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.014978239749707,
+     "solver": 0.21027564181592176,
+     "hands": 1059
+    }
+   ],
+   "score": {
+    "mean": 0.27559692914703626,
+    "p50": 0.12750208930397966,
+    "p90": 0.6752655196750387,
+    "p95": 1.108968796127357,
+    "over1": 0.0594059405940594,
+    "opposite": 0.11265246235741648,
+    "cells": 24
+   },
+   "n": 303
+  },
+  "examples": [
+   {
+    "spot": "3BP-SB-HJ 2s9d3s",
+    "pot_type": "3BP",
+    "pre": "3BP-SB-HJ",
+    "board": "2s 9d 3s 7c",
+    "line": "xx|first",
+    "pot": 23,
+    "toCall": 0,
+    "behind": 89,
+    "spr": 3.869565217391304,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.1858186258964287,
+    "my_eq": 0.41344610008468774,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "about even",
+     "my range": "in between",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": -0.037869837561400055,
+     "polar": 0.48194754765937503,
+     "his_weak": 0.1344990508528332
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.023928790226674834,
+      "his": 0.033684230164689855,
+      "solver": 0.11790335895480189
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.14703232548920678,
+      "his": 0.17581377126252895,
+      "solver": 0.53227375314161
+     },
+     {
+      "row": "top pair",
+      "mine": 0.009155735341814119,
+      "his": 0.00848868719187698,
+      "solver": 0.2014137277820378
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.03498324263937439,
+      "his": 0.0641269012094047,
+      "solver": 0.006910591072736088
+     },
+     {
+      "row": "low pair",
+      "mine": 0.005320011531947097,
+      "his": 0.12484433520053359,
+      "solver": 0.5577624527952805
+     },
+     {
+      "row": "draw",
+      "mine": 0.060099012577029806,
+      "his": 0.1347975541387014,
+      "solver": 0.5329777755404876
+     },
+     {
+      "row": "air",
+      "mine": 0.719480882193953,
+      "his": 0.4582445208322645,
+      "solver": 0.09402794359742155
+     }
+    ],
+    "hands": [
+     {
+      "hand": "9c9s",
+      "row": "trips or better",
+      "equity": 0.9624999761581421,
+      "draw": "no draw",
+      "margin": 0.9624999761581421,
+      "key": [
+       "trips or better",
+       "nobody"
+      ],
+      "call": "either",
+      "lean": "act",
+      "solver": 0.16619999706745148,
+      "cost_act": 0.0,
+      "cost_no": 0.050000002374872565
+     },
+     {
+      "hand": "AdAs",
+      "row": "overpair",
+      "equity": 0.9110999703407288,
+      "draw": "no draw",
+      "margin": 0.9110999703407288,
+      "key": [
+       "overpair",
+       "nobody"
+      ],
+      "call": "either",
+      "lean": "act",
+      "solver": 0.37630000710487366,
+      "cost_act": 0.0,
+      "cost_no": 0.35000001080334187
+     },
+     {
+      "hand": "8d8s",
+      "row": "middle pair",
+      "equity": 0.6629999876022339,
+      "draw": "no draw",
+      "margin": 0.6629999876022339,
+      "key": [
+       "middle pair",
+       "nobody"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.006899999920278788,
+      "cost_act": 0.4999999888241291,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AsKs",
+      "row": "draw",
+      "equity": 0.5914000272750854,
+      "draw": "flush draw",
+      "margin": 0.5914000272750854,
+      "key": [
+       "draw",
+       "nobody"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.00139999995008111,
+      "cost_act": 3.7200000137090683,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AsKc",
+      "row": "air",
+      "equity": 0.4652999937534332,
+      "draw": "no draw",
+      "margin": 0.4652999937534332,
+      "key": [
+       "air",
+       "nobody"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.25870001316070557,
+      "cost_act": 0.34000000450760126,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.12356519664468778,
+    "who": "nobody"
+   },
+   {
+    "spot": "Squeeze-BB-CO Ts3cJc",
+    "pot_type": "Squeeze",
+    "pre": "Squeeze-BB-CO",
+    "board": "Ts 3c Jc 8d",
+    "line": "xx|first",
+    "pot": 29,
+    "toCall": 0,
+    "behind": 87,
+    "spr": 3.0,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.742077445574643,
+    "my_eq": 0.5097234972895144,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "I have more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "45-55%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": 0.11157558228356373,
+     "polar": 0.20739693851145574,
+     "his_weak": 0.11162222722799864
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.055490309267405835,
+      "his": 0.1083381744460384,
+      "solver": 0.7271827714949177
+     },
+     {
+      "row": "two pair",
+      "mine": 0.004565028431899463,
+      "his": 0.0,
+      "solver": 0.5417832719358159
+     },
+     {
+      "row": "overpair",
+      "mine": 0.07185275129220828,
+      "his": 0.007077904371228379,
+      "solver": 0.9014814364815452
+     },
+     {
+      "row": "top pair",
+      "mine": 0.2655579221158376,
+      "his": 0.1704743500065207,
+      "solver": 0.8585504131728845
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.12609232239186255,
+      "his": 0.0,
+      "solver": 0.8040132552342528
+     },
+     {
+      "row": "low pair",
+      "mine": 0.055765670720783506,
+      "his": 0.2525045348382279,
+      "solver": 0.31922569103712173
+     },
+     {
+      "row": "draw",
+      "mine": 0.2709523525157421,
+      "his": 0.46160503633798483,
+      "solver": 0.7524586944622162
+     },
+     {
+      "row": "air",
+      "mine": 0.14972364326426077,
+      "his": 0.0,
+      "solver": 0.557170653698047
+     }
+    ],
+    "hands": [
+     {
+      "hand": "JdJh",
+      "row": "trips or better",
+      "equity": 0.8587999939918518,
+      "draw": "no draw",
+      "margin": 0.8587999939918518,
+      "key": [
+       "trips or better",
+       "nobody"
+      ],
+      "call": "either",
+      "lean": "act",
+      "solver": 0.734499990940094,
+      "cost_act": 0.2300000051036477,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "QcQs",
+      "row": "overpair",
+      "equity": 0.7480999827384949,
+      "draw": "gutshot",
+      "margin": 0.7480999827384949,
+      "key": [
+       "overpair",
+       "nobody"
+      ],
+      "call": "either",
+      "lean": "act",
+      "solver": 0.9948999881744385,
+      "cost_act": 0.0,
+      "cost_no": 1.3000000268220901
+     },
+     {
+      "hand": "QcTc",
+      "row": "middle pair",
+      "equity": 0.7175999879837036,
+      "draw": "flush draw",
+      "margin": 0.7175999879837036,
+      "key": [
+       "middle pair",
+       "nobody"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.3305000066757202,
+      "cost_act": 0.6800000090152025,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Js9s",
+      "row": "top pair",
+      "equity": 0.6450999975204468,
+      "draw": "open-ended",
+      "margin": 0.6450999975204468,
+      "key": [
+       "top pair",
+       "nobody"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.9553999900817871,
+      "cost_act": 0.0,
+      "cost_no": 0.38999998942017555
+     },
+     {
+      "hand": "AcKc",
+      "row": "draw",
+      "equity": 0.5547000169754028,
+      "draw": "flush draw",
+      "margin": 0.5547000169754028,
+      "key": [
+       "draw",
+       "nobody"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9793999791145325,
+      "cost_act": 0.0,
+      "cost_no": 0.46999999321997166
+     },
+     {
+      "hand": "AsKc",
+      "row": "air",
+      "equity": 0.4456000030040741,
+      "draw": "gutshot",
+      "margin": 0.4456000030040741,
+      "key": [
+       "air",
+       "nobody"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.8525999784469604,
+      "cost_act": 0.0,
+      "cost_no": 0.17000000225380063
+     }
+    ],
+    "lost": 0.12460308040376407,
+    "who": "nobody"
+   }
+  ],
+  "n": 303,
+  "solver_acts": 0.3090285096315771,
+  "always": 2.1877704512290252,
+  "never": 0.38718803827720716,
+  "model": [
+   0.28,
+   0.65
+  ]
+ },
+ "turn, in position, first to act": {
+  "table": {
+   "names": [
+    "equity",
+    "draw"
+   ],
+   "hand": [
+    "equity",
+    "draw"
+   ],
+   "spot": [],
+   "labels": {
+    "equity": [
+     "under 20%",
+     "20-35%",
+     "35-50%",
+     "50-65%",
+     "65-80%",
+     "80%+"
+    ],
+    "draw": [
+     "no draw",
+     "gutshot",
+     "open-ended",
+     "flush draw"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "under 20%",
+      "no draw"
+     ],
+     "share": 0.12198300403760083,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.2867256406119603,
+     "solver": 0.3402085538831828,
+     "hands": 6822
+    },
+    {
+     "key": [
+      "under 20%",
+      "gutshot"
+     ],
+     "share": 0.03920088555126084,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.5901780139905015,
+     "solver": 0.47074720478466653,
+     "hands": 2198
+    },
+    {
+     "key": [
+      "under 20%",
+      "open-ended"
+     ],
+     "share": 0.00344539603382674,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.0576435534433404,
+     "solver": 0.7548062650441277,
+     "hands": 290
+    },
+    {
+     "key": [
+      "under 20%",
+      "flush draw"
+     ],
+     "share": 0.0031556349993465474,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.1655525751407274,
+     "solver": 0.3357304383836738,
+     "hands": 121
+    },
+    {
+     "key": [
+      "20-35%",
+      "no draw"
+     ],
+     "share": 0.07991366221034701,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.027693208099523,
+     "solver": 0.3376987343752419,
+     "hands": 3566
+    },
+    {
+     "key": [
+      "20-35%",
+      "gutshot"
+     ],
+     "share": 0.03267553558660343,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.21700610504156906,
+     "solver": 0.6099979965169088,
+     "hands": 1587
+    },
+    {
+     "key": [
+      "20-35%",
+      "open-ended"
+     ],
+     "share": 0.01895891583322332,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.8421827615512745,
+     "solver": 0.8014927971565049,
+     "hands": 967
+    },
+    {
+     "key": [
+      "20-35%",
+      "flush draw"
+     ],
+     "share": 0.029847103749623523,
+     "call": "act",
+     "lean": "act",
+     "gap": 2.0882855982483144,
+     "solver": 0.7181833227183015,
+     "hands": 1583
+    },
+    {
+     "key": [
+      "35-50%",
+      "no draw"
+     ],
+     "share": 0.06884231647079118,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.5264670066135793,
+     "solver": 0.26125442082687916,
+     "hands": 2743
+    },
+    {
+     "key": [
+      "35-50%",
+      "gutshot"
+     ],
+     "share": 0.013652738432014418,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.9728887945662703,
+     "solver": 0.4153586897467772,
+     "hands": 786
+    },
+    {
+     "key": [
+      "35-50%",
+      "open-ended"
+     ],
+     "share": 0.005401905371763026,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.5402839628811388,
+     "solver": 0.6111116343614087,
+     "hands": 260
+    },
+    {
+     "key": [
+      "35-50%",
+      "flush draw"
+     ],
+     "share": 0.027258983754956282,
+     "call": "act",
+     "lean": "act",
+     "gap": 3.462604895241264,
+     "solver": 0.8230766357743118,
+     "hands": 1181
+    },
+    {
+     "key": [
+      "50-65%",
+      "no draw"
+     ],
+     "share": 0.08821505465573741,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.9993683517156642,
+     "solver": 0.23228104567623822,
+     "hands": 3152
+    },
+    {
+     "key": [
+      "50-65%",
+      "gutshot"
+     ],
+     "share": 0.011639740606758018,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.7879856819273043,
+     "solver": 0.15922062671977996,
+     "hands": 642
+    },
+    {
+     "key": [
+      "50-65%",
+      "open-ended"
+     ],
+     "share": 0.004317433886139358,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.7043630243042354,
+     "solver": 0.24640076045404324,
+     "hands": 288
+    },
+    {
+     "key": [
+      "50-65%",
+      "flush draw"
+     ],
+     "share": 0.018545665305298647,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.38117902154397804,
+     "solver": 0.5744374409817337,
+     "hands": 657
+    },
+    {
+     "key": [
+      "65-80%",
+      "no draw"
+     ],
+     "share": 0.15888488528634914,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.269605734611911,
+     "solver": 0.4685628546375096,
+     "hands": 5141
+    },
+    {
+     "key": [
+      "65-80%",
+      "gutshot"
+     ],
+     "share": 0.018095792764829748,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.5780546891606472,
+     "solver": 0.33817423950004555,
+     "hands": 900
+    },
+    {
+     "key": [
+      "65-80%",
+      "open-ended"
+     ],
+     "share": 0.005568162747252858,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.27605954136200067,
+     "solver": 0.5599025613620393,
+     "hands": 349
+    },
+    {
+     "key": [
+      "65-80%",
+      "flush draw"
+     ],
+     "share": 0.019101338001177554,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.24270960048317322,
+     "solver": 0.5041378423255585,
+     "hands": 630
+    },
+    {
+     "key": [
+      "80%+",
+      "no draw"
+     ],
+     "share": 0.2043576507439786,
+     "call": "act",
+     "lean": "act",
+     "gap": 6.477137507317445,
+     "solver": 0.7205698965302995,
+     "hands": 6616
+    },
+    {
+     "key": [
+      "80%+",
+      "gutshot"
+     ],
+     "share": 0.005581568752924465,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.7151871737343892,
+     "solver": 0.42268626151040306,
+     "hands": 340
+    },
+    {
+     "key": [
+      "80%+",
+      "open-ended"
+     ],
+     "share": 0.0015316755028670437,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.8781044913195126,
+     "solver": 0.8460741394174202,
+     "hands": 122
+    },
+    {
+     "key": [
+      "80%+",
+      "flush draw"
+     ],
+     "share": 0.01982494971533002,
+     "call": "act",
+     "lean": "act",
+     "gap": 2.788978885861106,
+     "solver": 0.6171921660228402,
+     "hands": 564
+    }
+   ],
+   "score": {
+    "mean": 0.4317783411830308,
+    "p50": 0.3307868362421811,
+    "p90": 0.8195469167313009,
+    "p95": 1.0299375366785388,
+    "over1": 0.05863192182410423,
+    "opposite": 0.15974077944576393,
+    "cells": 24
+   },
+   "n": 307
+  },
+  "examples": [
+   {
+    "spot": "4BP-BB-BU 2s2dTd",
+    "pot_type": "4BP",
+    "pre": "4BP-BB-BU",
+    "board": "2s 2d Td 6s",
+    "line": "xx|x",
+    "pot": 54.5,
+    "toCall": 0,
+    "behind": 73,
+    "spr": 1.3394495412844036,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.46396379358763074,
+    "my_eq": 0.509264446905351,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "about even",
+     "my range": "in between",
+     "his weak hands": "under 20% of his range",
+     "range equity": "45-55%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": 0.01387665558181922,
+     "polar": 0.5746758579762516,
+     "his_weak": 0.06868252301481308
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.09832087278584638,
+      "his": 0.02731193100143747,
+      "solver": 0.9994838628516359
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.14953716704904912,
+      "his": 0.061016016067041164,
+      "solver": 0.7514730420781823
+     },
+     {
+      "row": "top pair",
+      "mine": 0.0,
+      "his": 0.14565343718459767,
+      "solver": null
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.016017676138802197,
+      "his": 0.0577638675080794,
+      "solver": 0.0010000000474974513
+     },
+     {
+      "row": "low pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "draw",
+      "mine": 0.12688034165390583,
+      "his": 0.10468044327090703,
+      "solver": 0.7985584048654522
+     },
+     {
+      "row": "air",
+      "mine": 0.6092439423723964,
+      "his": 0.6035743049679374,
+      "solver": 0.24946187953816243
+     }
+    ],
+    "hands": [
+     {
+      "hand": "TcTh",
+      "row": "trips or better",
+      "equity": 0.9962999820709229,
+      "draw": "no draw",
+      "margin": 0.9962999820709229,
+      "key": [
+       "80%+",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9994000196456909,
+      "cost_act": 0.0,
+      "cost_no": 10.939999669790268
+     },
+     {
+      "hand": "Ad6d",
+      "row": "middle pair",
+      "equity": 0.7695000171661377,
+      "draw": "flush draw",
+      "margin": 0.7695000171661377,
+      "key": [
+       "65-80%",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.0010000000474974513,
+      "cost_act": 5.750000104308128,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AdKs",
+      "row": "air",
+      "equity": 0.6241000294685364,
+      "draw": "no draw",
+      "margin": 0.6241000294685364,
+      "key": [
+       "50-65%",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0020000000949949026,
+      "cost_act": 2.0600000396370888,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "As3s",
+      "row": "draw",
+      "equity": 0.33629998564720154,
+      "draw": "flush draw",
+      "margin": 0.33629998564720154,
+      "key": [
+       "20-35%",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9937999844551086,
+      "cost_act": 0.0,
+      "cost_no": 1.290000043809414
+     },
+     {
+      "hand": "AsJh",
+      "row": "air",
+      "equity": 0.21490000188350677,
+      "draw": "no draw",
+      "margin": 0.21490000188350677,
+      "key": [
+       "20-35%",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.5450999736785889,
+      "cost_act": 0.0,
+      "cost_no": 0.7799999788403511
+     },
+     {
+      "hand": "AcJh",
+      "row": "air",
+      "equity": 0.188400000333786,
+      "draw": "no draw",
+      "margin": 0.188400000333786,
+      "key": [
+       "under 20%",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0007999999797903001,
+      "cost_act": 3.370000049471855,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.3421604527800499,
+    "who": "nobody"
+   },
+   {
+    "spot": "3BP-BB-CO 9h3h6s",
+    "pot_type": "3BP",
+    "pre": "3BP-BB-CO",
+    "board": "9h 3h 6s 4c",
+    "line": "xx|x",
+    "pot": 24.5,
+    "toCall": 0,
+    "behind": 88,
+    "spr": 3.5918367346938775,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.6252198103725839,
+    "my_eq": 0.5906793209464766,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "I have more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "over 55%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": 0.04549060310735882,
+     "polar": 0.16806456107894321,
+     "his_weak": 0.42702045981205394
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.03545582031053119,
+      "his": 0.00018049350417464007,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.002018421982168018,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0769746185067582,
+      "his": 0.0853831314264421,
+      "solver": 0.6730918109770687
+     },
+     {
+      "row": "top pair",
+      "mine": 0.03381629621723545,
+      "his": 0.013174085014381257,
+      "solver": 0.9997620970816543
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.15939554037587492,
+      "his": 0.06278456838763019,
+      "solver": 0.8182813616930261
+     },
+     {
+      "row": "low pair",
+      "mine": 0.05528724284227658,
+      "his": 0.05160755666137478,
+      "solver": 0.9996826452482489
+     },
+     {
+      "row": "draw",
+      "mine": 0.1522355933861657,
+      "his": 0.04564544865250925,
+      "solver": 0.972387481601689
+     },
+     {
+      "row": "air",
+      "mine": 0.4868348883611577,
+      "his": 0.7392062943713198,
+      "solver": 0.35004202659122247
+     }
+    ],
+    "hands": [
+     {
+      "hand": "4h4s",
+      "row": "trips or better",
+      "equity": 0.9757999777793884,
+      "draw": "no draw",
+      "margin": 0.9757999777793884,
+      "key": [
+       "80%+",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 26.28999948501587
+     },
+     {
+      "hand": "ThTs",
+      "row": "overpair",
+      "equity": 0.7919999957084656,
+      "draw": "no draw",
+      "margin": 0.7919999957084656,
+      "key": [
+       "65-80%",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.9994999766349792,
+      "cost_act": 0.0,
+      "cost_no": 3.020000085234642
+     },
+     {
+      "hand": "7h7s",
+      "row": "middle pair",
+      "equity": 0.7771999835968018,
+      "draw": "gutshot",
+      "margin": 0.7771999835968018,
+      "key": [
+       "65-80%",
+       "gutshot"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.9995999932289124,
+      "cost_act": 0.0,
+      "cost_no": 0.8999999612569809
+     },
+     {
+      "hand": "AhKh",
+      "row": "draw",
+      "equity": 0.7621999979019165,
+      "draw": "flush draw",
+      "margin": 0.7621999979019165,
+      "key": [
+       "65-80%",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.569599986076355,
+      "cost_act": 0.24999999441206455,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "5h5s",
+      "row": "low pair",
+      "equity": 0.7534000277519226,
+      "draw": "open-ended",
+      "margin": 0.7534000277519226,
+      "key": [
+       "65-80%",
+       "open-ended"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 4.039999842643738
+     },
+     {
+      "hand": "AcKc",
+      "row": "air",
+      "equity": 0.6488000154495239,
+      "draw": "no draw",
+      "margin": 0.6488000154495239,
+      "key": [
+       "50-65%",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0012000000569969416,
+      "cost_act": 1.4100000262260437,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AhJh",
+      "row": "draw",
+      "equity": 0.6168000102043152,
+      "draw": "flush draw",
+      "margin": 0.6168000102043152,
+      "key": [
+       "50-65%",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 3.959999978542328
+     }
+    ],
+    "lost": 0.34405636126060374,
+    "who": "nobody"
+   }
+  ],
+  "n": 307,
+  "solver_acts": 0.4870773176576736,
+  "always": 1.2810383894631852,
+  "never": 2.0158496457456585,
+  "model": [
+   0.39,
+   0.76
+  ]
+ },
+ "river, out of position, first to act": {
+  "table": {
+   "names": [
+    "equity",
+    "his weak hands"
+   ],
+   "hand": [
+    "equity"
+   ],
+   "spot": [
+    "his weak hands"
+   ],
+   "labels": {
+    "equity": [
+     "under 20%",
+     "20-35%",
+     "35-50%",
+     "50-65%",
+     "65-80%",
+     "80%+"
+    ],
+    "his weak hands": [
+     "under 20% of his range",
+     "20-45%",
+     "over 45%"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "under 20%",
+      "under 20% of his range"
+     ],
+     "share": 0.14237018453735473,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.7079167242092816,
+     "solver": 0.24339514649072155,
+     "hands": 20317
+    },
+    {
+     "key": [
+      "under 20%",
+      "20-45%"
+     ],
+     "share": 0.05044787569013526,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.9367830328079397,
+     "solver": 0.3936044348880743,
+     "hands": 9332
+    },
+    {
+     "key": [
+      "under 20%",
+      "over 45%"
+     ],
+     "share": 0.016905327565545837,
+     "call": "act",
+     "lean": "act",
+     "gap": 10.359699213610334,
+     "solver": 0.7330072871832013,
+     "hands": 3957
+    },
+    {
+     "key": [
+      "20-35%",
+      "under 20% of his range"
+     ],
+     "share": 0.023689980636760522,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.221096780660503,
+     "solver": 0.07872675195544797,
+     "hands": 4444
+    },
+    {
+     "key": [
+      "20-35%",
+      "20-45%"
+     ],
+     "share": 0.06366691254482257,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.717816442004006,
+     "solver": 0.10904093114737462,
+     "hands": 8324
+    },
+    {
+     "key": [
+      "20-35%",
+      "over 45%"
+     ],
+     "share": 0.014621769586197505,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.3891011761401777,
+     "solver": 0.3653184793608715,
+     "hands": 2387
+    },
+    {
+     "key": [
+      "35-50%",
+      "under 20% of his range"
+     ],
+     "share": 0.01709036685367615,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.073004813255304,
+     "solver": 0.24046593809328318,
+     "hands": 2998
+    },
+    {
+     "key": [
+      "35-50%",
+      "20-45%"
+     ],
+     "share": 0.08581931027823647,
+     "call": "no",
+     "lean": "no",
+     "gap": 7.540970666715763,
+     "solver": 0.06811467655410744,
+     "hands": 8741
+    },
+    {
+     "key": [
+      "35-50%",
+      "over 45%"
+     ],
+     "share": 0.050837000771513215,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.933553935739052,
+     "solver": 0.12079785581793427,
+     "hands": 5856
+    },
+    {
+     "key": [
+      "50-65%",
+      "under 20% of his range"
+     ],
+     "share": 0.027521828886204268,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.3022001932779792,
+     "solver": 0.5022478923787982,
+     "hands": 3915
+    },
+    {
+     "key": [
+      "50-65%",
+      "20-45%"
+     ],
+     "share": 0.043671392507489644,
+     "call": "no",
+     "lean": "no",
+     "gap": 4.27235618530458,
+     "solver": 0.15748872352614043,
+     "hands": 5527
+    },
+    {
+     "key": [
+      "50-65%",
+      "over 45%"
+     ],
+     "share": 0.08453330727910423,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.805188811590946,
+     "solver": 0.09800724028517653,
+     "hands": 8284
+    },
+    {
+     "key": [
+      "65-80%",
+      "under 20% of his range"
+     ],
+     "share": 0.032102814412167426,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.9672035652295415,
+     "solver": 0.7467919260869487,
+     "hands": 4906
+    },
+    {
+     "key": [
+      "65-80%",
+      "20-45%"
+     ],
+     "share": 0.04166043376659377,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.9881381227475251,
+     "solver": 0.40158127767226187,
+     "hands": 5666
+    },
+    {
+     "key": [
+      "65-80%",
+      "over 45%"
+     ],
+     "share": 0.05381152074740064,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.3738936413201146,
+     "solver": 0.23712967850044211,
+     "hands": 6076
+    },
+    {
+     "key": [
+      "80%+",
+      "under 20% of his range"
+     ],
+     "share": 0.07546994992082877,
+     "call": "act",
+     "lean": "act",
+     "gap": 2.0798316966735624,
+     "solver": 0.8070772912440836,
+     "hands": 12181
+    },
+    {
+     "key": [
+      "80%+",
+      "20-45%"
+     ],
+     "share": 0.08520761277423738,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.46341067369205,
+     "solver": 0.5148739481002282,
+     "hands": 11697
+    },
+    {
+     "key": [
+      "80%+",
+      "over 45%"
+     ],
+     "share": 0.09057241124173163,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.704232463435058,
+     "solver": 0.46717400774927326,
+     "hands": 11150
+    }
+   ],
+   "score": {
+    "mean": 0.5028745016910184,
+    "p50": 0.23061146974053467,
+    "p90": 1.2712672568509071,
+    "p95": 1.8156124077144917,
+    "over1": 0.14763231197771587,
+    "opposite": 0.14689652006675,
+    "cells": 18
+   },
+   "n": 1436
+  },
+  "examples": [
+   {
+    "spot": "SRP-CO-BU 2d2sJc",
+    "pot_type": "SRP",
+    "pre": "SRP-CO-BU",
+    "board": "2d 2s Jc 9c Jd",
+    "line": "xx|xx|first",
+    "pot": 6.5,
+    "toCall": 0,
+    "behind": 97.5,
+    "spr": 15.0,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.22732025055036606,
+    "my_eq": 0.3632071290649715,
+    "reads": {
+     "stack to pot": "over 6",
+     "top pair or better": "I have more (4+ points)",
+     "my range": "polar (65%+ at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": 0.04326334455152224,
+     "polar": 0.865050832215732,
+     "his_weak": 0.04881152756681309
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.04326334455152224,
+      "his": 0.0,
+      "solver": 0.4793533816007985
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.12916326844431816,
+      "his": 0.11923724290816537,
+      "solver": 0.7515756470803384
+     },
+     {
+      "row": "low pair",
+      "mine": 0.19296971867585144,
+      "his": 0.5364957510571041,
+      "solver": 0.18268701663630385
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.6346036683283082,
+      "his": 0.3442670060347305,
+      "solver": 0.11700655932004368
+     }
+    ],
+    "hands": [
+     {
+      "hand": "9h9s",
+      "row": "trips or better",
+      "equity": 1.0,
+      "draw": "no draw",
+      "margin": 1.0,
+      "key": [
+       "80%+",
+       "under 20% of his range"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.4749999940395355,
+      "cost_act": 0.0,
+      "cost_no": 0.17999999690800905
+     },
+     {
+      "hand": "7c7h",
+      "row": "low pair",
+      "equity": 0.625,
+      "draw": "no draw",
+      "margin": 0.625,
+      "key": [
+       "50-65%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.00019999999494757503,
+      "cost_act": 2.580000087618828,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "6h6s",
+      "row": "low pair",
+      "equity": 0.4422999918460846,
+      "draw": "no draw",
+      "margin": 0.4422999918460846,
+      "key": [
+       "35-50%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.01730000041425228,
+      "cost_act": 2.4399999529123306,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Ac7h",
+      "row": "air",
+      "equity": 0.210999995470047,
+      "draw": "no draw",
+      "margin": 0.210999995470047,
+      "key": [
+       "20-35%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0005000000237487257,
+      "cost_act": 4.610000178217888,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Ad7s",
+      "row": "air",
+      "equity": 0.1996999979019165,
+      "draw": "no draw",
+      "margin": 0.1996999979019165,
+      "key": [
+       "under 20%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 9.999999747378752e-05,
+      "cost_act": 9.449999779462814,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.23045185261229753,
+    "who": "nobody"
+   },
+   {
+    "spot": "3BP-BB-CO 9h3h6s",
+    "pot_type": "3BP",
+    "pre": "3BP-BB-CO",
+    "board": "9h 3h 6s 4c 7s",
+    "line": "bc2|xx|first",
+    "pot": 61.26,
+    "toCall": 0,
+    "behind": 69.62,
+    "spr": 1.1364675155076722,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.25506959614481345,
+    "my_eq": 0.34702120578458656,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "polar (65%+ at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": -0.07040306802601487,
+     "polar": 0.731198287386639,
+     "his_weak": 0.05128605440849304
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.009412147270296638,
+      "his": 0.11075178285669683,
+      "solver": 0.8011215206869478
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0024388481410557504,
+      "his": 0.00028994072942396587,
+      "solver": 0.9684000015258789
+     },
+     {
+      "row": "overpair",
+      "mine": 0.25654424251183294,
+      "his": 0.1831867831633649,
+      "solver": 0.6329798934448906
+     },
+     {
+      "row": "top pair",
+      "mine": 0.00557321964085703,
+      "his": 0.05014301884057163,
+      "solver": 0.5659204198754835
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.009561187990027822,
+      "his": 0.11137627058160997,
+      "solver": 0.4160675877192021
+     },
+     {
+      "row": "low pair",
+      "mine": 0.05153195794341872,
+      "his": 0.00742694329986005,
+      "solver": 0.04699262908848761
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.6649383965025112,
+      "his": 0.5368252605284729,
+      "solver": 0.11012519819958455
+     }
+    ],
+    "hands": [
+     {
+      "hand": "As5h",
+      "row": "trips or better",
+      "equity": 1.0,
+      "draw": "no draw",
+      "margin": 1.0,
+      "key": [
+       "80%+",
+       "under 20% of his range"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.8202000260353088,
+      "cost_act": 0.0,
+      "cost_no": 1.339999958872795
+     },
+     {
+      "hand": "TcTs",
+      "row": "overpair",
+      "equity": 0.7616999745368958,
+      "draw": "no draw",
+      "margin": 0.7616999745368958,
+      "key": [
+       "65-80%",
+       "under 20% of his range"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.8781999945640564,
+      "cost_act": 0.0,
+      "cost_no": 2.290000021457672
+     },
+     {
+      "hand": "Kh4h",
+      "row": "low pair",
+      "equity": 0.5181999802589417,
+      "draw": "no draw",
+      "margin": 0.5181999802589417,
+      "key": [
+       "50-65%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.10580000281333923,
+      "cost_act": 2.03000009059906,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Ah4h",
+      "row": "low pair",
+      "equity": 0.4844000041484833,
+      "draw": "no draw",
+      "margin": 0.4844000041484833,
+      "key": [
+       "35-50%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.013799999840557575,
+      "cost_act": 3.830000013113022,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AsKs",
+      "row": "air",
+      "equity": 0.34950000047683716,
+      "draw": "no draw",
+      "margin": 0.34950000047683716,
+      "key": [
+       "20-35%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.009200000204145908,
+      "cost_act": 13.680000603199005,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AsQh",
+      "row": "air",
+      "equity": 0.18520000576972961,
+      "draw": "no draw",
+      "margin": 0.18520000576972961,
+      "key": [
+       "under 20%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0005000000237487257,
+      "cost_act": 16.419999301433563,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.23077108686877182,
+    "who": "nobody"
+   }
+  ],
+  "n": 1436,
+  "solver_acts": 0.32668982071233266,
+  "always": 3.3221583784655557,
+  "never": 0.8660233610261651,
+  "model": [
+   0.39,
+   0.85
+  ]
+ },
+ "river, in position, first to act": {
+  "table": {
+   "names": [
+    "equity",
+    "his weak hands"
+   ],
+   "hand": [
+    "equity"
+   ],
+   "spot": [
+    "his weak hands"
+   ],
+   "labels": {
+    "equity": [
+     "under 20%",
+     "20-35%",
+     "35-50%",
+     "50-65%",
+     "65-80%",
+     "80%+"
+    ],
+    "his weak hands": [
+     "under 20% of his range",
+     "20-45%",
+     "over 45%"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "under 20%",
+      "under 20% of his range"
+     ],
+     "share": 0.20949040614109468,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.8314367825332503,
+     "solver": 0.2705356470454082,
+     "hands": 38201
+    },
+    {
+     "key": [
+      "under 20%",
+      "20-45%"
+     ],
+     "share": 0.03611459685129394,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.3505810795977196,
+     "solver": 0.5393326444315237,
+     "hands": 7235
+    },
+    {
+     "key": [
+      "under 20%",
+      "over 45%"
+     ],
+     "share": 0.034724670898295236,
+     "call": "act",
+     "lean": "act",
+     "gap": 20.726124735079573,
+     "solver": 0.7983715243476195,
+     "hands": 7942
+    },
+    {
+     "key": [
+      "20-35%",
+      "under 20% of his range"
+     ],
+     "share": 0.014703865953727337,
+     "call": "no",
+     "lean": "no",
+     "gap": 13.579910666490425,
+     "solver": 0.06320700701004717,
+     "hands": 3144
+    },
+    {
+     "key": [
+      "20-35%",
+      "20-45%"
+     ],
+     "share": 0.020846358024452578,
+     "call": "no",
+     "lean": "no",
+     "gap": 6.199631314986287,
+     "solver": 0.20723506694196953,
+     "hands": 3692
+    },
+    {
+     "key": [
+      "20-35%",
+      "over 45%"
+     ],
+     "share": 0.014765849035243687,
+     "call": "act",
+     "lean": "act",
+     "gap": 7.2525696209594175,
+     "solver": 0.6025066711854038,
+     "hands": 3019
+    },
+    {
+     "key": [
+      "35-50%",
+      "under 20% of his range"
+     ],
+     "share": 0.015365868978964862,
+     "call": "no",
+     "lean": "no",
+     "gap": 14.763092577173124,
+     "solver": 0.060564035674184405,
+     "hands": 2815
+    },
+    {
+     "key": [
+      "35-50%",
+      "20-45%"
+     ],
+     "share": 0.016778646891315516,
+     "call": "no",
+     "lean": "no",
+     "gap": 11.777486528663065,
+     "solver": 0.08376068712797662,
+     "hands": 2738
+    },
+    {
+     "key": [
+      "35-50%",
+      "over 45%"
+     ],
+     "share": 0.021968441429584998,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.7381761696614341,
+     "solver": 0.38473937931728974,
+     "hands": 3647
+    },
+    {
+     "key": [
+      "50-65%",
+      "under 20% of his range"
+     ],
+     "share": 0.020181305269026475,
+     "call": "no",
+     "lean": "no",
+     "gap": 8.395224539512476,
+     "solver": 0.21857760665337816,
+     "hands": 3368
+    },
+    {
+     "key": [
+      "50-65%",
+      "20-45%"
+     ],
+     "share": 0.012812767188126352,
+     "call": "no",
+     "lean": "no",
+     "gap": 11.134500893674081,
+     "solver": 0.05226005443087913,
+     "hands": 2023
+    },
+    {
+     "key": [
+      "50-65%",
+      "over 45%"
+     ],
+     "share": 0.030260261273699466,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.098658137151861,
+     "solver": 0.2422100925859935,
+     "hands": 4487
+    },
+    {
+     "key": [
+      "65-80%",
+      "under 20% of his range"
+     ],
+     "share": 0.07059825421545633,
+     "call": "act",
+     "lean": "act",
+     "gap": 2.3253067932315443,
+     "solver": 0.7068621979179226,
+     "hands": 8783
+    },
+    {
+     "key": [
+      "65-80%",
+      "20-45%"
+     ],
+     "share": 0.025371487462988892,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.5414389334136801,
+     "solver": 0.5483164627033963,
+     "hands": 3520
+    },
+    {
+     "key": [
+      "65-80%",
+      "over 45%"
+     ],
+     "share": 0.059743234360423454,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.3849128172421556,
+     "solver": 0.3009303479732456,
+     "hands": 7511
+    },
+    {
+     "key": [
+      "80%+",
+      "under 20% of his range"
+     ],
+     "share": 0.11379823056338335,
+     "call": "act",
+     "lean": "act",
+     "gap": 23.29965030743988,
+     "solver": 0.9919576481490391,
+     "hands": 13224
+    },
+    {
+     "key": [
+      "80%+",
+      "20-45%"
+     ],
+     "share": 0.05773131601234546,
+     "call": "act",
+     "lean": "act",
+     "gap": 16.304199031043943,
+     "solver": 0.9385685661651471,
+     "hands": 7617
+    },
+    {
+     "key": [
+      "80%+",
+      "over 45%"
+     ],
+     "share": 0.2247444394505774,
+     "call": "act",
+     "lean": "act",
+     "gap": 4.622905057207138,
+     "solver": 0.67316003866081,
+     "hands": 26531
+    }
+   ],
+   "score": {
+    "mean": 0.7736121617564683,
+    "p50": 0.41775530962055146,
+    "p90": 1.8905469704310869,
+    "p95": 2.570378231409491,
+    "over1": 0.2537931034482759,
+    "opposite": 0.141364236108749,
+    "cells": 18
+   },
+   "n": 1450
+  },
+  "examples": [
+   {
+    "spot": "SRP-BB-CO 4cJdKh",
+    "pot_type": "SRP",
+    "pre": "SRP-BB-CO",
+    "board": "4c Jd Kh Ah 8h",
+    "line": "xx|xbc|x",
+    "pot": 13.76,
+    "toCall": 0,
+    "behind": 93.37,
+    "spr": 6.78561046511628,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.692423665210596,
+    "my_eq": 0.563432718625395,
+    "reads": {
+     "stack to pot": "over 6",
+     "top pair or better": "I have more (4+ points)",
+     "my range": "polar (65%+ at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "over 55%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": 0.06434740117588067,
+     "polar": 0.8842853526732943,
+     "his_weak": 0.041673496967346506
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.13619949327815592,
+      "his": 0.019755228678466758,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.16791489302409832,
+      "his": 0.09294073431396457,
+      "solver": 1.0
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.3132734649138085,
+      "his": 0.44034448704775075,
+      "solver": 0.6301412210514585
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.06459194028949562,
+      "his": 0.4042824985706346,
+      "solver": 0.0001352520275022948
+     },
+     {
+      "row": "low pair",
+      "mine": 0.28005090441256725,
+      "his": 0.04267705138918319,
+      "solver": 0.6767795846658794
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.037969304081874364,
+      "his": 0.0,
+      "solver": 0.03585228129549013
+     }
+    ],
+    "hands": [
+     {
+      "hand": "JhTh",
+      "row": "trips or better",
+      "equity": 1.0,
+      "draw": "no draw",
+      "margin": 1.0,
+      "key": [
+       "80%+",
+       "under 20% of his range"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 42.6800012588501
+     },
+     {
+      "hand": "As9h",
+      "row": "top pair",
+      "equity": 0.7466999888420105,
+      "draw": "no draw",
+      "margin": 0.7466999888420105,
+      "key": [
+       "65-80%",
+       "under 20% of his range"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.0,
+      "cost_act": 1.679999940097332,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KcTs",
+      "row": "middle pair",
+      "equity": 0.2160000056028366,
+      "draw": "no draw",
+      "margin": 0.2160000056028366,
+      "key": [
+       "20-35%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 9.999999747378752e-05,
+      "cost_act": 29.429998993873596,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "QdJh",
+      "row": "low pair",
+      "equity": 0.01510000042617321,
+      "draw": "no draw",
+      "margin": 0.01510000042617321,
+      "key": [
+       "under 20%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.021199999377131462,
+      "cost_act": 1.9999999552965164,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.4190451940725599,
+    "who": "I did"
+   },
+   {
+    "spot": "3BP-SB-BB Th6dKd",
+    "pot_type": "3BP",
+    "pre": "3BP-SB-BB",
+    "board": "Th 6d Kd 2s 3c",
+    "line": "xbc1|xx|x",
+    "pot": 33.2,
+    "toCall": 0,
+    "behind": 83.4,
+    "spr": 2.5120481927710845,
+    "price": 0.0,
+    "bet": 0.0,
+    "solver_acts": 0.41274090035724637,
+    "my_eq": 0.35279007000096557,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "polar (65%+ at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": -0.0734553626038019,
+     "polar": 0.8206189050883461,
+     "his_weak": 0.0
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.0,
+      "his": 0.0001570178036777852,
+      "solver": null
+     },
+     {
+      "row": "two pair",
+      "mine": 0.016708506324225162,
+      "his": 0.006737491212355875,
+      "solver": 1.0
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.008921502365549868,
+      "his": 0.09219086227754326,
+      "solver": 1.0
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.270778217630588,
+      "his": 0.21356919310691846,
+      "solver": 0.9377966092799574
+     },
+     {
+      "row": "low pair",
+      "mine": 0.2605049724823791,
+      "his": 0.34996770429265284,
+      "solver": 0.018277116771651055
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.44308680119725796,
+      "his": 0.337377731306852,
+      "solver": 0.2898184213739974
+     }
+    ],
+    "hands": [
+     {
+      "hand": "Ts3s",
+      "row": "two pair",
+      "equity": 0.9962000250816345,
+      "draw": "no draw",
+      "margin": 0.9962000250816345,
+      "key": [
+       "80%+",
+       "under 20% of his range"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 37.6800000667572
+     },
+     {
+      "hand": "Jh6h",
+      "row": "low pair",
+      "equity": 0.3781000077724457,
+      "draw": "no draw",
+      "margin": 0.3781000077724457,
+      "key": [
+       "35-50%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.004999999888241291,
+      "cost_act": 3.959999978542328,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Ad6s",
+      "row": "low pair",
+      "equity": 0.3393999934196472,
+      "draw": "no draw",
+      "margin": 0.3393999934196472,
+      "key": [
+       "20-35%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0038999998942017555,
+      "cost_act": 6.390000134706497,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "As7d",
+      "row": "air",
+      "equity": 0.004999999888241291,
+      "draw": "no draw",
+      "margin": 0.004999999888241291,
+      "key": [
+       "under 20%",
+       "under 20% of his range"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.2070000022649765,
+      "cost_act": 0.559999980032444,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.4174489718115959,
+    "who": "nobody"
+   }
+  ],
+  "n": 1450,
+  "solver_acts": 0.5413700437412732,
+  "always": 2.783888445602864,
+  "never": 6.44266194565675,
+  "model": [
+   0.43,
+   0.9
+  ]
+ },
+ "flop, out of position, facing a bet": {
+  "table": {
+   "names": [
+    "margin",
+    "draw"
+   ],
+   "hand": [
+    "margin",
+    "draw"
+   ],
+   "spot": [],
+   "labels": {
+    "margin": [
+     "5+ under the price",
+     "0-5 under",
+     "0-5 over",
+     "5-15 over",
+     "15+ over"
+    ],
+    "draw": [
+     "no draw",
+     "gutshot",
+     "open-ended",
+     "flush draw"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "5+ under the price",
+      "no draw"
+     ],
+     "share": 0.06713719826688938,
+     "call": "no",
+     "lean": "no",
+     "gap": 14.231254610573318,
+     "solver": 0.001715080256082729,
+     "hands": 1077
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "gutshot"
+     ],
+     "share": 0.003547661595113783,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.8395847964428462,
+     "solver": 0.08346120290044759,
+     "hands": 61
+    },
+    {
+     "key": [
+      "0-5 under",
+      "no draw"
+     ],
+     "share": 0.06993605723697738,
+     "call": "no",
+     "lean": "no",
+     "gap": 5.656782521251406,
+     "solver": 0.05606022606910272,
+     "hands": 1018
+    },
+    {
+     "key": [
+      "0-5 under",
+      "gutshot"
+     ],
+     "share": 0.0064517456421387545,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.713253049973229,
+     "solver": 0.18897714135676222,
+     "hands": 96
+    },
+    {
+     "key": [
+      "0-5 under",
+      "open-ended"
+     ],
+     "share": 7.188039304892827e-06,
+     "call": "act",
+     "lean": "act",
+     "gap": 24.845512441243045,
+     "solver": 1.0,
+     "hands": 1
+    },
+    {
+     "key": [
+      "0-5 under",
+      "flush draw"
+     ],
+     "share": 9.451302462896652e-05,
+     "call": "act",
+     "lean": "act",
+     "gap": 30.58117885303318,
+     "solver": 1.0,
+     "hands": 3
+    },
+    {
+     "key": [
+      "0-5 over",
+      "no draw"
+     ],
+     "share": 0.07963484454406322,
+     "call": "no",
+     "lean": "no",
+     "gap": 2.527796281261248,
+     "solver": 0.37933374917821566,
+     "hands": 1073
+    },
+    {
+     "key": [
+      "0-5 over",
+      "gutshot"
+     ],
+     "share": 0.007744315119981,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.423330084497935,
+     "solver": 0.5948830474077645,
+     "hands": 121
+    },
+    {
+     "key": [
+      "0-5 over",
+      "open-ended"
+     ],
+     "share": 0.0003640470821027139,
+     "call": "act",
+     "lean": "act",
+     "gap": 9.760917134091088,
+     "solver": 0.9810688836525657,
+     "hands": 12
+    },
+    {
+     "key": [
+      "0-5 over",
+      "flush draw"
+     ],
+     "share": 0.00029202721003777465,
+     "call": "act",
+     "lean": "act",
+     "gap": 2.4799416735618487,
+     "solver": 0.9288113010961654,
+     "hands": 9
+    },
+    {
+     "key": [
+      "5-15 over",
+      "no draw"
+     ],
+     "share": 0.15573742211153255,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.515250476796197,
+     "solver": 0.2469868064429793,
+     "hands": 2127
+    },
+    {
+     "key": [
+      "5-15 over",
+      "gutshot"
+     ],
+     "share": 0.027849062312074596,
+     "call": "act",
+     "lean": "act",
+     "gap": 3.4850798300485493,
+     "solver": 0.6959956673650993,
+     "hands": 361
+    },
+    {
+     "key": [
+      "5-15 over",
+      "open-ended"
+     ],
+     "share": 0.008422723392562633,
+     "call": "act",
+     "lean": "act",
+     "gap": 16.467207631001983,
+     "solver": 0.9952567162223513,
+     "hands": 148
+    },
+    {
+     "key": [
+      "5-15 over",
+      "flush draw"
+     ],
+     "share": 0.004592577828819777,
+     "call": "act",
+     "lean": "act",
+     "gap": 19.550245390047515,
+     "solver": 0.9998076412257146,
+     "hands": 67
+    },
+    {
+     "key": [
+      "15+ over",
+      "no draw"
+     ],
+     "share": 0.47828540745361336,
+     "call": "act",
+     "lean": "act",
+     "gap": 35.659812083879814,
+     "solver": 0.8027210450284162,
+     "hands": 6447
+    },
+    {
+     "key": [
+      "15+ over",
+      "gutshot"
+     ],
+     "share": 0.03396400910944657,
+     "call": "act",
+     "lean": "act",
+     "gap": 13.775268033553779,
+     "solver": 0.9624771580280431,
+     "hands": 475
+    },
+    {
+     "key": [
+      "15+ over",
+      "open-ended"
+     ],
+     "share": 0.009660178962881396,
+     "call": "act",
+     "lean": "act",
+     "gap": 29.42440561945867,
+     "solver": 0.9999945778733752,
+     "hands": 187
+    },
+    {
+     "key": [
+      "15+ over",
+      "flush draw"
+     ],
+     "share": 0.04627902106783124,
+     "call": "act",
+     "lean": "act",
+     "gap": 49.504058449117814,
+     "solver": 1.0,
+     "hands": 618
+    }
+   ],
+   "score": {
+    "mean": 0.38104828467717267,
+    "p50": 0.2326641842686894,
+    "p90": 0.6004321924689264,
+    "p95": 0.9336757797898149,
+    "over1": 0.05,
+    "opposite": 0.11931034502824786,
+    "cells": 20
+   },
+   "n": 80
+  },
+  "examples": [
+   {
+    "spot": "SRP-SB-BB Ad8h5d",
+    "pot_type": "SRP",
+    "pre": "SRP-SB-BB",
+    "board": "Ad 8h 5d",
+    "line": "xb3",
+    "pot": 13.5,
+    "toCall": 7.5,
+    "behind": 89.5,
+    "spr": 6.62962962962963,
+    "price": 0.35714285714285715,
+    "bet": 1.25,
+    "solver_acts": 0.40009923141956805,
+    "my_eq": 0.49639339687126394,
+    "reads": {
+     "stack to pot": "over 6",
+     "top pair or better": "about even",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "45-55%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": 0.009700927041881413,
+     "polar": 0.05547952551409409,
+     "his_weak": 0.26421276216301487
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.011590952727043188,
+      "his": 0.08560924249664473,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.027654575990540903,
+      "his": 0.1431759307315757,
+      "solver": 1.0
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.21796152012935527,
+      "his": 0.01872094857683751,
+      "solver": 0.9550592773771498
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.15635117754997013,
+      "his": 0.033861412850874885,
+      "solver": 0.5383788719333328
+     },
+     {
+      "row": "low pair",
+      "mine": 0.09861792873126073,
+      "his": 0.19359765508001217,
+      "solver": 0.16830027339087725
+     },
+     {
+      "row": "draw",
+      "mine": 0.04499059438737565,
+      "his": 0.1727732291349906,
+      "solver": 1.0
+     },
+     {
+      "row": "air",
+      "mine": 0.4428332504844541,
+      "his": 0.35226158112906425,
+      "solver": 0.01563419338836877
+     }
+    ],
+    "hands": [
+     {
+      "hand": "8d8s",
+      "row": "trips or better",
+      "equity": 0.8877999782562256,
+      "draw": "no draw",
+      "margin": 0.5306571211133684,
+      "key": [
+       "15+ over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 176.26999616622925
+     },
+     {
+      "hand": "Kd8d",
+      "row": "middle pair",
+      "equity": 0.746399998664856,
+      "draw": "flush draw",
+      "margin": 0.3892571415219988,
+      "key": [
+       "15+ over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.04245600139256567,
+      "cost_no": 79.68999743461609
+     },
+     {
+      "hand": "Td6d",
+      "row": "draw",
+      "equity": 0.504800021648407,
+      "draw": "flush draw",
+      "margin": 0.14765716450554983,
+      "key": [
+       "5-15 over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.00029400000585155794,
+      "cost_no": 27.160000801086426
+     },
+     {
+      "hand": "4d4h",
+      "row": "low pair",
+      "equity": 0.484499990940094,
+      "draw": "no draw",
+      "margin": 0.12735713379723684,
+      "key": [
+       "5-15 over",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0010000000474974513,
+      "cost_act": 2.6100000366568565,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "7h6h",
+      "row": "draw",
+      "equity": 0.4575999975204468,
+      "draw": "open-ended",
+      "margin": 0.10045714037758963,
+      "key": [
+       "5-15 over",
+       "open-ended"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.006594000296900049,
+      "cost_no": 39.12000060081482
+     },
+     {
+      "hand": "9h7h",
+      "row": "air",
+      "equity": 0.40700000524520874,
+      "draw": "gutshot",
+      "margin": 0.04985714810235159,
+      "key": [
+       "0-5 over",
+       "gutshot"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9997000098228455,
+      "cost_act": 0.018505551270209253,
+      "cost_no": 14.810000360012054
+     },
+     {
+      "hand": "KhJd",
+      "row": "air",
+      "equity": 0.4041000008583069,
+      "draw": "no draw",
+      "margin": 0.046957143715449734,
+      "key": [
+       "0-5 over",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.00019999999494757503,
+      "cost_act": 7.760000228881836,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.2199982122082546,
+    "who": "I did"
+   },
+   {
+    "spot": "4BP-CO-BU Js5s7d",
+    "pot_type": "4BP",
+    "pre": "4BP-CO-BU",
+    "board": "Js 5s 7d",
+    "line": "xb1",
+    "pot": 55.2,
+    "toCall": 13.7,
+    "behind": 66.3,
+    "spr": 1.201086956521739,
+    "price": 0.19883889695210447,
+    "bet": 0.3301204819277108,
+    "solver_acts": 0.5541397988587947,
+    "my_eq": 0.42392478101805153,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": -0.19993274459478916,
+     "polar": 0.3689977567335633,
+     "his_weak": 0.0920684400800725
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.04716881709098027,
+      "his": 0.02500273879831489,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.1446620797639301,
+      "his": 0.21836687946299635,
+      "solver": 1.0
+     },
+     {
+      "row": "top pair",
+      "mine": 0.04682254106382018,
+      "his": 0.19521656425220846,
+      "solver": 1.0
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.061947275710995016,
+      "his": 0.1661803224810525,
+      "solver": 0.9969872803135619
+     },
+     {
+      "row": "low pair",
+      "mine": 0.06264283886120355,
+      "his": 0.06386379706998375,
+      "solver": 0.8332225472784192
+     },
+     {
+      "row": "draw",
+      "mine": 0.03978560997274958,
+      "his": 0.06023364439442679,
+      "solver": 1.0
+     },
+     {
+      "row": "air",
+      "mine": 0.5969708375363214,
+      "his": 0.2711360535410173,
+      "solver": 0.27094234462323535
+     }
+    ],
+    "hands": [
+     {
+      "hand": "JdJh",
+      "row": "trips or better",
+      "equity": 0.9282000064849854,
+      "draw": "no draw",
+      "margin": 0.7293611095328809,
+      "key": [
+       "15+ over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.06202000076882541,
+      "cost_no": 149.0399956703186
+     },
+     {
+      "hand": "AsKs",
+      "row": "draw",
+      "equity": 0.5999000072479248,
+      "draw": "flush draw",
+      "margin": 0.40106111029582037,
+      "key": [
+       "15+ over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.01840799959609285,
+      "cost_no": 55.15999794006348
+     },
+     {
+      "hand": "AhQs",
+      "row": "air",
+      "equity": 0.3296000063419342,
+      "draw": "no draw",
+      "margin": 0.13076110938982974,
+      "key": [
+       "5-15 over",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.9883999824523926,
+      "cost_act": 0.17802509246394038,
+      "cost_no": 4.259999841451645
+     },
+     {
+      "hand": "AhTh",
+      "row": "air",
+      "equity": 0.2168000042438507,
+      "draw": "no draw",
+      "margin": 0.017961107291746242,
+      "key": [
+       "0-5 over",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0005000000237487257,
+      "cost_act": 2.6900000870227814,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "QdTd",
+      "row": "air",
+      "equity": 0.19200000166893005,
+      "draw": "no draw",
+      "margin": -0.006838895283174412,
+      "key": [
+       "0-5 under",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.03680000081658363,
+      "cost_act": 0.4232608713209629,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.21115731415431918,
+    "who": "I did"
+   }
+  ],
+  "n": 80,
+  "solver_acts": 0.5844772163925283,
+  "always": 2.1909958912058136,
+  "never": 20.82056508701309,
+  "model": [
+   0.14,
+   0.26
+  ]
+ },
+ "flop, in position, facing a bet": {
+  "table": {
+   "names": [
+    "margin",
+    "draw"
+   ],
+   "hand": [
+    "margin",
+    "draw"
+   ],
+   "spot": [],
+   "labels": {
+    "margin": [
+     "5+ under the price",
+     "0-5 under",
+     "0-5 over",
+     "5-15 over",
+     "15+ over"
+    ],
+    "draw": [
+     "no draw",
+     "gutshot",
+     "open-ended",
+     "flush draw"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "5+ under the price",
+      "no draw"
+     ],
+     "share": 0.09042411463502961,
+     "call": "no",
+     "lean": "no",
+     "gap": 10.200041051522447,
+     "solver": 0.028964604072247956,
+     "hands": 1369
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "gutshot"
+     ],
+     "share": 0.0041394325719262305,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.66734679405934,
+     "solver": 0.33099228985652035,
+     "hands": 63
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "open-ended"
+     ],
+     "share": 0.00045902844836058325,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.671110457470818,
+     "solver": 0.2041019422316884,
+     "hands": 14
+    },
+    {
+     "key": [
+      "0-5 under",
+      "no draw"
+     ],
+     "share": 0.07200630962145788,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.847668732661854,
+     "solver": 0.0995011979930111,
+     "hands": 940
+    },
+    {
+     "key": [
+      "0-5 under",
+      "gutshot"
+     ],
+     "share": 0.005719035330192176,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.8974333567980275,
+     "solver": 0.7142208538644894,
+     "hands": 113
+    },
+    {
+     "key": [
+      "0-5 under",
+      "open-ended"
+     ],
+     "share": 0.00038258421273125486,
+     "call": "act",
+     "lean": "act",
+     "gap": 4.593440331505104,
+     "solver": 1.0,
+     "hands": 6
+    },
+    {
+     "key": [
+      "0-5 over",
+      "no draw"
+     ],
+     "share": 0.08672917337664983,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.5102833513958975,
+     "solver": 0.33787648381834007,
+     "hands": 1055
+    },
+    {
+     "key": [
+      "0-5 over",
+      "gutshot"
+     ],
+     "share": 0.009255049781408276,
+     "call": "act",
+     "lean": "act",
+     "gap": 6.0040285657313435,
+     "solver": 0.84048410345538,
+     "hands": 138
+    },
+    {
+     "key": [
+      "0-5 over",
+      "open-ended"
+     ],
+     "share": 0.0007611310801548533,
+     "call": "act",
+     "lean": "act",
+     "gap": 16.86107302733068,
+     "solver": 1.0,
+     "hands": 18
+    },
+    {
+     "key": [
+      "0-5 over",
+      "flush draw"
+     ],
+     "share": 0.0001134614771748131,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.8673581719116689,
+     "solver": 0.9717269644694789,
+     "hands": 4
+    },
+    {
+     "key": [
+      "5-15 over",
+      "no draw"
+     ],
+     "share": 0.1387325872534159,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.4748084409133687,
+     "solver": 0.5010866444817136,
+     "hands": 1938
+    },
+    {
+     "key": [
+      "5-15 over",
+      "gutshot"
+     ],
+     "share": 0.028759463070316946,
+     "call": "act",
+     "lean": "act",
+     "gap": 6.494978811588903,
+     "solver": 0.8388482618301137,
+     "hands": 345
+    },
+    {
+     "key": [
+      "5-15 over",
+      "open-ended"
+     ],
+     "share": 0.011099992395481362,
+     "call": "act",
+     "lean": "act",
+     "gap": 15.94701626849882,
+     "solver": 0.9440052422979945,
+     "hands": 102
+    },
+    {
+     "key": [
+      "5-15 over",
+      "flush draw"
+     ],
+     "share": 0.002778569659829526,
+     "call": "act",
+     "lean": "act",
+     "gap": 24.86906172126698,
+     "solver": 0.9999627310668858,
+     "hands": 36
+    },
+    {
+     "key": [
+      "15+ over",
+      "no draw"
+     ],
+     "share": 0.4574527064473965,
+     "call": "act",
+     "lean": "act",
+     "gap": 52.081407368354206,
+     "solver": 0.9428072616482895,
+     "hands": 4654
+    },
+    {
+     "key": [
+      "15+ over",
+      "gutshot"
+     ],
+     "share": 0.0230847426410965,
+     "call": "act",
+     "lean": "act",
+     "gap": 16.404368745734473,
+     "solver": 0.9907899747701887,
+     "hands": 429
+    },
+    {
+     "key": [
+      "15+ over",
+      "open-ended"
+     ],
+     "share": 0.011789423085844252,
+     "call": "act",
+     "lean": "act",
+     "gap": 30.292167847205285,
+     "solver": 1.0,
+     "hands": 154
+    },
+    {
+     "key": [
+      "15+ over",
+      "flush draw"
+     ],
+     "share": 0.05631319491153352,
+     "call": "act",
+     "lean": "act",
+     "gap": 47.96984681898929,
+     "solver": 1.0,
+     "hands": 487
+    }
+   ],
+   "score": {
+    "mean": 0.2755366317337722,
+    "p50": 0.17698452213776972,
+    "p90": 0.6664431007538185,
+    "p95": 0.8327309503513175,
+    "over1": 0.04,
+    "opposite": 0.09108280188841794,
+    "cells": 20
+   },
+   "n": 75
+  },
+  "examples": [
+   {
+    "spot": "3BP-UTG-BU 3s8d4h",
+    "pot_type": "3BP",
+    "pre": "3BP-UTG-BU",
+    "board": "3s 8d 4h",
+    "line": "xb2r2",
+    "pot": 66.02,
+    "toCall": 24.759999999999998,
+    "behind": 55.36,
+    "spr": 0.8385337776431385,
+    "price": 0.27274730116765805,
+    "bet": 0.6000969461948619,
+    "solver_acts": 0.5492450032319192,
+    "my_eq": 0.43259058397373223,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "in between",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": -0.2617569125415086,
+     "polar": 0.525673961043864,
+     "his_weak": 0.0
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.009848606223332066,
+      "his": 0.08605240621425737,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.3018096906012844,
+      "his": 0.5103197365320397,
+      "solver": 1.0
+     },
+     {
+      "row": "top pair",
+      "mine": 0.03762469591415434,
+      "his": 0.014667762533982425,
+      "solver": 1.0
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.05128162630911145,
+      "his": 0.0915470696086489,
+      "solver": 0.9966712033117608
+     },
+     {
+      "row": "low pair",
+      "mine": 0.012658810616900638,
+      "his": 0.0,
+      "solver": 0.9113166954482275
+     },
+     {
+      "row": "draw",
+      "mine": 0.02023862797203055,
+      "his": 0.061579313396977926,
+      "solver": 1.0
+     },
+     {
+      "row": "air",
+      "mine": 0.5665379423631868,
+      "his": 0.23583371171409356,
+      "solver": 0.20665213533109456
+     }
+    ],
+    "hands": [
+     {
+      "hand": "AcAd",
+      "row": "overpair",
+      "equity": 0.8108000159263611,
+      "draw": "no draw",
+      "margin": 0.5380527147587031,
+      "key": [
+       "15+ over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 103.41999530792236
+     },
+     {
+      "hand": "6h5h",
+      "row": "draw",
+      "equity": 0.39649999141693115,
+      "draw": "open-ended",
+      "margin": 0.1237526902492731,
+      "key": [
+       "5-15 over",
+       "open-ended"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 31.189998984336853
+     },
+     {
+      "hand": "5s4s",
+      "row": "middle pair",
+      "equity": 0.3815000057220459,
+      "draw": "no draw",
+      "margin": 0.10875270455438785,
+      "key": [
+       "5-15 over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 15.73999971151352
+     },
+     {
+      "hand": "As5s",
+      "row": "air",
+      "equity": 0.33980000019073486,
+      "draw": "gutshot",
+      "margin": 0.06705269902307681,
+      "key": [
+       "5-15 over",
+       "gutshot"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 11.959999799728394
+     },
+     {
+      "hand": "AsKc",
+      "row": "air",
+      "equity": 0.31470000743865967,
+      "draw": "no draw",
+      "margin": 0.041952706271001616,
+      "key": [
+       "0-5 over",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.02930000051856041,
+      "cost_act": 0.2300000051036477,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AcQc",
+      "row": "air",
+      "equity": 0.271699994802475,
+      "draw": "no draw",
+      "margin": -0.001047306365183076,
+      "key": [
+       "0-5 under",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.03689999878406525,
+      "cost_act": 0.03000000142492354,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "QdTd",
+      "row": "air",
+      "equity": 0.22269999980926514,
+      "draw": "no draw",
+      "margin": -0.050047301358392915,
+      "key": [
+       "5+ under the price",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.38190001249313354,
+      "cost_act": 0.07999999797903001,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.16556396462167566,
+    "who": "I did"
+   },
+   {
+    "spot": "SRP-BB-CO 4cJdKh",
+    "pot_type": "SRP",
+    "pre": "SRP-BB-CO",
+    "board": "4c Jd Kh",
+    "line": "xb2r2",
+    "pot": 22.02,
+    "toCall": 8.260000000000002,
+    "behind": 85.11,
+    "spr": 3.8651226158038146,
+    "price": 0.27278731836195513,
+    "bet": 0.6002906976744188,
+    "solver_acts": 0.5921688923004059,
+    "my_eq": 0.42035866537101607,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "about even",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "under 45%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": -0.03252192748902505,
+     "polar": 0.38964731628845095,
+     "his_weak": 0.0
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.04610937359649194,
+      "his": 0.18031645182967806,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.07504266664489101,
+      "his": 0.1398741523611705,
+      "solver": 1.0
+     },
+     {
+      "row": "overpair",
+      "mine": 0.037402928279207256,
+      "his": 0.0,
+      "solver": 1.0
+     },
+     {
+      "row": "top pair",
+      "mine": 0.19760903471309232,
+      "his": 0.068495326531859,
+      "solver": 0.7932082314285073
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.03601309804754167,
+      "his": 0.04144419329219868,
+      "solver": 0.7331788648998222
+     },
+     {
+      "row": "low pair",
+      "mine": 0.09098570157029584,
+      "his": 0.12040442299468507,
+      "solver": 0.3878245251352037
+     },
+     {
+      "row": "draw",
+      "mine": 0.07237569511926246,
+      "his": 0.1965116989431242,
+      "solver": 1.0
+     },
+     {
+      "row": "air",
+      "mine": 0.44446150202921747,
+      "his": 0.2529537540472845,
+      "solver": 0.3212934904948185
+     }
+    ],
+    "hands": [
+     {
+      "hand": "KcKd",
+      "row": "trips or better",
+      "equity": 0.875,
+      "draw": "no draw",
+      "margin": 0.6022126816380449,
+      "key": [
+       "15+ over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 208.38000774383545
+     },
+     {
+      "hand": "AdQd",
+      "row": "air",
+      "equity": 0.43869999051094055,
+      "draw": "gutshot",
+      "margin": 0.16591267214898542,
+      "key": [
+       "15+ over",
+       "gutshot"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 11.299999803304672
+     },
+     {
+      "hand": "AhQs",
+      "row": "air",
+      "equity": 0.4205999970436096,
+      "draw": "gutshot",
+      "margin": 0.14781267868165449,
+      "key": [
+       "5-15 over",
+       "gutshot"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9997000098228455,
+      "cost_act": 0.0,
+      "cost_no": 3.530000150203705
+     },
+     {
+      "hand": "QdTd",
+      "row": "draw",
+      "equity": 0.4133000075817108,
+      "draw": "open-ended",
+      "margin": 0.14051268921975568,
+      "key": [
+       "5-15 over",
+       "open-ended"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 26.30000114440918
+     },
+     {
+      "hand": "6c6s",
+      "row": "low pair",
+      "equity": 0.3644999861717224,
+      "draw": "no draw",
+      "margin": 0.09171266780976728,
+      "key": [
+       "5-15 over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.30649998784065247,
+      "cost_act": 0.0,
+      "cost_no": 0.34000000450760126
+     },
+     {
+      "hand": "Ad5d",
+      "row": "air",
+      "equity": 0.2870999872684479,
+      "draw": "no draw",
+      "margin": 0.014312668906492743,
+      "key": [
+       "0-5 over",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0019000000320374966,
+      "cost_act": 5.5799998342990875,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Qd9d",
+      "row": "air",
+      "equity": 0.2727000117301941,
+      "draw": "gutshot",
+      "margin": -8.730663176104159e-05,
+      "key": [
+       "0-5 under",
+       "gutshot"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9997000098228455,
+      "cost_act": 0.0,
+      "cost_no": 3.7200000137090683
+     }
+    ],
+    "lost": 0.16738827890339616,
+    "who": "I did"
+   }
+  ],
+  "n": 75,
+  "solver_acts": 0.6828319879358428,
+  "always": 1.6026982632816869,
+  "never": 28.098196618634994,
+  "model": [
+   0.16,
+   0.36
+  ]
+ },
+ "turn, out of position, facing a bet": {
+  "table": {
+   "names": [
+    "margin",
+    "stack to pot"
+   ],
+   "hand": [
+    "margin"
+   ],
+   "spot": [
+    "stack to pot"
+   ],
+   "labels": {
+    "margin": [
+     "5+ under the price",
+     "0-5 under",
+     "0-5 over",
+     "5-15 over",
+     "15+ over"
+    ],
+    "stack to pot": [
+     "under 2",
+     "2 to 6",
+     "over 6"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "5+ under the price",
+      "under 2"
+     ],
+     "share": 0.13206144115112453,
+     "call": "no",
+     "lean": "no",
+     "gap": 14.669790773426666,
+     "solver": 0.015268152028816952,
+     "hands": 3769
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "2 to 6"
+     ],
+     "share": 0.03434242349262759,
+     "call": "no",
+     "lean": "no",
+     "gap": 12.93739277443895,
+     "solver": 0.0036277065776293585,
+     "hands": 1583
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "over 6"
+     ],
+     "share": 0.023006121319160203,
+     "call": "no",
+     "lean": "no",
+     "gap": 18.538794267970292,
+     "solver": 0.0033849469794916044,
+     "hands": 1355
+    },
+    {
+     "key": [
+      "0-5 under",
+      "under 2"
+     ],
+     "share": 0.07199183333455123,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.5988545395890363,
+     "solver": 0.13154665383019987,
+     "hands": 1469
+    },
+    {
+     "key": [
+      "0-5 under",
+      "2 to 6"
+     ],
+     "share": 0.01319737646405303,
+     "call": "no",
+     "lean": "no",
+     "gap": 8.094770394643119,
+     "solver": 0.030211207760147355,
+     "hands": 516
+    },
+    {
+     "key": [
+      "0-5 under",
+      "over 6"
+     ],
+     "share": 0.009805284687640725,
+     "call": "no",
+     "lean": "no",
+     "gap": 13.058919465774084,
+     "solver": 0.004924176103889593,
+     "hands": 488
+    },
+    {
+     "key": [
+      "0-5 over",
+      "under 2"
+     ],
+     "share": 0.0783688528806536,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.376328646086904,
+     "solver": 0.3561780275616661,
+     "hands": 1515
+    },
+    {
+     "key": [
+      "0-5 over",
+      "2 to 6"
+     ],
+     "share": 0.017702823854935573,
+     "call": "no",
+     "lean": "no",
+     "gap": 6.607596236722926,
+     "solver": 0.03302795055727067,
+     "hands": 722
+    },
+    {
+     "key": [
+      "0-5 over",
+      "over 6"
+     ],
+     "share": 0.004998146416921303,
+     "call": "no",
+     "lean": "no",
+     "gap": 8.90849877909098,
+     "solver": 0.03777341792776878,
+     "hands": 385
+    },
+    {
+     "key": [
+      "5-15 over",
+      "under 2"
+     ],
+     "share": 0.16224233769429372,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.7056019391614974,
+     "solver": 0.4825819639890032,
+     "hands": 3712
+    },
+    {
+     "key": [
+      "5-15 over",
+      "2 to 6"
+     ],
+     "share": 0.06086309616632672,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.323659102075914,
+     "solver": 0.24327996344481964,
+     "hands": 2162
+    },
+    {
+     "key": [
+      "5-15 over",
+      "over 6"
+     ],
+     "share": 0.03171395186913396,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.8153630522700352,
+     "solver": 0.25145981941614354,
+     "hands": 1511
+    },
+    {
+     "key": [
+      "15+ over",
+      "under 2"
+     ],
+     "share": 0.2023943584373753,
+     "call": "act",
+     "lean": "act",
+     "gap": 46.312867515635006,
+     "solver": 0.9583871574483799,
+     "hands": 5924
+    },
+    {
+     "key": [
+      "15+ over",
+      "2 to 6"
+     ],
+     "share": 0.11264860537025803,
+     "call": "act",
+     "lean": "act",
+     "gap": 29.658481853757415,
+     "solver": 0.902087402712305,
+     "hands": 4632
+    },
+    {
+     "key": [
+      "15+ over",
+      "over 6"
+     ],
+     "share": 0.04466334686094447,
+     "call": "act",
+     "lean": "act",
+     "gap": 33.23483532701873,
+     "solver": 0.969575012587661,
+     "hands": 2972
+    }
+   ],
+   "score": {
+    "mean": 0.2636622603355453,
+    "p50": 0.14502994762591923,
+    "p90": 0.6589509954635869,
+    "p95": 0.9124054876931833,
+    "over1": 0.03806228373702422,
+    "opposite": 0.07742530764563088,
+    "cells": 15
+   },
+   "n": 289
+  },
+  "examples": [
+   {
+    "spot": "4BP-BB-BU 2s2dTd",
+    "pot_type": "4BP",
+    "pre": "4BP-BB-BU",
+    "board": "2s 2d Td 9h",
+    "line": "xx|xb1",
+    "pot": 95.38,
+    "toCall": 40.88,
+    "behind": 32.12,
+    "spr": 0.33675823023694695,
+    "price": 0.3000146778218113,
+    "bet": 0.7500917431192662,
+    "solver_acts": 0.4561589733370533,
+    "my_eq": 0.41614288071420036,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "under 45%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": -0.19351447522596144,
+     "polar": 0.15790522498106893,
+     "his_weak": 0.3546742584745763
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.03088756924793751,
+      "his": 0.15346100370762714,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.006631860029492648,
+      "his": 0.0,
+      "solver": 1.0
+     },
+     {
+      "row": "overpair",
+      "mine": 0.046869395400741316,
+      "his": 0.21196371822033902,
+      "solver": 1.0
+     },
+     {
+      "row": "top pair",
+      "mine": 0.08752142202383326,
+      "his": 0.0,
+      "solver": 0.9997000098228455
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.0,
+      "his": 0.006256620762711864,
+      "solver": null
+     },
+     {
+      "row": "low pair",
+      "mine": 0.07750189310908297,
+      "his": 0.0,
+      "solver": 0.9993567130671654
+     },
+     {
+      "row": "draw",
+      "mine": 0.08220477462038182,
+      "his": 0.056450278072033906,
+      "solver": 0.9998170856783649
+     },
+     {
+      "row": "air",
+      "mine": 0.6683830855685307,
+      "his": 0.5718683792372882,
+      "solver": 0.18646972443094864
+     }
+    ],
+    "hands": [
+     {
+      "hand": "JhTh",
+      "row": "top pair",
+      "equity": 0.5782999992370605,
+      "draw": "no draw",
+      "margin": 0.27828532141524925,
+      "key": [
+       "15+ over",
+       "under 2"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9997000098228455,
+      "cost_act": 0.0,
+      "cost_no": 33.649998903274536
+     },
+     {
+      "hand": "AdQs",
+      "row": "air",
+      "equity": 0.4007999897003174,
+      "draw": "no draw",
+      "margin": 0.10078531187850609,
+      "key": [
+       "5-15 over",
+       "under 2"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9919999837875366,
+      "cost_act": 0.0,
+      "cost_no": 2.5699999183416367
+     },
+     {
+      "hand": "AhJh",
+      "row": "air",
+      "equity": 0.3359000086784363,
+      "draw": "no draw",
+      "margin": 0.035885330856624986,
+      "key": [
+       "0-5 over",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.004900000058114529,
+      "cost_act": 1.4000000432133675,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KcQc",
+      "row": "air",
+      "equity": 0.1843000054359436,
+      "draw": "gutshot",
+      "margin": -0.11571467238586769,
+      "key": [
+       "5+ under the price",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.05620000138878822,
+      "cost_act": 0.2099999925121665,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.1447361234537143,
+    "who": "nobody"
+   },
+   {
+    "spot": "3BP-CO-BU Qc9h3c",
+    "pot_type": "3BP",
+    "pre": "3BP-CO-BU",
+    "board": "Qc 9h 3c 6d",
+    "line": "xbc1|xb1",
+    "pot": 47.95,
+    "toCall": 20.55,
+    "behind": 66.5,
+    "spr": 1.386861313868613,
+    "price": 0.3,
+    "bet": 0.75,
+    "solver_acts": 0.619291844371995,
+    "my_eq": 0.490900016914249,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "45-55%",
+     "who bet last street": "he did"
+    },
+    "values": {
+     "tp_lead": -0.10744950676260107,
+     "polar": 0.12034488153682865,
+     "his_weak": 0.44235317496225246
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.059622727676362765,
+      "his": 0.10665119505760158,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.013111833829240986,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.20598176408280147,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.270611069530249,
+      "his": 0.11193851099956884,
+      "solver": 0.9998813708566753
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.2647291394452972,
+      "his": 0.030357709988946317,
+      "solver": 0.7634326681821637
+     },
+     {
+      "row": "low pair",
+      "mine": 0.27174432421232453,
+      "his": 0.05055419232700452,
+      "solver": 0.1264410804546015
+     },
+     {
+      "row": "draw",
+      "mine": 0.04937269279072422,
+      "his": 0.1511604593932361,
+      "solver": 0.9872016100827153
+     },
+     {
+      "row": "air",
+      "mine": 0.08392004634504222,
+      "his": 0.3302443343216001,
+      "solver": 0.04631586073162475
+     }
+    ],
+    "hands": [
+     {
+      "hand": "9d9s",
+      "row": "trips or better",
+      "equity": 0.8899999856948853,
+      "draw": "no draw",
+      "margin": 0.5899999856948852,
+      "key": [
+       "15+ over",
+       "under 2"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 124.90999698638916
+     },
+     {
+      "hand": "8c8h",
+      "row": "low pair",
+      "equity": 0.44029998779296875,
+      "draw": "no draw",
+      "margin": 0.14029998779296876,
+      "key": [
+       "5-15 over",
+       "under 2"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.09399999678134918,
+      "cost_act": 0.03999999898951501,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AhJh",
+      "row": "air",
+      "equity": 0.25429999828338623,
+      "draw": "no draw",
+      "margin": -0.04570000171661376,
+      "key": [
+       "0-5 under",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0,
+      "cost_act": 12.790000438690186,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KsTs",
+      "row": "air",
+      "equity": 0.16509999334812164,
+      "draw": "gutshot",
+      "margin": -0.13490000665187835,
+      "key": [
+       "5+ under the price",
+       "under 2"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0,
+      "cost_act": 11.990000307559967,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.14456921598282083,
+    "who": "he did"
+   }
+  ],
+  "n": 289,
+  "solver_acts": 0.48079510677801063,
+  "always": 3.97324215273715,
+  "never": 14.73921181030297,
+  "model": [
+   0.11,
+   0.22
+  ]
+ },
+ "turn, in position, facing a bet": {
+  "table": {
+   "names": [
+    "margin",
+    "draw"
+   ],
+   "hand": [
+    "margin",
+    "draw"
+   ],
+   "spot": [],
+   "labels": {
+    "margin": [
+     "5+ under the price",
+     "0-5 under",
+     "0-5 over",
+     "5-15 over",
+     "15+ over"
+    ],
+    "draw": [
+     "no draw",
+     "gutshot",
+     "open-ended",
+     "flush draw"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "5+ under the price",
+      "no draw"
+     ],
+     "share": 0.1005425267272491,
+     "call": "no",
+     "lean": "no",
+     "gap": 12.533110875263239,
+     "solver": 0.03788261747264322,
+     "hands": 4460
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "gutshot"
+     ],
+     "share": 0.038837964943696124,
+     "call": "no",
+     "lean": "no",
+     "gap": 7.299076076421649,
+     "solver": 0.14326943396333433,
+     "hands": 1576
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "open-ended"
+     ],
+     "share": 0.014079794645557458,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.0499605078310865,
+     "solver": 0.6241564832189016,
+     "hands": 617
+    },
+    {
+     "key": [
+      "5+ under the price",
+      "flush draw"
+     ],
+     "share": 0.00616773319272914,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.0853539274894173,
+     "solver": 0.3819327335833989,
+     "hands": 281
+    },
+    {
+     "key": [
+      "0-5 under",
+      "no draw"
+     ],
+     "share": 0.05897461804058394,
+     "call": "no",
+     "lean": "no",
+     "gap": 3.0846469857071592,
+     "solver": 0.13106687165350386,
+     "hands": 1706
+    },
+    {
+     "key": [
+      "0-5 under",
+      "gutshot"
+     ],
+     "share": 0.02165484967010912,
+     "call": "no",
+     "lean": "no",
+     "gap": 0.8535898707950678,
+     "solver": 0.23497001097721557,
+     "hands": 632
+    },
+    {
+     "key": [
+      "0-5 under",
+      "open-ended"
+     ],
+     "share": 0.003961284110518072,
+     "call": "act",
+     "lean": "act",
+     "gap": 5.862052524821772,
+     "solver": 0.886817455196166,
+     "hands": 200
+    },
+    {
+     "key": [
+      "0-5 under",
+      "flush draw"
+     ],
+     "share": 0.010066511890659732,
+     "call": "act",
+     "lean": "act",
+     "gap": 5.619011039283286,
+     "solver": 0.6790010157297747,
+     "hands": 436
+    },
+    {
+     "key": [
+      "0-5 over",
+      "no draw"
+     ],
+     "share": 0.07490374391822933,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.199031320699003,
+     "solver": 0.3550815478268412,
+     "hands": 2163
+    },
+    {
+     "key": [
+      "0-5 over",
+      "gutshot"
+     ],
+     "share": 0.01897270002182433,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.27923737025917866,
+     "solver": 0.548611050897818,
+     "hands": 675
+    },
+    {
+     "key": [
+      "0-5 over",
+      "open-ended"
+     ],
+     "share": 0.00682787662712787,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.7571718902855336,
+     "solver": 0.5949606716987674,
+     "hands": 162
+    },
+    {
+     "key": [
+      "0-5 over",
+      "flush draw"
+     ],
+     "share": 0.016050385508385074,
+     "call": "act",
+     "lean": "act",
+     "gap": 7.508506158133285,
+     "solver": 0.89837919448435,
+     "hands": 490
+    },
+    {
+     "key": [
+      "5-15 over",
+      "no draw"
+     ],
+     "share": 0.1669917121345467,
+     "call": "act",
+     "lean": "act",
+     "gap": 0.7800987402296413,
+     "solver": 0.5004799040614109,
+     "hands": 4952
+    },
+    {
+     "key": [
+      "5-15 over",
+      "gutshot"
+     ],
+     "share": 0.024106979250850518,
+     "call": "act",
+     "lean": "act",
+     "gap": 2.2377357203436357,
+     "solver": 0.7089525007614631,
+     "hands": 1030
+    },
+    {
+     "key": [
+      "5-15 over",
+      "open-ended"
+     ],
+     "share": 0.007892262893577553,
+     "call": "act",
+     "lean": "act",
+     "gap": 7.639782351545221,
+     "solver": 0.826390051758349,
+     "hands": 309
+    },
+    {
+     "key": [
+      "5-15 over",
+      "flush draw"
+     ],
+     "share": 0.03453225819163471,
+     "call": "act",
+     "lean": "act",
+     "gap": 16.07485161653944,
+     "solver": 0.9619951511639058,
+     "hands": 1030
+    },
+    {
+     "key": [
+      "15+ over",
+      "no draw"
+     ],
+     "share": 0.31521164098925014,
+     "call": "act",
+     "lean": "act",
+     "gap": 59.02768849625585,
+     "solver": 0.9729803228230731,
+     "hands": 8513
+    },
+    {
+     "key": [
+      "15+ over",
+      "gutshot"
+     ],
+     "share": 0.021425486445689926,
+     "call": "act",
+     "lean": "act",
+     "gap": 15.932007175408373,
+     "solver": 0.9911588475104154,
+     "hands": 1003
+    },
+    {
+     "key": [
+      "15+ over",
+      "open-ended"
+     ],
+     "share": 0.007095763946707732,
+     "call": "act",
+     "lean": "act",
+     "gap": 20.19829242455766,
+     "solver": 0.9999577808423948,
+     "hands": 465
+    },
+    {
+     "key": [
+      "15+ over",
+      "flush draw"
+     ],
+     "share": 0.051703906851073414,
+     "call": "act",
+     "lean": "act",
+     "gap": 40.74672507317781,
+     "solver": 0.9983830333228001,
+     "hands": 1503
+    }
+   ],
+   "score": {
+    "mean": 0.30698875599764064,
+    "p50": 0.18292671384556675,
+    "p90": 0.6593554883964382,
+    "p95": 0.9571357817262095,
+    "over1": 0.049586776859504134,
+    "opposite": 0.08710821602065806,
+    "cells": 20
+   },
+   "n": 242
+  },
+  "examples": [
+   {
+    "spot": "4BP-BB-UTG Jh2h8d",
+    "pot_type": "4BP",
+    "pre": "4BP-BB-UTG",
+    "board": "Jh 2h 8d 4c",
+    "line": "xx|b1",
+    "pot": 95.38,
+    "toCall": 40.88,
+    "behind": 32.12,
+    "spr": 0.33675823023694695,
+    "price": 0.3000146778218113,
+    "bet": 0.7500917431192662,
+    "solver_acts": 0.4952290464851547,
+    "my_eq": 0.469537604966922,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "45-55%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": -0.1942353225713047,
+     "polar": 0.11851982204429096,
+     "his_weak": 0.27177177177177175
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.0,
+      "his": 0.12247962247962246,
+      "solver": null
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.26728001627777803,
+      "his": 0.37087087087087084,
+      "solver": 1.0
+     },
+     {
+      "row": "top pair",
+      "mine": 0.031835154501410556,
+      "his": 0.0,
+      "solver": 1.0
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.0,
+      "his": 0.01201201201201201,
+      "solver": null
+     },
+     {
+      "row": "low pair",
+      "mine": 0.15730052847786277,
+      "his": 0.0,
+      "solver": 0.6226059910974184
+     },
+     {
+      "row": "draw",
+      "mine": 0.056306814119872636,
+      "his": 0.19433719433719432,
+      "solver": 1.0
+     },
+     {
+      "row": "air",
+      "mine": 0.4872774866230759,
+      "his": 0.3003003003003003,
+      "solver": 0.08592806711857133
+     }
+    ],
+    "hands": [
+     {
+      "hand": "AcAh",
+      "row": "overpair",
+      "equity": 0.7986000180244446,
+      "draw": "no draw",
+      "margin": 0.4985853402026333,
+      "key": [
+       "15+ over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 84.22999978065491
+     },
+     {
+      "hand": "AhKh",
+      "row": "draw",
+      "equity": 0.5109000205993652,
+      "draw": "flush draw",
+      "margin": 0.21088534277755394,
+      "key": [
+       "15+ over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 26.05000138282776
+     },
+     {
+      "hand": "Ah3h",
+      "row": "draw",
+      "equity": 0.400299996137619,
+      "draw": "flush draw",
+      "margin": 0.10028531831580773,
+      "key": [
+       "5-15 over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 23.639999330043793
+     },
+     {
+      "hand": "Ad2d",
+      "row": "low pair",
+      "equity": 0.3889000117778778,
+      "draw": "no draw",
+      "margin": 0.08888533395606651,
+      "key": [
+       "5-15 over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.8960000276565552,
+      "cost_act": 0.0,
+      "cost_no": 0.1500000013038516
+     },
+     {
+      "hand": "KhTh",
+      "row": "draw",
+      "equity": 0.34130001068115234,
+      "draw": "flush draw",
+      "margin": 0.04128533285934105,
+      "key": [
+       "0-5 over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 14.020000398159027
+     },
+     {
+      "hand": "Ac3c",
+      "row": "air",
+      "equity": 0.24060000479221344,
+      "draw": "gutshot",
+      "margin": -0.05941467302959785,
+      "key": [
+       "5+ under the price",
+       "gutshot"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.07530000060796738,
+      "cost_act": 0.2899999963119626,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KdTd",
+      "row": "air",
+      "equity": 0.17020000517368317,
+      "draw": "no draw",
+      "margin": -0.12981467264812813,
+      "key": [
+       "5+ under the price",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0,
+      "cost_act": 7.959999889135361,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.18288375349270414,
+    "who": "nobody"
+   },
+   {
+    "spot": "3BP-SB-UTG 2h2d8c",
+    "pot_type": "3BP",
+    "pre": "3BP-SB-UTG",
+    "board": "2h 2d 8c 5c",
+    "line": "xx|b1",
+    "pot": 40.25,
+    "toCall": 17.25,
+    "behind": 71.75,
+    "spr": 1.7826086956521738,
+    "price": 0.3,
+    "bet": 0.75,
+    "solver_acts": 0.7066211075707886,
+    "my_eq": 0.45456433335469176,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "45-55%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": -0.15272463896316174,
+     "polar": 0.14221222906339379,
+     "his_weak": 0.21967553922114558
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.037985006378405455,
+      "his": 0.0017596614322307606,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.2723783006063854,
+      "his": 0.46132828451572183,
+      "solver": 0.9994229623339187
+     },
+     {
+      "row": "top pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.13295625986614087,
+      "his": 0.019861157515684742,
+      "solver": 0.8620695797436841
+     },
+     {
+      "row": "low pair",
+      "mine": 0.0066521817641679235,
+      "his": 0.0,
+      "solver": 0.013003677653779064
+     },
+     {
+      "row": "draw",
+      "mine": 0.08732299196728663,
+      "his": 0.2616104243234213,
+      "solver": 1.0
+     },
+     {
+      "row": "air",
+      "mine": 0.46270525941761365,
+      "his": 0.2554404722129413,
+      "solver": 0.4201117884254126
+     }
+    ],
+    "hands": [
+     {
+      "hand": "5h5s",
+      "row": "trips or better",
+      "equity": 0.9769999980926514,
+      "draw": "no draw",
+      "margin": 0.6769999980926513,
+      "key": [
+       "15+ over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 167.70000457763672
+     },
+     {
+      "hand": "AcJc",
+      "row": "draw",
+      "equity": 0.46480000019073486,
+      "draw": "flush draw",
+      "margin": 0.16480000019073487,
+      "key": [
+       "15+ over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 26.94000005722046
+     },
+     {
+      "hand": "9h9s",
+      "row": "overpair",
+      "equity": 0.44749999046325684,
+      "draw": "no draw",
+      "margin": 0.14749999046325685,
+      "key": [
+       "5-15 over",
+       "no draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9973000288009644,
+      "cost_act": 0.0,
+      "cost_no": 1.5599999576807022
+     },
+     {
+      "hand": "AcQc",
+      "row": "draw",
+      "equity": 0.4465000033378601,
+      "draw": "flush draw",
+      "margin": 0.14650000333786012,
+      "key": [
+       "5-15 over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 21.789999306201935
+     },
+     {
+      "hand": "AsJs",
+      "row": "air",
+      "equity": 0.3418999910354614,
+      "draw": "no draw",
+      "margin": 0.04189999103546144,
+      "key": [
+       "0-5 over",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 9.999999747378752e-05,
+      "cost_act": 1.3899999670684338,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "KcQc",
+      "row": "draw",
+      "equity": 0.30790001153945923,
+      "draw": "flush draw",
+      "margin": 0.00790001153945924,
+      "key": [
+       "0-5 over",
+       "flush draw"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 13.529999554157257
+     },
+     {
+      "hand": "KdQd",
+      "row": "air",
+      "equity": 0.22789999842643738,
+      "draw": "no draw",
+      "margin": -0.07210000157356261,
+      "key": [
+       "5+ under the price",
+       "no draw"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.07339999824762344,
+      "cost_act": 0.6800000090152025,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.18525167003835583,
+    "who": "nobody"
+   }
+  ],
+  "n": 242,
+  "solver_acts": 0.6262251531139594,
+  "always": 2.159822465390392,
+  "never": 22.536631067237803,
+  "model": [
+   0.2,
+   0.36
+  ]
+ },
+ "river, out of position, facing a bet": {
+  "table": {
+   "names": [
+    "margin"
+   ],
+   "hand": [
+    "margin"
+   ],
+   "spot": [],
+   "labels": {
+    "margin": [
+     "5+ under the price",
+     "0-5 under",
+     "0-5 over",
+     "5-15 over",
+     "15+ over"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "5+ under the price"
+     ],
+     "share": 0.24323456967355978,
+     "call": "no",
+     "lean": "no",
+     "gap": 25.294627458934524,
+     "solver": 0.0007870567330151845,
+     "hands": 24357
+    },
+    {
+     "key": [
+      "0-5 under"
+     ],
+     "share": 0.28538322487673556,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.7973649512281484,
+     "solver": 0.19310780749974826,
+     "hands": 26329
+    },
+    {
+     "key": [
+      "0-5 over"
+     ],
+     "share": 0.24307438311162255,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.440548214861484,
+     "solver": 0.7066128219298848,
+     "hands": 21122
+    },
+    {
+     "key": [
+      "5-15 over"
+     ],
+     "share": 0.05061048231105935,
+     "call": "act",
+     "lean": "act",
+     "gap": 12.63708260223958,
+     "solver": 0.9948665721048149,
+     "hands": 6551
+    },
+    {
+     "key": [
+      "15+ over"
+     ],
+     "share": 0.17769734002702278,
+     "call": "act",
+     "lean": "act",
+     "gap": 69.15259451050127,
+     "solver": 0.9998543442577932,
+     "hands": 27543
+    }
+   ],
+   "score": {
+    "mean": 3.0122735695680115e-06,
+    "p50": 0.0,
+    "p90": 2.2794643928222487e-17,
+    "p95": 1.0472314901038117e-16,
+    "over1": 0.0,
+    "opposite": 0.004388989667943271,
+    "cells": 5
+   },
+   "n": 1386
+  },
+  "examples": [
+   {
+    "spot": "3BP-CO-BU Qc9h3c",
+    "pot_type": "3BP",
+    "pre": "3BP-CO-BU",
+    "board": "Qc 9h 3c 2c 8h",
+    "line": "xbc1|xbc|xb1",
+    "pot": 135,
+    "toCall": 66.5,
+    "behind": 0,
+    "spr": 0.0,
+    "price": 0.33002481389578164,
+    "bet": 0.9708029197080292,
+    "solver_acts": 0.5073126392114825,
+    "my_eq": 0.40942428979810624,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "about even",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "under 45%",
+     "who bet last street": "he did"
+    },
+    "values": {
+     "tp_lead": 0.024251645148498424,
+     "polar": 0.04454767434935383,
+     "his_weak": 0.3198415444993409
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.245458876779227,
+      "his": 0.5439471029592595,
+      "solver": 0.9994806038853911
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.13621135254139943,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.4589512238699305,
+      "his": 0.0,
+      "solver": 0.46919384607758674
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.12441933178488479,
+      "his": 0.0,
+      "solver": 0.034580153531229826
+     },
+     {
+      "row": "low pair",
+      "mine": 0.171170567565958,
+      "his": 0.001174426224679886,
+      "solver": 0.24736564981372533
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.0,
+      "his": 0.31866711827466104,
+      "solver": null
+     }
+    ],
+    "hands": [
+     {
+      "hand": "KcTc",
+      "row": "trips or better",
+      "equity": 0.751800000667572,
+      "draw": "no draw",
+      "margin": 0.4217751867717904,
+      "key": [
+       "15+ over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 62.95999884605408
+     },
+     {
+      "hand": "8c8s",
+      "row": "trips or better",
+      "equity": 0.46880000829696655,
+      "draw": "no draw",
+      "margin": 0.1387751944011849,
+      "key": [
+       "5-15 over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9977999925613403,
+      "cost_act": 0.0,
+      "cost_no": 20.720000565052032
+     },
+     {
+      "hand": "QhTh",
+      "row": "top pair",
+      "equity": 0.3431999981403351,
+      "draw": "no draw",
+      "margin": 0.01317518424455344,
+      "key": [
+       "0-5 over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9383999705314636,
+      "cost_act": 0.0,
+      "cost_no": 1.9700000062584877
+     },
+     {
+      "hand": "7c7s",
+      "row": "low pair",
+      "equity": 0.329800009727478,
+      "draw": "no draw",
+      "margin": -0.00022480416830361616,
+      "key": [
+       "0-5 under"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.22759999334812164,
+      "cost_act": 0.03000000142492354,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.0,
+    "who": "he did"
+   },
+   {
+    "spot": "SRP-CO-BU 2d2sJc",
+    "pot_type": "SRP",
+    "pre": "SRP-CO-BU",
+    "board": "2d 2s Jc 9s Jd",
+    "line": "xx|xbc|xb1",
+    "pot": 28.46,
+    "toCall": 12.2,
+    "behind": 80.42,
+    "spr": 2.825720309205903,
+    "price": 0.3000491883915396,
+    "bet": 0.7503075030750306,
+    "solver_acts": 0.5704128245223202,
+    "my_eq": 0.4116898766172563,
+    "reads": {
+     "stack to pot": "2 to 6",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "middling (under 40% at the ends)",
+     "his weak hands": "20-45%",
+     "range equity": "under 45%",
+     "who bet last street": "he did"
+    },
+    "values": {
+     "tp_lead": -0.13702602829333455,
+     "polar": 0.23569408913423995,
+     "his_weak": 0.30101639542622066
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.14133321909005225,
+      "his": 0.2783592473833868,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.37972630573950084,
+      "his": 0.4206243571903927,
+      "solver": 0.9920199345851359
+     },
+     {
+      "row": "low pair",
+      "mine": 0.4023219946876874,
+      "his": 0.0,
+      "solver": 0.13020302320073035
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.07661848048275947,
+      "his": 0.30101639542622066,
+      "solver": 0.0
+     }
+    ],
+    "hands": [
+     {
+      "hand": "JhJs",
+      "row": "trips or better",
+      "equity": 1.0,
+      "draw": "no draw",
+      "margin": 0.6999508116084604,
+      "key": [
+       "15+ over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 100.0
+     },
+     {
+      "hand": "Tc9c",
+      "row": "middle pair",
+      "equity": 0.43320000171661377,
+      "draw": "no draw",
+      "margin": 0.13315081332507417,
+      "key": [
+       "5-15 over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 19.030000269412994
+     },
+     {
+      "hand": "Qc9c",
+      "row": "middle pair",
+      "equity": 0.3483999967575073,
+      "draw": "no draw",
+      "margin": 0.04835080836596772,
+      "key": [
+       "0-5 over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9914000034332275,
+      "cost_act": 0.0,
+      "cost_no": 6.9200001657009125
+     },
+     {
+      "hand": "Qh9h",
+      "row": "middle pair",
+      "equity": 0.2964000105857849,
+      "draw": "no draw",
+      "margin": -0.0036491778057546886,
+      "key": [
+       "0-5 under"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.8632000088691711,
+      "cost_act": 0.5200000014156103,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AsKs",
+      "row": "air",
+      "equity": 0.23690000176429749,
+      "draw": "no draw",
+      "margin": -0.06314918662724212,
+      "key": [
+       "5+ under the price"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0,
+      "cost_act": 9.009999781847,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.0,
+    "who": "he did"
+   }
+  ],
+  "n": 1386,
+  "solver_acts": 0.45508277871119374,
+  "always": 6.665468643462413,
+  "never": 13.277964327130139,
+  "model": [
+   0.06,
+   0.13
+  ]
+ },
+ "river, in position, facing a bet": {
+  "table": {
+   "names": [
+    "margin"
+   ],
+   "hand": [
+    "margin"
+   ],
+   "spot": [],
+   "labels": {
+    "margin": [
+     "5+ under the price",
+     "0-5 under",
+     "0-5 over",
+     "5-15 over",
+     "15+ over"
+    ]
+   },
+   "cells": [
+    {
+     "key": [
+      "5+ under the price"
+     ],
+     "share": 0.2078272589965335,
+     "call": "no",
+     "lean": "no",
+     "gap": 26.771042972012257,
+     "solver": 0.011135422509222408,
+     "hands": 30650
+    },
+    {
+     "key": [
+      "0-5 under"
+     ],
+     "share": 0.222752355134412,
+     "call": "no",
+     "lean": "no",
+     "gap": 1.6780523143841388,
+     "solver": 0.20066640996905102,
+     "hands": 22116
+    },
+    {
+     "key": [
+      "0-5 over"
+     ],
+     "share": 0.2419500717994144,
+     "call": "act",
+     "lean": "act",
+     "gap": 1.5470115593087679,
+     "solver": 0.6970151222968272,
+     "hands": 22323
+    },
+    {
+     "key": [
+      "5-15 over"
+     ],
+     "share": 0.06401007394531162,
+     "call": "act",
+     "lean": "act",
+     "gap": 12.759813384927606,
+     "solver": 0.9679729374870966,
+     "hands": 6785
+    },
+    {
+     "key": [
+      "15+ over"
+     ],
+     "share": 0.26346024012432845,
+     "call": "act",
+     "lean": "act",
+     "gap": 67.81293080097562,
+     "solver": 0.998663490778524,
+     "hands": 24415
+    }
+   ],
+   "score": {
+    "mean": 2.6524650033131534e-06,
+    "p50": 0.0,
+    "p90": 4.554879865793021e-17,
+    "p95": 1.1125338322484816e-16,
+    "over1": 0.0,
+    "opposite": 0.006740474115315454,
+    "cells": 5
+   },
+   "n": 1081
+  },
+  "examples": [
+   {
+    "spot": "SRP-SB-BU 9dJcKh",
+    "pot_type": "SRP",
+    "pre": "SRP-SB-BU",
+    "board": "9d Jc Kh 6s 8h",
+    "line": "xx|xx|b1",
+    "pot": 10.5,
+    "toCall": 4.5,
+    "behind": 93,
+    "spr": 8.857142857142858,
+    "price": 0.3,
+    "bet": 0.75,
+    "solver_acts": 0.5401234910705438,
+    "my_eq": 0.3737811902241779,
+    "reads": {
+     "stack to pot": "over 6",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "in between",
+     "his weak hands": "20-45%",
+     "range equity": "under 45%",
+     "who bet last street": "nobody"
+    },
+    "values": {
+     "tp_lead": -0.15146903672754303,
+     "polar": 0.513139481873501,
+     "his_weak": 0.2983958673191952
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.023773562466551705,
+      "his": 0.07626427406199021,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.07690551227924124,
+      "his": 0.13159325720500273,
+      "solver": 1.0
+     },
+     {
+      "row": "overpair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "top pair",
+      "mine": 0.030614259380388895,
+      "his": 0.07490483958673191,
+      "solver": 1.0
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.23649085251035662,
+      "his": 0.414763458401305,
+      "solver": 0.9997258554232955
+     },
+     {
+      "row": "low pair",
+      "mine": 0.498930843789023,
+      "his": 0.09706362153344207,
+      "solver": 0.34554716107491257
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.13328496957443856,
+      "his": 0.20541054921152802,
+      "solver": 0.0
+     }
+    ],
+    "hands": [
+     {
+      "hand": "8c8d",
+      "row": "trips or better",
+      "equity": 0.9994999766349792,
+      "draw": "no draw",
+      "margin": 0.6994999766349792,
+      "key": [
+       "15+ over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 99.91999864578247
+     },
+     {
+      "hand": "QcJh",
+      "row": "middle pair",
+      "equity": 0.4352000057697296,
+      "draw": "no draw",
+      "margin": 0.13520000576972963,
+      "key": [
+       "5-15 over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 19.32000070810318
+     },
+     {
+      "hand": "Jh5h",
+      "row": "middle pair",
+      "equity": 0.34369999170303345,
+      "draw": "no draw",
+      "margin": 0.04369999170303346,
+      "key": [
+       "0-5 over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.9966999888420105,
+      "cost_act": 0.0,
+      "cost_no": 6.239999830722809
+     },
+     {
+      "hand": "Tc9h",
+      "row": "low pair",
+      "equity": 0.299699991941452,
+      "draw": "no draw",
+      "margin": -0.00030000805854796253,
+      "key": [
+       "0-5 under"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.1467999964952469,
+      "cost_act": 0.050000002374872565,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "Ad5s",
+      "row": "air",
+      "equity": 0.03709999844431877,
+      "draw": "no draw",
+      "margin": -0.2629000015556812,
+      "key": [
+       "5+ under the price"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0,
+      "cost_act": 37.56000101566315,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.0,
+    "who": "nobody"
+   },
+   {
+    "spot": "4BP-UTG-HJ Th6h4c",
+    "pot_type": "4BP",
+    "pre": "4BP-UTG-HJ",
+    "board": "Th 6h 4c 5h 2s",
+    "line": "xx|xbc|b1",
+    "pot": 152.63,
+    "toCall": 48.870000000000005,
+    "behind": 0,
+    "spr": 0.0,
+    "price": 0.24253101736972707,
+    "bet": 0.4709907478797225,
+    "solver_acts": 0.5243805660675825,
+    "my_eq": 0.47695892359547826,
+    "reads": {
+     "stack to pot": "under 2",
+     "top pair or better": "he has more (4+ points)",
+     "my range": "polar (65%+ at the ends)",
+     "his weak hands": "under 20% of his range",
+     "range equity": "45-55%",
+     "who bet last street": "I did"
+    },
+    "values": {
+     "tp_lead": -0.26458411327023773,
+     "polar": 0.9538336111753325,
+     "his_weak": 0.08837908988341482
+    },
+    "rows": [
+     {
+      "row": "trips or better",
+      "mine": 0.32508730728513896,
+      "his": 0.0026325686348251227,
+      "solver": 1.0
+     },
+     {
+      "row": "two pair",
+      "mine": 0.0009369562307589346,
+      "his": 0.0,
+      "solver": 1.0
+     },
+     {
+      "row": "overpair",
+      "mine": 0.11798347549920299,
+      "his": 0.7173122727842549,
+      "solver": 0.9705646272830942
+     },
+     {
+      "row": "top pair",
+      "mine": 0.011352989133741375,
+      "his": 0.0,
+      "solver": 0.61624417976219
+     },
+     {
+      "row": "middle pair",
+      "mine": 0.07607597863253063,
+      "his": 0.0,
+      "solver": 0.47394976426589963
+     },
+     {
+      "row": "low pair",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "draw",
+      "mine": 0.0,
+      "his": 0.0,
+      "solver": null
+     },
+     {
+      "row": "air",
+      "mine": 0.46856329321862716,
+      "his": 0.28005515858092017,
+      "solver": 0.08706040548123423
+     }
+    ],
+    "hands": [
+     {
+      "hand": "AhQh",
+      "row": "trips or better",
+      "equity": 1.0,
+      "draw": "no draw",
+      "margin": 0.757468982630273,
+      "key": [
+       "15+ over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 1.0,
+      "cost_act": 0.0,
+      "cost_no": 100.0
+     },
+     {
+      "hand": "7c7d",
+      "row": "middle pair",
+      "equity": 0.27570000290870667,
+      "draw": "no draw",
+      "margin": 0.033168985538979595,
+      "key": [
+       "0-5 over"
+      ],
+      "call": "act",
+      "lean": "act",
+      "solver": 0.4740000069141388,
+      "cost_act": 0.0,
+      "cost_no": 4.38000001013279
+     },
+     {
+      "hand": "AsKh",
+      "row": "air",
+      "equity": 0.23260000348091125,
+      "draw": "no draw",
+      "margin": -0.009931013888815815,
+      "key": [
+       "0-5 under"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.14790000021457672,
+      "cost_act": 1.3100000098347664,
+      "cost_no": 0.0
+     },
+     {
+      "hand": "AcQc",
+      "row": "air",
+      "equity": 0.0414000004529953,
+      "draw": "no draw",
+      "margin": -0.20113101691673177,
+      "key": [
+       "5+ under the price"
+      ],
+      "call": "no",
+      "lean": "no",
+      "solver": 0.0,
+      "cost_act": 26.5500009059906,
+      "cost_no": 0.0
+     }
+    ],
+    "lost": 0.0,
+    "who": "I did"
+   }
+  ],
+  "n": 1081,
+  "solver_acts": 0.5407241610023841,
+  "always": 5.937545240355836,
+  "never": 19.057069845693725,
+  "model": [
+   0.11,
+   0.2
+  ]
+ }
+}
