@@ -29,10 +29,11 @@ def learn(cols, hm):
         pred[idx[te]] = HistGradientBoostingClassifier(max_iter=80, learning_rate=0.15, max_leaf_nodes=31, categorical_features=cat or None).fit(X[tr], y[tr], sample_weight=w[idx][tr]).predict(X[te])
     return pred
 # the few heuristics the first study chose for each situation
-FEW = {}
+FEW = {}; at = None
 for line in open(os.path.join(HERE, 'heuristics.md')):
-    mt = re.match(r'- \*\*(.+?)\*\*: (.*)', line)
-    if mt: FEW[mt.group(1)] = [] if mt.group(2).startswith('none') else mt.group(2).strip().split('; ')
+    if line.startswith('### '): at = line[4:].split(' (')[0]; FEW[at] = []
+    mt = re.match(r'\| \+ \d+\. (.+?) \|', line)
+    if mt and at: FEW[at].append(mt.group(1))
 say(f'# What the calls cost, and the kinds of error ({N} decisions solved again with each action\'s worth, {len(uniq)} spots)\n')
 say('EV lost is in percent of the pot at the decision, summed over the range: Always plays the acting move, Never checks or folds, Mix plays half of each. "The solver\'s own labels" is the floor of the measure: the right label for every hand, with every mix played half and half.\n')
 ROWS = []; KINDS = []

@@ -156,6 +156,7 @@ def fit_score(cols, hm, folds=3, full=False):
     ok = tot > 0; acc_d = right[ok] / tot[ok]
     return (acc_d.mean(), (sev[ok] / tot[ok]).mean(), acc_d) if full else acc_d.mean()
 SUMMARY = []
+if os.environ.get('ONLY'): SITS = [SITS[int(k)] for k in os.environ['ONLY'].split(',')]     # ONLY=11: just those situations (0-11, first to act then facing a bet)
 for s, q, fi in SITS:
     t0 = time.time(); m = sit_mask(s, q, fi); hm = m[dec]; groups = GROUPS_FIRST if fi else GROUPS_FACE
     say(f'\n### {sit_name(s, q, fi)} ({m.sum()} decisions)\n')
