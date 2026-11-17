@@ -29,12 +29,9 @@ def filled(t):
     return names, labs, out
 COL = ['#BFE6DE', '#F0896B', '#15171B']                       # fold or check, call or bet, raise or bet big
 def td(c, ans, sep=None):
-    """A cell as solid colours side by side, each as wide as its answer's share."""
-    q = c['quarters']; stops = []; at = 0
-    for k in range(3):
-        if q[k]: stops.append(f'{COL[k]} {at}% {at + 25 * q[k]}%'); at += 25 * q[k]
-    title = ', '.join(f'{WORD[ans[k]]} {25 * q[k]}%' for k in range(3) if q[k])
-    return f'<td class="bar" title="{title}" style="background:linear-gradient(to right, {", ".join(stops)})"></td>'
+    """A cell as solid blocks side by side, each as wide as its answer's share (separate boxes, so the edges print sharp)."""
+    q = c['quarters']; title = ', '.join(f'{WORD[ans[k]]} {25 * q[k]}%' for k in range(3) if q[k])
+    return f'<td class="bar" title="{title}"><div>' + ''.join(f'<span style="background:{COL[k]};flex:{q[k]} 0 0"></span>' for k in range(3) if q[k]) + '</div></td>'
 def grid(nm, title=None, loss=None):
     t = R[nm]; names, labs, cells = filled(t)
     h = f'<div class="t"><h3>{title or TITLE[nm]}</h3><table>'

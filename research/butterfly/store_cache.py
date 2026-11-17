@@ -11,7 +11,9 @@ def group_value(P, Q, idx):
     """A group of actions as the solver mixes them for the hand, or its best member where the solver never takes it."""
     if not idx: return None
     pa = P[:, idx]; s = pa.sum(1); return np.where(s > 0.02, (pa * Q[:, idx]).sum(1) / np.maximum(s, 1e-9), Q[:, idx].max(1)), s
-H = {k: [] for k in ('dec', 'w', 'e', 'row', 'draw', 'frac', 'l0', 'l1', 'l2', 'p1', 'p2')}; Dn = []
+H = {k: [] for k in ('dec', 'w', 'e', 'row', 'draw', 'frac', 'l0', 'l1', 'l2', 'p1', 'p2', 'bhi', 'bmid', 'blo', 'fb', 'pocket')}; Dn = []
+CID = {r + s_: i for i, (r, s_) in enumerate((r, s_) for r in RANKS for s_ in 'cdhs')}
+def two(names): return np.array([[CID[h[:2]], CID[h[2:]]] for h in names]); Dn = []
 for name, streets in (('fullhand', (0, 1)), ('river-real', (2,))):
     for text in open(os.path.join(STORE, name + '.jsonl')):
         if name == 'fullhand' and text.count(' ', text.index('"board":"'), text.index('"board":"') + 24) >= 4: continue      # the full hands' rivers are not used
@@ -32,6 +34,12 @@ for name, streets in (('fullhand', (0, 1)), ('river-real', (2,))):
         if not a2: p2 = np.zeros(len(hs))
         row = np.array([row_of(cards(h['h']), board) for h in hs]); fo = np.array([h['fo'] for h in hs]); so = np.array([h['so'] for h in hs]); draw = np.where(fo >= 9, 3, np.where(so >= 8, 2, np.where(so >= 4, 1, 0)))
         vw = np.array([x[1] for x in vr]); ve = np.array([x[2] for x in vr]); vrow = np.array([row_of(cards(x[0]), board) for x in vr]); vw = vw / vw.sum(); w = w / w.sum()
+        # blockers: the share of his strong (80%+ against my range), middling and weak (under 30%) hands that my two cards make impossible
+        hc = two([h['h'] for h in hs]); vc = two([x[0] for x in vr]); clash = (hc[:, None, 0] == vc[None, :, 0]) | (hc[:, None, 0] == vc[None, :, 1]) | (hc[:, None, 1] == vc[None, :, 0]) | (hc[:, None, 1] == vc[None, :, 1])
+        part = lambda m: (clash[:, m] * vw[m]).sum(1) / max(vw[m].sum(), 1e-9) if m.any() else np.zeros(len(hs))
+        bhi, bmid, blo = part(ve >= .8), part((ve >= .3) & (ve < .8)), part(ve < .3)
+        suit = [s_ for s_ in 'cdhs' if sum(c[1] == s_ for c in board) >= 3]; fb = np.zeros(len(hs), dtype=int)       # a flush is possible: I hold none of the suit, one, or its ace
+        if suit: fb = np.array([2 if ('A' + suit[0]) in (h['h'][:2], h['h'][2:]) else 1 if suit[0] in (h['h'][1], h['h'][3]) else 0 for h in hs])
         frac = np.zeros(len(hs))
         for r in range(8):
             m = np.where(row == r)[0]
@@ -40,9 +48,9 @@ for name, streets in (('fullhand', (0, 1)), ('river-real', (2,))):
         Dn.append(dict(spot=d['spot'], flop=flop, set=name, pre=d['pre'], pot_type=d['action'], line=d['line'], street=street, seat=d['seat'], first=first, faced=d['faced'] if not first else 'none', role=d['role'], board=d['board'],
                        pot=d['pot'], toCall=d['toCall'], behind=d['behind'], spr=d['behind'] / d['pot'], price=d['toCall'] / (d['pot'] + d['toCall']) if not first else 0.0, share=d['share'], n=len(hs), has1=bool(a1), has2=bool(a2), sizes=sizes,
                        act1=float((w * p1).sum()), act2=float((w * p2).sum()), my_eq=float((w * e).sum()), his_weak=float(vw[ve < .3].sum()), my_ends=float(w[(e < .3) | (e >= .8)].sum()), his_strong=float(vw[ve >= .8].sum()), my_strong=float(w[e >= .8].sum()),
-                       tp_lead=float(w[row >= 4].sum() - vw[vrow >= 4].sum()), my_rows=[float(w[row == r].sum()) for r in range(8)], his_rows=[float(vw[vrow == r].sum()) for r in range(8)]))
+                       tp_lead=float(w[row >= 4].sum() - vw[vrow >= 4].sum()), flush3=bool(suit), my_rows=[float(w[row == r].sum()) for r in range(8)], his_rows=[float(vw[vrow == r].sum()) for r in range(8)]))
         k = len(Dn) - 1
-        for key, val in (('dec', np.full(len(hs), k)), ('w', w), ('e', e), ('row', row), ('draw', draw), ('frac', frac), ('l0', top - v0), ('l1', top - v1), ('l2', top - v2), ('p1', p1), ('p2', p2)): H[key].append(val)
+        for key, val in (('dec', np.full(len(hs), k)), ('w', w), ('e', e), ('row', row), ('draw', draw), ('frac', frac), ('l0', top - v0), ('l1', top - v1), ('l2', top - v2), ('p1', p1), ('p2', p2), ('bhi', bhi), ('bmid', bmid), ('blo', blo), ('fb', fb), ('pocket', np.array([h['h'][0] == h['h'][2] for h in hs]))): H[key].append(val)
     print(f'read {name}: {len(Dn)} decisions', file=sys.stderr)
-np.savez_compressed(os.path.join(STORE, 'cache3.npz'), **{k: np.concatenate(v).astype(np.int32 if k in ('dec', 'row', 'draw') else np.float32) for k, v in H.items()})
+np.savez_compressed(os.path.join(STORE, 'cache3.npz'), **{k: np.concatenate(v).astype(np.int32 if k in ('dec', 'row', 'draw', 'fb', 'pocket') else np.float32) for k, v in H.items()})
 json.dump(Dn, open(os.path.join(STORE, 'cache3-decisions.json'), 'w')); print(f'{len(Dn)} decisions, {sum(len(x) for x in H["w"])} hands', file=sys.stderr)
