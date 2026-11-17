@@ -27,3 +27,18 @@ The scoring spots solved with no restriction: the two sides' values sum to 100.0
 | flop-f97-B413_C-6s | SRP-BB-UTG | Td 7h 7d 6s | 6.8 | 9.0 | 11.5 | 11.3 | 21.3 |
 | **under 3 pots behind (4)** | | | | **4.6** | **4.2** | **9.8** | **10.1** |
 | **3 pots or more behind (4)** | | | | **8.9** | **8.8** | **12.5** | **16.6** |
+
+## Reading the range held at each decision, and stack depth
+
+Exploitability on the 16 turn spots not solved on, percent of the pot as the turn starts.
+
+| turn and river tables | OOP: mean | worst | IP: mean | worst | on the spots solved on, raw (OOP / IP) |
+|---|---|---|---|---|---|
+| ranges as the turn starts (the earlier result) | 11.6 | 18.8 | 14.1 | 22.0 | 61.2 / 59.3 |
+| ranges as the turn starts, with stack depth | 12.2 | 36.0 | 11.0 | 20.1 | 60.3 / 57.1 |
+| the range held at each decision | 10.1 | 19.0 | 8.9 | 14.2 | 59.5 / 58.0 |
+| the range held at each decision, with stack depth | 10.5 | 17.6 | 8.5 | 11.3 | 59.3 / 57.2 |
+
+Each of 8 scoring spots solved alone, ranges as the turn starts: OOP 6.7, IP 6.5; spot by spot 4.6/5.2, 8.9/10.1, 3.7/3.0, 9.0/11.5, 8.5/6.6, 7.0/6.1, 3.0/2.3, 9.4/6.9
+
+Each of 8 scoring spots solved alone, the range held at each decision, with stack depth: OOP 5.1, IP 4.9; spot by spot 4.0/3.8, 6.9/7.4, 2.7/3.5, 7.2/6.1, 5.4/5.6, 5.9/4.9, 2.7/2.3, 6.2/5.6
