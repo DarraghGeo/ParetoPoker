@@ -16,6 +16,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, '..
 src = open(os.path.join(HERE, 'analyse.py')).read().split('# ---------------------------------------------------------------- read')[0]
 exec(src)                                    # row_of, cards, role_of, the constants
 
+SPOTS = []
 rng = np.random.default_rng(5); X = []; Y = []; Wt = []; G = []; DEC = []; POTS = ['SRP', '3BP', '4BP', 'Squeeze']; ROLES = ['none', 'led', 'followed']
 for name in FILES:
     path = os.path.join(DATA, name + '.jsonl')
@@ -37,14 +38,20 @@ for name in FILES:
             m = np.where(row == r)[0]
             if len(m): o = m[np.argsort(e[m], kind='stable')]; frac[o] = (np.cumsum(w[o]) - w[o] / 2) / w[o].sum()
         act = float((w * f).sum() / w.sum()); price = d['toCall'] / (d['pot'] + d['toCall']) if not first else 0
-        ctx = [len(board) - 3, int(first), d['seat'], ROLES.index(role_of(d)), POTS.index(d['action']) if d['action'] in POTS else 4, ms[4:].sum() - hsr[4:].sum(), ms[6:].sum() - hsr[6:].sum(), float((w * e).sum() / w.sum()), price, *ms, *hsr, act]
+        ve = np.array([x[2] if x[2] is not None else 0.5 for x in vr]); band = lambda ww, ee: [float(ww[ee < 0.3].sum() / ww.sum()), float(ww[(ee >= 0.3) & (ee < 0.5)].sum() / ww.sum()), float(ww[(ee >= 0.5) & (ee < 0.8)].sum() / ww.sum()), float(ww[ee >= 0.8].sum() / ww.sum())]
+        mb, hb = band(w, e), band(vw, ve); spr = d['behind'] / max(d['pot'], 1e-9)
+        SPOTS.append(dict(first=first, seat=d['seat'], street=len(board) - 3, act=act if 'act' in dir() else 0, pol=mb[0] + mb[3], hispol=hb[0] + hb[3], strong=mb[3], hisstrong=hb[3], role=role_of(d), spr=spr, f=float((w * f).sum() / w.sum())))
+        ctx = [len(board) - 3, int(first), d['seat'], ROLES.index(role_of(d)), POTS.index(d['action']) if d['action'] in POTS else 4, ms[4:].sum() - hsr[4:].sum(), ms[6:].sum() - hsr[6:].sum(), float((w * e).sum() / w.sum()), price, *ms, *hsr, act, *mb, *hb, spr]
         keep = rng.random(len(hs)) < 0.35
         for i in np.where(keep)[0]:
             X.append([row[i], e[i], frac[i], ms[row[i]], *ctx]); Y.append(kind[i]); Wt.append(w[i] / w.sum()); G.append(d['spot']); DEC.append(len(DEC) and 0)
 X = np.array(X, dtype=np.float32); Y = np.array(Y); Wt = np.array(Wt); G = np.array(G); first = X[:, 5] == 1
 print(f'{len(Y)} hands sampled', file=sys.stderr)
 # columns: 0 row, 1 equity, 2 place on bar, 3 row size, 4 street, 5 first, 6 seat, 7 role, 8 pot, 9 range adv, 10 nut adv, 11 range equity, 12 price, 13..20 my rows, 21..28 his rows, 29 how often
-SETS = {'chart (row, equity, place on bar, street, seat)': [0, 1, 2, 3, 4, 5, 6, 12], '+ table (who led, pot, advantages, both ranges by row)': list(range(0, 29)), '+ how often the range acts (not known at the table)': list(range(0, 30))}
+SHAPE = list(range(30, 39))   # 30..33 my range by equity band, 34..37 his, 38 stack to pot
+SETS = {'chart alone (row, equity, place on bar, street)': [0, 1, 2, 3, 4, 5, 12], '+ seat': [0, 1, 2, 3, 4, 5, 6, 12], '+ seat, who led, pot type': [0, 1, 2, 3, 4, 5, 6, 7, 8, 12],
+        '+ range and nut advantage': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12], '+ both ranges by row (the whole butterfly)': list(range(0, 29)),
+        '+ range shapes (weak, middling, strong shares of both; stack to pot)': list(range(0, 29)) + SHAPE, '+ how often the range acts (not known at the table)': list(range(0, 30)) + SHAPE}
 out = open(os.path.join(HERE, 'learner.md'), 'w')
 def both(*a):
     print(*a); print(*a, file=out)
@@ -60,8 +67,17 @@ for name, cols in SETS.items():
     for sit in (True, False):
         m = first == sit; right = (Wt[m] * (pred[m] == Y[m])).sum() / Wt[m].sum(); sev = (Wt[m] * (np.abs(pred[m] - Y[m]) == 2)).sum() / Wt[m].sum(); cells += [f'{100 * right:.0f}%', f'{100 * sev:.0f}%']
     both(f'| {name} | ' + ' | '.join(cells) + ' |')
+both('\n## The heuristics themselves: how often the range bets, first to act\n')
+S = [x for x in SPOTS if x['first']]; mean = lambda xs: f"{100 * np.mean([x['f'] for x in xs]):.0f}% ({len(xs)})" if xs else '-'
+both('| | flop | turn | river | all |'); both('|---|---|---|---|---|')
+def line(name, test): both(f'| {name} | ' + ' | '.join(mean([x for x in S if test(x) and x['street'] == st]) for st in range(3)) + f' | {mean([x for x in S if test(x)])} |')
+line('out of position', lambda x: x['seat'] == 0); line('in position', lambda x: x['seat'] == 1)
+line('led the street before (or raised before the flop)', lambda x: x['role'] == 'led'); line('followed', lambda x: x['role'] == 'followed'); line('nobody led', lambda x: x['role'] == 'none')
+q = np.percentile([x['pol'] for x in S], [33, 67]); line('own range condensed (least at the two ends)', lambda x: x['pol'] <= q[0]); line('own range in between', lambda x: q[0] < x['pol'] <= q[1]); line('own range polarised (most at the two ends)', lambda x: x['pol'] > q[1])
+q2 = np.percentile([x['strong'] for x in S], [33, 67]); line('few strong hands (80%+)', lambda x: x['strong'] <= q2[0]); line('many strong hands', lambda x: x['strong'] > q2[1])
+q3 = np.percentile([x['hisstrong'] for x in S], [33, 67]); line('he has few strong hands', lambda x: x['hisstrong'] <= q3[0]); line('he has many strong hands', lambda x: x['hisstrong'] > q3[1])
 both('\nBy street, with the table\'s information (first to act / facing a bet):\n'); both('| | first to act | facing a bet |'); both('|---|---|---|')
-pred = pred_all['+ table (who led, pot, advantages, both ranges by row)']
+pred = pred_all['+ range shapes (weak, middling, strong shares of both; stack to pot)']
 for s, nm in enumerate(['flop', 'turn', 'river']):
     cells = []
     for sit in (True, False):
