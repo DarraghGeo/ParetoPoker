@@ -4,5 +4,3 @@ cache-decisions.json
 cache-v.npz
 cache-v-decisions.json
 exploit.jsonl
-restricted-own-range.md
-restricted-grid.md
