@@ -2,13 +2,13 @@
 // with its weight, its equity against the other range, its draw, the solver's play and what each action is worth.
 // These solves allow a raise on every street (fullhand: one raise; handselector-river-real: two, three bet sizes and all-in).
 // The ranges come from paid course charts: the rows are written outside this repository and are not committed.
-//   node research/butterfly/store.mjs fullhand|river-real <out.jsonl> [files from] [files to]
+//   node research/butterfly/store.mjs fullhand|river-real|turn-real <out.jsonl> [files from] [files to]
 import { readFileSync, readdirSync, writeFileSync, appendFileSync } from 'node:fs';
 import { gunzipSync } from 'node:zlib';
 import { fs } from '../proof/lib.mjs';
 import { bothEquities } from '../../src/solver/equity.js';
 const [set = 'fullhand', out = 'store.jsonl', from = '0', to = '9999'] = process.argv.slice(2);
-const DIR = `/home/user/poker-huerosolver/bench/solves/${set === 'fullhand' ? 'fullhand' : 'handselector-river-real'}/`;
+const DIR = `/home/user/poker-huerosolver/bench/solves/${set === 'fullhand' ? 'fullhand' : set === 'turn-real' ? 'handselector-turn' : 'handselector-river-real'}/`;   // turn-real: the turn spots built from the flop library's street ends
 const N = fs.COMBOS; const CARD = new Map(); for (let c = 0; c < 52; c++) CARD.set(fs.formatCards([c]).trim(), c);
 const COMBO = new Map(); for (let c = 0; c < N; c++) { const a = fs.COMBO_CARDS[2 * c], b = fs.COMBO_CARDS[2 * c + 1]; COMBO.set(a * 52 + b, c); COMBO.set(b * 52 + a, c); }
 const cardsOf = (t) => { const o = []; const s = t.replace(/\s/g, ''); for (let i = 0; i < s.length; i += 2) o.push(CARD.get(s.slice(i, i + 2))); return o; };
