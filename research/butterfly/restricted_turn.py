@@ -12,6 +12,7 @@
 import os, sys, json, re, time
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']; RANKS = '23456789TJQKA'; DECK = [r + s for r in RANKS for s in 'cdhs']
+EDGES = list(np.linspace(.05, .95, 19)) if os.environ.get('BANDS') == '20' else [.15, .35, .55, .75, .9]; NB = len(EDGES) + 1      # the bands of a hand's place in the range: six, or twenty of five points each (BANDS=20)
 def score7(cs):
     """The best five of seven cards as one number that compares."""
     rs = sorted((RANKS.index(c[0]) for c in cs), reverse=True); cnt = {}
@@ -31,13 +32,14 @@ def score7(cs):
     if cnt[by[0]] == 2 and len(by) > 1 and cnt[by[1]] == 2: return pack(2, [by[0], by[1], max(r for r in rs if r not in (by[0], by[1]))])
     if cnt[by[0]] == 2: return pack(1, [by[0]] + [r for r in rs if r != by[0]][:3])
     return pack(0, rs[:5])
-def has_draw(hand, board):
+def has_draw(hand, board, kinds=False):
+    """A draw: a flush draw or eight or more cards to a straight. With `kinds`: 0 none, 1 a gutshot, 2 a flush draw or eight or more cards."""
     cs = [hand[:2], hand[2:]] + board
-    if any(sum(c[1] == s for c in cs) == 4 and any(c[1] == s for c in cs[:2]) for s in 'shdc'): return 1
+    if any(sum(c[1] == s for c in cs) == 4 and any(c[1] == s for c in cs[:2]) for s in 'shdc'): return 2 if kinds else 1
     ranks = [RANKS.index(c[0]) for c in cs]
     def top(r):
         have = set(r) | ({-1} if 12 in r else set()); return next((t for t in range(12, 2, -1) if all(t - k in have for k in range(5))), -1)
-    return int(sum(1 for r in range(13) if top(ranks + [r]) > top(ranks)) >= 2)
+    n = sum(1 for r in range(13) if top(ranks + [r]) > top(ranks)); return (2 if n >= 2 else 1 if n == 1 else 0) if kinds else int(n >= 2)
 def street(P, base, S):
     """One street's betting from a pot P with `base` already in from each player: nodes, the first decision's index. Ends: ('fold', folder, inv) or ('end', inv)."""
     nodes = []
@@ -67,11 +69,12 @@ class Turn:
         w0, w1 = self.w[0].astype(np.float32), self.w[1].astype(np.float32); self.eqr = [None, None]; self.eqt = [None, None]
         win0 = self.W @ w1 + 0.5 * (self.T @ w1); den0 = self.V @ w1; win1 = np.einsum('cij,i->cj', self.L, w0) + 0.5 * np.einsum('cij,i->cj', self.T, w0); den1 = np.einsum('cij,i->cj', self.V, w0)
         self.eqr = [win0 / np.maximum(den0, 1e-9), win1 / np.maximum(den1, 1e-9)]; self.eqt = [win0.sum(0) / np.maximum(den0.sum(0), 1e-9), win1.sum(0) / np.maximum(den1.sum(0), 1e-9)]
-        self.draw = [np.array([has_draw(h, self.board) for h in self.hands[p]]) for p in (0, 1)]
+        self.draw = [np.array([has_draw(h, self.board) for h in self.hands[p]]) for p in (0, 1)]; self.draw3 = [np.array([has_draw(h, self.board, True) for h in self.hands[p]]) for p in (0, 1)]
+        self.cat_r = [s0 // 15 ** 5, s1 // 15 ** 5]; self.cat_t = [np.array([score7(list(two(h)) + self.board) // 15 ** 5 for h in self.hands[p]]) for p in (0, 1)]          # made hand: 0 high card, 1 pair, 2 two pair, 3 trips, 4 straight, 5 flush, 6+ full house or better
     def cells(self, hero, draw):
         """Each hand's cell on the turn, and on each river card."""
         def place_of(e, w):
-            o = np.argsort(e, kind='stable'); pl = np.zeros(len(e)); ww = w / max(w.sum(), 1e-12); pl[o] = np.cumsum(ww[o]) - ww[o] / 2; return np.digitize(pl, [.15, .35, .55, .75, .9])
+            o = np.argsort(e, kind='stable'); pl = np.zeros(len(e)); ww = w / max(w.sum(), 1e-12); pl[o] = np.cumsum(ww[o]) - ww[o] / 2; return np.digitize(pl, EDGES)
         w = self.w[hero]; e = self.eqt[hero]; weak = int(np.digitize(float(w[e < .3].sum() / w.sum()), [.3, .5])); ct = place_of(e, w) * 3 + weak
         if draw: ct = ct * 2 + self.draw[hero]
         cr = np.zeros(self.eqr[hero].shape, int)
@@ -120,12 +123,12 @@ def node_raised(node, hero): return len(node[1]) == 2            # facing a wage
 def place_rows(E, Wt):
     """For each row (a river card, or the turn): each hand's place in the weighted range by equity (six bands), and the range's weak share (three bands)."""
     o = np.argsort(E, axis=1, kind='stable'); ws = np.take_along_axis(Wt, o, 1); tot = np.maximum(Wt.sum(1, keepdims=True), 1e-12); cum = (np.cumsum(ws, 1) - ws / 2) / tot; pl = np.empty_like(cum); np.put_along_axis(pl, o, cum, 1)
-    return np.digitize(pl, [.15, .35, .55, .75, .9]), np.digitize((Wt * (E < .3)).sum(1) / tot[:, 0], [.3, .5])
+    return np.digitize(pl, EDGES), np.digitize((Wt * (E < .3)).sum(1) / tot[:, 0], [.3, .5])
 def lay(sp, hero, tab, opts):
     """The tables laid over a spot. opts = (true, spr): `true` reads the place and the weak share from the range the player
     holds at each decision, as its own tables have shaped it (else from its range as the turn starts); `spr` adds the
     stacks behind in pots at the decision (under 1.5, 1.5 to 4, over 4)."""
-    true, spr = opts; st, sr, plan = {}, {}, []; w = sp.w[hero]; C = len(sp.cards)
+    true, spr, drw = opts; st, sr, plan = {}, {}, []; w = sp.w[hero]; C = len(sp.cards)
     if not hasattr(sp, '_frozen'): sp._frozen = {}
     if hero not in sp._frozen: sp._frozen[hero] = sp.cells(hero, False)
     ct0, cr0 = sp._frozen[hero]
@@ -159,12 +162,13 @@ def lay(sp, hero, tab, opts):
         if true: pl, wk = place_rows(sp.eqt[hero][None, :], (w * mine)[None, :]); cells = pl[0] * 3 + wk[0]
         else: cells = ct0
         if spr: cells = cells * 3 + depth(inv)
+        if drw: cells = cells * 3 + sp.draw3[hero]
         kd = kind(node, hero, 'T'); na = len(acts); x = strat(kd, cells, na); st[k] = x; plan.append(('t', k, kd, cells, na))
         for a, (_, c) in enumerate(acts): turn(c, mine * x[:, a])
     turn(0, np.ones(len(w), np.float32)); return st, sr, plan
-VARIANTS = {'frozen': (False, False), 'true': (True, False), 'spr': (False, True), 'true+spr': (True, True)}
+VARIANTS = {'frozen': (False, False, False), 'true': (True, False, False), 'spr': (False, True, False), 'true+spr': (True, True, False), 'true+spr+draw': (True, True, True)}       # draw: on the turn tables, in three kinds
 def solve(spots, hero, rounds, opts, log=None):
-    draw = opts; nc = {kd: 18 * (3 if opts[1] else 1) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
+    draw = opts; nc = {kd: NB * 3 * (3 if opts[1] else 1) * (3 if opts[2] and kd[0] == 'T' else 1) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
     for t in range(1, rounds + 1):
         add = {kd: np.zeros_like(v) for kd, v in reg.items()}; own = {kd: np.zeros(nc[kd]) for kd in KINDS}; total = 0.0
         for sp in spots:
@@ -182,7 +186,7 @@ def solve(spots, hero, rounds, opts, log=None):
         if log and (t in (1, 5, 20, 50) or t % 100 == 0): print(f'    round {t}: the reply wins {total:.1f}% of the pot (raw), {time.time() - t0:.0f} s', file=log, flush=True)
     av = {k: np.where(v.sum(1, keepdims=True) > 0, v / np.maximum(v.sum(1, keepdims=True), 1e-12), 1 / KINDS[k]) for k, v in avg.items()}
     ga = float(np.mean([100 * sp.walk(1 - hero, *lay(sp, hero, av, draw)[:2], 'reply')[0] / sp.P0 for sp in spots])); return av if ga < best[0] else best[1]
-def equilibrium(sp, rounds):
+def equilibrium(sp, rounds, full=False):
     """Both players free (CFR+): each player's value against the other's best play, percent of the pot."""
     td, rd = [sp.decisions(p) for p in (0, 1)], None; sig_t = [dict(), dict()]; sig_r = [dict(), dict()]; C = len(sp.cards)
     for p in (0, 1):
@@ -197,7 +201,33 @@ def equilibrium(sp, rounds):
                     v = (q * sigs[k]).sum(-1); regs[k] = np.maximum(regs[k] + q - v[..., None], 0); tot = regs[k].sum(-1, keepdims=True); sigs[k] = np.where(tot > 0, regs[k] / np.maximum(tot, 1e-12), 1 / q.shape[-1]).astype(np.float32); avs[k] += t * mine[..., None] * sigs[k]
     norm = lambda a: {k: np.where(v.sum(-1, keepdims=True) > 0, v / np.maximum(v.sum(-1, keepdims=True), 1e-12), 1 / v.shape[-1]).astype(np.float32) for k, v in a.items()}
     nt, nr = [norm(at[0]), norm(at[1])], [norm(ar[0]), norm(ar[1])]
-    return [100 * sp.walk(1 - p, nt[p], nr[p], 'reply')[0] / sp.P0 for p in (0, 1)]          # what the free player gets against each seat's equilibrium play
+    vals = [100 * sp.walk(1 - p, nt[p], nr[p], 'reply')[0] / sp.P0 for p in (0, 1)]          # what the free player gets against each seat's equilibrium play
+    return (vals, nt, nr) if full else vals
+def profile(sp, hero, nt, nr):
+    """How the unrestricted solve plays each of our cells: for each table, cell and kind of hand (the turn: draw kind and made hand; the river: made hand), the weight there and the share of each answer."""
+    st, sr, plan = lay(sp, hero, {kd: np.full((NB * 9, a), 1 / a) for kd, a in KINDS.items()}, (False, True, False)); out = {}; w = sp.w[hero]; C = len(sp.cards)
+    def put(kd, cell, grp, wt, probs):
+        for c_, g_, w_, p_ in zip(cell.reshape(-1), grp.reshape(-1), wt.reshape(-1), probs.reshape(-1, probs.shape[-1])):
+            if w_ > 0: key = f'{kd}|{int(c_)}|{int(g_)}'; cur = out.setdefault(key, [0.0] * (1 + probs.shape[-1])); cur[0] += float(w_); [cur.__setitem__(1 + i, cur[1 + i] + float(w_ * x)) for i, x in enumerate(p_)]
+    def depth(inv): return int(np.digitize((sp.S - max(inv)) / (sp.P0 + inv[0] + inv[1]), [1.5, 4]))
+    def river(key, k, mine):
+        node = sp.rv[key][k]
+        if not isinstance(node[0], int): return
+        p, acts, inv = node
+        if p != hero: [river(key, c, mine) for _, c in acts]; return
+        x = nr[hero][(key, k)]; wt = w[None, :] * mine * sp.A[hero] / C; pl, wk = place_rows(sp.eqr[hero], w[None, :] * mine * sp.A[hero]); cells = (pl * 3 + wk[:, None]) * 3 + depth(inv); put(kind(node, hero, 'R'), cells, np.minimum(sp.cat_r[hero], 6), wt, x)
+        for a, (_, c) in enumerate(acts): river(key, c, mine * x[..., a])
+    def turn(k, mine):
+        node = sp.tn[k]
+        if node[0] == 'fold': return
+        if node[0] == 'end':
+            if k in sp.rv: river(k, 0, np.repeat(mine[None, :], C, 0))
+            return
+        p, acts, inv = node
+        if p != hero: [turn(c, mine) for _, c in acts]; return
+        x = nt[hero][k]; pl, wk = place_rows(sp.eqt[hero][None, :], (w * mine)[None, :]); cells = (pl[0] * 3 + wk[0]) * 3 + depth(inv); put(kind(node, hero, 'T'), cells, sp.draw3[hero] * 10 + np.minimum(sp.cat_t[hero], 6), w * mine, x)
+        for a, (_, c) in enumerate(acts): turn(c, mine * x[:, a])
+    turn(0, np.ones(len(w), np.float32)); return out
 if __name__ == '__main__':
     job = sys.argv[1]; rounds = int(sys.argv[2]) if len(sys.argv) > 2 else 300; n_tr = int(sys.argv[3]) if len(sys.argv) > 3 else 12; n_te = int(sys.argv[4]) if len(sys.argv) > 4 else 8; rows = []
     for text in open(os.path.join(STORE, 'turn-real.jsonl')):
@@ -206,7 +236,12 @@ if __name__ == '__main__':
         if d['seat'] == 0 and 60 <= len(d['hands']) <= 190 and 60 <= len(d['vr']) <= 190 and d['behind'] / d['pot'] >= 1: d['flop'] = re.search(r'f\d+|b\d+', d['spot']).group(0); rows.append(d)
     rng = np.random.default_rng(4); flops = sorted({d['flop'] for d in rows}); rng.shuffle(flops); held = set(flops[: len(flops) // 3]); rng.shuffle(rows); t0 = time.time(); log = sys.stderr
     te = [x for x in rows if x['flop'] in held][:n_te]; tr = [x for x in rows if x['flop'] not in held][:n_tr]
-    if job == 'base':
+    if job == 'profile':                             # how the unrestricted solve plays our cells, on the spots solved on and scored on
+        res = {}
+        for d in (tr + te)[: int(os.environ.get('PROFILE', 30))]:
+            sp = Turn(d); vals, nt, nr = equilibrium(sp, rounds, True); res[d['spot']] = dict(board=d['board'], pot=d['action'], spr=d['behind'] / d['pot'], cells=[profile(sp, h, nt, nr) for h in (0, 1)]); print(f"  {d['spot']} {time.time() - t0:.0f} s", file=log, flush=True)
+            json.dump(res, open(os.path.join(STORE, 'turn-profile.json'), 'w'))
+    elif job == 'base':
         res = {}
         for d in te: sp = Turn(d); res[d['spot']] = equilibrium(sp, rounds); print(f"  {d['spot']} {res[d['spot']]} {time.time() - t0:.0f} s", file=log, flush=True)
         json.dump(res, open(os.path.join(STORE, 'turn-base.json'), 'w'))
@@ -221,4 +256,4 @@ if __name__ == '__main__':
         hero, kindj = job.split(':'); hero = int(hero); draw = VARIANTS[kindj]; S_tr = [Turn(d) for d in tr]; print(f'  spots ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, draw, log)
         raw_tr = [100 * sp.walk(1 - hero, *lay(sp, hero, tab, draw)[:2], 'reply')[0] / sp.P0 for sp in S_tr]; del S_tr; raw_te = {}
         for d in te: sp = Turn(d); raw_te[d['spot']] = 100 * sp.walk(1 - hero, *lay(sp, hero, tab, draw)[:2], 'reply')[0] / sp.P0
-        json.dump(dict(job=job, rounds=rounds, solved_on=float(np.mean(raw_tr)), scored=raw_te, tables={k: v.tolist() for k, v in tab.items()}), open(os.path.join(STORE, f'turn-{hero}-{kindj}.json'), 'w')); print(f'  done {time.time() - t0:.0f} s', file=log, flush=True)
+        json.dump(dict(job=job, rounds=rounds, solved_on=float(np.mean(raw_tr)), scored=raw_te, tables={k: v.tolist() for k, v in tab.items()}), open(os.path.join(STORE, f"turn-{hero}-{kindj}{'-b20' if NB == 20 else ''}.json"), 'w')); print(f'  done {time.time() - t0:.0f} s', file=log, flush=True)
