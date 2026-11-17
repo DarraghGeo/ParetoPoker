@@ -25,6 +25,16 @@ LINES = ['folds', 'come', 'folds', 'come', 'now', 'now', 'now', 'now']
 ABS, FRAC = 50, 40          # bins of equity (2 points each) and of place along the bar
 WAGER = ('bet', 'raise', 'allin')
 
+import re
+_pre = open(os.path.join(HERE, '..', '..', 'web', 'lib', 'study', 'presets.js')).read()
+PRE = {f'{a}-{o}-{i}': ('oop' if line.startswith(o + ' ') else 'ip' if line.startswith(i + ' ') else None) for a, o, i, line in re.findall(r"action: '(\w+)', oop: '(\w+)', ip: '(\w+)', line: '([^']*)'", _pre)}
+def role_of(d):
+    """Whether the player to act was the last to bet or raise before this street: 'led', 'followed', or 'none' (checked through, or a limped pot)."""
+    me = 'oop' if d['seat'] == 0 else 'ip'; parts = d['line'].split('|')
+    if len(parts) == 1: who = PRE.get(d['pre'])
+    else: prev = parts[-2]; who = None if prev.startswith('xx') else 'ip' if prev.startswith('x') else 'oop'
+    return 'none' if who is None else 'led' if who == me else 'followed'
+
 def cards(text): t = text.replace(' ', ''); return [(RANKS.index(t[i]), t[i + 1]) for i in range(0, len(t), 2)]
 def straight_top(ranks):
     have = set(ranks)
@@ -107,7 +117,7 @@ for name in FILES:
         vw = np.array([x[1] for x in vr]); vrow = np.array([row_of(cards(x[0]), board) for x in vr])
         mine = np.array([w[ok & (row == r)].sum() for r in range(8)]); his = np.array([vw[vrow == r].sum() for r in range(8)])
         ms, hsr = mine / max(mine.sum(), 1e-9), his / max(his.sum(), 1e-9)
-        rec = dict(spot=d['spot'], pot=d['action'], line=d['line'], street=len(board) - 3, seat=d['seat'], first=first, board=d['board'],
+        rec = dict(role=role_of(d), spot=d['spot'], pot=d['action'], line=d['line'], street=len(board) - 3, seat=d['seat'], first=first, board=d['board'],
                    ra=float(ms[4:].sum() - hsr[4:].sum()), na=float(ms[6:].sum() - hsr[6:].sum()), W=float(w[ok].sum()),
                    mix=float(w[ok & (kind == 1)].sum() / w[ok].sum()), act=float((w[ok] * f[ok]).sum() / w[ok].sum()), rows={})
         ha = np.zeros((8, ABS, 3), np.float32); hf = np.zeros((8, FRAC, 3), np.float32)
@@ -133,13 +143,15 @@ for i, rec in enumerate(D):
     for r, R in rec['rows'].items(): R['free3'] = float(max(f3[i, r], R['eq'])); R['free4'] = float(max(f4[i, r], R['free3']))
 
 # ---------------------------------------------------------------- cuts learnt on other spots
+freq_bin = lambda x: 0 if x < 0.1 else 1 if x < 0.3 else 2 if x < 0.5 else 3 if x < 0.7 else 4 if x < 0.9 else 5
 ra_bin = lambda x: 0 if x <= -0.03 else 2 if x >= 0.03 else 1
 na_bin = lambda x: 0 if x <= -0.02 else 2 if x >= 0.02 else 1
 spots = sorted({rec['spot'] for rec in D}); rng = np.random.default_rng(3); order = rng.permutation(len(spots)); fold_of = {spots[s]: k % 5 for k, s in enumerate(order)}
 folds_ = np.array([fold_of[rec['spot']] for rec in D])
 base = lambda rec: (rec['street'], rec['first'], rec['seat'])
 KEYS = dict(frac=(HF, base), eqcut=(HA, base), frac_ra=(HF, lambda rec: base(rec) + (ra_bin(rec['ra']),)), eqcut_ra=(HA, lambda rec: base(rec) + (ra_bin(rec['ra']),)),
-            frac_pot=(HF, lambda rec: base(rec) + (rec['pot'],)), frac_ra_na=(HF, lambda rec: base(rec) + (ra_bin(rec['ra']), na_bin(rec['na']))))
+            frac_pot=(HF, lambda rec: base(rec) + (rec['pot'],)), frac_role=(HF, lambda rec: base(rec) + (rec['role'],)), frac_ctx=(HF, lambda rec: base(rec) + (rec['role'], rec['pot'], ra_bin(rec['ra']))),
+            frac_freq=(HF, lambda rec: base(rec) + (freq_bin(rec['act']),)), eqcut_freq=(HA, lambda rec: base(rec) + (freq_bin(rec['act']),)), frac_freq_ctx=(HF, lambda rec: base(rec) + (freq_bin(rec['act']), rec['role'])), frac_ra_na=(HF, lambda rec: base(rec) + (ra_bin(rec['ra']), na_bin(rec['na']))))
 for name, (H, key) in KEYS.items():
     keys = [key(rec) for rec in D]; groups = collections.defaultdict(list)
     for i, k in enumerate(keys): groups[k].append(i)
@@ -152,8 +164,9 @@ for name, (H, key) in KEYS.items():
                 pool = H[train, r].sum(axis=0).astype(np.float64) if len(train) else np.zeros(H.shape[2:])
                 if pool.sum() <= 0: pool = H[idx, r].sum(axis=0).astype(np.float64)
                 pred = predict(mono_bins(pool), H.shape[2]); right = H[test, r][:, np.arange(H.shape[2]), pred].sum(axis=1)
-                for i, x in zip(test, right):
-                    if r in D[i]['rows']: D[i]['rows'][r][name] = float(x)
+                sev = H[test, r][:, pred == 0, 2].sum(axis=1) + H[test, r][:, pred == 2, 0].sum(axis=1)   # always called never, or never called always
+                for i, x, y in zip(test, right, sev):
+                    if r in D[i]['rows']: D[i]['rows'][r][name] = float(x); D[i]['rows'][r][name + '_sev'] = float(y)
 # the rows alone, learnt the same way: each row called by its commonest kind on the other spots
 keys = [base(rec) for rec in D]; groups = collections.defaultdict(list)
 for i, k in enumerate(keys): groups[k].append(i)
@@ -186,7 +199,8 @@ def table(title, groups, meas=('none', 'rows_learnt', 'frac', 'frac_ra', 'eqcut'
             v = [a for a in (acc(r, m) for r in recs) if a is not None]; cells.append(f'{100 * np.mean(v):.0f}%' if v else '-')
         err = np.array([1 - acc(r, 'frac') for r in recs]) * 100
         print(f'| {name} | {len(recs)} | {100 * np.mean([r["mix"] for r in recs]):.0f}% | ' + ' | '.join(cells) + f' | {np.percentile(err, 50):.0f} | {np.percentile(err, 90):.0f} | {np.percentile(err, 95):.0f} | {err.max():.0f} |', file=out)
-LABEL = dict(none='rows only (this spot)', rows_learnt='rows only (learnt)', frac='cuts learnt: place on bar', eqcut='cuts learnt: equity value', frac_ra='place on bar + range adv.',
+LABEL = dict(frac_role='+ who led', frac_ctx='+ who led, pot, range adv.', frac_freq='+ how often the range acts', eqcut_freq='equity value + how often', frac_freq_ctx='+ how often + who led',
+             none='rows only (this spot)', rows_learnt='rows only (learnt)', frac='cuts learnt: place on bar', eqcut='cuts learnt: equity value', frac_ra='place on bar + range adv.',
              frac_ra_na='+ nut adv.', frac_pot='place on bar + pot type', eq='ceiling: equity', free3='ceiling: any 3 stretches', free4='ceiling: any 4 stretches', line='ceiling: special lines')
 STREET = ['flop', 'turn', 'river']; SEAT = ['out of position', 'in position']; RA = ['behind (3+ points)', 'level', 'ahead (3+ points)']; NA = ['behind (2+ points)', 'level', 'ahead (2+ points)']
 def by(recs, key, names): return [(names[k] if not isinstance(names, dict) else names[k], [r for r in recs if key(r) == k]) for k in (range(len(names)) if not isinstance(names, dict) else names)]
@@ -245,6 +259,32 @@ for sit, title in ((True, 'First to act: bet or check'), (False, 'Facing a bet: 
         print('\nThe ten worst:\n', file=o)
         for i in np.argsort(-err)[:10]:
             r = recs[i]; print(f"- {r['spot']} | line {r['line']} | {STREET[r['street']]}, {SEAT[r['seat']]} | learnt {100 * (1 - err[i]):.0f}% right, ceiling {100 * acc(r, 'eq'):.0f}%, rows alone {100 * acc(r, 'none'):.0f}% | mixing {100 * r['mix']:.0f}%, acts {100 * r['act']:.0f}% | range adv {100 * r['ra']:+.0f}, nut adv {100 * r['na']:+.0f}", file=o)
+        print('\n### What makes the cuts carry over to a spot not seen\n', file=o)
+        ms = ['rows_learnt', 'frac', 'frac_role', 'frac_ctx', 'frac_freq', 'frac_freq_ctx', 'eqcut_freq', 'eq']
+        print('| | ' + ' | '.join(LABEL[m] for m in ms) + ' |', file=o); print('|---|' + '---|' * len(ms), file=o)
+        for nm, rs in [('all', recs)] + by(recs, lambda r: r['street'], STREET) + by(recs, lambda r: r['seat'], SEAT):
+            print(f'| {nm} | ' + ' | '.join(f"{100 * np.mean([acc(r, m) for r in rs]):.0f}%" for m in ms) + ' |', file=o)
+        print('\nSevere errors only (a hand that always acts called never, or the reverse), share of the range:\n', file=o)
+        ms2 = ['frac', 'frac_ctx', 'frac_freq', 'frac_freq_ctx']
+        print('| | ' + ' | '.join(LABEL[m] for m in ms2) + ' | at the ceiling |', file=o); print('|---|' + '---|' * (len(ms2) + 1), file=o)
+        for nm, rs in [('all', recs)] + by(recs, lambda r: r['street'], STREET):
+            print(f'| {nm} | ' + ' | '.join(f"{100 * np.mean([acc(r, m + '_sev') for r in rs]):.0f}%" for m in ms2) + f" | {100 * np.mean([sum(R['sev'] for R in r['rows'].values()) / r['W'] for r in rs]):.1f}% |", file=o)
+        print('\nSpread of the error over decisions, knowing how often the range acts and who led (median / P90 / P95 / worst):\n', file=o)
+        print('| | median | P90 | P95 | worst |', file=o); print('|---|---|---|---|---|', file=o)
+        for nm, rs in [('all', recs)] + by(recs, lambda r: r['street'], STREET) + by(recs, lambda r: r['seat'], SEAT) + by(recs, lambda r: ra_bin(r['ra']), RA) + by(recs, lambda r: na_bin(r['na']), NA):
+            e2 = np.array([1 - acc(r, 'frac_freq_ctx') for r in rs]) * 100; print(f'| {nm} | {np.percentile(e2, 50):.0f} | {np.percentile(e2, 90):.0f} | {np.percentile(e2, 95):.0f} | {e2.max():.0f} |', file=o)
+        # how well what a player knows says how often the range acts
+        print('\nHow far off a guess of how often the range acts is, from what a player knows (the mean of other spots like it), in points:\n', file=o)
+        print('| known | typical miss (mean) | P90 |', file=o); print('|---|---|---|', file=o)
+        for nm, key in (('street and seat', base), ('+ who led', lambda r: base(r) + (r['role'],)), ('+ pot', lambda r: base(r) + (r['role'], r['pot'])), ('+ range advantage', lambda r: base(r) + (r['role'], r['pot'], ra_bin(r['ra']))), ('+ nut advantage', lambda r: base(r) + (r['role'], r['pot'], ra_bin(r['ra']), na_bin(r['na'])))):
+            g = collections.defaultdict(list)
+            for r in recs: g[key(r)].append(r)
+            miss = []
+            for rs in g.values():
+                for fo in range(5):
+                    te = [r for r in rs if fold_of[r['spot']] == fo]; tr = [r for r in rs if fold_of[r['spot']] != fo] or rs
+                    mu = np.mean([r['act'] for r in tr]); miss += [abs(r['act'] - mu) for r in te]
+            print(f'| {nm} | {100 * np.mean(miss):.0f} | {100 * np.percentile(miss, 90):.0f} |', file=o)
         if sit:
             print('\n### The special lines against plain equity (ceilings, first to act)\n', file=o)
             print('| | equity | special lines |', file=o); print('|---|---|---|', file=o)
