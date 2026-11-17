@@ -7,7 +7,7 @@
 # against the ranges as the turn starts, so the cells do not move with either player's play.
 # Turn spots: poker-huerosolver's handselector-turn roots (store.mjs turn-real), solved on some flops, scored on others.
 #   STORE=<dir> python3 research/butterfly/restricted_turn.py <job> [rounds] [spots to solve on] [spots to score on]
-#     job: base (the game's value on the scoring spots) | <seat 0/1>:<plain|draw>   ->  $STORE/turn-<job>.json
+#     job: base (the game's value on the scoring spots) | alone (each scoring spot solved alone) | <seat 0/1>:<plain|draw>   ->  $STORE/turn-<job>.json
 import os, sys, json, re, time
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']; RANKS = '23456789TJQKA'; DECK = [r + s for r in RANKS for s in 'cdhs']
@@ -174,6 +174,13 @@ if __name__ == '__main__':
         res = {}
         for d in te: sp = Turn(d); res[d['spot']] = equilibrium(sp, rounds); print(f"  {d['spot']} {res[d['spot']]} {time.time() - t0:.0f} s", file=log, flush=True)
         json.dump(res, open(os.path.join(STORE, 'turn-base.json'), 'w'))
+    elif job == 'alone':                             # each scoring spot solved alone with the same tables: what sharing across boards costs
+        base = json.load(open(os.path.join(STORE, 'turn-base.json'))); res = {}
+        for d in te[: int(os.environ.get('ALONE', 6))]:
+            sp = Turn(d); res[d['spot']] = []
+            for hero in (0, 1): tab = solve([sp], hero, rounds, False); res[d['spot']].append(100 * sp.walk(1 - hero, *lay(sp, hero, tab, False)[:2], 'reply')[0] / sp.P0 - base[d['spot']][hero])
+            print(f"  {d['spot']} alone: {[round(x, 1) for x in res[d['spot']]]} {time.time() - t0:.0f} s", file=log, flush=True)
+        json.dump(res, open(os.path.join(STORE, 'turn-alone.json'), 'w'))
     else:
         hero, kindj = job.split(':'); hero = int(hero); draw = kindj == 'draw'; S_tr = [Turn(d) for d in tr]; print(f'  spots ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, draw, log)
         raw_tr = [100 * sp.walk(1 - hero, *lay(sp, hero, tab, draw)[:2], 'reply')[0] / sp.P0 for sp in S_tr]; del S_tr; raw_te = {}
