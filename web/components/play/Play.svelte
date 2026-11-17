@@ -58,7 +58,7 @@
   });
   $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
   // nothing moves while Study or a card over the table is open: clocks stop, and villain's next action waits
-  $effect(() => pause(game, studying || !!peek || !!why || scores || reviewing || (sitting && game.seated)));
+  $effect(() => pause(game, studying || !!peek || !!why || !!game.sprint || scores || reviewing || (sitting && game.seated)));
   // a newer build of the app may be taken up while nothing has been dealt
   $effect(() => { route.idle = !game.seated; return () => { route.idle = true; }; });
   const clockOf = (who) => (game.clock.who === who && !st?.result ? game.clock : null);
@@ -102,13 +102,13 @@
     </header>
     {#if why}<Why hero={why.hero} grade={why} told={why.told} failed={why.failed} rule={why.rule} twins={why.twins} actions={why.mix} record={why.rule ? recordOf(game.rules, why.rule.id) : null} onstudy={studyWhy} onclose={() => (why = null)} />{/if}
     {#if scores}<Days days={game.days} onclose={() => (scores = false)} />{/if}
-    {#if reviewing}<Mistakes hands={game.mistakes} rules={game.rules} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : m.flop ? { flop: m.flop } : null)} onclose={() => (reviewing = false)} />
+    {#if reviewing}<Mistakes hands={game.mistakes} rules={game.rules} quiz={game.quiz} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : m.flop ? { flop: m.flop } : null)} onclose={() => (reviewing = false)} />
     {:else if sitting}<Sitting stopped={game.seated ? null : game.stopped} seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
     {:else}
       {#if st && names.line}<p class="pre" aria-label="Before the flop"><b>{names.pot}</b> {names.line}</p>{/if}
       <div class="arena">
         <div class="felt" aria-hidden="true"></div>
-        <Seat name="Villain" tag={names[st ? other(st.seat) : 'oop']} cards={st?.villain ?? null} behind={st ? st.behind[1 - me] : config.stack} clock={clockOf('villain')} bank={game.bank.villain} dealer={st ? st.seat === 'oop' : false} onpeek={() => (peek = 'villain')} />
+        <Seat name="Villain" tag={names[st ? other(st.seat) : 'oop']} cards={st?.villain ?? null} behind={st ? st.behind[1 - me] : config.stack} clock={clockOf('villain')} bank={game.bank.villain} dealer={st ? st.seat === 'oop' : false} onpeek={() => { if (!game.sprint) peek = 'villain'; }} />
         <div class="middle" aria-label="The board and the pot">
           <div class="wager" class:on={!!lastOf('villain')}>{#if lastOf('villain')}<b>{lastOf('villain')}</b>{#if front('villain') > 0}<span>{chips(front('villain'))}</span>{/if}{/if}</div>
           <div class="pot"><span>Pot</span> {st ? chips(st.pot) : chips(config.pot)}</div>
@@ -117,7 +117,7 @@
           <div class="wager" class:on={!!lastOf('hero')}>{#if lastOf('hero')}<b>{lastOf('hero')}</b>{#if front('hero') > 0}<span>{chips(front('hero'))}</span>{/if}{/if}</div>
           <div class="grades" class:over={!!st?.result}>{#if graded}{#key graded.key}<Grade grade={graded} onopen={explainGraded} />{/key}{/if}</div>
         </div>
-        <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero onpeek={() => (peek = 'hero')} />
+        <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero onpeek={() => { if (!game.sprint) peek = 'hero'; }} />
         {#if looked && peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={withMix(looked.hands)} his={withMix(looked.other)} seat={peeked} board={looked.board} actions={looked.actions} marked={peek === 'hero' ? cellOf(st.hero) : st.villain ? cellOf(st.villain) : null} onclose={() => (peek = null)} />
         {:else if peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={listOf(peeked)} his={listOf(other(peeked))} board={held.board} seat={peeked} marked={peek === 'hero' ? cellOf(held.hero) : null} onclose={() => (peek = null)} />{/if}
       </div>

@@ -3,6 +3,7 @@
 import * as fs from 'poker-flopsolve';
 import { cardsOf, text } from '../../solver/deck.js';
 import { rangesOf, strategyOf } from './solved.js';
+import { sprintFor } from './sprint.js';
 import { play, say } from './state.js';
 
 const cents = (x) => Math.round(x * 100) / 100;
@@ -72,8 +73,11 @@ export function post(p) {
   const key = [p.step, p.waiting != null, toAct, !!p.done].join('|'); if (key === p.posted) return;   // told already
   p.posted = key;
   const shown = p.done?.showdown ? p.hand.board : boardOf(p.seg);
+  // the questions due, before one of hero's decisions (the first or second he comes to); asked once
+  const moves = p.history.reduce((t, h) => t + h.actions.filter((a) => a.who === 'hero').length, 0);
+  let sprint = null; if (toAct && p.sprintAt >= 0 && moves >= p.sprintAt) { sprint = sprintFor(p, node); if (sprint) { p.sprintAt = -1; play.sprint = false; } }
   say({
-    type: 'state', id: p.hand.id, step: p.step, stack: p.hand.config.stack, spot: { oop: p.hand.config.oop, ip: p.hand.config.ip, pot: p.hand.config.pot, stack: p.hand.config.stack }, seat: p.hand.seat, hero: fs.formatCombo(p.hand.hero), villain: p.done?.showdown ? fs.formatCombo(p.hand.villain) : null,
+    type: 'state', sprint, id: p.hand.id, step: p.step, stack: p.hand.config.stack, spot: { oop: p.hand.config.oop, ip: p.hand.config.ip, pot: p.hand.config.pot, stack: p.hand.config.stack }, seat: p.hand.seat, hero: fs.formatCombo(p.hand.hero), villain: p.done?.showdown ? fs.formatCombo(p.hand.villain) : null,
     board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(p.hand.config.stack - x)), history: p.history,
     toAct, waiting: p.waiting != null, actions: toAct ? choicesAt(node, p.me) : [], actor: node?.seat ?? null,
     ranges: node && (toAct || p.step === 0) ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,   // read where hero decides and as the hand starts: every other step is told too

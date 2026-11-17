@@ -1,0 +1,1 @@
+import{$ as e,c as t,et as n,i as r,r as i}from"./index-CnVDC_gt.js";import{o as a,r as o,t as s}from"./game.svelte-DtwWuv1G.js";function c(c,l){n(l,!1);let u=s();o(u,i.query),r(()=>u.worker.terminate()),t(),a(c,{get game(){return u}}),e()}export{c as default};

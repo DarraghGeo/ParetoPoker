@@ -23,7 +23,7 @@ export function start() {
   const hand = play.hands.find((h) => h.flop);
   if (!hand) { dealAhead(); status(); pump(); return false; }
   play.hands.splice(play.hands.indexOf(hand), 1); play.hands.unshift(hand);
-  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: hand.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: hand.config.pot, waiting: null, done: null, streets: {}, last: {} };
+  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: hand.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: hand.config.pot, waiting: null, done: null, streets: {}, last: {}, sprintAt: play.sprint ? Math.floor(Math.random() * 2) : -1 };   // `sprintAt`: which of hero's decisions the questions due come before
   proceed();
   return true;
 }

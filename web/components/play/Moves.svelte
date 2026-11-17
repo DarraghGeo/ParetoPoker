@@ -2,6 +2,7 @@
 <script>
   import CopyButton from '../common/CopyButton.svelte';
   import Track from '../common/Track.svelte';
+  import Sprint from './Sprint.svelte';
   import { chips, spelled } from '../../lib/actions.js';
   import { act, deal } from '../../lib/play/flow.js';
   import { handText } from '../../lib/play/history.js';
@@ -19,6 +20,7 @@
     <div class="after"><button type="button" class="primary" id="next" onclick={() => deal(game)}>Next hand</button>
       <span class="copy"><CopyButton text={() => handText(st, config)} label="Copy the hand history" /><span>Copy hand</span></span></div>
     {#if game.status && !game.status.ready}<Track done={game.progress?.done ?? 0} />{/if}
+  {:else if st.toAct && game.sprint}<Sprint {game} />
   {:else if st.toAct}
     <div class="acts">{#each st.actions as a}<button type="button" class="act k-{a.kind}" data-act={a.label} disabled={sent != null} onclick={() => { sent = a.label; act(game, a.label); }}><b>{words(a)}</b>{#if a.add > 0}<span>{chips(a.add)}</span>{/if}</button>{/each}</div>
   {:else}<p class="note wait">{st.waiting ? `Dealing… ${solving ? `(${solving.toLowerCase()})` : ''}` : 'Villain to act'}</p>{#if st.waiting}<Track done={game.progress?.done ?? 0} />{/if}{/if}

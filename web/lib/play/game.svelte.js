@@ -2,6 +2,7 @@
 // clock running and both time banks, what is being solved and how far along, and the session's chips won from the flop
 // on. flow.js takes the worker's messages and paces them.
 import { loadMistakes } from './mistakes.js';
+import { loadQuiz } from './quiz.js';
 import { loadRules } from './rules.js';
 import { configOf, loadSeating } from './seating.js';
 import { lastStop, startTrace } from './trace.js';
@@ -23,6 +24,8 @@ class PlayState {
   mistakes = $state.raw(loadMistakes());
   days = $state.raw(loadDays());
   rules = $state.raw(loadRules());
+  quiz = $state.raw(loadQuiz());
+  sprint = $state.raw(null);
   stopped = $state.raw(lastStop());
   paused = false;
   queue = []; busy = false; lastKey = ''; tick = null; timer = null; onExport = () => {}; onExplained = () => {};

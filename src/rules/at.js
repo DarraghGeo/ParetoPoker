@@ -8,14 +8,14 @@ import { ruleFor } from './rules.js';
 const topPairUp = (x) => x.made >= 4 || x.own >= 2 || (x.made === 3 && x.own > 0) || (x.own === 1 && (x.pair === 'top pair' || x.pair === 'overpair'));
 
 /** How much of a range is top pair or better on the board. */
-function topShare(fs, board, range) {
+export function topShare(fs, board, range) {
   let all = 0, top = 0;
   for (let c = 0; c < fs.COMBOS; c++) if (range[c] > 0) { all += range[c]; if (topPairUp(features(fs, board, c))) top += range[c]; }
   return all > 0 ? top / all : 0;
 }
 
 /** How much of his range is strong (80% or more against mine) and weak (under 30%). */
-function shapeOf(fs, board, mine, his) {
+export function shapeOf(fs, board, mine, his) {
   const eq = bothEquities(fs, board, mine, his)[1]; let all = 0, strong = 0, weak = 0;
   for (let c = 0; c < fs.COMBOS; c++) if (his[c] > 0 && !Number.isNaN(eq[c])) { all += his[c]; if (eq[c] >= 0.8) strong += his[c]; else if (eq[c] < 0.3) weak += his[c]; }
   return all > 0 ? { strong: strong / all, weak: weak / all } : { strong: 0, weak: 0 };

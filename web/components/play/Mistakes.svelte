@@ -5,14 +5,16 @@
   import Cards from '../common/Cards.svelte';
   import CopyButton from '../common/CopyButton.svelte';
   import { COSTLY, KEPT, SMALL } from '../../lib/play/mistakes.js';
+  import { quizList } from '../../lib/play/quiz.js';
   import { ruleList, ruleText } from '../../lib/play/rules.js';
-  let { hands, rules, onstudy, onclose } = $props();
+  let { hands, rules, quiz, onstudy, onclose } = $props();
+  const asked = $derived(quizList(quiz));
   let tab = $state('mistakes'); let open = $state(null);
   const day = (at) => new Date(at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   const list = $derived(ruleList(rules));
 </script>
 <section class="sitting mistakes" aria-label="Mistakes and rules">
-  <div class="seg" role="group" aria-label="What to show"><button type="button" aria-pressed={tab === 'mistakes'} onclick={() => (tab = 'mistakes')}>Mistakes</button><button type="button" aria-pressed={tab === 'rules'} onclick={() => (tab = 'rules')}>Rules</button></div>
+  <div class="seg" role="group" aria-label="What to show"><button type="button" aria-pressed={tab === 'mistakes'} onclick={() => (tab = 'mistakes')}>Mistakes</button><button type="button" aria-pressed={tab === 'rules'} onclick={() => (tab = 'rules')}>Rules</button><button type="button" aria-pressed={tab === 'sprint'} onclick={() => (tab = 'sprint')}>Sprint</button></div>
   {#if tab === 'mistakes'}
     {#if !hands.length}<p class="said">Nothing here yet. A hand is kept when you make a move the solver almost never makes and it costs {SMALL} or more in EV, or any move that gives up {COSTLY} or more. The last {KEPT} are kept on this device.</p>
     {:else}<ul>{#each hands as h (h.at)}
@@ -21,6 +23,10 @@
         {#each h.mistakes as m}<button type="button" class="miss" onclick={() => onstudy(m)}><i aria-hidden="true"></i><span><b>{m.street}: you {m.move}</b> {m.solver}{#if m.cost >= 0.005}{' · '}EV −{m.cost.toFixed(2)}{/if}</span><span class="go" aria-hidden="true">›</span></button>{/each}
       </li>{/each}</ul>
       <p class="said">Tap a mistake to open that decision in Study, solved again there: a turn or river in seconds, a flop in about a minute.</p>{/if}
+  {:else if tab === 'sprint'}
+    {#if !asked.length}<p class="said">Nothing here yet. Every eight to twelve hands a sprint asks three to five questions about the spot in front of you, before you act. Next one in {Math.max(0, quiz.left)} {quiz.left === 1 ? 'hand' : 'hands'}.</p>
+    {:else}<ul>{#each asked as a (a.id)}<li><div class="rrow"><span class="pct" class:low={a.pct < 70}>{a.pct}%</span><span class="rtext">{a.text}</span></div><div class="top"><span class="meta">{a.n} {a.n === 1 ? 'answer' : 'answers'}</span></div></li>{/each}</ul>
+      <p class="said">How often each kind of question was answered right. Next sprint in {Math.max(0, quiz.left)} {quiz.left === 1 ? 'hand' : 'hands'}.</p>{/if}
   {:else}
     {#if !list.length}<p class="said">Nothing here yet. Each decision you make is set against your rule for it: whether the solver does what the rule says with that hand. The record builds as you play.</p>
     {:else}<ul>{#each list as r (r.id)}

@@ -5,6 +5,7 @@
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
 import { keepMistakes } from './mistakes.js';
+import { handPlayed, sprintDue, sprintStarted } from './quiz.js';
 import { keepRules } from './rules.js';
 import { PHONE, configOf, keepSeating } from './seating.js';
 import { mark, markSolver } from './trace.js';
@@ -61,13 +62,14 @@ function timedOut(game) {
 function counted(game, data) {
   const hand = `${data.epoch}|${data.id}`; if (!data.result || game.counted === hand) return;
   game.counted = hand; Object.assign(game.session, { net: game.session.net + data.result.net, lost: game.session.lost + (data.result.lost ?? 0), hands: game.session.hands + 1 });
-  keep(KEY, game.session); keepDay(game); keepMistakes(game, data); keepRules(game, data);
+  keep(KEY, game.session); keepDay(game); keepMistakes(game, data); keepRules(game, data); handPlayed(game);
 }
 
 /** Put a step on the table, and start the clock it calls for. */
 function show(game, data) {
   game.state = data; game.shownAt = performance.now(); stopClock(game);
   if (data.study) game.study = { ...data.study, hero: data.hero };
+  if (data.sprint) sprintStarted(game, data.sprint);   // a few questions before this decision
   counted(game, data);
   if (data.result) return;
   if (data.toAct) runClock(game, 'hero', SHOT, () => timedOut(game));
@@ -153,7 +155,7 @@ function clear(game) { clearTimeout(game.timer); stopClock(game); Object.assign(
 export function deal(game) {
   mark('asked for the next hand');
   clear(game); game.study = null; game.bank = { hero: Math.min(BANK, game.bank.hero + REFILL), villain: BANK };   // the hand before is gone from the worker, and from Study with it
-  game.worker.postMessage({ type: 'deal' });
+  game.sprint = null; game.worker.postMessage({ type: 'deal', sprint: sprintDue(game) });
 }
 export function act(game, label) { mark(`your move (${label})`); stopClock(game); game.worker.postMessage({ type: 'act', label }); }
 
@@ -161,7 +163,7 @@ export function act(game, label) { mark(`your move (${label})`); stopClock(game)
 export function sitDown(game, seating) {
   const config = configOf(seating); const same = sameSetup(config, game.config); keepSeating(seating); game.seating = seating;
   const first = !game.seated; game.seated = true; mark('sat down', true);
-  if (same && first) deal(game); else if (!same) { resetup(game, config); game.worker.postMessage({ type: 'deal' }); }   // the same table again plays on with what is solved
+  if (same && first) deal(game); else if (!same) { resetup(game, config); game.worker.postMessage({ type: 'deal', sprint: sprintDue(game) }); }   // the same table again plays on with what is solved
 }
 /** Whether two setups are solved alike: the same spots in rotation and the same betting, however they were chosen. */
 const sameSetup = (a, b) => { const of = (c) => JSON.stringify([c.spots, c.bets, c.raises, c.maxRaises, c.allIn]); return of(a) === of(b); };
