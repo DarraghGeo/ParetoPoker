@@ -7,6 +7,9 @@ import os, sys, json
 HERE = os.path.dirname(os.path.abspath(__file__))
 exec(open(os.path.join(HERE, 'rules_mix.py')).read().split("out = open(os.path.join(HERE, 'rules-mix.md')")[0])
 KEPT = json.load(open(os.path.join(HERE, 'rules3.json'))); GAPS = [0, 0.2, 0.5, 1.0, 99]
+# two tables take a second dimension (second_dim.py): the flop out of position plays two opposite ways by pot type, the turn by who bet the flop
+SECOND = {'flop, out of position, first to act': (['row'], ['stack to pot']), 'turn, out of position, first to act': (['equity'], ['who bet last street'])}
+for nm_, (hd_, sp_) in SECOND.items(): KEPT[nm_].update(hand=hd_, spot=sp_, names=hd_ + sp_, labels={x: (HANDF[x][1] if x in HANDF else SPOTF[x][1]) for x in hd_ + sp_})
 def strategy(loss, sol, n, gap):
     """Each cell's play: the answers within `gap` of the best (per unit of weight), in the solver's proportions, in quarters."""
     near = loss <= loss.min(1, keepdims=True) + gap / 100; f = np.where(near, sol, 0); lone = f.sum(1) <= 1e-9; f[lone] = (loss[lone] == loss[lone].min(1, keepdims=True)).astype(float); f = f / f.sum(1, keepdims=True)

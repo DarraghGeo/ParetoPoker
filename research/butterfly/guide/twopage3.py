@@ -32,13 +32,17 @@ def td(c, ans, sep=None):
     """A cell as solid blocks side by side, each as wide as its answer's share (separate boxes, so the edges print sharp)."""
     q = c['quarters']; title = ', '.join(f'{WORD[ans[k]]} {25 * q[k]}%' for k in range(3) if q[k])
     return f'<td class="bar" title="{title}"><div>' + ''.join(f'<span style="background:{COL[k]};flex:{q[k]} 0 0"></span>' for k in range(3) if q[k]) + '</div></td>'
+POT = {'title': 'The pot', 'labels': {'2 to 6': '3-bet', 'over 6': 'Single-raised'}}        # in this data the stack bands are the pot types
 def grid(nm, title=None, loss=None):
     t = R[nm]; names, labs, cells = filled(t)
+    if len(names) == 2: labs = [labs[0], [b for b in labs[1] if any(not cells[(a, b)].get('rare') for a in labs[0])]]      # a column with no hands in the data is left off the page
+    ct = COLTITLE.get(names[1]) if len(names) == 2 else None; cl = COLHEAD.get(names[1]) if len(names) == 2 else None
+    if nm == 'flop, out of position, first to act' and len(names) == 2: ct, cl = POT['title'], POT['labels']
     h = f'<div class="t"><h3>{title or TITLE[nm]}</h3><table>'
     if len(names) == 1:
         h += f'<tr><th class="rh">{ROWHEAD[names[0]]}</th><th></th></tr>' + ''.join(f'<tr><th class="rh">{SHORT[a]}</th>{td(cells[(a,)], t['answers'], ' · ')}</tr>' for a in reversed(labs[0]))
     else:
-        h += f'<tr><th class="rh" rowspan="2">{ROWHEAD[names[0]]}</th><th class="grp" colspan="{len(labs[1])}">{COLTITLE[names[1]]}</th></tr><tr>' + ''.join(f'<th>{COLHEAD[names[1]][b]}</th>' for b in labs[1]) + '</tr>' + ''.join(f'<tr><th class="rh">{SHORT[a]}</th>' + ''.join(td(cells[(a, b)], t['answers']) for b in labs[1]) + '</tr>' for a in reversed(labs[0]))
+        h += f'<tr><th class="rh" rowspan="2">{ROWHEAD[names[0]]}</th><th class="grp" colspan="{len(labs[1])}">{ct}</th></tr><tr>' + ''.join(f'<th>{cl[b]}</th>' for b in labs[1]) + '</tr>' + ''.join(f'<tr><th class="rh">{SHORT[a]}</th>' + ''.join(td(cells[(a, b)], t['answers']) for b in labs[1]) + '</tr>' for a in reversed(labs[0]))
     return h + f'</table><p class="loss">{loss or f"Loses {t['score']['mean']:.2f}% of the pot per decision"}</p></div>'
 def lookup(k, nm):
     t = R[nm]; names, labs, cells = filled(t); head = f'<b>{k}. {nm}</b> [{" × ".join(names)}] loss {t["score"]["mean"]:.2f} (P90 {t["score"]["p90"]:.2f})'; code = lambda c: ''.join(str(x) for x in c['quarters'])

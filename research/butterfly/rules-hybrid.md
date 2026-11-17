@@ -83,15 +83,15 @@ Each cell plays its best answer, plus any answer within the gap of it, in the so
 | 1.0 | 0.66 | 1.26 | 35 | 24 / 13 | 56% / 2% |
 | all | 1.97 | 3.37 | 36 | 14 / 12 | 37% / 12% |
 
-## turn, out of position, first to act: equity (2372 decisions; the solver: bet 29%, bet big 0%)
+## turn, out of position, first to act: equity x who bet last street (2372 decisions; the solver: bet 29%, bet big 0%)
 
 | gap (% pot a hand) | EV lost | P90 | differs | frequency miss | the table's own shares: second / third answer |
 |---|---|---|---|---|---|
-| 0 | 0.16 | 0.42 | 29 | 29 / 0 | 0% / 0% |
-| 0.2 | 0.16 | 0.42 | 29 | 29 / 0 | 0% / 0% |
-| 0.5 | 0.20 | 0.45 | 26 | 24 / 0 | 8% / 0% |
-| 1.0 | 0.23 | 0.50 | 27 | 23 / 0 | 12% / 0% |
-| all | 0.60 | 1.23 | 32 | 20 / 0 | 29% / 0% |
+| 0 | 0.16 | 0.41 | 26 | 18 / 0 | 11% / 0% |
+| 0.2 | 0.16 | 0.40 | 24 | 20 / 0 | 10% / 0% |
+| 0.5 | 0.16 | 0.41 | 24 | 19 / 0 | 11% / 0% |
+| 1.0 | 0.20 | 0.50 | 24 | 16 / 0 | 16% / 0% |
+| all | 0.42 | 0.80 | 27 | 16 / 0 | 28% / 0% |
 
 ## turn, in position, first to act: equity (2323 decisions; the solver: bet 40%, bet big 0%)
 
@@ -103,15 +103,15 @@ Each cell plays its best answer, plus any answer within the gap of it, in the so
 | 1.0 | 0.38 | 0.72 | 32 | 12 / 0 | 44% / 0% |
 | all | 0.57 | 0.95 | 32 | 12 / 0 | 47% / 0% |
 
-## flop, out of position, first to act: row (226 decisions; the solver: bet 19%, bet big 0%)
+## flop, out of position, first to act: row x stack to pot (226 decisions; the solver: bet 19%, bet big 0%)
 
 | gap (% pot a hand) | EV lost | P90 | differs | frequency miss | the table's own shares: second / third answer |
 |---|---|---|---|---|---|
-| 0 | 0.05 | 0.09 | 18 | 15 / 0 | 5% / 0% |
-| 0.2 | 0.06 | 0.11 | 19 | 16 / 0 | 9% / 0% |
-| 0.5 | 0.07 | 0.12 | 20 | 18 / 0 | 12% / 0% |
-| 1.0 | 0.14 | 0.27 | 25 | 22 / 0 | 23% / 0% |
-| all | 0.14 | 0.27 | 25 | 22 / 0 | 23% / 0% |
+| 0 | 0.03 | 0.08 | 16 | 11 / 0 | 9% / 0% |
+| 0.2 | 0.04 | 0.13 | 12 | 9 / 0 | 17% / 0% |
+| 0.5 | 0.05 | 0.14 | 11 | 9 / 0 | 16% / 0% |
+| 1.0 | 0.05 | 0.14 | 11 | 9 / 0 | 16% / 0% |
+| all | 0.05 | 0.14 | 11 | 9 / 0 | 16% / 0% |
 
 ## flop, in position, first to act: equity (221 decisions; the solver: bet 54%, bet big 0%)
 
