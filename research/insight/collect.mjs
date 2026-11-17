@@ -7,6 +7,7 @@ import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/lib/study/presets.js';
 import { study } from '../../src/explain/street.js';
 import { evaluator } from '../../src/explain/best.js';
+import { actionValues } from '../../src/explain/account.js';
 const [seed = '1', count = '40'] = process.argv.slice(2);
 const TREE = { betSizes: [[0.33, 0.75, 1.25], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: [2, 1, 1], allInThreshold: 0.67 };
 let a = (+seed * 2654435761) >>> 0; const rnd = () => { a = (a + 0x6d2b79f5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; const rand = (k) => Math.floor(rnd() * k);
@@ -14,7 +15,8 @@ const pool = PRESETS.filter((p) => p.action !== 'Limped' && (!process.env.ONLY |
 const N = fs.COMBOS; const A = (c) => fs.COMBO_CARDS[2 * c]; const B = (c) => fs.COMBO_CARDS[2 * c + 1];
 const clash = (h, v) => A(h) === A(v) || A(h) === B(v) || B(h) === A(v) || B(h) === B(v);
 const r4 = (x) => (x == null || Number.isNaN(x) ? null : +x.toFixed(4));
-const file = new URL(`./out/hands-${seed}.jsonl`, import.meta.url); writeFileSync(file, '');
+const VALUES = !!process.env.VALUES;   // VALUES=1: what each action is worth to each hand (q, in pots), to out/hands-<seed>v.jsonl
+const file = new URL(`./out/hands-${seed}${VALUES ? 'v' : ''}.jsonl`, import.meta.url); writeFileSync(file, '');
 /** One decision: the spot it is in, and every hand that reaches it. */
 function record(g, meta, id, dealt, line, withValue, lite = false) {
   const st = study(fs, g.solution, g.nodes, id, dealt); if (!st) return null;
@@ -30,6 +32,7 @@ function record(g, meta, id, dealt, line, withValue, lite = false) {
   const replies = f.node.edges.map((e) => { if (lite) return null; const child = g.nodes[e.child]; if (child.kind !== 'decision' || e.kind === 'check' || e.kind === 'call' || e.kind === 'fold') return null; const s2 = study(fs, g.solution, g.nodes, e.child, dealt); if (!s2) return null; const kinds = child.edges.map((x) => x.kind); const vs = []; for (let v = 0; v < N; v++) if (s2.f.mine[v] > 0) vs.push(v); return { s2, kinds, vs }; });
   const through = (c, r) => { let w = 0, fold = 0, raise = 0; for (const v of r.vs) { if (clash(c, v)) continue; const m = r.s2.f.mine[v]; w += m; r.kinds.forEach((k, i) => { const p = r.s2.sigma(v, i); if (k === 'fold') fold += m * p; else if (k !== 'call') raise += m * p; }); } return w > 0 ? [r4(fold / w), r4(raise / w)] : [null, null]; };
   let values = null; if (withValue) { try { values = evaluator(fs, g.solution, g.nodes)(f, 'average'); } catch { values = null; } }
+  let worth = null; if (VALUES) { try { worth = actionValues(f); } catch { worth = null; } }
   const hands = [];
   for (let c = 0; c < N; c++) {
     if (!(f.mine[c] > 0.002) || Number.isNaN(eq[c])) continue;
@@ -38,6 +41,7 @@ function record(g, meta, id, dealt, line, withValue, lite = false) {
     const h = { h: fs.formatCombo(c), w: r4(f.mine[c]), e: r4(eq[c]), now: r4(parts?.now[c]), draw: r4(parts?.draw[c]), top: r4(eqTop[c]), down: r4(n ? down / n : null), up: r4(n ? up / n : null), made: x.made, own: x.own, pair: x.pair, fo: x.flushOuts, so: x.straightOuts, p };
     h.re = replies.map((r) => (r ? through(c, r) : null));
     if (values) h.v = r4(values.reduce((t, v, i) => t + (p[i] > 0 ? p[i] * v[c] : 0), 0) / st.pot);
+    if (worth) h.q = worth.map((x) => r4(x[c] / st.pot));
     hands.push(h);
   }
   return { ...meta, line, seat: f.me, board: fs.formatCards(f.board), pot: st.pot, toCall: st.toCall, behind: +(meta.stack - (Math.max(...f.node.invested) - Math.max(...g.nodes[0].invested))).toFixed(2), reach: st.lineReach.map(r4),
