@@ -5,7 +5,9 @@
 import { dayKey } from '../days.js';
 import { keep, load } from '../storage.js';
 import { keepMistakes } from './mistakes.js';
-import { handPlayed, sprintDue, sprintStarted } from './quiz.js';
+import { handPlayed, sprintDue, sprintStarted, weightsOf } from './quiz.js';
+/** What a deal tells the worker about a sprint: none due, or the weight of each kind of question. */
+const sprintAsk = (game) => (sprintDue(game) ? { weights: weightsOf(game.quiz) } : false);
 import { keepRules } from './rules.js';
 import { PHONE, configOf, keepSeating } from './seating.js';
 import { mark, markSolver } from './trace.js';
@@ -155,7 +157,7 @@ function clear(game) { clearTimeout(game.timer); stopClock(game); Object.assign(
 export function deal(game) {
   mark('asked for the next hand');
   clear(game); game.study = null; game.bank = { hero: Math.min(BANK, game.bank.hero + REFILL), villain: BANK };   // the hand before is gone from the worker, and from Study with it
-  game.sprint = null; game.worker.postMessage({ type: 'deal', sprint: sprintDue(game) });
+  game.sprint = null; game.worker.postMessage({ type: 'deal', sprint: sprintAsk(game) });
 }
 export function act(game, label) { mark(`your move (${label})`); stopClock(game); game.worker.postMessage({ type: 'act', label }); }
 
@@ -163,7 +165,7 @@ export function act(game, label) { mark(`your move (${label})`); stopClock(game)
 export function sitDown(game, seating) {
   const config = configOf(seating); const same = sameSetup(config, game.config); keepSeating(seating); game.seating = seating;
   const first = !game.seated; game.seated = true; mark('sat down', true);
-  if (same && first) deal(game); else if (!same) { resetup(game, config); game.worker.postMessage({ type: 'deal', sprint: sprintDue(game) }); }   // the same table again plays on with what is solved
+  if (same && first) deal(game); else if (!same) { resetup(game, config); game.worker.postMessage({ type: 'deal', sprint: sprintAsk(game) }); }   // the same table again plays on with what is solved
 }
 /** Whether two setups are solved alike: the same spots in rotation and the same betting, however they were chosen. */
 const sameSetup = (a, b) => { const of = (c) => JSON.stringify([c.spots, c.bets, c.raises, c.maxRaises, c.allIn]); return of(a) === of(b); };

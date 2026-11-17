@@ -5,7 +5,7 @@
   import Cards from '../common/Cards.svelte';
   import CopyButton from '../common/CopyButton.svelte';
   import { COSTLY, KEPT, SMALL } from '../../lib/play/mistakes.js';
-  import { quizList } from '../../lib/play/quiz.js';
+  import { OFTEN, quizList } from '../../lib/play/quiz.js';
   import { ruleList, ruleText } from '../../lib/play/rules.js';
   let { hands, rules, quiz, onstudy, onclose } = $props();
   const asked = $derived(quizList(quiz));
@@ -25,8 +25,8 @@
       <p class="said">Tap a mistake to open that decision in Study, solved again there: a turn or river in seconds, a flop in about a minute.</p>{/if}
   {:else if tab === 'sprint'}
     {#if !asked.length}<p class="said">Nothing here yet. Every eight to twelve hands a sprint asks three to five questions about the spot in front of you, before you act. Next one in {Math.max(0, quiz.left)} {quiz.left === 1 ? 'hand' : 'hands'}.</p>
-    {:else}<ul>{#each asked as a (a.id)}<li><div class="rrow"><span class="pct" class:low={a.pct < 70}>{a.pct}%</span><span class="rtext">{a.text}</span></div><div class="top"><span class="meta">{a.n} {a.n === 1 ? 'answer' : 'answers'}</span></div></li>{/each}</ul>
-      <p class="said">How often each kind of question was answered right. Next sprint in {Math.max(0, quiz.left)} {quiz.left === 1 ? 'hand' : 'hands'}.</p>{/if}
+    {:else}<ul>{#each asked as a (a.id)}<li><div class="rrow"><span class="pct" class:low={a.pct < 70}>{a.pct}%</span><span class="rtext">{a.text}</span></div><div class="top"><span class="meta">{a.n} {a.n === 1 ? 'answer' : 'answers'} · {OFTEN[a.box]}</span></div></li>{/each}</ul>
+      <p class="said">How often each kind of question was answered right. A wrong answer brings its kind round most often; each right one in a row lets it come round less. Next sprint in {Math.max(0, quiz.left)} {quiz.left === 1 ? 'hand' : 'hands'}.</p>{/if}
   {:else}
     {#if !list.length}<p class="said">Nothing here yet. Each decision you make is set against your rule for it: whether the solver does what the rule says with that hand. The record builds as you play.</p>
     {:else}<ul>{#each list as r (r.id)}

@@ -15,7 +15,7 @@ onSolved((job) => {
 });
 
 /** The next hand, as soon as one is solved: asked for before then, it starts by itself when its flop arrives. */
-function deal(data) { if (data?.sprint) play.sprint = true; play.wants = !start(); }   // `sprint`: a few questions are due in the hand to come
+function deal(data) { if (data?.sprint) play.sprint = data.sprint; play.wants = !start(); }   // `sprint`: a few questions are due in the hand to come
 
 /** A street of the hand on the table, for Study: its flop, or a later street solved again here (by the key it is kept under). */
 function share(solve) {

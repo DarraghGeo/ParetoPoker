@@ -10,6 +10,7 @@ import { bothEquities } from '../../../src/solver/equity.js';
 import { ROWS, rowOf } from '../../lib/study/butterfly.js';
 import { text } from '../../solver/deck.js';
 import { rangesOf } from './solved.js';
+import { play } from './state.js';
 
 const pct = (x) => `${Math.round(100 * x)}%`;
 const shuffled = (list) => { const out = [...list]; for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; } return out; };
@@ -107,11 +108,24 @@ function relevant(c) {
   return list;
 }
 
-/** A sprint for hero's decision: three to five of the questions the spot calls for, the equity question always among them. */
+/** `n` of a list drawn without putting back, each as likely as its weight. */
+function drawn(list, weightOf, n) {
+  const left = [...list]; const out = [];
+  while (left.length && out.length < n) {
+    let roll = Math.random() * left.reduce((t, x) => t + weightOf(x), 0); let k = 0;
+    while (k < left.length - 1 && (roll -= weightOf(left[k])) > 0) k++;
+    out.push(left.splice(k, 1)[0]);
+  }
+  return out;
+}
+
+/** A sprint for hero's decision: three to five of the questions the spot calls for, the equity question always among
+ *  them, the rest drawn by how much trouble each kind has given (`play.sprint.weights`, from the page's record). */
 export function sprintFor(p, node) {
   try {
     const c = contextOf(p, node); if (Number.isNaN(c.equity)) return null;
-    const [first, ...rest] = relevant(c); const picked = shuffled(rest).slice(0, 3 + Math.floor(Math.random() * 2));
+    const weights = play.sprint?.weights ?? {}; const [first, ...rest] = relevant(c);
+    const picked = drawn(rest, (q) => weights[q.id] ?? 1, 3 + Math.floor(Math.random() * 2));
     return { questions: [first, ...picked.sort((a, b) => (a.id === 'butterfly') - (b.id === 'butterfly'))] };
   } catch { return null; }
 }
