@@ -9,7 +9,8 @@ import os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); os.environ.setdefault('CACHE', 'cache-v'); os.environ['OUT'] = os.devnull
 exec(open(os.path.join(HERE, 'heuristics.py')).read().split('SUMMARY = []')[0])          # the readings, the rulebook, the heuristic groups
 la, lp = Z['la'].astype(np.float64), Z['lp'].astype(np.float64)
-out = open(os.path.join(HERE, 'ev.md'), 'w')
+PRELIM = os.environ.get('PRELIM')                                                          # a first look: only the calls that need no learner
+out = open(PRELIM or os.path.join(HERE, 'ev.md'), 'w')
 loss_of = lambda pred: np.where(pred == 2, la, np.where(pred == 0, lp, (la + lp) / 2))
 TYPES = ['right', 'near the line', 'pure, on the majority side of a mix', 'pure, on the minority side of a mix', 'mixed where the solver is pure', 'the opposite']
 def type_of(pred):
@@ -39,8 +40,9 @@ for s, q, fi in SITS:
     m = sit_mask(s, q, fi); idx = np.where(m)[0]; hm = m[dec]; groups = GROUPS_FIRST if fi else GROUPS_FACE; nm = sit_name(s, q, fi)
     if m.sum() < 20: continue
     few = [c for g_ in FEW.get(nm, []) for c in groups[g_]]; every = [c for cs in groups.values() for c in cs]; spot_cols = [c for c in every if c in SPOTF]
-    ways = [('the solver\'s own labels', kind), ('rows alone', learnt_rows(m)), ('the rulebook, nothing fitted', rule), ('heuristics and made class, no chart', learn(spot_cols + ['row', 'row_share', 'flush_outs', 'straight_outs', 'pocket'], hm)),
+    ways = [] if PRELIM else [('the solver\'s own labels', kind), ('rows alone', learnt_rows(m)), ('the rulebook, nothing fitted', rule), ('heuristics and made class, no chart', learn(spot_cols + ['row', 'row_share', 'flush_outs', 'straight_outs', 'pocket'], hm)),
             ('the chart alone', learn(CHART, hm)), (f'the chart and its {len(FEW.get(nm, []))} heuristics', learn(CHART + few, hm)), ('the chart and every heuristic', learn(CHART + every, hm))]
+    if PRELIM: ways = [('the solver\'s own labels', kind), ('rows alone', learnt_rows(m)), ('the rulebook, nothing fitted', rule), ('always check or fold', np.zeros(len(w), dtype=int)), ('always act', np.full(len(w), 2))]
     say(f'\n## {nm} ({m.sum()} decisions)\n'); say('| the call | right | EV lost: mean | median | P90 | P95 | decisions losing over 1% pot |'); say('|---|---|---|---|---|---|---|')
     for name, pred in ways:
         L = per(w * loss_of(pred) * hm)[idx] * 100; right = per(w * (pred == kind) * hm)[idx]
