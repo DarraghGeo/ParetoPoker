@@ -7,3 +7,5 @@ exploit.jsonl
 restricted-river.md
 restricted-river-tables.json
 restricted-tables.json
+guide/river-*.html
+guide/river-*.png
