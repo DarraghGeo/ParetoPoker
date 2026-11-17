@@ -50,35 +50,3 @@ A strong learner, on spots it has not seen (three folds by spot). "Right" is the
 
 ### flop, out of position, first to act (132 decisions)
 
-| what the learner is given | right | gain | severe |
-|---|---|---|---|
-| the spot's heuristics alone, nothing about the hand | 67% | | |
-| the spot's heuristics and the hand's made class and draw, no chart | 72% | | |
-| **the chart alone** (row, equity, place on the bar) | 50% | | 7% |
-| + 1. top pair+ and two pair+ lead, off the butterfly (read) | 66% | +15.4 | |
-| + 2. stack to pot (counted) | 72% | +5.7 | |
-| + 3. nut advantage and strong hands of both (read) | 74% | +2.0 | |
-| the chart and those 3 | 74% | | 1% |
-| the chart and every heuristic | 75% | | 0% |
-| the rulebook, nothing fitted | 51% | | |
-
-Error per decision, median / P90 / P95: chart alone 50 / 75 / 82; chart and those 3: 25 / 56 / 64; everything: 23 / 53 / 63.
-
-### flop, in position, first to act (132 decisions)
-
-| what the learner is given | right | gain | severe |
-|---|---|---|---|
-| the spot's heuristics alone, nothing about the hand | 63% | | |
-| the spot's heuristics and the hand's made class and draw, no chart | 68% | | |
-| **the chart alone** (row, equity, place on the bar) | 64% | | 2% |
-| + 1. stack to pot (counted) | 67% | +3.9 | |
-| + 2. the hand's draw (seen) | 70% | +2.2 | |
-| + 3. the bet sizes on offer (seen) | 71% | +1.0 | |
-| the chart and those 3 | 71% | | 1% |
-| the chart and every heuristic | 70% | | 1% |
-| the rulebook, nothing fitted | 29% | | |
-
-Error per decision, median / P90 / P95: chart alone 36 / 59 / 63; chart and those 3: 28 / 48 / 56; everything: 30 / 50 / 60.
-
-### turn, out of position, first to act (1020 decisions)
-
