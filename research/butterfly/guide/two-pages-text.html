@@ -39,12 +39,12 @@ pre { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 6.3pt
 <div class="grids two">{{FACING}}</div>
 <h2>First to act, or checked to: most hands check</h2>
 <div class="grids">{{FIRST}}</div>
-<p class="small" style="margin-top:5pt"><b>Flop, first to act, out of position: check every hand</b> (loses {{FLOP_OOP}}% of the pot per decision). <b>Either</b> = both choices are worth the same. <b>Hand names:</b> top pair pairs the highest board card; middle pair pairs the second, or is a pocket pair between the top two; overpair is a pocket pair above the board; trips or better includes straights and flushes. <b>Limits:</b> losses are measured against solver play with equity known exactly. Six-handed cash, 100 big blinds. No bet sizes or raises: as a default bet a third of the pot on the flop and three quarters later. Flop tables rest on few decisions.</p>
+<p class="small" style="margin-top:5pt"><b>Flop, first to act, out of position: check every hand</b> (loses {{FLOP_OOP}}% of the pot per decision). <b>Either</b> = both choices are worth the same. <b>Hand names:</b> top pair pairs the highest board card; middle pair pairs the second, or is a pocket pair between the top two; overpair is a pocket pair above the board; trips or better includes straights and flushes. <b>Limits:</b> losses are measured against solver play with equity known exactly. Six-handed cash, 100 big blinds. <b>The solver was not allowed to raise on the turn or river, and had one bet size there (three quarters of the pot)</b>, so those tables answer a simpler game than real poker. On the flop it raises about a fifth of its range; calling there instead costs a further 0.04% (in position) and 0.14% (out of position). Default sizes: a third of the pot on the flop, three quarters later. Flop tables rest on few decisions.</p>
 </div>
 
 <div class="page agent">
 <h1>Specification for an engine</h1>
-<p class="sub" style="font-size:8pt">Reproduces page one exactly. Output BET or CHECK when no bet is faced, CALL or FOLD when one is. No sizing, no raises.</p>
+<p class="sub" style="font-size:8pt">Reproduces page one exactly. Output BET or CHECK when no bet is faced, CALL or FOLD when one is. No sizing, no raises: the solves offer no raise on the turn or river, and one bet size there.</p>
 <div class="cols">
 <p><b>Scope.</b> No-limit hold'em, two players after the flop, six-handed cash ranges, 100 big blinds. Decision nodes: each player's first decision on a street, and facing a bet or raise.</p>
 <p><b>Inputs.</b> Board; hero's two cards; hero's and villain's ranges at this node as a weight per two-card combination, after all actions so far including the bet faced; pot including all bets; amount to call; effective stack behind; betting history.</p>
@@ -64,7 +64,7 @@ pre { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 6.3pt
 <p><b>his weak hands</b> = share by weight of villain's range with equity against hero's range &lt;0.30. Bands: &lt;0.20; [0.20,0.45); ≥0.45.</p>
 <p><b>who bet last street</b> = last player to bet or raise on the previous street: "I did", "he did", or "nobody" (checked through).</p>
 <p><b>Procedure.</b> Spot = street × seat × (bet faced?). Compute the spot's inputs, look up the cell. Letters: B bet, x check, C call, f fold. A cell shown as Either on page one takes the action listed here. Rows below run weakest to strongest; columns in the order listed.</p>
-<p><b>Check.</b> On solved spots, per decision: Σ over hero's range of weight × (solver value of best action − value of the engine's action) ÷ pot. Value a bet as the solver's own mix of sizes for that hand (best size if it never bets); same for call against raise. Average over decisions. Expected loss, % of pot, is given per table (five folds by spot, 41 spots; trees: bets 33/75/125% flop, 75% turn and river, raises 3×).</p>
+<p><b>Check.</b> On solved spots, per decision: Σ over hero's range of weight × (solver value of best action − value of the engine's action) ÷ pot. Value a bet as the solver's own mix of sizes for that hand (best size if it never bets); same for call against raise. Average over decisions. Expected loss, % of pot, is given per table (five folds by spot, 41 spots; trees: bets 33/75/125% flop, 75% turn and river; raises 3× on the flop only, none on the turn or river). The flop facing-a-bet figures credit raising as the solver does; a call-only engine loses about 0.04 (in position) and 0.14 (out of position) more.</p>
 {{LOOKUPS}}
 </div>
 </div>

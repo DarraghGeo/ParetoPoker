@@ -54,7 +54,7 @@ table.res td, table.res th { font-size: 8.6pt; padding: 3pt 5pt; }
 <p>After the flop, every decision in a heads-up pot is one of twelve spots: flop, turn or river; first to act or facing a bet; in position or out of position. This guide gives one small table for each. Find your hand in the table and it tells you what to do.</p>
 <p>The tables were made from {{N}} decisions solved by a poker solver, and then tested on boards and matchups they had never seen. Every number in this guide is from those tests. Nothing here is opinion.</p>
 <h4 style="margin-top:8pt">What it is not</h4>
-<p>It does not cover preflop play, bet sizing, or raising. It tells you bet or check, and call or fold. Those four choices are where most of the money is, and they are the place to start.</p>
+<p>It does not cover preflop play, bet sizing, or raising, and the solver it was checked against could not raise on the turn or river. It tells you bet or check, and call or fold. Those four choices are where most of the money is, and they are the place to start.</p>
 </div>
 </section>
 
@@ -197,8 +197,8 @@ table.res td, table.res th { font-size: 8.6pt; padding: 3pt 5pt; }
 <li><b>The opponent is the solver.</b> The tables are the best simple reply to solver play. Against a player who adapts, always taking the same action with the same kind of hand can be read. The solver mixes many of these hands; the small number in each cell shows how often.</li>
 <li><b>Equity is assumed known.</b> The tests used exact equity. Your estimate will be rougher. Most hands are far from the lines, so wide bands forgive a lot; the hands near a line cost little either way.</li>
 <li><b>The flop tables rest on fewer decisions</b> (41 to 80 each, against hundreds or more for the turn and river). Treat them as less certain.</li>
-<li><b>One game.</b> Six-handed cash, 100 big blinds deep, two players after the flop. Other stack depths were not tested.</li>
-<li><b>Bet size and raises are not covered.</b> As a default, bet a third of the pot on the flop and three quarters on the turn and river.</li>
+<li><b>One game.</b> Six-handed cash, 100 big blinds deep, two players after the flop.</li>
+<li><b>No raises on the turn or river, and one bet size there.</b> The solver was only allowed to bet three quarters of the pot on those streets and could not raise. Those tables are right for that simpler game; with raises possible the answers change. On the flop the solver raises a fifth of its range; calling instead costs a further 0.04% (in position) and 0.14% (out of position). Default sizes: a third of the pot on the flop, three quarters later.</li>
 </ul>
 </section>
 
@@ -229,7 +229,7 @@ table.res td, table.res th { font-size: 8.6pt; padding: 3pt 5pt; }
 <h4>Procedure</h4>
 <p>Identify the spot from the street, hero's seat and whether a bet is faced. Compute that spot's inputs. Look the cell up below. Cells marked "either is fine" may take either action; the action written is the one that lost less. Cells marked "did not occur; filled" had no hands in the data and take the neighbouring band's action.</p>
 <h4>How to check an engine</h4>
-<p>For each decision in a set of solved spots: for each hand in hero's range, take the solver's value of the best action and of the engine's action, and sum the difference over the range by weight, divided by the pot. Where the engine bets and several bet sizes exist, value the bet as the solver's own mix of sizes for that hand, or the best size if the solver never bets it; likewise for calling against raising. Average over decisions. Solves used: bet sizes of 33%, 75% and 125% of the pot on the flop and 75% on the turn and river, raises to three times the bet, solved to within 0.3% of the pot.</p>
+<p>For each decision in a set of solved spots: for each hand in hero's range, take the solver's value of the best action and of the engine's action, and sum the difference over the range by weight, divided by the pot. Where the engine bets and several bet sizes exist, value the bet as the solver's own mix of sizes for that hand, or the best size if the solver never bets it; likewise for calling against raising. Average over decisions. Solves used: bet sizes of 33%, 75% and 125% of the pot on the flop and 75% on the turn and river; raises to three times the bet on the flop only, none on the turn or river; solved to within 0.3% of the pot. The flop facing-a-bet figures credit raising as the solver does; a call-only engine loses about 0.04 (in position) and 0.14 (out of position) more.</p>
 <h4>The twelve tables</h4>
 {{APPENDIX_TABLES}}
 </section>
