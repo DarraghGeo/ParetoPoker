@@ -125,7 +125,7 @@ for s, q, fi in SITS:
 # ================================================================ 3. the chart, then one heuristic at a time
 say('\n## 3. The chart, then the heuristic that helps most, then the next\n')
 say('A strong learner, on spots it has not seen (three folds by spot). "Right" is the share of the range called right as Always / Mix / Never; "severe" is a hand that always acts called never, or the reverse.\n')
-rsub = np.random.default_rng(11).random(len(w)) < (0.25 if QUICK else 0.6)
+RU = np.random.default_rng(11).random(len(w)); CAP = 25000 if QUICK else 70000        # hands a situation is learnt from, at most
 HAND = dict(row=row, equity=e, place_in_row=frac, place_in_range=grank, row_share=MR[dec, row],
             value_line=(e >= LINE).astype(float), air=(e < 0.2).astype(float), bet_share_of_its_kind=np.where(e >= LINE, qv[dec], np.where(e < 0.2, qb[dec], 0)),
             flush_outs=fo, straight_outs=so, draw_equity=draw, ahead_now=now, pocket=pocket.astype(float),
@@ -148,10 +148,10 @@ GROUPS_FACE = {
     'weak hands of both (read)': ['his_weak', 'my_weak'], 'how polar each range is (read)': ['my_ends', 'his_ends', 'his_middle'], 'the hand\'s draw (seen)': ['flush_outs', 'straight_outs', 'draw_equity', 'ahead_now'], 'the whole rulebook\'s call for the hand': ['rulebook']}
 CATS = {'row', 'who_led', 'pot_type'}
 def fit_score(cols, hm, folds=3, full=False):
-    idx = np.where(hm & rsub)[0]; X = np.column_stack([COL[c][idx] for c in cols]).astype(np.float32); y = kind[idx]; ww = w[idx]; gsp = spots[dec[idx]]; pred = np.zeros(len(idx), dtype=int)
+    idx = np.where(hm & (RU < CAP / max(hm.sum(), 1)))[0]; X = np.column_stack([COL[c][idx] for c in cols]).astype(np.float32); y = kind[idx]; ww = w[idx]; gsp = spots[dec[idx]]; pred = np.zeros(len(idx), dtype=int)
     cat = [i for i, c in enumerate(cols) if c in CATS]
     for tr, te in GroupKFold(n_splits=folds).split(X, y, gsp):
-        mdl = HistGradientBoostingClassifier(max_iter=60 if QUICK else 110, learning_rate=0.15, max_leaf_nodes=31, categorical_features=cat or None).fit(X[tr], y[tr], sample_weight=ww[tr]); pred[te] = mdl.predict(X[te])
+        mdl = HistGradientBoostingClassifier(max_iter=60 if QUICK else 90, learning_rate=0.15, max_leaf_nodes=31, categorical_features=cat or None).fit(X[tr], y[tr], sample_weight=ww[tr]); pred[te] = mdl.predict(X[te])
     dd = dec[idx]; tot = np.bincount(dd, weights=ww, minlength=N); right = np.bincount(dd, weights=ww * (pred == y), minlength=N); sev = np.bincount(dd, weights=ww * (np.abs(pred - y) == 2), minlength=N)
     ok = tot > 0; acc_d = right[ok] / tot[ok]
     return (acc_d.mean(), (sev[ok] / tot[ok]).mean(), acc_d) if full else acc_d.mean()
@@ -163,7 +163,7 @@ for s, q, fi in SITS:
     a_spot = fit_score(spot_cols, hm); a_row = fit_score(spot_cols + ['row', 'row_share', 'flush_outs', 'straight_outs', 'pocket'], hm)
     a_chart, sev_chart, d_chart = fit_score(CHART, hm, full=True)
     chosen = list(CHART); left = dict(groups); steps = []; cur = a_chart
-    for step in range(3 if QUICK else 7):
+    for step in range(3 if QUICK else 6):
         best = None
         for name, cs in left.items():
             a = fit_score(chosen + cs, hm)
