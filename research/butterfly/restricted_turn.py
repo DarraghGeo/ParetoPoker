@@ -13,6 +13,7 @@ import os, sys, json, re, time
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']; RANKS = '23456789TJQKA'; DECK = [r + s for r in RANKS for s in 'cdhs']
 EDGES = list(np.linspace(.05, .95, 19)) if os.environ.get('BANDS') == '20' else [.15, .35, .55, .75, .9]; NB = len(EDGES) + 1      # the bands of a hand's place in the range: six, or twenty of five points each (BANDS=20)
+BETF = 0.75                                    # the one bet size, in pots (the divergent tests change it)
 def score7(cs):
     """The best five of seven cards as one number that compares."""
     rs = sorted((RANKS.index(c[0]) for c in cs), reverse=True); cnt = {}
@@ -51,7 +52,7 @@ def street(P, base, S):
             if bets < 2 and inv[o] < S: n = list(inv); n[p] = min(S, round(base + 3 * (inv[o] - base), 2)); acts.append(('raise', decide(o, n, bets + 1, True)))
         else:
             acts.append(('check', add(('end', tuple(inv))) if checked else decide(o, inv, bets, True)))
-            if inv[p] < S: n = list(inv); n[p] = min(S, round(base + 0.75 * P, 2)); acts.append(('bet', decide(o, n, 1, True)))
+            if inv[p] < S: n = list(inv); n[p] = min(S, round(base + BETF * P, 2)); acts.append(('bet', decide(o, n, 1, True)))
         nodes[k] = (p, acts, tuple(inv)); return k
     decide(0, [base, base], 0, False); return nodes
 class Turn:
@@ -236,7 +237,39 @@ if __name__ == '__main__':
         if d['seat'] == 0 and 60 <= len(d['hands']) <= 190 and 60 <= len(d['vr']) <= 190 and d['behind'] / d['pot'] >= 1: d['flop'] = re.search(r'f\d+|b\d+', d['spot']).group(0); rows.append(d)
     rng = np.random.default_rng(4); flops = sorted({d['flop'] for d in rows}); rng.shuffle(flops); held = set(flops[: len(flops) // 3]); rng.shuffle(rows); t0 = time.time(); log = sys.stderr
     te = [x for x in rows if x['flop'] in held][:n_te]; tr = [x for x in rows if x['flop'] not in held][:n_tr]
-    if job == 'profile':                             # how the unrestricted solve plays our cells, on the spots solved on and scored on
+    if job.startswith('diverge'):                    # one spot, one thing changed at a time: stack depth, the turn card, the bet size, the shape of a range
+        import copy
+        order = sorted(te, key=lambda d: d['behind'] / d['pot']); d0 = [order[1], order[len(order) // 2], order[-2]][int(job.split(':')[1])]; shared = [json.load(open(os.path.join(STORE, f'turn-{h}-true+spr.json')))['tables'] for h in (0, 1)]; OPT = VARIANTS['true+spr']; res = []
+        def measure(d, factor, level):
+            sp = Turn(d); vals = equilibrium(sp, 500); row = dict(base=d0['spot'], board=d['board'], factor=factor, level=level, spr=d['behind'] / d['pot'], alone=[], shared=[])
+            for h in (0, 1):
+                tab = solve([sp], h, rounds, OPT); row['alone'].append(100 * sp.walk(1 - h, *lay(sp, h, tab, OPT)[:2], 'reply')[0] / sp.P0 - vals[h]); row['shared'].append(100 * sp.walk(1 - h, *lay(sp, h, {k: np.array(v) for k, v in shared[h].items()}, OPT)[:2], 'reply')[0] / sp.P0 - vals[h])
+            res.append(row); print(f"  {factor}: {level} | alone {[round(x, 1) for x in row['alone']]} shared {[round(x, 1) for x in row['shared']]} | {time.time() - t0:.0f} s", file=log, flush=True); json.dump(res, open(os.path.join(STORE, f"turn-diverge-{job.split(':')[1]}.json"), 'w'))
+        measure(d0, 'as it is', f"{d0['pre']} {d0['board']}, {d0['behind'] / d0['pot']:.1f} pots behind")
+        for x in (0.75, 1.5, 3, 6, 12):              # stack depth, with the pot, the board and the ranges as they are
+            d = copy.deepcopy(d0); d['behind'] = round(x * d['pot'], 2); measure(d, 'stacks behind, in pots', x)
+        for bf in (0.33, 1.5):                       # the bet size
+            globals()['BETF'] = bf; measure(d0, 'bet size, in pots', bf)
+        globals()['BETF'] = 0.75
+        flop = d0['board'].split()[:3]; fr = sorted((RANKS.index(c[0]) for c in flop), reverse=True); fsu = [c[1] for c in flop]; two_tone = next((x for x in 'shdc' if fsu.count(x) == 2), None); off = next(x for x in 'shdc' if fsu.count(x) == 0) if any(fsu.count(x) == 0 for x in 'shdc') else fsu[0]
+        cand = {}
+        if two_tone: cand['completes the flush'] = next((RANKS[r] + two_tone for r in range(12) if RANKS[r] + two_tone not in flop and r not in fr), None)
+        cand['pairs the top card'] = next((RANKS[fr[0]] + x for x in 'shdc' if RANKS[fr[0]] + x not in flop and x != two_tone), None)
+        cand['pairs the bottom card'] = next((RANKS[fr[-1]] + x for x in 'shdc' if RANKS[fr[-1]] + x not in flop and x != two_tone), None)
+        cand['an overcard'] = next((RANKS[r] + off for r in range(12, fr[0], -1)), None)
+        cand['a low blank'] = next((RANKS[r] + off for r in range(0, 13) if r not in fr and all(abs(r - y) > 3 for y in fr)), None) or next((RANKS[r] + off for r in range(0, 13) if r not in fr), None)
+        cand['a connecting card'] = next((RANKS[r] + off for r in range(12, -1, -1) if r not in fr and sum(1 for y in fr if abs(r - y) <= 2) >= 2), None)
+        for name, card in cand.items():              # the turn card, with the flop and the ranges that reached the turn as they are
+            if not card or card in flop: continue
+            d = copy.deepcopy(d0); d['board'] = ' '.join(flop + [card]); d['hands'] = [h for h in d['hands'] if card not in (h['h'][:2], h['h'][2:])]; d['vr'] = [v for v in d['vr'] if card not in (v[0][:2], v[0][2:])]; measure(d, 'the turn card', f'{name} ({card})')
+        sp0 = Turn(d0)
+        for name, seat, f in (('out of position has no strong hands (80%+ cut to a fifth)', 0, lambda e: np.where(e >= .8, .2, 1)), ('out of position has few weak hands (under 30% cut to a fifth)', 0, lambda e: np.where(e < .3, .2, 1)),
+                              ('in position has no strong hands', 1, lambda e: np.where(e >= .8, .2, 1)), ('in position has few weak hands', 1, lambda e: np.where(e < .3, .2, 1))):
+            d = copy.deepcopy(d0); m = f(sp0.eqt[seat]); live = [h for h in (d['hands'] if seat == 0 else d['vr']) if (h['w'] if seat == 0 else h[1]) > 0]
+            if seat == 0: [h.__setitem__('w', h['w'] * float(m[i])) for i, h in enumerate(live)]; d['hands'] = live
+            else: d['vr'] = [[v[0], v[1] * float(m[i]), v[2]] for i, v in enumerate(live)]
+            measure(d, 'the shape of a range', name)
+    elif job == 'profile':                             # how the unrestricted solve plays our cells, on the spots solved on and scored on
         res = {}
         for d in (tr + te)[: int(os.environ.get('PROFILE', 30))]:
             sp = Turn(d); vals, nt, nr = equilibrium(sp, rounds, True); res[d['spot']] = dict(board=d['board'], pot=d['action'], spr=d['behind'] / d['pot'], cells=[profile(sp, h, nt, nr) for h in (0, 1)]); print(f"  {d['spot']} {time.time() - t0:.0f} s", file=log, flush=True)
