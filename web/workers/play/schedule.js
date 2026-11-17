@@ -86,7 +86,7 @@ export function dealAhead() {
   }
 }
 /** Ask the flop workers for a hand's flop, made slim for it (`kept`: the flop kept on the device, read back). */
-function ask(hand, kept = false) {
+function ask(hand, kept = false) {   // `kept`: the key of the flop kept on the device, where the hand was dealt onto it
   say({ type: 'need', id: hand.id, epoch: play.epoch, config: hand.config, cards: hand.board.slice(0, 3), hand: { hero: hand.hero, seat: hand.seat, board: hand.board }, kept });
 }
 
@@ -103,7 +103,7 @@ export async function takeKept() {
   if (!spot) return;
   const hand = dealHand(play.config, ++play.ids, { spot, flop: kept.cards });
   if (hand.hero < 0 || hand.villain < 0) return;
-  play.hands.push(hand); ask(hand, true);
+  play.hands.push(hand); ask(hand, kept.key ?? false);
 }
 
 /** A flop back from a flop worker: read into its hand, or the hand dropped where it could not be solved. */

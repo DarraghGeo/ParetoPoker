@@ -31,7 +31,7 @@ function mistakesIn(st, config) {
       if (g && ((g.level === 'error' && (a.cost ?? SMALL) >= SMALL) || (a.cost ?? 0) >= COSTLY)) {
         out.push({ street: STREET[h.street] ?? h.street, move: moved(a), solver: g.detail.replace(/ · EV.*$/, ''), cost: a.cost ?? null,
           href: studyUrl(config, flop, { line: [...line], dealt, hand: st.hero, lite: true, resolve: dealt.length > 0 }),
-          spot: street ? { ...street, line: [...inStreet] } : null });   // a later street opens on its own, without its flop
+          spot: street ? { ...street, line: [...inStreet] } : null, flop: k === 0 ? st.result.flop ?? null : null });   // a later street opens on its own, without its flop
       }
       line.push(a.label); inStreet.push(a.label);
     }

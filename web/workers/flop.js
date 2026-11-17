@@ -1,13 +1,13 @@
 // A flop solved off to the side, for a hand Play will deal later: Play's own worker keeps the table and its turns and
 // rivers, and one or two of these solve the flops ahead beside it. A solved flop is made slim here for the hand that will
 // be dealt onto it (solver/slim.js) and only that is handed back: the solve itself, 75 to 120 MB of it, never leaves this
-// worker and is let go of with the next one. The newest is also kept on the device, where it is small enough, for a hand
-// to deal at the next start (`kept`: a hand dealt onto that one, read back and made slim the same way).
+// worker's memory: it is written whole to the device (solver/kept.js), where Study finds it when the hand is taken
+// there, and where the next start finds a hand to deal (`kept`: the key of that one, read back and made slim the same way).
 // Where the page is cross-origin isolated (the service worker sees to that: sw.js) the solve is split across threads
 // that share its memory; where it is not, it runs on one, as before.
 import { enableThreads } from 'poker-flopsolve/threads';
 import { exportedFlop, flopFrom, flopJob } from '../solver/jobs.js';
-import { keepFlop, keptFlop, sigOf } from '../solver/kept.js';
+import { keepFlop, readFlop, sigOf } from '../solver/kept.js';
 import { pause } from '../solver/progress.js';
 import { slimFlop } from '../solver/slim.js';
 
@@ -17,9 +17,9 @@ const say = (message) => self.postMessage(message);
 const threadsFor = (wanted) => (threads ??= wanted > 1 ? enableThreads(wanted).catch(() => 1) : Promise.resolve(1));
 
 /** The flop kept on the device, read back whole, if it is the one this hand was dealt onto; else null. */
-async function fromKept({ config, cards }) {
+async function fromKept({ config, cards, kept: key }) {
   try {
-    const kept = await keptFlop(); if (!kept || kept.sig !== sigOf(config) || kept.cards.join() !== cards.join()) return null;
+    const kept = await readFlop(key); if (!kept || kept.sig !== sigOf(config) || kept.cards.join() !== cards.join()) return null;
     return flopFrom(config, cards, kept.used, kept.sums);
   } catch { return null; }
 }
@@ -34,9 +34,9 @@ async function solved(need, mine, n) {
       await pause();
     }
     const slim = slimFlop(result, need.hand);
-    // kept on the device for the next start, where it is small enough to copy once more
+    // the whole solve goes to the device (for Study, and for the next start), and its key with the slim flop
     const out = result.run.solver.ctx.strategySum.byteLength <= (need.keepUnder ?? 0) ? exportedFlop(result) : null;
-    if (out) await keepFlop({ sig: sigOf(config), cards: [...cards], used: out.betting, sums: out.sums }, need.keepUnder);
+    slim.store = out ? await keepFlop({ sig: sigOf(config), cards: [...cards], used: out.betting, sums: out.sums }, need.keepUnder) : null;
     return { slim, bytes: result.run.solver.ctx.strategySum.byteLength };
   } finally { job.close(); }
 }
@@ -47,7 +47,7 @@ async function solve(need) {
   try {
     const n = await threadsFor(need.threads ?? 1); if (mine !== task) return;
     const back = need.kept ? await fromKept(need) : null; if (mine !== task) return;
-    const out = back ? { slim: slimFlop(back, need.hand), bytes: 0 } : await solved(need, mine, n);
+    const out = back ? { slim: { ...slimFlop(back, need.hand), store: need.kept }, bytes: 0 } : await solved(need, mine, n);
     if (out && mine === task) say({ type: 'flop', id, epoch, slim: out.slim, solvedBytes: out.bytes, threads: n, readBack: !!back });
   } catch (error) { say({ type: 'flop', id, epoch, failed: true, why: String(error?.message ?? error) }); }
 }

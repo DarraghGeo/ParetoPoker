@@ -22,7 +22,7 @@ function decisionsIn(st, config) {
     const inStreet = []; const kept = st.result.streets?.[k];
     const dealt = st.history.slice(1, k + 1).map((x) => x.cards); const board = st.history.slice(0, k + 1).map((x) => x.cards).join(' ');
     for (const a of h.actions) {
-      if (a.who === 'hero' && a.rule) out.push({ a, street: STREET[h.street] ?? h.street, board, href: studyUrl(config, flop, { line: [...line], dealt, hand: st.hero, lite: true, resolve: dealt.length > 0 }), spot: kept ? { ...kept, line: [...inStreet] } : null });
+      if (a.who === 'hero' && a.rule) out.push({ a, street: STREET[h.street] ?? h.street, board, href: studyUrl(config, flop, { line: [...line], dealt, hand: st.hero, lite: true, resolve: dealt.length > 0 }), spot: kept ? { ...kept, line: [...inStreet] } : null, flop: k === 0 ? st.result.flop ?? null : null });
       line.push(a.label); inStreet.push(a.label);
     }
   });
@@ -33,10 +33,10 @@ function decisionsIn(st, config) {
 export function keepRules(game, st) {
   const config = { ...game.config, ...st.spot }; const found = decisionsIn(st, config); if (!found.length) return;
   const stats = { ...game.rules.stats }; const misses = [...game.rules.misses];
-  for (const { a, street, board, href, spot } of found) {
+  for (const { a, street, board, href, spot, flop } of found) {
     const r = a.rule; const s = stats[r.id] ?? { n: 0, held: 0, cost: 0 };
     stats[r.id] = { n: s.n + 1, held: s.held + (r.held ? 1 : 0), cost: s.cost + (r.cost ?? 0) };
-    if (!r.held) misses.unshift({ at: Date.now(), id: r.id, street, hero: st.hero, board, seat: st.seat, says: SAYS[r.says] ?? r.says, why: r.why, solver: solverSaid(a.mix), cost: r.cost, href, spot });
+    if (!r.held) misses.unshift({ at: Date.now(), id: r.id, street, hero: st.hero, board, seat: st.seat, says: SAYS[r.says] ?? r.says, why: r.why, solver: solverSaid(a.mix), cost: r.cost, href, spot, flop });
   }
   game.rules = { stats, misses: misses.slice(0, MISSES) }; keep(KEY, game.rules);
 }

@@ -18,7 +18,9 @@
     game ??= createStudyGame();
     if (shown !== url) {
       shown = url; asked = handing ? { url, line: spot.line } : null;
-      if (spot?.street) openStreet(game, queryOf(url), spot.street); else openAddress(game, queryOf(url), handing);
+      if (spot?.street) openStreet(game, queryOf(url), spot.street);
+      else if (spot?.flop) { openAddress(game, queryOf(url), true); adopt(game, { found: true, lite: true, exploit: null, ...spot.flop }); }   // its flop, still kept on the device
+      else openAddress(game, queryOf(url), handing);
       if (handing) requestExport(spot.solve, url);
     }
     if (!studying) { history.pushState({ study: true }, ''); studying = true; }

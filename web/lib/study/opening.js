@@ -74,7 +74,9 @@ function adoptFlop(game, h) {
   game.config = { ...game.config, ...h.betting, lite: true };
   game.versions = [versionOf(game, { oop: game.config.oop, ip: game.config.ip })]; game.at = 0;
   game.open = { ...game.open, resolve: false };
-  game.worker.postMessage({ type: 'adopt', key: version(game).id, sums: h.sums, exploit: h.exploit, lite: true }, [h.sums.buffer]);
+  // the numbers themselves, or where the worker finds them on the device (a flop Play keeps there, out of memory)
+  if (h.kept) game.worker.postMessage({ type: 'adopt', key: version(game).id, kept: h.kept, exploit: h.exploit, lite: true });
+  else game.worker.postMessage({ type: 'adopt', key: version(game).id, sums: h.sums, exploit: h.exploit, lite: true }, [h.sums.buffer]);
   solve(game);
 }
 

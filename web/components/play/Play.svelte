@@ -99,7 +99,7 @@
     </header>
     {#if why}<Why hero={why.hero} grade={why} told={why.told} failed={why.failed} rule={why.rule} record={why.rule ? recordOf(game.rules, why.rule.id) : null} onstudy={studyWhy} onclose={() => (why = null)} />{/if}
     {#if scores}<Days days={game.days} onclose={() => (scores = false)} />{/if}
-    {#if reviewing}<Mistakes hands={game.mistakes} rules={game.rules} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : null)} onclose={() => (reviewing = false)} />
+    {#if reviewing}<Mistakes hands={game.mistakes} rules={game.rules} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : m.flop ? { flop: m.flop } : null)} onclose={() => (reviewing = false)} />
     {:else if sitting}<Sitting stopped={game.seated ? null : game.stopped} seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />
     {:else}
       {#if st && names.line}<p class="pre" aria-label="Before the flop"><b>{names.pot}</b> {names.line}</p>{/if}

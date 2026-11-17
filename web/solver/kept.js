@@ -1,7 +1,11 @@
-// One solved flop kept on the device (IndexedDB), so that Play has a hand to deal the moment it is next opened: the spot it
-// was solved for, its three cards, the betting it was solved with and the strategy's numbers. The newest solve replaces
-// the one kept. Everything here fails quietly: with no storage, Play solves from scratch as before.
-const NAME = 'pareto-kept'; const STORE = 'flops'; const SLOT = 'last'; const NOTE = 'note';
+// The solved flops, kept whole on the device (IndexedDB) and out of memory: each flop Play solves is written here as it
+// finishes, the last few of them (the hands on the table and waiting), so that Study can be handed the flop of a hand
+// without solving it again, and so that Play has a hand to deal the moment it is next opened. A record is the spot the
+// flop was solved for, its three cards, the betting it was solved with and the strategy's numbers; a note says which is
+// the newest. Everything here fails quietly: with no storage, Play solves from scratch and Study solves its own.
+const NAME = 'pareto-kept'; const STORE = 'flops'; const NOTE = 'note';
+/** How many solved flops are kept: the hand on the table and the three that may wait behind it. */
+const KEEP = 4;
 /** Nothing larger than this is kept, in bytes. */
 const MOST = 400 * 2 ** 20;
 let db = null;
@@ -16,18 +20,30 @@ const open = () => (db ??= new Promise((done) => {
 /** What a kept flop was solved for: the two ranges, pot, stack and betting. */
 export const sigOf = (c) => JSON.stringify([c.oop, c.ip, c.pot, c.stack, c.bets, c.raises, c.maxRaises, c.allIn]);
 
-/** Keep a solved flop in place of the one kept, if it is no larger than `most` bytes (storing copies it once more, which
- *  a phone short of memory cannot always afford). Resolved once the numbers have been copied for storing, so that their
- *  buffer may then be handed on. */
-export async function keepFlop(record, most = MOST) {
-  const d = await open(); if (!d || record.sums.byteLength > Math.min(most, MOST)) return;
-  try { const store = d.transaction(STORE, 'readwrite').objectStore(STORE); store.put(record, SLOT); store.put({ sig: record.sig, cards: record.cards }, NOTE); } catch { /* not kept */ }
+/** Throw away all but the newest flops kept (their keys sort by when they were written; an older build's single slot goes too). */
+function prune(store) {
+  const ask = store.getAllKeys();
+  ask.onsuccess = () => { const flops = ask.result.filter((k) => k !== NOTE).sort(); for (const k of flops.slice(0, Math.max(0, flops.length - KEEP))) store.delete(k); for (const k of flops) if (!String(k).startsWith('f')) store.delete(k); };
 }
 
-/** What the flop kept was solved for and its cards, without its numbers: `{ sig, cards }`, or null. */
+/** Keep a solved flop, if it is no larger than `most` bytes (storing copies it once more). Resolved, with the key it is
+ *  kept under (null if it was not), once it is safely written: a key given out is a flop that can be read. */
+export async function keepFlop(record, most = MOST) {
+  const d = await open(); if (!d || record.sums.byteLength > Math.min(most, MOST)) return null;
+  const key = `f${Date.now().toString(36).padStart(9, '0')}${Math.random().toString(36).slice(2, 6)}`;
+  return new Promise((done) => {
+    try {
+      const tx = d.transaction(STORE, 'readwrite'); const store = tx.objectStore(STORE);
+      store.put(record, key); store.put({ sig: record.sig, cards: record.cards, key }, NOTE); prune(store);
+      tx.oncomplete = () => done(key); tx.onerror = () => done(null); tx.onabort = () => done(null);
+    } catch { done(null); }
+  });
+}
+
+/** The newest flop kept, without its numbers: `{ sig, cards, key }`, or null. */
 export const keptNote = () => read(NOTE);
-/** The flop kept, or null. */
-export const keptFlop = () => read(SLOT);
+/** A flop kept, by its key, or null. */
+export const readFlop = (key) => (key ? read(key) : Promise.resolve(null));
 
 async function read(slot) {
   const d = await open(); if (!d) return null;

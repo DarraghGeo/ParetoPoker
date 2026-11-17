@@ -104,6 +104,7 @@ async function fromScratch(data, mine) {
 
 export async function solve(data) {
   const mine = ++held.job; held.halt = false;
+  if (held.adopting) { await held.adopting; if (mine !== held.job) return; }   // a handed-over flop being read from the device
   const kept = held.kept.get(data.key);
   if (kept) { use(kept); say({ type: 'solved', job: data.job, nodes: tree(), exploit: kept.exploit, lite: kept.lite }); return; }
   try { await fromScratch(data, mine); } catch (error) { say({ type: 'error', job: data.job, message: firstLine(error) }); }

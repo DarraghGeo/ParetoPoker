@@ -105,11 +105,12 @@ const HELPERS = PHONE ? 1 : Math.max(1, Math.min(2, (globalThis.navigator?.hardw
  *  table's own, shared among the flop workers; four at most. */
 const THREADS = Math.max(1, Math.min(4, Math.floor(((globalThis.navigator?.hardwareConcurrency ?? 4) - 1) / HELPERS)));
 
-/** A solved flop is kept on the device for the next start only up to this size: storing copies it once more. */
-const KEEP_UNDER = (PHONE ? 90 : 400) * 2 ** 20;
+/** A solved flop is written to the device (for Study and for the next start) only up to this size: storing copies it once more. */
+const KEEP_UNDER = (PHONE ? 200 : 400) * 2 ** 20;
 
 /** Give waiting flops to the flop workers that are free. */
 function assign(game) {
+  if (game.holding) return;
   for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', threads: THREADS, keepUnder: KEEP_UNDER, ...need }); mark('solving a flop'); }
 }
 function fromHelper(game, h, data) {
@@ -137,17 +138,11 @@ export function startHelpers(game) {
   while (game.helpers.length < HELPERS) game.helpers.push(helper(game));
 }
 
-/** Study opens beside the table: on a phone the hands solved ahead and the flop being solved are let go of first, so that
- *  the two together are not more than it can hold; they are solved again on the way back. */
-export function studyOpened(game) {
-  mark('Study open'); if (!PHONE || game.holding) return; game.holding = true;
-  for (const h of game.helpers) h.worker.terminate(); game.helpers = []; game.needs = [];
-  game.worker.postMessage({ type: 'hold' });
-}
-export function studyClosed(game) {
-  mark('back from Study'); if (!game.holding) return; game.holding = false;
-  startHelpers(game); game.worker.postMessage({ type: 'resume' });
-}
+/** Study opens beside the table: on a phone no new flop is started while it is open (Study reads a whole flop into
+ *  memory, and a second one being solved beside it is more than it should hold); the flop being solved is finished and
+ *  written, and the hands ahead, which are small, stay. */
+export function studyOpened(game) { mark('Study open'); if (PHONE) game.holding = true; }
+export function studyClosed(game) { mark('back from Study'); if (!game.holding) return; game.holding = false; assign(game); }
 
 /** The table stands still (Study, or a card over it, is open), or moves on again: clocks stop and no step is shown meanwhile. */
 export function pause(game, on) { if (game.paused === on) return; game.paused = on; if (!on) pump(game); }
@@ -180,7 +175,7 @@ export function setup(game) { game.epoch++; game.worker.postMessage({ type: 'set
 export function broke(game) { clearTimeout(game.timer); stopClock(game); game.error = 'the solver stopped'; }
 
 const HEARD = {
-  need: (game, data) => { game.needs.first ??= data.id; game.needs.push({ id: data.id, epoch: data.epoch, config: data.config, cards: data.cards, hand: data.hand, kept: !!data.kept }); assign(game); },
+  need: (game, data) => { game.needs.first ??= data.id; game.needs.push({ id: data.id, epoch: data.epoch, config: data.config, cards: data.cards, hand: data.hand, kept: data.kept || false }); assign(game); },
   export: (game, data) => game.onExport(data),
   explained: (game, data) => game.onExplained(data),
   status: (game, data) => { game.status = data; },

@@ -66,6 +66,6 @@ export function post(p) {
     board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(p.hand.config.stack - x)), history: p.history,
     toAct, waiting: p.waiting != null, actions: toAct ? choicesAt(node, p.me) : [], actor: node?.seat ?? null,
     ranges: node && (toAct || p.step === 0) ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,   // read where hero decides and as the hand starts: every other step is told too
-    result: p.done ? { ...resultOf(p), lost: lostIn(p), streets: streetsOf(p) } : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
+    result: p.done ? { ...resultOf(p), lost: lostIn(p), streets: streetsOf(p), flop: p.hand.flop?.store ? { kept: p.hand.flop.store, betting: p.hand.flop.used ?? {} } : null } : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
   });
 }

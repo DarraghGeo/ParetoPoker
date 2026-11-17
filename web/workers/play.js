@@ -2,6 +2,7 @@
 // flops of the hands ahead are solved in the page's flop workers (workers/flop.js) and handed in here.
 import * as fs from 'poker-flopsolve';
 import { RARE, explainStreet, measure, study, tolerance } from '../../src/explain/street.js';
+import { text } from '../solver/deck.js';
 import { exported, exportedFlop } from '../solver/jobs.js';
 import { dealAhead, gotFlop, hold, onSolved, pump, resume, status, takeKept } from './play/schedule.js';
 import { current, play, say } from './play/state.js';
@@ -46,7 +47,9 @@ const handlers = {
   act(data) { heroActs(data.label); },
   explain(data) { let told = null; try { told = explained(data); } catch { told = null; } say({ type: 'explained', ask: data.ask, told }); },
   export(data) {
-    const solved = share(data.solve); const out = !solved || solved.slim ? null : solved.street === 'flop' ? exportedFlop(solved) : solved.oop ? exported(solved) : null;   // a slim flop has no solve to hand over: Study solves it
+    const solved = share(data.solve); // a slim flop's whole solve is on the device: Study is told where, and reads it there
+    if (solved?.slim && solved.store) { say({ type: 'export', ask: data.ask, found: true, kept: solved.store, board: text(solved.cards), pot: solved.pot, stack: solved.stack, lite: true, betting: solved.used ?? {}, exploit: null }); return; }
+    const out = !solved || solved.slim ? null : solved.street === 'flop' ? exportedFlop(solved) : solved.oop ? exported(solved) : null;
     if (!out) { say({ type: 'export', ask: data.ask, found: false }); return; }
     say({ type: 'export', ask: data.ask, found: true, ...out }, [out.sums.buffer]);
   },
