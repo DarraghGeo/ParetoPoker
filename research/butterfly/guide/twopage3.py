@@ -10,9 +10,10 @@ TITLE = {'river, out of position, facing a bet': 'River · facing a bet · eithe
          'river, out of position, first to act': 'River · first to act · out of position', 'turn, in position, first to act': 'Turn · checked to you · in position', 'turn, out of position, first to act': 'Turn · first to act · out of position',
          'flop, in position, first to act': 'Flop · checked to you · in position', 'flop, out of position, first to act': 'Flop · first to act · out of position'}
 ROWHEAD = {'margin': 'Equity vs price', 'equity': 'Equity', 'row': 'Hand'}
-COLHEAD = {'draw': {'no draw': 'No draw', 'gutshot': 'Gutshot', 'open-ended': 'Open-ended', 'flush draw': 'Flush draw'}, 'his weak hands': {'under 20%': 'His weak hands under 20%', '20-45%': '20–45%', 'over 45%': 'Over 45%'},
-           'range equity': {'under 45%': 'Range equity under 45%', '45-55%': '45–55%', 'over 55%': 'Over 55%'}, 'stack to pot': {'under 2': 'Stack under 2 pots', '2 to 6': '2 to 6 pots', 'over 6': 'Over 6 pots'},
-           'who bet last street': {'nobody': 'Checked through', 'I did': 'You bet before', 'he did': 'He bet before'}}
+COLHEAD = {'draw': {'no draw': 'None', 'gutshot': 'Gutshot', 'open-ended': 'Open', 'flush draw': 'Flush'}, 'his weak hands': {'under 20%': '&lt;20%', '20-45%': '20–45%', 'over 45%': '&gt;45%'},
+           'range equity': {'under 45%': '&lt;45%', '45-55%': '45–55%', 'over 55%': '&gt;55%'}, 'stack to pot': {'under 2': '&lt;2', '2 to 6': '2–6', 'over 6': '&gt;6'},
+           'who bet last street': {'nobody': 'Checked', 'I did': 'You bet', 'he did': 'He bet'}}
+COLTITLE = {'draw': 'Your draw', 'his weak hands': 'His weak hands', 'range equity': 'Your range equity', 'stack to pot': 'Stack, in pots', 'who bet last street': 'The street before'}
 SHORT = {'5+ under the price': '5+ under', '0-5 under': '0–5 under', '0-5 over': '0–5 over', '5-15 over': '5–15 over', '15-30 over': '15–30 over', '30+ over': '30+ over', 'under 20%': 'Under 20%', '20-35%': '20–35%', '35-50%': '35–50%', '50-65%': '50–65%', '65-80%': '65–80%', '80%+': '80%+',
          'trips or better': 'Trips or better', 'two pair': 'Two pair', 'overpair': 'Overpair', 'top pair': 'Top pair', 'middle pair': 'Middle pair', 'low pair': 'Low pair', 'draw': 'Draw, no pair', 'air': 'Nothing'}
 WORD = {'fold': 'Fold', 'call': 'Call', 'raise': 'Raise', 'check': 'Check', 'bet': 'Bet', 'bet big': 'Bet big'}; CLS = {'fold': 'n', 'check': 'n', 'call': 'y', 'bet': 'y', 'raise': 'r', 'bet big': 'r'}
@@ -38,9 +39,9 @@ def grid(nm, title=None, loss=None):
     t = R[nm]; names, labs, cells = filled(t)
     h = f'<div class="t"><h3>{title or TITLE[nm]}</h3><table>'
     if len(names) == 1:
-        h += f'<tr><th>{ROWHEAD[names[0]]}</th><th></th></tr>' + ''.join(f'<tr><th>{SHORT[a]}</th>{td(cells[(a,)], t['answers'], ' · ')}</tr>' for a in reversed(labs[0]))
+        h += f'<tr><th class="rh">{ROWHEAD[names[0]]}</th><th></th></tr>' + ''.join(f'<tr><th class="rh">{SHORT[a]}</th>{td(cells[(a,)], t['answers'], ' · ')}</tr>' for a in reversed(labs[0]))
     else:
-        h += f'<tr><th>{ROWHEAD[names[0]]}</th>' + ''.join(f'<th>{COLHEAD[names[1]][b]}</th>' for b in labs[1]) + '</tr>' + ''.join(f'<tr><th>{SHORT[a]}</th>' + ''.join(td(cells[(a, b)], t['answers']) for b in labs[1]) + '</tr>' for a in reversed(labs[0]))
+        h += f'<tr><th class="rh" rowspan="2">{ROWHEAD[names[0]]}</th><th class="grp" colspan="{len(labs[1])}">{COLTITLE[names[1]]}</th></tr><tr>' + ''.join(f'<th>{COLHEAD[names[1]][b]}</th>' for b in labs[1]) + '</tr>' + ''.join(f'<tr><th class="rh">{SHORT[a]}</th>' + ''.join(td(cells[(a, b)], t['answers']) for b in labs[1]) + '</tr>' for a in reversed(labs[0]))
     return h + f'</table><p class="loss">{loss or f"Loses {t['score']['mean']:.2f}% of the pot per decision"}</p></div>'
 def lookup(k, nm):
     t = R[nm]; names, labs, cells = filled(t); head = f'<b>{k}. {nm}</b> [{" × ".join(names)}] loss {t["score"]["mean"]:.2f} (P90 {t["score"]["p90"]:.2f})'; code = lambda c: ''.join(str(x) for x in c['quarters'])
