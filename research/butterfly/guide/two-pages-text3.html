@@ -9,12 +9,12 @@ body { font-family: "Inter", system-ui, sans-serif; color: var(--ink); font-size
 h1 { font-size: 17pt; margin: 0; letter-spacing: -0.02em; font-weight: 600; } .sub { color: var(--ink-2); margin: 1pt 0 6pt; font-size: 9pt; }
 h2 { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin: 6pt 0 3pt; font-weight: 600; }
 h3 { font-size: 8.2pt; margin: 0 0 2pt; font-weight: 600; } p { margin: 0 0 3pt; }
-.top { display: grid; grid-template-columns: 1fr 1.25fr 1.25fr; gap: 9pt; } .box { background: var(--surface); border-radius: 5pt; padding: 5pt 7pt; }
+.top { display: grid; grid-template-columns: 1fr 1.25fr 1.25fr; gap: 9pt; } .box { background: var(--surface); border-radius: 5pt; padding: 4pt 7pt; font-size: 7.6pt; line-height: 1.3; }
 .box p:last-child { margin-bottom: 0; }
-.grids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5pt 9pt; align-items: start; } .grids.two { grid-template-columns: 1fr 1.25fr 1.25fr; }
-table { border-collapse: collapse; width: 100%; } th, td { padding: 0.9pt 3pt; font-size: 7.3pt; text-align: center; }
+.grids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4pt 9pt; align-items: start; } .grids.two { grid-template-columns: 1fr 1fr 1fr; }
+table { border-collapse: collapse; width: 100%; table-layout: fixed; } .t table tr th:first-child { width: 56pt; } .price { table-layout: auto; } th, td { padding: 0.9pt 3pt; font-size: 7.3pt; text-align: center; }
 th { font-weight: 500; color: var(--ink-2); font-size: 6.8pt; line-height: 1.15; } tr th:first-child { text-align: left; color: var(--ink); white-space: nowrap; font-size: 7.4pt; }
-td { border: 1pt solid #fff; font-weight: 600; } td.y { background: var(--bet); } td.n { background: var(--check-soft); font-weight: 400; } td.r { background: var(--ink); color: #fff; } td i { font-style: normal; font-weight: 400; font-size: 6pt; margin-left: 2pt; opacity: 0.8; }
+td { border: 1pt solid #fff; font-weight: 600; } td.y { background: var(--bet); } td.n { background: var(--check-soft); font-weight: 400; } td.r { background: var(--ink); color: #fff; } td.m { font-weight: 400; font-size: 6.1pt; line-height: 1.1; padding: 0.5pt 1pt; white-space: nowrap; background: repeating-linear-gradient(135deg, var(--bet-soft) 0 4pt, var(--check-soft) 4pt 8pt); } td.m[class*="yr"], td.m[class*="ry"] { background: repeating-linear-gradient(135deg, var(--bet) 0 4pt, #d9d6cf 4pt 8pt); } td i { font-style: normal; font-weight: 400; font-size: 6pt; margin-left: 2pt; opacity: 0.8; }
 .loss { font-size: 6.6pt; color: var(--ink-3); margin: 1.5pt 0 0; } .small { font-size: 7pt; color: var(--ink-3); }
 .price td, .price th { font-weight: 400; border: 0; border-bottom: 0.5pt solid var(--line); text-align: left; padding: 0.8pt 3pt; font-size: 7.6pt; } .price td:last-child { text-align: right; font-weight: 600; }
 .agent { font-size: 7.3pt; line-height: 1.32; } .agent h1 { font-size: 13pt; } .agent p { margin-bottom: 2.6pt; } .cols { columns: 2; column-gap: 12pt; }
@@ -24,7 +24,7 @@ pre { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 6.3pt
 
 <div class="page">
 <h1>Bet, check, call, raise or fold: twelve spots on one page</h1>
-<p class="sub">After the flop, with two players. Find the spot, find your hand, do what the cell says. Made from {{N}} solver decisions, with raises on every street, and tested on flops it had not seen.</p>
+<p class="sub">After the flop, with two players. Find the spot, find your hand, do what the cell says. Two answers in a cell: how often to take each, out of 100.</p>
 <div class="top">
 <div class="box"><h3>1. The price of a call</h3>
 <p>Call ÷ (pot with his bet in it + your call).</p>
@@ -39,12 +39,12 @@ pre { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 6.3pt
 <div class="grids two">{{FACING}}</div>
 <h2>First to act, or checked to: most hands check</h2>
 <div class="grids">{{FIRST}}</div>
-<p class="small" style="margin-top:5pt"><b>Turn, first to act, out of position: check every hand</b> (loses {{TURN_OOP}}% of the pot per decision). <b>Raise</b> = three times his bet. <b>Hand names:</b> top pair pairs the highest board card; middle pair pairs the second, or is a pocket pair between the top two; overpair is a pocket pair above the board; trips or better includes straights and flushes. <b>Limits:</b> losses are measured against solver play with equity known exactly. Single-raised pots against the big blind and 3-bet pots, 100 big blinds; no 4-bet pots. The solver could raise once on the flop and turn and twice on the river. Bet sizes are not chosen here: bet a third of the pot on the flop and three quarters later.</p>
+<p class="small" style="margin-top:4pt"><b>Raise</b> = three times his bet. <b>Two answers in a cell</b> are worth the same there; the split is the solver's. <b>Range equity:</b> the average equity of all the hands you can hold. <b>Hand names:</b> top pair pairs the highest board card; middle pair pairs the second, or is a pocket pair between the top two; overpair is a pocket pair above the board; trips or better includes straights and flushes. <b>Limits:</b> made from {{N}} solver decisions with raises on every street, tested on flops not used to make it; losses are against solver play with equity known exactly. Single-raised and 3-bet pots, 100 big blinds. About a quarter of this play still differs from the solver's, hand by hand. Bet sizes are not chosen: bet a third of the pot on the flop, three quarters later.</p>
 </div>
 
 <div class="page agent">
 <h1>Specification for an engine</h1>
-<p class="sub" style="font-size:8pt">Reproduces page one exactly. Output CHECK or BET when no bet is faced; FOLD, CALL or RAISE (to 3× the bet faced, or all-in if that is all the tree offers) when one is. No bet sizing.</p>
+<p class="sub" style="font-size:8pt">Reproduces page one exactly. Output CHECK or BET when no bet is faced; FOLD, CALL or RAISE (to 3× the bet faced, or all-in if that is all the tree offers) when one is; where a cell mixes, draw the answer at random with its weights. No bet sizing.</p>
 <div class="cols">
 <p><b>Scope.</b> No-limit hold'em, two players after the flop, 100 big blinds; single-raised pots (BU, CO or UTG against BB) and 3-bet pots (SB against BU). Every decision reached, within its street, 3% of the time or more: first to act, checked to, facing a bet, facing a raise.</p>
 <p><b>Inputs.</b> Board; hero's two cards; hero's and villain's ranges at this node as a weight per two-card combination, after all actions so far including the bet faced; pot including all bets; amount to call; effective stack behind; betting history.</p>
@@ -63,7 +63,7 @@ pre { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 6.3pt
 <p><b>stack to pot</b> = stack behind ÷ pot. Bands: &lt;2 "under 2"; [2,6) "2 to 6"; ≥6 "over 6".</p>
 <p><b>his weak hands</b> = share by weight of villain's range with equity against hero's range &lt;0.30. Bands: &lt;0.20; [0.20,0.45); ≥0.45. <b>range equity</b> = hero's range-weighted mean equity. Bands: &lt;0.45; [0.45,0.55); ≥0.55.</p>
 <p><b>who bet last street</b> = last player to bet or raise on the previous street: "I did", "he did", or "nobody" (checked through).</p>
-<p><b>Procedure.</b> Spot = street × seat × (bet or raise faced?). Compute the spot's inputs, look up the cell. A cell holding under 0.3% of the range in the data takes the answer of the next band up in its column. Letters: x check, B bet, G bet big (over the pot), f fold, C call, R raise. Rows below run weakest to strongest; columns in the order listed. Where the tree offers no raise, R is played as C.</p>
+<p><b>Procedure.</b> Spot = street × seat × (bet or raise faced?). Compute the spot's inputs, look up the cell. A cell holding under 0.3% of the range in the data takes the answer of the next band up in its column. Each cell is three digits: quarters of the time to give the first, second and third answer (first to act: check, bet, bet big over the pot; facing: fold, call, raise). 031 = call three times in four, raise one in four. A cell plays its least-losing answer, and any answer within 0.5% of the pot per hand of it, in the solver's proportions. Rows below run weakest to strongest; columns in the order listed. Where the tree offers no raise, R is played as C.</p>
 <p><b>Check.</b> On solved spots, per decision: Σ over hero's range of weight × (solver value of best action − value of the engine's answer) ÷ pot. An answer covering several actions (bet sizes up to the pot; raise or all-in) is valued as the solver's own mix of them for that hand, or the best of them if the solver never takes it. Average over decisions. Expected loss, % of pot, is given per table (five folds by flop). Solves: poker-huerosolver <code>fullhand</code> for the flop and turn (226 flops; bets 33/75% flop, 75% turn, all-in, one 3× raise a street) and <code>handselector-river-real</code> for the river (300 rivers on 72 flops; bets 33/75/150%, all-in, two 3× raises), solved to 0.3% of the pot.</p>
 {{LOOKUPS}}
 </div>
