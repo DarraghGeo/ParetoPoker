@@ -7,7 +7,8 @@
 # against the ranges as the turn starts, so the cells do not move with either player's play.
 # Turn spots: poker-huerosolver's handselector-turn roots (store.mjs turn-real), solved on some flops, scored on others.
 #   STORE=<dir> python3 research/butterfly/restricted_turn.py <job> [rounds] [spots to solve on] [spots to score on]
-#     job: base (the game's value on the scoring spots) | alone (each scoring spot solved alone) | <seat 0/1>:<plain|draw>   ->  $STORE/turn-<job>.json
+#     job: base (the game's value on the scoring spots) | alone:<variant> (each scoring spot solved alone) | <seat 0/1>:<variant>   ->  $STORE/turn-<job>.json
+#     variants: frozen (the cells read the ranges as the turn starts) | true (the range the player holds at each decision) | spr (frozen, with stacks behind in pots) | true+spr
 import os, sys, json, re, time
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']; RANKS = '23456789TJQKA'; DECK = [r + s for r in RANKS for s in 'cdhs']
@@ -116,19 +117,54 @@ KINDS = {'T first': 2, 'T facing a bet': 3, 'T facing a raise': 2, 'R first': 2,
 def kind(node, hero, tag):
     p, acts, inv = node; return tag + (' first' if inv[1 - hero] <= inv[hero] else ' facing a raise' if len(acts) == 2 and acts[0][0] == 'fold' and any(True for _ in [0]) and node_raised(node, hero) else ' facing a bet')
 def node_raised(node, hero): return len(node[1]) == 2            # facing a wager with no raise left: a raise was faced (or the stack is gone)
-def lay(sp, hero, tab, draw):
-    ct, cr = sp.cells(hero, draw) if not hasattr(sp, '_cells') or sp._cells[0] != (hero, draw) else sp._cells[1]; sp._cells = ((hero, draw), (ct, cr)); td, rd = sp.decisions(hero); st, sr, plan = {}, {}, []
-    for k in td:
-        kd = kind(sp.tn[k], hero, 'T'); na = len(sp.tn[k][1]); t = tab[kd][ct]; s = np.zeros((len(ct), na), np.float32); s[:, :min(na, t.shape[1])] = t[:, :na]
-        if na < t.shape[1]: s[:, na - 1] += t[:, na:].sum(1)
-        st[k] = s; plan.append(('t', k, kd, ct, na))
-    for key in rd:
-        node = sp.rv[key[0]][key[1]]; kd = kind(node, hero, 'R'); na = len(node[1]); t = tab[kd][cr]; s = np.zeros(cr.shape + (na,), np.float32); s[..., :min(na, t.shape[-1])] = t[..., :na]
+def place_rows(E, Wt):
+    """For each row (a river card, or the turn): each hand's place in the weighted range by equity (six bands), and the range's weak share (three bands)."""
+    o = np.argsort(E, axis=1, kind='stable'); ws = np.take_along_axis(Wt, o, 1); tot = np.maximum(Wt.sum(1, keepdims=True), 1e-12); cum = (np.cumsum(ws, 1) - ws / 2) / tot; pl = np.empty_like(cum); np.put_along_axis(pl, o, cum, 1)
+    return np.digitize(pl, [.15, .35, .55, .75, .9]), np.digitize((Wt * (E < .3)).sum(1) / tot[:, 0], [.3, .5])
+def lay(sp, hero, tab, opts):
+    """The tables laid over a spot. opts = (true, spr): `true` reads the place and the weak share from the range the player
+    holds at each decision, as its own tables have shaped it (else from its range as the turn starts); `spr` adds the
+    stacks behind in pots at the decision (under 1.5, 1.5 to 4, over 4)."""
+    true, spr = opts; st, sr, plan = {}, {}, []; w = sp.w[hero]; C = len(sp.cards)
+    if not hasattr(sp, '_frozen'): sp._frozen = {}
+    if hero not in sp._frozen: sp._frozen[hero] = sp.cells(hero, False)
+    ct0, cr0 = sp._frozen[hero]
+    def depth(inv): return int(np.digitize((sp.S - max(inv)) / (sp.P0 + inv[0] + inv[1]), [1.5, 4]))
+    def strat(kd, cells, na):
+        t = tab[kd][cells]; s = np.zeros(cells.shape + (na,), np.float32); s[..., :min(na, t.shape[-1])] = t[..., :na]
         if na < t.shape[-1]: s[..., na - 1] += t[..., na:].sum(-1)
-        sr[key] = s; plan.append(('r', key, kd, cr, na))
-    return st, sr, plan
-def solve(spots, hero, rounds, draw, log=None):
-    nc = {kd: (18 * (2 if draw else 1) if kd[0] == 'T' else 18) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
+        return s
+    def river(key, k, mine):                       # mine: my own reach so far, (C, n)
+        node = sp.rv[key][k]
+        if not isinstance(node[0], int): return
+        p, acts, inv = node
+        if p != hero:
+            for _, c in acts: river(key, c, mine)
+            return
+        if true: pl, wk = place_rows(sp.eqr[hero], w[None, :] * mine * sp.A[hero]); cells = pl * 3 + wk[:, None]
+        else: cells = cr0
+        if spr: cells = cells * 3 + depth(inv)
+        kd = kind(node, hero, 'R'); na = len(acts); x = strat(kd, cells, na); sr[(key, k)] = x; plan.append(('r', (key, k), kd, cells, na))
+        for a, (_, c) in enumerate(acts): river(key, c, mine * x[..., a])
+    def turn(k, mine):
+        node = sp.tn[k]
+        if node[0] == 'fold': return
+        if node[0] == 'end':
+            if k in sp.rv: river(k, 0, np.repeat(mine[None, :], C, 0))
+            return
+        p, acts, inv = node
+        if p != hero:
+            for _, c in acts: turn(c, mine)
+            return
+        if true: pl, wk = place_rows(sp.eqt[hero][None, :], (w * mine)[None, :]); cells = pl[0] * 3 + wk[0]
+        else: cells = ct0
+        if spr: cells = cells * 3 + depth(inv)
+        kd = kind(node, hero, 'T'); na = len(acts); x = strat(kd, cells, na); st[k] = x; plan.append(('t', k, kd, cells, na))
+        for a, (_, c) in enumerate(acts): turn(c, mine * x[:, a])
+    turn(0, np.ones(len(w), np.float32)); return st, sr, plan
+VARIANTS = {'frozen': (False, False), 'true': (True, False), 'spr': (False, True), 'true+spr': (True, True)}
+def solve(spots, hero, rounds, opts, log=None):
+    draw = opts; nc = {kd: 18 * (3 if opts[1] else 1) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
     for t in range(1, rounds + 1):
         add = {kd: np.zeros_like(v) for kd, v in reg.items()}; own = {kd: np.zeros(nc[kd]) for kd in KINDS}; total = 0.0
         for sp in spots:
@@ -174,15 +210,15 @@ if __name__ == '__main__':
         res = {}
         for d in te: sp = Turn(d); res[d['spot']] = equilibrium(sp, rounds); print(f"  {d['spot']} {res[d['spot']]} {time.time() - t0:.0f} s", file=log, flush=True)
         json.dump(res, open(os.path.join(STORE, 'turn-base.json'), 'w'))
-    elif job == 'alone':                             # each scoring spot solved alone with the same tables: what sharing across boards costs
-        base = json.load(open(os.path.join(STORE, 'turn-base.json'))); res = {}
+    elif job.startswith('alone'):                             # each scoring spot solved alone with the same tables: what sharing across boards costs
+        base = json.load(open(os.path.join(STORE, 'turn-base.json'))); res = {}; VAR = job.split(':')[1] if ':' in job else 'frozen'
         for d in te[: int(os.environ.get('ALONE', 6))]:
             sp = Turn(d); res[d['spot']] = []
-            for hero in (0, 1): tab = solve([sp], hero, rounds, False); res[d['spot']].append(100 * sp.walk(1 - hero, *lay(sp, hero, tab, False)[:2], 'reply')[0] / sp.P0 - base[d['spot']][hero])
+            for hero in (0, 1): tab = solve([sp], hero, rounds, VARIANTS[VAR]); res[d['spot']].append(100 * sp.walk(1 - hero, *lay(sp, hero, tab, VARIANTS[VAR])[:2], 'reply')[0] / sp.P0 - base[d['spot']][hero])
             print(f"  {d['spot']} alone: {[round(x, 1) for x in res[d['spot']]]} {time.time() - t0:.0f} s", file=log, flush=True)
-        json.dump(res, open(os.path.join(STORE, 'turn-alone.json'), 'w'))
+        json.dump(res, open(os.path.join(STORE, f'turn-alone-{VAR}.json'), 'w'))
     else:
-        hero, kindj = job.split(':'); hero = int(hero); draw = kindj == 'draw'; S_tr = [Turn(d) for d in tr]; print(f'  spots ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, draw, log)
+        hero, kindj = job.split(':'); hero = int(hero); draw = VARIANTS[kindj]; S_tr = [Turn(d) for d in tr]; print(f'  spots ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, draw, log)
         raw_tr = [100 * sp.walk(1 - hero, *lay(sp, hero, tab, draw)[:2], 'reply')[0] / sp.P0 for sp in S_tr]; del S_tr; raw_te = {}
         for d in te: sp = Turn(d); raw_te[d['spot']] = 100 * sp.walk(1 - hero, *lay(sp, hero, tab, draw)[:2], 'reply')[0] / sp.P0
         json.dump(dict(job=job, rounds=rounds, solved_on=float(np.mean(raw_tr)), scored=raw_te, tables={k: v.tolist() for k, v in tab.items()}), open(os.path.join(STORE, f'turn-{hero}-{kindj}.json'), 'w')); print(f'  done {time.time() - t0:.0f} s', file=log, flush=True)
