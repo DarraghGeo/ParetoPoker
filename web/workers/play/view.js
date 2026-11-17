@@ -2,7 +2,7 @@
 // his turn, both ranges at the decision on screen, how the hand ended, and the address and solve for Study.
 import * as fs from 'poker-flopsolve';
 import { cardsOf, text } from '../../solver/deck.js';
-import { rangesOf } from './solved.js';
+import { rangesOf, strategyOf } from './solved.js';
 import { play, say } from './state.js';
 
 const cents = (x) => Math.round(x * 100) / 100;
@@ -14,6 +14,17 @@ function rangeAt(seg, node, who) {
   const out = []; const weights = rangesOf(seg, node)[who];
   for (let c = 0; c < weights.length; c++) if (weights[c] > 1e-6) out.push([fs.formatCombo(c), Math.round(weights[c] * 1e4) / 1e4]);
   return out;
+}
+
+/** A decision as it is looked back on once the hand is over: the range of the player to act with what the solution does
+ *  with each hand (`[name, weight, [how often each action]]`), the other player's range, the board and the actions. */
+export function reviewOf(seg, node) {
+  const who = node.seat === 'oop' ? 0 : 1; const st = strategyOf(seg, node); const mine = rangesOf(seg, node)[who]; const hands = [];
+  for (let c = 0; c < mine.length; c++) {
+    if (!(mine[c] > 1e-6)) continue; const i = st.at(c);
+    hands.push([fs.formatCombo(c), Math.round(mine[c] * 1e4) / 1e4, i < 0 ? null : Array.from({ length: st.n }, (_, a) => Math.round(1e3 * st.probs[i * st.n + a]) / 1e3)]);
+  }
+  return { board: text(boardOf(seg)), actions: node.edges.map((e) => ({ label: e.label, kind: e.kind })), hands, other: rangeAt(seg, node, 1 - who) };
 }
 
 /** Chips won from the flop on by whoever takes the pot (hero's view), and how the hand ended. */
@@ -66,6 +77,6 @@ export function post(p) {
     board: text(shown), pot: cents(p.pot0 + p.put[0] + p.put[1]), behind: p.put.map((x) => cents(p.hand.config.stack - x)), history: p.history,
     toAct, waiting: p.waiting != null, actions: toAct ? choicesAt(node, p.me) : [], actor: node?.seat ?? null,
     ranges: node && (toAct || p.step === 0) ? { oop: rangeAt(p.seg, node, 0), ip: rangeAt(p.seg, node, 1) } : null,   // read where hero decides and as the hand starts: every other step is told too
-    result: p.done ? { ...resultOf(p), lost: lostIn(p), streets: streetsOf(p), flop: p.hand.flop?.store ? { kept: p.hand.flop.store, betting: p.hand.flop.used ?? {} } : null } : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
+    result: p.done ? { ...resultOf(p), lost: lostIn(p), streets: streetsOf(p), review: p.last, flop: p.hand.flop?.store ? { kept: p.hand.flop.store, betting: p.hand.flop.used ?? {} } : null } : null, study: toAct ? studyOf(p, node) : null,   // Study is for hero's own decisions, not villain's between them
   });
 }

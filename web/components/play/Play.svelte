@@ -65,6 +65,9 @@
   const href = $derived(game.study ? studyUrl(config, game.study.flop, { line: game.study.line, dealt: game.study.dealt, hand: game.study.hero, lite: true, resolve: true }) : '');
   const listOf = (seat) => held[seat].map(([name, w]) => ({ name, w }));
   const peeked = $derived(peek && held ? (peek === 'hero' ? held.seat : other(held.seat)) : null);
+  // once the hand is over, a player's range is shown as it stood at his last decision, with what the solver does with each hand
+  const looked = $derived(peek && st?.result?.review?.[peek] ? st.result.review[peek] : null);
+  const withMix = (list) => list.map(([name, w, mix]) => ({ name, w, mix: mix ?? null }));
   const signed = (x) => `${x > 0 ? '+' : x < 0 ? '−' : ''}${chips(Math.abs(x))}`;
   /** EV given up: always a loss, so shown with its minus and to the cent (a good decision costs nothing). */
   const ev = (x) => `EV ${x >= 0.005 ? '−' : ''}${x.toFixed(2)}`;
@@ -115,7 +118,8 @@
           <div class="grades" class:over={!!st?.result}>{#if graded}{#key graded.key}<Grade grade={graded} onopen={explainGraded} />{/key}{/if}</div>
         </div>
         <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero onpeek={() => (peek = 'hero')} />
-        {#if peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={listOf(peeked)} his={listOf(other(peeked))} board={held.board} marked={peek === 'hero' ? cellOf(held.hero) : null} villain={peek === 'villain'} onclose={() => (peek = null)} />{/if}
+        {#if looked && peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={withMix(looked.hands)} his={withMix(looked.other)} board={looked.board} actions={looked.actions} marked={peek === 'hero' ? cellOf(st.hero) : st.villain ? cellOf(st.villain) : null} onclose={() => (peek = null)} />
+        {:else if peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={listOf(peeked)} his={listOf(other(peeked))} board={held.board} marked={peek === 'hero' ? cellOf(held.hero) : null} villain={peek === 'villain'} onclose={() => (peek = null)} />{/if}
       </div>
       <Moves {game} {config} />
     {/if}

@@ -450,6 +450,10 @@ body.paged{overflow:hidden;height:100dvh}
 .pfly .code{font:500 12px/14px var(--mono);text-align:center;color:var(--ink-2);letter-spacing:.02em}
 .peek.villain .pfly .wing.me i{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
 .peek.villain .pfly .wing.him i{background:var(--ink)}
+.peek .keys{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:4px 12px;font:400 11px/14px var(--mono);color:var(--ink-2)}
+.peek .keys span{display:inline-flex;align-items:center;gap:5px}
+.peek .keys i{width:9px;height:9px;border-radius:2px}
+.peek .keys .when{margin-left:auto;color:var(--ink-3)}
 .peek .dots{display:flex;justify-content:center;gap:6px;padding-top:8px}
 .peek .dots i{width:6px;height:6px;border-radius:50%;background:var(--line-strong)}
 .peek .dots i.on{background:var(--ink)}

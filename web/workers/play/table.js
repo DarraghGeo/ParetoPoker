@@ -9,7 +9,7 @@ import { streetOf } from '../../solver/jobs.js';
 import { dealAhead, pump, status } from './schedule.js';
 import { current, play, slot } from './state.js';
 import { rangesOf, strategyOf, worthOf } from './solved.js';
-import { post } from './view.js';
+import { post, reviewOf } from './view.js';
 
 const seatOf = (node) => (node.seat === 'oop' ? 0 : 1);
 export const nodeOf = (seg) => seg.solved.nodes[seg.node];
@@ -23,7 +23,7 @@ export function start() {
   const hand = play.hands.find((h) => h.flop);
   if (!hand) { dealAhead(); status(); pump(); return false; }
   play.hands.splice(play.hands.indexOf(hand), 1); play.hands.unshift(hand);
-  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: hand.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: hand.config.pot, waiting: null, done: null, streets: {} };
+  play.playing = { hand, me: hand.seat === 'oop' ? 0 : 1, seg: { key: 'flop', solved: hand.flop, node: 0, dealt: [] }, history: [{ street: 'flop', actions: [], pot: hand.config.pot, cards: text(hand.board.slice(0, 3)) }], step: 0, put: [0, 0], pot0: hand.config.pot, waiting: null, done: null, streets: {}, last: {} };
   proceed();
   return true;
 }
@@ -110,6 +110,7 @@ function advance(p) {
   if (node.kind === 'showdown') { p.done = { showdown: true }; return false; }
   if (node.kind === 'chance') return deal(p, node);
   if (node.kind !== 'decision' || seatOf(node) === p.me) return false;
+  p.last.villain = reviewOf(p.seg, node);   // his last decision, to look back on once the hand is over
   take(p, node, villainChoice(p.seg, node, p.hand.villain));
   return true;
 }
@@ -130,6 +131,7 @@ export function heroActs(label) {
   const p = play.playing; if (!p || p.done) return;
   const node = nodeOf(p.seg); const k = node.edges.findIndex((e) => e.label === label);
   if (node.kind !== 'decision' || seatOf(node) !== p.me || k < 0) return;
+  p.last.hero = reviewOf(p.seg, node);
   // off the solution's line (hero left it earlier in the hand) there is nothing to set the move against, and nothing is charged
   const off = reachOf(p, node) < OFF_LINE;
   const mix = off ? null : mixOf(p.seg, node, p.hand.hero); const worth = mix ? worthOf(p.seg, node, p.hand.hero) : null;
