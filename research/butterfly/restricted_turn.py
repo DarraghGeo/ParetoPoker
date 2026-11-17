@@ -130,7 +130,10 @@ def lay(sp, hero, tab, opts):
     """The tables laid over a spot. opts = (true, spr): `true` reads the place and the weak share from the range the player
     holds at each decision, as its own tables have shaped it (else from its range as the turn starts); `spr` adds the
     stacks behind in pots at the decision (under 1.5, 1.5 to 4, over 4)."""
-    true, spr, drw, vs = opts; st, sr, plan = {}, {}, []; w = sp.w[hero]; C = len(sp.cards); opp = 1 - hero
+    true, spr, drw, vs = opts[:4]; nut = len(opts) > 4 and opts[4]; fdraw = len(opts) > 5 and opts[5]; st, sr, plan = {}, {}, []; w = sp.w[hero]; C = len(sp.cards); opp = 1 - hero
+    if nut and not hasattr(sp, '_hs'):            # his share of strong hands (80%+ against my range) as the turn starts: on the turn, and on each river card
+        wo = sp.w[opp]; wc = wo[None, :] * sp.A[opp]; sp._hs = [None, None]
+        for q in (0, 1): wq = sp.w[q]; wcq = wq[None, :] * sp.A[q]; sp._hs[q] = (float(wq[sp.eqt[q] >= .8].sum() / wq.sum()), (wcq * (sp.eqr[q] >= .8)).sum(1) / np.maximum(wcq.sum(1), 1e-12))
     if vs: et, er = eq_store(sp); ot, orv = et[opp], er[opp]
     if not hasattr(sp, '_frozen'): sp._frozen = {}
     if hero not in sp._frozen: sp._frozen[hero] = sp.cells(hero, False)
@@ -157,8 +160,9 @@ def lay(sp, hero, tab, opts):
             for a, (_, c) in enumerate(acts): river(key, c, mine, his * orv[(key, k)][..., a] if vs else his)
             return
         E = versus_r(his) if vs else sp.eqr[hero]
-        if true or vs: pl, wk = place_rows(E, w[None, :] * (mine if true else 1) * sp.A[hero]); cells = pl * 3 + wk[:, None]
+        if true or vs or nut: Wt = w[None, :] * (mine if true else 1) * sp.A[hero]; pl, wk = place_rows(E, Wt); cells = pl * 3 + wk[:, None]
         else: cells = cr0
+        if nut and inv[opp] <= inv[hero]: cells = pl * 3 + np.digitize((Wt * (E >= .8)).sum(1) / np.maximum(Wt.sum(1), 1e-12) - sp._hs[opp][1], [-.05, .05])[:, None]      # first to act: who has more strong hands, in place of the weak share
         if spr: cells = cells * ND + depth(inv)
         kd = kind(node, hero, 'R'); na = len(acts); x = strat(kd, cells, na); sr[(key, k)] = x; plan.append(('r', (key, k), kd, cells, na))
         for a, (_, c) in enumerate(acts): river(key, c, mine * x[..., a], his)
@@ -173,16 +177,21 @@ def lay(sp, hero, tab, opts):
             for a, (_, c) in enumerate(acts): turn(c, mine, his * ot[k][:, a] if vs else his)
             return
         E = versus_t(his) if vs else sp.eqt[hero]
-        if true or vs: pl, wk = place_rows(E[None, :], (w * (mine if true else 1))[None, :]); cells = pl[0] * 3 + wk[0]
+        if true or vs or nut: Wt = (w * (mine if true else 1))[None, :]; pl, wk = place_rows(E[None, :], Wt); cells = pl[0] * 3 + wk[0]
         else: cells = ct0
+        if nut and inv[opp] <= inv[hero]: cells = pl[0] * 3 + int(np.digitize(float((Wt[0] * (E >= .8)).sum() / max(Wt[0].sum(), 1e-12)) - sp._hs[opp][0], [-.05, .05]))
         if spr: cells = cells * ND + depth(inv)
         if drw: cells = cells * 3 + sp.draw3[hero]
+        kd = kind(node, hero, 'T')
+        if fdraw and kd == 'T facing a bet': cells = cells * 2 + (sp.draw3[hero] == 2)          # facing a turn bet only: a flush draw or eight or more cards to a straight, or not
         kd = kind(node, hero, 'T'); na = len(acts); x = strat(kd, cells, na); st[k] = x; plan.append(('t', k, kd, cells, na))
         for a, (_, c) in enumerate(acts): turn(c, mine * x[:, a], his)
     turn(0, np.ones(len(w), np.float32), sp.w[opp].astype(np.float32)); return st, sr, plan
 # true: my own range as my tables shape it; spr: stacks behind; draw: on the turn tables, in three kinds; vs: equity against the range a sound opponent holds at the decision
 VARIANTS = {'frozen': (False, False, False, False), 'true': (True, False, False, False), 'spr': (False, True, False, False), 'true+spr': (True, True, False, False), 'true+spr+draw': (True, True, True, False),
-            'true+spr+vs': (True, True, False, True), 'true+vs': (True, False, False, True), 'true+spr+draw+vs': (True, True, True, True)}
+            'true+spr+vs': (True, True, False, True), 'true+vs': (True, False, False, True), 'true+spr+draw+vs': (True, True, True, True),
+            # nut: first to act, who has more strong hands in place of the weak share; fdraw: a strong draw or not, on the turn's facing-a-bet table only
+            'true+spr+nut': (True, True, False, False, True, False), 'true+spr+fdraw': (True, True, False, False, False, True), 'true+spr+nut+fdraw': (True, True, False, False, True, True), 'true+spr+nut+fdraw+vs': (True, True, False, True, True, True)}
 def eq_store(sp):
     """The unrestricted solve's strategies for a spot (both players), solved once and kept on disk: the 'sound opponent' whose ranges the tables may assume."""
     if hasattr(sp, '_eq'): return sp._eq
@@ -198,7 +207,7 @@ def eq_store(sp):
     sp._eq = (nt, nr); return sp._eq
 
 def solve(spots, hero, rounds, opts, log=None):
-    draw = opts; nc = {kd: NB * 3 * (ND if opts[1] else 1) * (3 if opts[2] and kd[0] == 'T' else 1) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
+    draw = opts; nc = {kd: NB * 3 * (ND if opts[1] else 1) * (3 if opts[2] and kd[0] == 'T' else 1) * (2 if len(opts) > 5 and opts[5] and kd == 'T facing a bet' else 1) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
     for t in range(1, rounds + 1):
         add = {kd: np.zeros_like(v) for kd, v in reg.items()}; own = {kd: np.zeros(nc[kd]) for kd in KINDS}; total = 0.0
         for sp in spots:
