@@ -7,7 +7,7 @@ import { keep, load } from '../storage.js';
 import { keepMistakes } from './mistakes.js';
 import { keepRules } from './rules.js';
 import { PHONE, configOf, keepSeating } from './seating.js';
-import { mark } from './trace.js';
+import { mark, markSolver } from './trace.js';
 
 const KEY = 'pareto-play'; const DAYS_KEY = 'pareto-days';
 /** How many days of play are kept. */
@@ -103,7 +103,7 @@ const HELPERS = PHONE ? 1 : Math.max(1, Math.min(2, (globalThis.navigator?.hardw
 
 /** How many threads each flop worker solves on, where the page has them: the cores there are, less the page's and the
  *  table's own, shared among the flop workers; four at most. */
-const THREADS = Math.max(1, Math.min(4, Math.floor(((globalThis.navigator?.hardwareConcurrency ?? 4) - 1) / HELPERS)));
+const THREADS = PHONE ? 1 : Math.max(1, Math.min(4, Math.floor(((globalThis.navigator?.hardwareConcurrency ?? 4) - 1) / HELPERS)));   // one on a phone: Play began stopping by itself there once flops were solved on several
 
 /** A solved flop is written to the device (for Study and for the next start) only up to this size: storing copies it once more. */
 const KEEP_UNDER = (PHONE ? 200 : 400) * 2 ** 20;
@@ -111,12 +111,13 @@ const KEEP_UNDER = (PHONE ? 200 : 400) * 2 ** 20;
 /** Give waiting flops to the flop workers that are free. */
 function assign(game) {
   if (game.holding) return;
-  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', threads: THREADS, keepUnder: KEEP_UNDER, ...need }); mark('solving a flop'); }
+  for (const h of game.helpers) { if (h.busy || !game.needs.length) continue; const need = game.needs.shift(); h.busy = need.id; h.need = need; h.worker.postMessage({ type: 'solve', threads: THREADS, keepUnder: KEEP_UNDER, ...need }); markSolver(need.kept ? 'reading back the flop kept' : 'started solving a flop'); }
 }
 function fromHelper(game, h, data) {
   if (data.epoch !== game.epoch) return;   // a solve stopped with the setup it was for
-  if (data.type === 'progress') { if (!game.state && data.id === game.needs.first) game.progress = { done: data.done }; return; }
-  if (data.slim) mark(data.readBack ? 'the flop kept from last time just read back' : `a flop of ${Math.round((data.solvedBytes ?? 0) / 2 ** 20)} MB just solved`);
+  if (data.type === 'progress') { markSolver(`solving a flop, ${Math.round(100 * (data.done ?? 0))}% along`); if (!game.state && data.id === game.needs.first) game.progress = { done: data.done }; return; }
+  if (data.type === 'stage') { markSolver(data.stage); return; }
+  if (data.slim) markSolver(data.readBack ? 'handed over the flop kept from last time' : `handed over a flop of ${Math.round((data.solvedBytes ?? 0) / 2 ** 20)} MB`);
   h.busy = null; game.worker.postMessage(data); assign(game);
 }
 /** A flop worker that broke: its flop is told as failed, so the table does not wait for it for ever. */
@@ -145,15 +146,16 @@ export function studyOpened(game) { mark('Study open'); if (PHONE) game.holding 
 export function studyClosed(game) { mark('back from Study'); if (!game.holding) return; game.holding = false; assign(game); }
 
 /** The table stands still (Study, or a card over it, is open), or moves on again: clocks stop and no step is shown meanwhile. */
-export function pause(game, on) { if (game.paused === on) return; game.paused = on; if (!on) pump(game); }
+export function pause(game, on) { if (game.paused === on) return; game.paused = on; mark(on ? 'opened a card or drawer over the table' : 'closed it and went back to the table'); if (!on) pump(game); }
 
 function clear(game) { clearTimeout(game.timer); stopClock(game); Object.assign(game, { queue: [], busy: false, lastKey: '', state: null, timedOut: false, error: '' }); }
 
 export function deal(game) {
+  mark('asked for the next hand');
   clear(game); game.study = null; game.bank = { hero: Math.min(BANK, game.bank.hero + REFILL), villain: BANK };   // the hand before is gone from the worker, and from Study with it
   game.worker.postMessage({ type: 'deal' });
 }
-export function act(game, label) { stopClock(game); game.worker.postMessage({ type: 'act', label }); }
+export function act(game, label) { mark(`your move (${label})`); stopClock(game); game.worker.postMessage({ type: 'act', label }); }
 
 /** Sit down with a seating: kept for next time, the table cleared, and the worker set up with its spots and bet sizes. */
 export function sitDown(game, seating) {

@@ -26,7 +26,7 @@
   import { recordOf } from '../../lib/play/rules.js';
   import { handText, seatNames } from '../../lib/play/history.js';
   import { seatingLabel } from '../../lib/play/seating.js';
-  import { mark } from '../../lib/play/trace.js';
+  import { endTrace, mark } from '../../lib/play/trace.js';
 
   const GRADE_MS = 4500;
   const game = createPlayGame();
@@ -34,7 +34,7 @@
   game.onExport = (data) => pane?.handedOver(data);
   game.onExplained = (data) => { if (why && data.ask === why.key) why = { ...why, told: data.told, failed: !data.told }; };
   // leaving Play stops its solving
-  onDestroy(() => { clearTimeout(gradeTimer); clearTimeout(game.timer); clearInterval(game.tick); game.worker.terminate(); for (const h of game.helpers) h.worker.terminate(); });
+  onDestroy(() => { endTrace(); clearTimeout(gradeTimer); clearTimeout(game.timer); clearInterval(game.tick); game.worker.terminate(); for (const h of game.helpers) h.worker.terminate(); });
   const st = $derived(game.state);
   const me = $derived(st?.seat === 'oop' ? 0 : 1);
   const other = (seat) => (seat === 'oop' ? 'ip' : 'oop');

@@ -18,7 +18,7 @@
 {/snippet}
 <section class="sitting" aria-label="Set up the table">
   <h2>Set up the table</h2>
-  {#if stopped}<p class="said stopped">Play stopped by itself last time{stopped.hidden ? ', while the app was in the background' : ''}. The last thing it was doing: {stopped.doing}. If this keeps happening, tell me this line.</p>{/if}
+  {#if stopped}<p class="said stopped">Play stopped by itself last time. {stopped.text} If this keeps happening, send me this.</p>{/if}
   <div class="presets">
     <div class="line"><span>Against</span><div class="seg" role="group" aria-label="Who you play against">{#each POOLS as [key, label]}<button type="button" aria-pressed={draft.pool === key} onclick={() => (draft.pool = key)}>{label}</button>{/each}</div></div>
     {#if draft.pool === 'live'}

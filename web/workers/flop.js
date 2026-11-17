@@ -33,9 +33,11 @@ async function solved(need, mine, n) {
       if (Date.now() - told > 250) { told = Date.now(); say({ type: 'progress', id, epoch, done: job.done() }); }
       await pause();
     }
+    say({ type: 'stage', id, epoch, stage: 'solved a flop, reading the hand off it' });
     const slim = slimFlop(result, need.hand);
     // the whole solve goes to the device (for Study, and for the next start), and its key with the slim flop
     const out = result.run.solver.ctx.strategySum.byteLength <= (need.keepUnder ?? 0) ? exportedFlop(result) : null;
+    if (out) say({ type: 'stage', id, epoch, stage: `writing a flop of ${Math.round(out.sums.byteLength / 2 ** 20)} MB to the device` });
     slim.store = out ? await keepFlop({ sig: sigOf(config), cards: [...cards], used: out.betting, sums: out.sums }, need.keepUnder) : null;
     return { slim, bytes: result.run.solver.ctx.strategySum.byteLength };
   } finally { job.close(); }
