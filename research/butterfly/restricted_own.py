@@ -71,17 +71,19 @@ if __name__ == '__main__':
     rng = np.random.default_rng(4); flops = sorted({d['spot'] for d in rows}); rng.shuffle(flops); held = set(flops[: max(4, len(flops) // 3)]); rng.shuffle(rows)
     train = [d for d in rows if d['spot'] not in held][:36]; test = [d for d in rows if d['spot'] in held][:18]; t0 = time.time()
     S_tr = [Spot(d) for d in train]; S_te = [Spot(d) for d in test]; base = {id(sp): [sp.best_reply(p, equilibrium(sp, 600)[p])[0] for p in (0, 1)] for sp in S_tr + S_te}
-    out = open(os.path.join(HERE, 'restricted-grid.md' if os.environ.get('GRID') else 'restricted-own-range.md'), 'w')
+    out = open(os.path.join(HERE, 'restricted-grid.md' if os.environ.get('GRID') else os.devnull if os.environ.get('SHOW') else 'restricted-own-range.md'), 'w')
     def say(*a): print(*a); print(*a, file=out); out.flush()
     ex = lambda spots, gains, hero: float(np.mean([100 * (g - base[id(sp)][hero]) / sp.P0 for g, sp in zip(gains, spots)]))
     say(f'# Shared river tables with cells on the player\'s own range ({len(S_tr)} river spots to solve on, {len(S_te)} others to score on, from {len(flops)} flops)\n')
     say('What the best reply wins over the value of the game, percent of the pot, averaged over spots. Four tables a seat (first to act; facing a bet; facing a big bet; facing a raise), shared by every board. "Place" is where the hand stands in the player\'s own range by equity: bottom 15%, 15-35, 35-55, 55-75, 75-90, top 10%.\n')
     say('| rows | columns (a read of the spot) | cells a table | seat | on the spots solved on | on other spots: exact | in 10% steps | in 25% steps | worst spot |'); say('|---|---|---|---|---|---|---|---|---|'); KEEP = {}
     PLAN = [('equity', None), ('place', None), ('place', 'my strong hands'), ('place', 'my weak hands'), ('place', 'my strong to weak'), ('equity', 'my strong to weak'), ('equity', 'my strong hands'), ('place x equity', None), ('place x equity', 'my strong to weak')]
+    if os.environ.get('SHOW'): PLAN = [('place', 'my weak hands'), ('place x equity', None)]
     if os.environ.get('GRID'): PLAN = [('place 6 x equity 6', None), ('place 7 x equity 7', None)]
     for hand, read in PLAN:
         for hero in (0, 1):
             tab = pooled(S_tr, hero, rounds, read, hand=hand); sc = lambda S, t: pooled(S, hero, 0, read, table=t, hand=hand); g_tr = sc(S_tr, tab); g_te = sc(S_te, tab); g10 = sc(S_te, {k: quarters(v, 10) for k, v in tab.items()}); g4 = sc(S_te, {k: quarters(v) for k, v in tab.items()})
             worst = max(100 * (g - base[id(sp)][hero]) / sp.P0 for g, sp in zip(g_te, S_te)); KEEP[(hand, read, hero)] = tab; nc = next(iter(tab.values())).shape[0]
             say(f"| {hand} | {read or '-'} | {nc} | {'OOP' if hero == 0 else 'IP'} | {ex(S_tr, g_tr, hero):.1f} | {ex(S_te, g_te, hero):.1f} | {ex(S_te, g10, hero):.1f} | {ex(S_te, g4, hero):.1f} | {worst:.1f} |")
+    if os.environ.get('SHOW'): json.dump({f'{h}|{r}|{hero}': {k: v.tolist() for k, v in t.items()} for (h, r, hero), t in KEEP.items()}, open(os.path.join(HERE, 'restricted-tables.json'), 'w'))
     say(f'\n({time.time() - t0:.0f} s)'); out.close()
