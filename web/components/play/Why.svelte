@@ -1,18 +1,26 @@
 <!-- Why the hand plays as it does at the decision just made: a drawer up from the bottom of the table. It leads with the
+     hand with its twins (the same hand in its other suits), each with the solver's strategy in colour as in Study, the
      player's own rule for the decision, what the rule says for this hand, and how often that rule has agreed with the
      solver over the hands played; then the move set against the solver and the explanation Study gives for the hand. -->
 <script>
   import { fly } from 'svelte/transition';
+  import Bar from '../common/Bar.svelte';
   import Cards from '../common/Cards.svelte';
+  import { COLORS, spelled, strataOf } from '../../lib/actions.js';
   import Said from '../study/Said.svelte';
   import { RULES } from '../../../src/rules/rules.js';
-  let { hero, grade, told, failed = false, rule = null, record = null, onstudy, onclose } = $props();
+  let { hero, grade, told, failed = false, rule = null, record = null, twins = null, actions = null, onstudy, onclose } = $props();
+  const strata = $derived(actions ? strataOf(actions) : null);
   const SAYS = { bet: 'bet', check: 'check', call: 'call', continue: 'continue (call or raise)', raise: 'raise', fold: 'fold' };
   const calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 </script>
 <button type="button" class="peek-out" aria-label="Close" onclick={onclose}></button>
 <section class="whyd why" aria-label="Why this hand plays so" transition:fly={{ y: calm ? 0 : 60, duration: calm ? 0 : 220 }}>
   <header><h2><Cards cards={hero} /></h2><span class="grade g-{grade.level}"><i aria-hidden="true"></i><span>{grade.detail}</span></span></header>
+  {#if strata && twins?.length}
+    <div class="combos twins" aria-label="The same hand in its other suits, and what the solver does with each">{#each twins as t (t.name)}<span class="twin" class:on={t.name === hero}><span><Cards cards={t.name} /></span><span class="bar"><Bar mix={t.mix} {strata} /></span></span>{/each}</div>
+    <p class="keys">{#each actions as a, k}<span><i style="background:var({COLORS[strata[k]]})"></i>{a.kind === 'call' ? 'Call' : spelled(a)}</span>{/each}</p>
+  {/if}
   {#if rule}<div class="myrule">
     <p class="kind"><span>Your rule</span><span class="rec" title="How often this rule has agreed with the solver over the hands you have played">{record ? `${record.pct}% over ${record.n}` : 'first time met'}</span></p>
     <p class="text">{RULES[rule.id]}</p>

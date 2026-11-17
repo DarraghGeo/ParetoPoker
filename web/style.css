@@ -422,6 +422,12 @@ body.paged{overflow:hidden;height:100dvh}
 .whyd p{margin:0}
 .whyd > *{flex:none}
 .mistakes .top .meta{font:400 11px/15px var(--mono);color:var(--ink-3);white-space:normal}
+.whyd .twins{min-height:0;flex-wrap:wrap}
+.whyd .twin{flex:none;display:flex;flex-direction:column;gap:3px;padding:5px 7px;border:1px solid var(--line-strong);border-radius:3px;font:500 12px/16px var(--mono);color:var(--ink)}
+.whyd .twin.on{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.whyd .keys{display:flex;flex-wrap:wrap;gap:4px 12px;font:400 11px/14px var(--mono);color:var(--ink-2)}
+.whyd .keys span{display:inline-flex;align-items:center;gap:5px}
+.whyd .keys i{width:9px;height:9px;border-radius:2px}
 .whyd .myrule{display:flex;flex-direction:column;gap:6px;padding:12px;border:1px solid var(--line-strong);border-radius:6px;background:var(--surface)}
 .whyd .myrule .kind{display:flex;justify-content:space-between;font:400 11px/14px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
 .whyd .myrule .rec{color:var(--ink);letter-spacing:.02em}

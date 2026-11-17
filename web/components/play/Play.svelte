@@ -53,7 +53,7 @@
   let seen = '';
   $effect(() => {
     const key = st ? `${st.id}|${mine.length}` : ''; if (key === seen) return; seen = key;
-    const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key, study: game.study, href, rule: mine.at(-1).rule ?? null } : null;   // the decision just made, for Study
+    const g = gradeOf(mine.at(-1)); clearTimeout(gradeTimer); graded = g ? { ...g, key, study: game.study, href, rule: mine.at(-1).rule ?? null, twins: mine.at(-1).twins ?? null, mix: mine.at(-1).mix ?? null } : null;   // the decision just made, for Study
     if (g && !st?.result?.stopped) gradeTimer = setTimeout(() => (graded = null), GRADE_MS);   // at an error that stopped the hand it stays, as the reason
   });
   $effect(() => { if (studying) studyOpened(game); else studyClosed(game); });
@@ -100,7 +100,7 @@
           {#if game.study}<a class="icon" id="study" {href} aria-label="Study this spot (or swipe left)" title="Study this spot" onclick={study}><Icon name="study" /></a>{/if}{/if}
       {/if}
     </header>
-    {#if why}<Why hero={why.hero} grade={why} told={why.told} failed={why.failed} rule={why.rule} record={why.rule ? recordOf(game.rules, why.rule.id) : null} onstudy={studyWhy} onclose={() => (why = null)} />{/if}
+    {#if why}<Why hero={why.hero} grade={why} told={why.told} failed={why.failed} rule={why.rule} twins={why.twins} actions={why.mix} record={why.rule ? recordOf(game.rules, why.rule.id) : null} onstudy={studyWhy} onclose={() => (why = null)} />{/if}
     {#if scores}<Days days={game.days} onclose={() => (scores = false)} />{/if}
     {#if reviewing}<Mistakes hands={game.mistakes} rules={game.rules} onstudy={(m) => pane.open(m.href, m.spot ? { street: m.spot } : m.flop ? { flop: m.flop } : null)} onclose={() => (reviewing = false)} />
     {:else if sitting}<Sitting stopped={game.seated ? null : game.stopped} seating={game.seating} playing={game.seated} ondeal={deal} oncancel={() => (sitting = false)} />

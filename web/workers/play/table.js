@@ -126,18 +126,23 @@ export function proceed() {
   post(p); status(); pump();
 }
 
+/** A hand's cell of the 13x13 chart: its two ranks, and whether it is suited, offsuit or a pair. */
+const cellKey = (name) => [name[0], name[2]].sort().join('') + (name[0] === name[2] ? '' : name[1] === name[3] ? 's' : 'o');
+/** The hands of hero's range in the same cell as his own (his own among them), each with what the solution does with it. */
+const twinsOf = (hands, hero) => hands.filter(([name, , mix]) => mix && cellKey(name) === cellKey(hero)).map(([name, , mix]) => ({ name, mix }));
+
 /** Hero's action, by its label, at the decision on screen. */
 export function heroActs(label) {
   const p = play.playing; if (!p || p.done) return;
   const node = nodeOf(p.seg); const k = node.edges.findIndex((e) => e.label === label);
   if (node.kind !== 'decision' || seatOf(node) !== p.me || k < 0) return;
-  p.last.hero = reviewOf(p.seg, node);
+  p.last.hero = reviewOf(p.seg, node); const twins = twinsOf(p.last.hero.hands, fs.formatCombo(p.hand.hero));
   // off the solution's line (hero left it earlier in the hand) there is nothing to set the move against, and nothing is charged
   const off = reachOf(p, node) < OFF_LINE;
   const mix = off ? null : mixOf(p.seg, node, p.hand.hero); const worth = mix ? worthOf(p.seg, node, p.hand.hero) : null;
   const cost = worth ? Math.round(100 * (Math.max(...worth) - worth[k])) / 100 : null; const rule = mix ? ruleOf(p, node, mix, worth) : null;
   take(p, node, k);
-  if (mix) Object.assign(p.history[p.history.length - 1].actions.at(-1), { mix, cost, rule }); else if (off) p.history[p.history.length - 1].actions.at(-1).off = true;   // for the page to say how the move stands against the solution
+  if (mix) Object.assign(p.history[p.history.length - 1].actions.at(-1), { mix, cost, rule, twins }); else if (off) p.history[p.history.length - 1].actions.at(-1).off = true;   // for the page to say how the move stands against the solution
   // an error ends the hand where it was made (a fold has ended it already)
   if (mix && !p.done && (mix.find((x) => x.label === label)?.freq ?? 1) < ERROR) p.done = { stopped: true };
   post(p); proceed();
