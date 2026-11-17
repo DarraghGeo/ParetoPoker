@@ -26,11 +26,14 @@ def filled(t):
             if (labs[0][j],) + key[1:] in got: src = got[(labs[0][j],) + key[1:]]; break
         out[key] = dict(quarters=src['quarters'] if src else [4, 0, 0], rare=True)
     return names, labs, out
-def td(c, ans, sep='<br>'):
-    q = c['quarters']; order = sorted(range(3), key=lambda k: -q[k]); top = order[0]
-    if q[top] == 4: return f'<td class="{CLS[ans[top]]}">{WORD[ans[top]]}</td>'
-    text = sep.join(f'{WORD[ans[k]]} {25 * q[k]}' for k in order if q[k] > 0)
-    return f'<td class="m {CLS[ans[top]]}{CLS[ans[order[1]]]}{q[top]}">{text}</td>'
+COL = ['#BFE6DE', '#F0896B', '#15171B']                       # fold or check, call or bet, raise or bet big
+def td(c, ans, sep=None):
+    """A cell as solid colours side by side, each as wide as its answer's share."""
+    q = c['quarters']; stops = []; at = 0
+    for k in range(3):
+        if q[k]: stops.append(f'{COL[k]} {at}% {at + 25 * q[k]}%'); at += 25 * q[k]
+    title = ', '.join(f'{WORD[ans[k]]} {25 * q[k]}%' for k in range(3) if q[k])
+    return f'<td class="bar" title="{title}" style="background:linear-gradient(to right, {", ".join(stops)})"></td>'
 def grid(nm, title=None, loss=None):
     t = R[nm]; names, labs, cells = filled(t)
     h = f'<div class="t"><h3>{title or TITLE[nm]}</h3><table>'
