@@ -218,3 +218,17 @@ Error per decision, median / P90 / P95: chart alone 12 / 43 / 54; chart and thos
 
 ### river, in position, facing a bet (1257 decisions)
 
+| what the learner is given | right | gain | severe |
+|---|---|---|---|
+| the spot's heuristics alone, nothing about the hand | 45% | | |
+| the spot's heuristics and the hand's made class and draw, no chart | 73% | | |
+| **the chart alone** (row, equity, place on the bar) | 85% | | 1% |
+| + 1. the price, and the hand's equity over it (calculated) | 88% | +3.7 | |
+| + 2. stack to pot (counted) | 89% | +0.5 | |
+| the chart and those 2 | 89% | | 0% |
+| the chart and every heuristic | 90% | | 0% |
+| the rulebook, nothing fitted | 81% | | |
+
+Error per decision, median / P90 / P95: chart alone 12 / 35 / 44; chart and those 2: 8 / 27 / 38; everything: 7 / 27 / 36.
+
+(This last situation was run on its own after the main run was cut off by a time limit; the summary table was not written.)
