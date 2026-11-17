@@ -186,6 +186,53 @@ The ten worst:
 - 4BP-SB-BB KcKsAs | line xx|xbc|first | river, out of position | learnt 0% right, ceiling 100%, rows alone 98% | mixing 98%, acts 45% | range adv +44, nut adv +44
 - 4BP-UTG-BU 3hKs5d | line first | flop, out of position | learnt 0% right, ceiling 100%, rows alone 100% | mixing 0%, acts 100% | range adv +29, nut adv +7
 
+### What makes the cuts carry over to a spot not seen
+
+| | rows only (learnt) | cuts learnt: place on bar | + who led | + who led, pot, range adv. | + how often the range acts | + how often + who led | equity value + how often | ceiling: equity |
+|---|---|---|---|---|---|---|---|---|
+| all | 55% | 56% | 59% | 59% | 64% | 64% | 65% | 91% |
+| flop | 58% | 57% | 61% | 64% | 73% | 75% | 72% | 88% |
+| turn | 53% | 54% | 56% | 57% | 61% | 62% | 62% | 89% |
+| river | 57% | 58% | 60% | 60% | 64% | 65% | 67% | 92% |
+| out of position | 56% | 56% | 60% | 60% | 68% | 68% | 69% | 91% |
+| in position | 55% | 56% | 58% | 59% | 60% | 60% | 62% | 91% |
+
+Severe errors only (a hand that always acts called never, or the reverse), share of the range:
+
+| | cuts learnt: place on bar | + who led, pot, range adv. | + how often the range acts | + how often + who led | at the ceiling |
+|---|---|---|---|---|---|
+| all | 16% | 12% | 10% | 9% | 1.9% |
+| flop | 5% | 2% | 1% | 1% | 0.6% |
+| turn | 13% | 9% | 6% | 6% | 2.2% |
+| river | 19% | 15% | 12% | 11% | 1.9% |
+
+Spread of the error over decisions, knowing how often the range acts and who led (median / P90 / P95 / worst):
+
+| | median | P90 | P95 | worst |
+|---|---|---|---|---|
+| all | 37 | 59 | 66 | 100 |
+| flop | 26 | 46 | 51 | 72 |
+| turn | 40 | 60 | 67 | 100 |
+| river | 36 | 59 | 67 | 97 |
+| out of position | 34 | 59 | 67 | 100 |
+| in position | 39 | 59 | 66 | 100 |
+| behind (3+ points) | 36 | 58 | 66 | 100 |
+| level | 37 | 57 | 65 | 97 |
+| ahead (3+ points) | 37 | 60 | 68 | 100 |
+| behind (2+ points) | 35 | 58 | 66 | 100 |
+| level | 36 | 56 | 63 | 97 |
+| ahead (2+ points) | 38 | 60 | 68 | 100 |
+
+How far off a guess of how often the range acts is, from what a player knows (the mean of other spots like it), in points:
+
+| known | typical miss (mean) | P90 |
+|---|---|---|
+| street and seat | 17 | 32 |
+| + who led | 14 | 30 |
+| + pot | 13 | 28 |
+| + range advantage | 13 | 28 |
+| + nut advantage | 13 | 29 |
+
 ### The special lines against plain equity (ceilings, first to act)
 
 | | equity | special lines |
@@ -378,3 +425,50 @@ The ten worst:
 - 3BP-UTG-HJ 5c5s5d | line xbc2|xx|xb1 | river, out of position | learnt 13% right, ceiling 100%, rows alone 100% | mixing 87%, acts 49% | range adv -18, nut adv +13
 - 4BP-BB-HJ Jd2d3h | line xx|xbc|xb1 | river, out of position | learnt 14% right, ceiling 100%, rows alone 78% | mixing 72%, acts 82% | range adv -41, nut adv -5
 - 3BP-UTG-BU 3s8d4h | line xx|xx|xb1 | river, out of position | learnt 14% right, ceiling 100%, rows alone 93% | mixing 67%, acts 54% | range adv -41, nut adv -8
+
+### What makes the cuts carry over to a spot not seen
+
+| | rows only (learnt) | cuts learnt: place on bar | + who led | + who led, pot, range adv. | + how often the range acts | + how often + who led | equity value + how often | ceiling: equity |
+|---|---|---|---|---|---|---|---|---|
+| all | 66% | 69% | 69% | 70% | 70% | 71% | 77% | 98% |
+| flop | 70% | 74% | 74% | 73% | 76% | 76% | 75% | 93% |
+| turn | 71% | 72% | 73% | 73% | 73% | 73% | 77% | 97% |
+| river | 64% | 67% | 67% | 69% | 69% | 69% | 78% | 99% |
+| out of position | 65% | 68% | 69% | 70% | 70% | 70% | 78% | 98% |
+| in position | 67% | 70% | 69% | 70% | 70% | 71% | 77% | 97% |
+
+Severe errors only (a hand that always acts called never, or the reverse), share of the range:
+
+| | cuts learnt: place on bar | + who led, pot, range adv. | + how often the range acts | + how often + who led | at the ceiling |
+|---|---|---|---|---|---|
+| all | 7% | 6% | 6% | 6% | 0.4% |
+| flop | 11% | 10% | 8% | 8% | 2.4% |
+| turn | 10% | 8% | 9% | 8% | 0.6% |
+| river | 6% | 5% | 5% | 5% | 0.0% |
+
+Spread of the error over decisions, knowing how often the range acts and who led (median / P90 / P95 / worst):
+
+| | median | P90 | P95 | worst |
+|---|---|---|---|---|
+| all | 28 | 50 | 55 | 90 |
+| flop | 22 | 39 | 48 | 76 |
+| turn | 26 | 46 | 51 | 72 |
+| river | 30 | 51 | 58 | 90 |
+| out of position | 28 | 51 | 57 | 90 |
+| in position | 28 | 47 | 53 | 76 |
+| behind (3+ points) | 27 | 47 | 52 | 87 |
+| level | 33 | 51 | 55 | 77 |
+| ahead (3+ points) | 40 | 60 | 66 | 90 |
+| behind (2+ points) | 28 | 49 | 54 | 81 |
+| level | 28 | 52 | 63 | 76 |
+| ahead (2+ points) | 28 | 51 | 57 | 90 |
+
+How far off a guess of how often the range acts is, from what a player knows (the mean of other spots like it), in points:
+
+| known | typical miss (mean) | P90 |
+|---|---|---|
+| street and seat | 11 | 25 |
+| + who led | 10 | 20 |
+| + pot | 9 | 20 |
+| + range advantage | 9 | 19 |
+| + nut advantage | 9 | 19 |
