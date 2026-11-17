@@ -4,9 +4,5 @@ cache-decisions.json
 cache-v.npz
 cache-v-decisions.json
 exploit.jsonl
-restricted-river.md
-restricted-river-tables.json
 restricted-tables.json
 guide/river-*.html
-guide/river-*.png
-restricted-ev.md
