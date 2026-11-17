@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Pareto: bet, check, call, fold</title>
+<style>
+@page { size: A4; margin: 10mm 11mm; }
+:root { --surface:#F1F0EB; --line:#E6E4DD; --line-strong:#CFCDC4; --ink:#15171B; --ink-2:#4F535B; --ink-3:#6B6F77; --accent:#2A3CE0; --bet:#F0896B; --bet-soft:#FBE3DA; --check-soft:#DFF3EF; }
+* { box-sizing: border-box; } html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+body { font-family: "Inter", system-ui, sans-serif; color: var(--ink); font-size: 8.4pt; line-height: 1.36; margin: 0; }
+.page { break-after: page; height: 276mm; overflow: hidden; } .page:last-child { break-after: auto; }
+h1 { font-size: 17pt; margin: 0; letter-spacing: -0.02em; font-weight: 600; } .sub { color: var(--ink-2); margin: 1pt 0 6pt; font-size: 9pt; }
+h2 { font-size: 8pt; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin: 6pt 0 3pt; font-weight: 600; }
+h3 { font-size: 8.2pt; margin: 0 0 2pt; font-weight: 600; } p { margin: 0 0 3pt; }
+.top { display: grid; grid-template-columns: 1fr 1.25fr 1.25fr; gap: 9pt; } .box { background: var(--surface); border-radius: 5pt; padding: 5pt 7pt; }
+.box p:last-child { margin-bottom: 0; }
+.grids { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5pt 9pt; align-items: start; } .grids.two { grid-template-columns: 1fr 1.25fr 1.25fr; }
+table { border-collapse: collapse; width: 100%; } th, td { padding: 1.1pt 3pt; font-size: 7.3pt; text-align: center; }
+th { font-weight: 500; color: var(--ink-2); font-size: 6.8pt; line-height: 1.15; } tr th:first-child { text-align: left; color: var(--ink); white-space: nowrap; font-size: 7.4pt; }
+td { border: 1pt solid #fff; font-weight: 600; } td.y { background: var(--bet); } td.n { background: var(--check-soft); font-weight: 400; } td.e { background: repeating-linear-gradient(135deg, var(--bet-soft) 0 4pt, var(--check-soft) 4pt 8pt); font-weight: 400; }
+.loss { font-size: 6.6pt; color: var(--ink-3); margin: 1.5pt 0 0; } .small { font-size: 7pt; color: var(--ink-3); }
+.price td, .price th { font-weight: 400; border: 0; border-bottom: 0.5pt solid var(--line); text-align: left; padding: 0.8pt 3pt; font-size: 7.6pt; } .price td:last-child { text-align: right; font-weight: 600; }
+.agent { font-size: 7.3pt; line-height: 1.32; } .agent h1 { font-size: 13pt; } .agent p { margin-bottom: 2.6pt; } .cols { columns: 2; column-gap: 12pt; }
+pre { font-family: ui-monospace, "DejaVu Sans Mono", monospace; font-size: 6.3pt; line-height: 1.22; background: var(--surface); padding: 3pt 5pt; border-radius: 3pt; margin: 1pt 0 4pt; white-space: pre-wrap; }
+.lk { break-inside: avoid; } .lk p { margin: 0; } ol { margin: 0 0 3pt; padding-left: 11pt; } li { margin-bottom: 1pt; }
+</style></head><body>
+
+<div class="page">
+<h1>Bet, check, call or fold: twelve spots on one page</h1>
+<p class="sub">After the flop, with two players. Find the spot, find your hand, do what the cell says. Made from 6731 solver decisions and tested on boards it had not seen.</p>
+<div class="top">
+<div class="box"><h3>1. The price of a call</h3>
+<p>Call ÷ (pot with his bet in it + your call).</p>
+<p>He bets a third of the pot: <b>20%</b>. Half: <b>25%</b>. Three quarters: <b>30%</b>. The pot: <b>33%</b>. Twice the pot: <b>40%</b>.</p></div>
+<div class="box"><h3>2. Your equity</h3>
+<p>How often you win against all the hands he can hold if the rest of the cards were dealt with no more betting. <b>River:</b> the share of his hands you beat. <b>Earlier:</b> that share, plus about 2 points per card that makes you the best hand, per street to come.</p>
+<p><b>Equity vs price</b> = equity against the hands he bets with, minus the price.</p></div>
+<div class="box"><h3>3. Four things to notice</h3>
+<p><b>Stack:</b> the smaller stack left, in pots. <b>Draw:</b> flush draw; open-ended (8 cards make a straight); gutshot (4 cards). A pair can also be a draw. <b>The flop:</b> who bet it. <b>His weak hands:</b> how much of what he can hold has under 30% equity against what you can hold.</p></div>
+</div>
+<h2>Facing a bet: compare your equity with the price</h2>
+<div class="grids two"><div class="t"><h3>River · facing a bet · either seat</h3><table><tr><th>Equity vs price</th><th></th></tr><tr><th>15+ over</th><td class="y">Call</td></tr><tr><th>5–15 over</th><td class="y">Call</td></tr><tr><th>0–5 over</th><td class="y">Call</td></tr><tr><th>0–5 under</th><td class="n">Fold</td></tr><tr><th>5+ under</th><td class="n">Fold</td></tr></table><p class="loss">Loses 0.00% of the pot per decision</p></div><div class="t"><h3>Turn · facing a bet · out of position</h3><table><tr><th>Equity vs price</th><th>Stack under 2 pots</th><th>2 to 6 pots</th><th>Over 6 pots</th></tr><tr><th>15+ over</th><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>5–15 over</th><td class="y">Call</td><td class="n">Fold</td><td class="n">Fold</td></tr><tr><th>0–5 over</th><td class="n">Fold</td><td class="n">Fold</td><td class="n">Fold</td></tr><tr><th>0–5 under</th><td class="n">Fold</td><td class="n">Fold</td><td class="n">Fold</td></tr><tr><th>5+ under</th><td class="n">Fold</td><td class="n">Fold</td><td class="n">Fold</td></tr></table><p class="loss">Loses 0.26% of the pot per decision</p></div><div class="t"><h3>Turn · facing a bet · in position</h3><table><tr><th>Equity vs price</th><th>No draw</th><th>Gutshot</th><th>Open-ended</th><th>Flush draw</th></tr><tr><th>15+ over</th><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>5–15 over</th><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>0–5 over</th><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>0–5 under</th><td class="n">Fold</td><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>5+ under</th><td class="n">Fold</td><td class="n">Fold</td><td class="y">Call</td><td class="n">Fold</td></tr></table><p class="loss">Loses 0.31% of the pot per decision</p></div><div class="t"><h3>Flop · facing a bet · out of position</h3><table><tr><th>Equity vs price</th><th>No draw</th><th>Gutshot</th><th>Open-ended</th><th>Flush draw</th></tr><tr><th>15+ over</th><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>5–15 over</th><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>0–5 over</th><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>0–5 under</th><td class="n">Fold</td><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>5+ under</th><td class="n">Fold</td><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td></tr></table><p class="loss">Loses 0.38% of the pot per decision</p></div><div class="t"><h3>Flop · facing a bet · in position</h3><table><tr><th>Equity vs price</th><th>No draw</th><th>Gutshot</th><th>Open-ended</th><th>Flush draw</th></tr><tr><th>15+ over</th><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>5–15 over</th><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>0–5 over</th><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>0–5 under</th><td class="n">Fold</td><td class="y">Call</td><td class="y">Call</td><td class="y">Call</td></tr><tr><th>5+ under</th><td class="n">Fold</td><td class="n">Fold</td><td class="n">Fold</td><td class="y">Call</td></tr></table><p class="loss">Loses 0.28% of the pot per decision</p></div></div>
+<h2>First to act, or checked to: most hands check</h2>
+<div class="grids"><div class="t"><h3>River · checked to you · in position</h3><table><tr><th>Equity</th><th>His weak hands: under 20%</th><th>20–45%</th><th>Over 45%</th></tr><tr><th>80%+</th><td class="y">Bet</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>65–80%</th><td class="y">Bet</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>50–65%</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>35–50%</th><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td></tr><tr><th>20–35%</th><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td></tr><tr><th>Under 20%</th><td class="n">Check</td><td class="y">Bet</td><td class="y">Bet</td></tr></table><p class="loss">Loses 0.77% of the pot per decision</p></div><div class="t"><h3>River · first to act · out of position</h3><table><tr><th>Equity</th><th>His weak hands: under 20%</th><th>20–45%</th><th>Over 45%</th></tr><tr><th>80%+</th><td class="y">Bet</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>65–80%</th><td class="y">Bet</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>50–65%</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>35–50%</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>20–35%</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>Under 20%</th><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td></tr></table><p class="loss">Loses 0.50% of the pot per decision</p></div><div class="t"><h3>Turn · checked to you · in position</h3><table><tr><th>Equity</th><th>No draw</th><th>Gutshot</th><th>Open-ended</th><th>Flush draw</th></tr><tr><th>80%+</th><td class="y">Bet</td><td class="y">Bet</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>65–80%</th><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>50–65%</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td></tr><tr><th>35–50%</th><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>20–35%</th><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>Under 20%</th><td class="n">Check</td><td class="n">Check</td><td class="y">Bet</td><td class="n">Check</td></tr></table><p class="loss">Loses 0.43% of the pot per decision</p></div><div class="t"><h3>Turn · first to act · out of position</h3><table><tr><th>Hand</th><th>Flop checked through</th><th>You bet the flop</th><th>He bet the flop</th></tr><tr><th>Trips or better</th><td class="e">Either</td><td class="e">Either</td><td class="n">Check</td></tr><tr><th>Two pair</th><td class="y">Bet</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>Overpair</th><td class="e">Either</td><td class="y">Bet</td><td class="n">Check</td></tr><tr><th>Top pair</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>Middle pair</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>Low pair</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>Draw, no pair</th><td class="y">Bet</td><td class="y">Bet</td><td class="n">Check</td></tr><tr><th>Nothing</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr></table><p class="loss">Loses 0.28% of the pot per decision</p></div><div class="t"><h3>Flop · checked to you · in position</h3><table><tr><th>Hand</th><th>Stack under 2 pots</th><th>2 to 6 pots</th><th>Over 6 pots</th></tr><tr><th>Trips or better</th><td class="n">Check</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>Two pair</th><td class="e">Either</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>Overpair</th><td class="y">Bet</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>Top pair</th><td class="n">Check</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>Middle pair</th><td class="n">Check</td><td class="e">Either</td><td class="e">Either</td></tr><tr><th>Low pair</th><td class="n">Check</td><td class="n">Check</td><td class="n">Check</td></tr><tr><th>Draw, no pair</th><td class="n">Check</td><td class="y">Bet</td><td class="y">Bet</td></tr><tr><th>Nothing</th><td class="n">Check</td><td class="e">Either</td><td class="e">Either</td></tr></table><p class="loss">Loses 0.18% of the pot per decision</p></div></div>
+<p class="small" style="margin-top:5pt"><b>Flop, first to act, out of position: check every hand</b> (loses 0.11% of the pot per decision). <b>Either</b> = both choices are worth the same. <b>Hand names:</b> top pair pairs the highest board card; middle pair pairs the second, or is a pocket pair between the top two; overpair is a pocket pair above the board; trips or better includes straights and flushes. <b>Limits:</b> losses are measured against solver play with equity known exactly. Six-handed cash, 100 big blinds. No bet sizes or raises: as a default bet a third of the pot on the flop and three quarters later. Flop tables rest on few decisions.</p>
+</div>
+
+<div class="page agent">
+<h1>Specification for an engine</h1>
+<p class="sub" style="font-size:8pt">Reproduces page one exactly. Output BET or CHECK when no bet is faced, CALL or FOLD when one is. No sizing, no raises.</p>
+<div class="cols">
+<p><b>Scope.</b> No-limit hold'em, two players after the flop, six-handed cash ranges, 100 big blinds. Decision nodes: each player's first decision on a street, and facing a bet or raise.</p>
+<p><b>Inputs.</b> Board; hero's two cards; hero's and villain's ranges at this node as a weight per two-card combination, after all actions so far including the bet faced; pot including all bets; amount to call; effective stack behind; betting history.</p>
+<p><b>equity(hand)</b> = expected share of the pot against villain's range at this node with remaining board cards dealt and no further betting; weight villain's combinations by range weight; drop combinations sharing a card with hero's hand or the board; a tie is half. <b>Bands:</b> &lt;0.20; [0.20,0.35); [0.35,0.50); [0.50,0.65); [0.65,0.80); ≥0.80.</p>
+<p><b>price</b> = toCall ÷ (pot + toCall). <b>margin</b> = equity − price. <b>Bands:</b> &lt;−0.05 "5+ under the price"; [−0.05,0) "0-5 under"; [0,0.05) "0-5 over"; [0.05,0.15) "5-15 over"; ≥0.15 "15+ over".</p>
+<p><b>row</b>, first that applies (board ranks = distinct ranks on board, highest first):</p>
+<ol>
+<li>trips or better: five of a suit among hole+board with ≥1 hole card of that suit and &lt;5 of it on board; or best straight from hole+board is higher than best straight on board alone; or a hole card's rank occurs ≥3 times among hole+board.</li>
+<li>two pair: hole cards of different ranks, each matching a board rank.</li>
+<li>pocket pair: above top board rank → overpair; else ≥ second board rank → middle pair; else low pair.</li>
+<li>one hole card matches a board rank: top → top pair; second → middle pair; else low pair.</li>
+<li>draw (flop, turn): exactly four of a suit among hole+board including a hole card; or ≥2 distinct ranks would each give a higher straight than now.</li>
+<li>air.</li>
+</ol>
+<p><b>draw class</b> (any hand, flop and turn; river = no draw): flush draw if 9 cards complete a flush using a hole card; else open-ended if ≥8 cards complete a straight; else gutshot if 4–7 do; else no draw.</p>
+<p><b>stack to pot</b> = stack behind ÷ pot. Bands: &lt;2 "under 2"; [2,6) "2 to 6"; ≥6 "over 6".</p>
+<p><b>his weak hands</b> = share by weight of villain's range with equity against hero's range &lt;0.30. Bands: &lt;0.20; [0.20,0.45); ≥0.45.</p>
+<p><b>who bet last street</b> = last player to bet or raise on the previous street: "I did", "he did", or "nobody" (checked through).</p>
+<p><b>Procedure.</b> Spot = street × seat × (bet faced?). Compute the spot's inputs, look up the cell. Letters: B bet, x check, C call, f fold. A cell shown as Either on page one takes the action listed here. Rows below run weakest to strongest; columns in the order listed.</p>
+<p><b>Check.</b> On solved spots, per decision: Σ over hero's range of weight × (solver value of best action − value of the engine's action) ÷ pot. Value a bet as the solver's own mix of sizes for that hand (best size if it never bets); same for call against raise. Average over decisions. Expected loss, % of pot, is given per table (five folds by spot, 41 spots; trees: bets 33/75/125% flop, 75% turn and river, raises 3×).</p>
+<div class="lk"><p><b>1. river, out of position, facing a bet</b> [margin] loss 0.00</p><pre>5+ under the price:f  0-5 under:f  0-5 over:C  5-15 over:C  15+ over:C</pre></div><div class="lk"><p><b>2. river, in position, facing a bet</b> [margin] loss 0.00</p><pre>5+ under the price:f  0-5 under:f  0-5 over:C  5-15 over:C  15+ over:C</pre></div><div class="lk"><p><b>3. turn, out of position, facing a bet</b> [margin × stack to pot] loss 0.26</p><pre>columns = stack to pot: under 2 / 2 to 6 / over 6
+5+ under the price f f f
+0-5 under          f f f
+0-5 over           f f f
+5-15 over          C f f
+15+ over           C C C</pre></div><div class="lk"><p><b>4. turn, in position, facing a bet</b> [margin × draw] loss 0.31</p><pre>columns = draw: no draw / gutshot / open-ended / flush draw
+5+ under the price f f C f
+0-5 under          f f C C
+0-5 over           f C C C
+5-15 over          C C C C
+15+ over           C C C C</pre></div><div class="lk"><p><b>5. flop, out of position, facing a bet</b> [margin × draw] loss 0.38</p><pre>columns = draw: no draw / gutshot / open-ended / flush draw
+5+ under the price f f C C
+0-5 under          f f C C
+0-5 over           f C C C
+5-15 over          f C C C
+15+ over           C C C C</pre></div><div class="lk"><p><b>6. flop, in position, facing a bet</b> [margin × draw] loss 0.28</p><pre>columns = draw: no draw / gutshot / open-ended / flush draw
+5+ under the price f f f C
+0-5 under          f C C C
+0-5 over           f C C C
+5-15 over          C C C C
+15+ over           C C C C</pre></div><div class="lk"><p><b>7. river, in position, first to act</b> [equity × his weak hands] loss 0.77</p><pre>columns = his weak hands: under 20% of his range / 20-45% / over 45%
+under 20%          x B B
+20-35%             x x B
+35-50%             x x B
+50-65%             x x x
+65-80%             B x x
+80%+               B B B</pre></div><div class="lk"><p><b>8. river, out of position, first to act</b> [equity × his weak hands] loss 0.50</p><pre>columns = his weak hands: under 20% of his range / 20-45% / over 45%
+under 20%          x x B
+20-35%             x x x
+35-50%             x x x
+50-65%             x x x
+65-80%             B x x
+80%+               B x x</pre></div><div class="lk"><p><b>9. turn, in position, first to act</b> [equity × draw] loss 0.43</p><pre>columns = draw: no draw / gutshot / open-ended / flush draw
+under 20%          x x B x
+20-35%             x x B B
+35-50%             x x B B
+50-65%             x x x B
+65-80%             x x B B
+80%+               B B B B</pre></div><div class="lk"><p><b>10. turn, out of position, first to act</b> [row × who bet last street] loss 0.28</p><pre>columns = who bet last street: nobody / I did / he did
+air                x x x
+draw               B B x
+low pair           x x x
+middle pair        x x x
+top pair           x x x
+overpair           B B x
+two pair           B x x
+trips or better    B x x</pre></div><div class="lk"><p><b>11. flop, in position, first to act</b> [row × stack to pot] loss 0.18</p><pre>columns = stack to pot: under 2 / 2 to 6 / over 6
+air                x B B
+draw               x B B
+low pair           x x x
+middle pair        x B x
+top pair           x B B
+overpair           B B B
+two pair           x B B
+trips or better    x B B</pre></div><div class="lk"><p><b>12. flop, out of position, first to act</b> [equity] loss 0.11</p><pre>under 20%:x  20-35%:x  35-50%:x  50-65%:x  65-80%:x  80%+:x</pre></div>
+</div>
+</div>
+</body></html>
