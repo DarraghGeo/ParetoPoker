@@ -101,10 +101,11 @@ def equilibrium(spot, rounds=600):
     for p in (0, 1):
         for k, v in norm[p].items(): v[v.sum(1) == 0] = 1 / v.shape[1]
     return norm
-def quarters(fr):
-    x = fr * 4; lo = np.floor(x + 1e-9); left = (4 - lo.sum(1)).astype(int); order = np.argsort(-(x - lo), axis=1)
+def quarters(fr, steps=4):
+    """Frequencies rounded to steps (quarters, or tenths with steps=10) that still add to one."""
+    x = fr * steps; lo = np.floor(x + 1e-9); left = (steps - lo.sum(1)).astype(int); order = np.argsort(-(x - lo), axis=1)
     for k in range(fr.shape[1]): lo[np.arange(len(lo)), order[:, k]] += (left > k)
-    return lo / 4
+    return lo / steps
 def restricted(spot, hero, cells, rounds):
     """The least exploitable strategy for `hero` when every hand of a cell must play alike. `cells[k]`: each hand's cell at decision k."""
     mine = [k for k in spot.dec if spot.nodes[k][0] == hero]; nb = {k: int(cells[k].max()) + 1 for k in mine}; A = {k: len(spot.nodes[k][1]) for k in mine}
@@ -120,10 +121,10 @@ def restricted(spot, hero, cells, rounds):
             cur[k] = np.where(tot > 0, reg[k] / np.maximum(tot, 1e-12), 1 / A[k])
         if t in (1, 10, 30, 100, 300, 1000, 3000) or t == rounds: trace.append((t, gain))
     av = {k: np.where(v.sum(1, keepdims=True) > 0, v / np.maximum(v.sum(1, keepdims=True), 1e-12), 1 / A[k]) for k, v in avg.items()}
-    g_av, _ = spot.best_reply(hero, expand(av)); pick = av if g_av < best[0] else best[1]; g = min(g_av, best[0]); qt = {k: quarters(v) for k, v in pick.items()}; g_q, _ = spot.best_reply(hero, expand(qt))
-    return dict(gain=g, gain_quarters=g_q, table=qt, smooth=pick, trace=trace)
+    g_av, _ = spot.best_reply(hero, expand(av)); pick = av if g_av < best[0] else best[1]; g = min(g_av, best[0]); qt = {k: quarters(v) for k, v in pick.items()}; g_q, _ = spot.best_reply(hero, expand(qt)); tn = {k: quarters(v, 10) for k, v in pick.items()}; g_t, _ = spot.best_reply(hero, expand(tn))
+    return dict(gain=g, gain_quarters=g_q, gain_tenths=g_t, table=qt, tenths=tn, smooth=pick, trace=trace)
 def bands(x, n):
-    edges = {3: [.35, .65], 6: [.2, .35, .5, .65, .8], 12: [.1, .2, .275, .35, .425, .5, .575, .65, .725, .8, .9]}[n]; return np.digitize(x, edges)
+    edges = {3: [.35, .65], 6: [.2, .35, .5, .65, .8], 10: [.1, .2, .3, .4, .5, .6, .7, .8, .9], 12: [.1, .2, .275, .35, .425, .5, .575, .65, .725, .8, .9]}[n]; return np.digitize(x, edges)
 if __name__ == '__main__':
     n_spots = int(sys.argv[1]) if len(sys.argv) > 1 else 3; rounds = int(sys.argv[2]) if len(sys.argv) > 2 else 1000; picked = []; seen = set()
     for name in ('hands-9v', 'hands-7v'):

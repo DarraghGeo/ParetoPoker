@@ -41,12 +41,12 @@ if __name__ == '__main__':
     picked = picked[:n_spots]; out = open(os.path.join(HERE, 'restricted-page.md'), 'w')
     def say(*a): print(*a); print(*a, file=out); out.flush()
     say('# The two pages\' river tables against the restricted solve, on the same river spots\n'); say('What the best reply wins over the value of the game, in percent of the pot.\n')
-    say('| river spot | seat | the two pages\' tables | restricted solve: 6 equity bands | the same in quarters | 12 bands | every hand alike |'); say('|---|---|---|---|---|---|---|'); tot = np.zeros(5); n = 0
+    say('| river spot | seat | the two pages\' tables | 6 equity bands: exact | in 10% steps | in 25% steps | 10 bands of ten points: exact | in 10% steps | in 25% steps | 12 bands | every hand alike |'); say('|---|---|---|---|---|---|---|---|---|---|---|'); tot = np.zeros(9); n = 0
     for d in picked:
         spot = Spot(d); eq = equilibrium(spot, 800); base = [spot.best_reply(p, eq[p])[0] for p in (0, 1)]
         for hero in (0, 1):
             mine = [k for k in spot.dec if spot.nodes[k][0] == hero]; ex = lambda g: 100 * (g - base[hero]) / spot.P0; page = ex(spot.best_reply(hero, page_strategy(spot, hero, eq))[0]); r = {}
-            for nb in (6, 12, 1): r[nb] = restricted(spot, hero, {k: (np.zeros(len(spot.w[hero]), int) if nb == 1 else bands(spot.eq0[hero], nb)) for k in mine}, rounds)
-            row = [page, ex(r[6]['gain']), ex(r[6]['gain_quarters']), ex(r[12]['gain']), ex(r[1]['gain'])]; tot += row; n += 1
+            for nb in (6, 10, 12, 1): r[nb] = restricted(spot, hero, {k: (np.zeros(len(spot.w[hero]), int) if nb == 1 else bands(spot.eq0[hero], nb)) for k in mine}, rounds)
+            row = [page, ex(r[6]['gain']), ex(r[6]['gain_tenths']), ex(r[6]['gain_quarters']), ex(r[10]['gain']), ex(r[10]['gain_tenths']), ex(r[10]['gain_quarters']), ex(r[12]['gain']), ex(r[1]['gain'])]; tot += row; n += 1
             say(f"| {spot.name} (pot {spot.P0:g}, {spot.S:g} behind) | {'OOP' if hero == 0 else 'IP'} | " + ' | '.join(f'{x:.1f}' for x in row) + ' |')
     say('| **average** | | ' + ' | '.join(f'**{x:.1f}**' for x in tot / n) + ' |'); out.close()
