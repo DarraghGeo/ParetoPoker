@@ -15,7 +15,7 @@ from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostin
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.model_selection import GroupKFold
 HERE = os.path.dirname(os.path.abspath(__file__)); QUICK = len(sys.argv) > 1 and sys.argv[1] == 'quick'
-Z = np.load(os.path.join(HERE, 'cache.npz')); D = json.load(open(os.path.join(HERE, 'cache-decisions.json'))); N = len(D)
+CACHE = os.environ.get('CACHE', 'cache'); Z = np.load(os.path.join(HERE, CACHE + '.npz')); D = json.load(open(os.path.join(HERE, CACHE + '-decisions.json'))); N = len(D)
 dec, w, e, f, row, frac, grank = Z['dec'], Z['w'].astype(np.float64), Z['e'].astype(np.float64), Z['f'].astype(np.float64), Z['row'], Z['frac'], Z['grank']
 draw, fo, so, now, pocket = Z['draw'], Z['fo'], Z['so'], Z['now'], Z['pocket']
 kind = np.where(f >= 0.9, 2, np.where(f <= 0.1, 0, 1))
@@ -46,7 +46,7 @@ mdf = 1 / (1 + np.maximum(betf, 1e-9)); mdf2e = mdf * np.minimum(1, 2 * my_eq)
 fold_of = {}; rng = np.random.default_rng(3); uniq = sorted(set(spots))
 for k, s in enumerate(rng.permutation(len(uniq))): fold_of[uniq[s]] = k % 5
 dfold = np.array([fold_of[s] for s in spots])
-out = open(os.path.join(HERE, 'heuristics.md'), 'w')
+out = open(os.environ.get('OUT') or os.path.join(HERE, 'heuristics.md'), 'w')
 def say(*a):
     print(*a); print(*a, file=out); out.flush()
 STREET = ['flop', 'turn', 'river']; SEAT = ['out of position', 'in position']; ROLE = ['nobody led', 'led', 'followed']

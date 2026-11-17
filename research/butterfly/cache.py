@@ -1,17 +1,22 @@
 # The stored solved decisions (research/insight/out) read once into arrays, for the heuristics study: every hand of every
 # decision with what the chart shows of it, and every decision with what a player can see, count or read of the spot.
 #   python3 research/butterfly/cache.py   ->  research/butterfly/cache.npz (not committed)
+# With FILES=hands-7v,hands-8v,hands-9v CACHE=cache-v: the decisions solved again with each action's worth (collect.mjs, VALUES=1),
+# and with them what always acting and never acting would lose each hand against its best action (la, lp, in pots).
 import json, os, sys
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); DATA = os.path.join(HERE, '..', 'insight', 'out')
 exec(open(os.path.join(HERE, 'analyse.py')).read().split('# ---------------------------------------------------------------- read')[0])   # row_of, cards, role_of, FILES
+
+if os.environ.get('FILES'): FILES = os.environ['FILES'].split(',')
+CACHE = os.environ.get('CACHE', 'cache')
 
 def bands(w, e):
     """A range by equity against the other: shares under 20%, 20-30, 30-50, 50-65, 65-80, 80%+."""
     t = w.sum(); edges = [0, .2, .3, .5, .65, .8, 1.01]
     return [float(w[(e >= a) & (e < b)].sum() / t) for a, b in zip(edges, edges[1:])]
 
-H = {k: [] for k in ('dec', 'w', 'e', 'now', 'draw', 'top', 'f', 'row', 'frac', 'grank', 'fo', 'so', 'pocket')}
+H = {k: [] for k in ('dec', 'w', 'e', 'now', 'draw', 'top', 'f', 'row', 'frac', 'grank', 'fo', 'so', 'pocket', 'la', 'lp')}
 Dn = []
 for name in FILES:
     path = os.path.join(DATA, name + '.jsonl')
@@ -26,6 +31,11 @@ for name in FILES:
         if len(hs) < 8: continue
         w = np.array([h['w'] for h in hs]); e = np.array([h['e'] for h in hs]); P = np.array([h['p'] for h in hs])
         f = P[:, wag].sum(axis=1) if first else 1 - P[:, fold]
+        if 'q' in hs[0]:      # what each action is worth: acting as the solver sizes it (or the best acting move where it never acts) against checking or folding
+            Q = np.array([[x if x is not None else -9 for x in h['q']] for h in hs]); act_i = wag if first else [i for i in range(len(kinds)) if i != fold]; quiet = kinds.index('check') if first and 'check' in kinds else fold
+            pa = P[:, act_i]; qa = np.where(pa.sum(1) > 0.02, (pa * Q[:, act_i]).sum(1) / np.maximum(pa.sum(1), 1e-9), Q[:, act_i].max(1)); qp = Q[:, quiet] if quiet >= 0 else qa; top = Q.max(1)
+            la, lp = top - qa, top - qp
+        else: la = lp = np.zeros(len(hs))
         raises = P[:, wag].sum(axis=1) if not first else np.zeros(len(hs))
         row = np.array([row_of(cards(h['h']), board) for h in hs])
         vw = np.array([x[1] for x in vr]); ve = np.array([x[2] if x[2] is not None else 0.5 for x in vr]); vrow = np.array([row_of(cards(x[0]), board) for x in vr])
@@ -45,10 +55,10 @@ for name in FILES:
                        my_rows=ms.tolist(), his_rows=hsr.tolist(), my_bands=bands(w, e), his_bands=bands(vw, ve), my_eq=float((w * e).sum() / w.sum()), his_eq=float((vw * ve).sum() / vw.sum()),
                        n=len(hs), reach=d.get('reach'), exploit=d.get('exploit'),
                        paired=len({c[0] for c in board}) < len(board), suits=max(sum(c[1] == s for c in board) for s in 'shdc'), high=max(c[0] for c in board)))
-        H['dec'].append(np.full(len(hs), k)); H['w'].append(w / w.sum()); H['e'].append(e); H['f'].append(f); H['row'].append(row); H['frac'].append(frac); H['grank'].append(grank)
+        H['dec'].append(np.full(len(hs), k)); H['w'].append(w / w.sum()); H['e'].append(e); H['f'].append(f); H['row'].append(row); H['frac'].append(frac); H['grank'].append(grank); H['la'].append(la); H['lp'].append(lp)
         H['now'].append(np.array([h['now'] if h.get('now') is not None else h['e'] for h in hs])); H['draw'].append(np.array([h.get('draw') or 0 for h in hs])); H['top'].append(np.array([h['top'] if h.get('top') is not None else np.nan for h in hs]))
         H['fo'].append(np.array([h.get('fo') or 0 for h in hs])); H['so'].append(np.array([h.get('so') or 0 for h in hs])); H['pocket'].append(np.array([h['h'][0] == h['h'][2] for h in hs]))
     print(f'read {name}: {len(Dn)} decisions', file=sys.stderr)
-np.savez_compressed(os.path.join(HERE, 'cache.npz'), **{k: np.concatenate(v).astype(np.float32 if k not in ('dec', 'row') else np.int32) for k, v in H.items()})
-json.dump(Dn, open(os.path.join(HERE, 'cache-decisions.json'), 'w'))
+np.savez_compressed(os.path.join(HERE, CACHE + '.npz'), **{k: np.concatenate(v).astype(np.float32 if k not in ('dec', 'row') else np.int32) for k, v in H.items()})
+json.dump(Dn, open(os.path.join(HERE, CACHE + '-decisions.json'), 'w'))
 print(f'{len(Dn)} decisions, {sum(len(x) for x in H["w"])} hands', file=sys.stderr)
