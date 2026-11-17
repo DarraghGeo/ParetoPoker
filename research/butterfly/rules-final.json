@@ -1,0 +1,1250 @@
+{
+ "river, out of position, facing a bet": {
+  "names": [
+   "margin"
+  ],
+  "labels": [
+   [
+    "5+ under the price",
+    "0-5 under",
+    "0-5 over",
+    "5-15 over",
+    "15-30 over",
+    "30+ over"
+   ]
+  ],
+  "cells": {
+   "5+ under the price": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over": [
+    0,
+    4,
+    0
+   ],
+   "30+ over": [
+    0,
+    0,
+    4
+   ]
+  }
+ },
+ "river, in position, facing a bet": {
+  "names": [
+   "margin"
+  ],
+  "labels": [
+   [
+    "5+ under the price",
+    "0-5 under",
+    "0-5 over",
+    "5-15 over",
+    "15-30 over",
+    "30+ over"
+   ]
+  ],
+  "cells": {
+   "5+ under the price": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over": [
+    0,
+    4,
+    0
+   ],
+   "30+ over": [
+    0,
+    0,
+    4
+   ]
+  }
+ },
+ "turn, out of position, facing a bet": {
+  "names": [
+   "margin",
+   "draw"
+  ],
+  "labels": [
+   [
+    "5+ under the price",
+    "0-5 under",
+    "0-5 over",
+    "5-15 over",
+    "15-30 over",
+    "30+ over"
+   ],
+   [
+    "no draw",
+    "gutshot",
+    "open-ended",
+    "flush draw"
+   ]
+  ],
+  "cells": {
+   "5+ under the price|no draw": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|gutshot": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|open-ended": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|flush draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|gutshot": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|open-ended": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|flush draw": [
+    3,
+    0,
+    1
+   ],
+   "0-5 over|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over|gutshot": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over|open-ended": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over|flush draw": [
+    0,
+    3,
+    1
+   ],
+   "5-15 over|no draw": [
+    4,
+    0,
+    0
+   ],
+   "5-15 over|gutshot": [
+    4,
+    0,
+    0
+   ],
+   "5-15 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|no draw": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|no draw": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|gutshot": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|flush draw": [
+    0,
+    3,
+    1
+   ]
+  }
+ },
+ "turn, in position, facing a bet": {
+  "names": [
+   "margin",
+   "draw"
+  ],
+  "labels": [
+   [
+    "5+ under the price",
+    "0-5 under",
+    "0-5 over",
+    "5-15 over",
+    "15-30 over",
+    "30+ over"
+   ],
+   [
+    "no draw",
+    "gutshot",
+    "open-ended",
+    "flush draw"
+   ]
+  ],
+  "cells": {
+   "5+ under the price|no draw": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|gutshot": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|open-ended": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|flush draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|gutshot": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|open-ended": [
+    2,
+    2,
+    0
+   ],
+   "0-5 under|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "0-5 over|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over|gutshot": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "0-5 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over|no draw": [
+    2,
+    2,
+    0
+   ],
+   "5-15 over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|no draw": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|no draw": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|flush draw": [
+    0,
+    4,
+    0
+   ]
+  }
+ },
+ "flop, out of position, facing a bet": {
+  "names": [
+   "margin",
+   "draw"
+  ],
+  "labels": [
+   [
+    "5+ under the price",
+    "0-5 under",
+    "0-5 over",
+    "5-15 over",
+    "15-30 over",
+    "30+ over"
+   ],
+   [
+    "no draw",
+    "gutshot",
+    "open-ended",
+    "flush draw"
+   ]
+  ],
+  "cells": {
+   "5+ under the price|no draw": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|gutshot": [
+    3,
+    1,
+    0
+   ],
+   "5+ under the price|open-ended": [
+    0,
+    2,
+    2
+   ],
+   "5+ under the price|flush draw": [
+    0,
+    3,
+    1
+   ],
+   "0-5 under|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|gutshot": [
+    3,
+    1,
+    0
+   ],
+   "0-5 under|open-ended": [
+    0,
+    2,
+    2
+   ],
+   "0-5 under|flush draw": [
+    0,
+    3,
+    1
+   ],
+   "0-5 over|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "0-5 over|open-ended": [
+    0,
+    2,
+    2
+   ],
+   "0-5 over|flush draw": [
+    0,
+    3,
+    1
+   ],
+   "5-15 over|no draw": [
+    4,
+    0,
+    0
+   ],
+   "5-15 over|gutshot": [
+    0,
+    3,
+    1
+   ],
+   "5-15 over|open-ended": [
+    0,
+    2,
+    2
+   ],
+   "5-15 over|flush draw": [
+    0,
+    3,
+    1
+   ],
+   "15-30 over|no draw": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|gutshot": [
+    0,
+    3,
+    1
+   ],
+   "15-30 over|open-ended": [
+    0,
+    2,
+    2
+   ],
+   "15-30 over|flush draw": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|no draw": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|gutshot": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|open-ended": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|flush draw": [
+    0,
+    3,
+    1
+   ]
+  }
+ },
+ "flop, in position, facing a bet": {
+  "names": [
+   "margin",
+   "draw"
+  ],
+  "labels": [
+   [
+    "5+ under the price",
+    "0-5 under",
+    "0-5 over",
+    "5-15 over",
+    "15-30 over",
+    "30+ over"
+   ],
+   [
+    "no draw",
+    "gutshot",
+    "open-ended",
+    "flush draw"
+   ]
+  ],
+  "cells": {
+   "5+ under the price|no draw": [
+    4,
+    0,
+    0
+   ],
+   "5+ under the price|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "5+ under the price|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "5+ under the price|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "0-5 under|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 under|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "0-5 under|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "0-5 under|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "0-5 over|no draw": [
+    4,
+    0,
+    0
+   ],
+   "0-5 over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "0-5 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "0-5 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over|no draw": [
+    4,
+    0,
+    0
+   ],
+   "5-15 over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "5-15 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|no draw": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|gutshot": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|open-ended": [
+    0,
+    4,
+    0
+   ],
+   "15-30 over|flush draw": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|no draw": [
+    0,
+    4,
+    0
+   ],
+   "30+ over|gutshot": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|open-ended": [
+    0,
+    3,
+    1
+   ],
+   "30+ over|flush draw": [
+    0,
+    4,
+    0
+   ]
+  }
+ },
+ "river, out of position, first to act": {
+  "names": [
+   "equity",
+   "range equity"
+  ],
+  "labels": [
+   [
+    "under 20%",
+    "20-35%",
+    "35-50%",
+    "50-65%",
+    "65-80%",
+    "80%+"
+   ],
+   [
+    "under 45%",
+    "45-55%",
+    "over 55%"
+   ]
+  ],
+  "cells": {
+   "under 20%|under 45%": [
+    4,
+    0,
+    0
+   ],
+   "under 20%|45-55%": [
+    3,
+    1,
+    0
+   ],
+   "under 20%|over 55%": [
+    0,
+    3,
+    1
+   ],
+   "20-35%|under 45%": [
+    4,
+    0,
+    0
+   ],
+   "20-35%|45-55%": [
+    4,
+    0,
+    0
+   ],
+   "20-35%|over 55%": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|under 45%": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|45-55%": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|over 55%": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|under 45%": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|45-55%": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|over 55%": [
+    4,
+    0,
+    0
+   ],
+   "65-80%|under 45%": [
+    1,
+    3,
+    0
+   ],
+   "65-80%|45-55%": [
+    2,
+    2,
+    0
+   ],
+   "65-80%|over 55%": [
+    2,
+    2,
+    0
+   ],
+   "80%+|under 45%": [
+    2,
+    2,
+    0
+   ],
+   "80%+|45-55%": [
+    2,
+    2,
+    0
+   ],
+   "80%+|over 55%": [
+    2,
+    2,
+    0
+   ]
+  }
+ },
+ "river, in position, first to act": {
+  "names": [
+   "equity",
+   "his weak hands"
+  ],
+  "labels": [
+   [
+    "under 20%",
+    "20-35%",
+    "35-50%",
+    "50-65%",
+    "65-80%",
+    "80%+"
+   ],
+   [
+    "under 20%",
+    "20-45%",
+    "over 45%"
+   ]
+  ],
+  "cells": {
+   "under 20%|under 20%": [
+    4,
+    0,
+    0
+   ],
+   "under 20%|20-45%": [
+    0,
+    4,
+    0
+   ],
+   "under 20%|over 45%": [
+    0,
+    4,
+    0
+   ],
+   "20-35%|under 20%": [
+    4,
+    0,
+    0
+   ],
+   "20-35%|20-45%": [
+    4,
+    0,
+    0
+   ],
+   "20-35%|over 45%": [
+    0,
+    4,
+    0
+   ],
+   "35-50%|under 20%": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|20-45%": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|over 45%": [
+    3,
+    1,
+    0
+   ],
+   "50-65%|under 20%": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|20-45%": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|over 45%": [
+    4,
+    0,
+    0
+   ],
+   "65-80%|under 20%": [
+    4,
+    0,
+    0
+   ],
+   "65-80%|20-45%": [
+    4,
+    0,
+    0
+   ],
+   "65-80%|over 45%": [
+    4,
+    0,
+    0
+   ],
+   "80%+|under 20%": [
+    0,
+    4,
+    0
+   ],
+   "80%+|20-45%": [
+    0,
+    4,
+    0
+   ],
+   "80%+|over 45%": [
+    0,
+    4,
+    0
+   ]
+  }
+ },
+ "turn, out of position, first to act": {
+  "names": [
+   "equity",
+   "who bet last street"
+  ],
+  "labels": [
+   [
+    "under 20%",
+    "20-35%",
+    "35-50%",
+    "50-65%",
+    "65-80%",
+    "80%+"
+   ],
+   [
+    "nobody",
+    "I did",
+    "he did"
+   ]
+  ],
+  "cells": {
+   "under 20%|nobody": [
+    4,
+    0,
+    0
+   ],
+   "under 20%|I did": [
+    4,
+    0,
+    0
+   ],
+   "under 20%|he did": [
+    4,
+    0,
+    0
+   ],
+   "20-35%|nobody": [
+    4,
+    0,
+    0
+   ],
+   "20-35%|I did": [
+    4,
+    0,
+    0
+   ],
+   "20-35%|he did": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|nobody": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|I did": [
+    4,
+    0,
+    0
+   ],
+   "35-50%|he did": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|nobody": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|I did": [
+    4,
+    0,
+    0
+   ],
+   "50-65%|he did": [
+    4,
+    0,
+    0
+   ],
+   "65-80%|nobody": [
+    3,
+    1,
+    0
+   ],
+   "65-80%|I did": [
+    2,
+    2,
+    0
+   ],
+   "65-80%|he did": [
+    4,
+    0,
+    0
+   ],
+   "80%+|nobody": [
+    2,
+    2,
+    0
+   ],
+   "80%+|I did": [
+    1,
+    3,
+    0
+   ],
+   "80%+|he did": [
+    4,
+    0,
+    0
+   ]
+  }
+ },
+ "turn, in position, first to act": {
+  "names": [
+   "equity"
+  ],
+  "labels": [
+   [
+    "under 20%",
+    "20-35%",
+    "35-50%",
+    "50-65%",
+    "65-80%",
+    "80%+"
+   ]
+  ],
+  "cells": {
+   "under 20%": [
+    2,
+    2,
+    0
+   ],
+   "20-35%": [
+    4,
+    0,
+    0
+   ],
+   "35-50%": [
+    4,
+    0,
+    0
+   ],
+   "50-65%": [
+    4,
+    0,
+    0
+   ],
+   "65-80%": [
+    4,
+    0,
+    0
+   ],
+   "80%+": [
+    0,
+    4,
+    0
+   ]
+  }
+ },
+ "flop, out of position, first to act": {
+  "names": [
+   "row",
+   "stack to pot"
+  ],
+  "labels": [
+   [
+    "air",
+    "draw",
+    "low pair",
+    "middle pair",
+    "top pair",
+    "overpair",
+    "two pair",
+    "trips or better"
+   ],
+   [
+    "under 2",
+    "2 to 6",
+    "over 6"
+   ]
+  ],
+  "cells": {
+   "air|under 2": [
+    4,
+    0,
+    0
+   ],
+   "air|2 to 6": [
+    2,
+    2,
+    0
+   ],
+   "air|over 6": [
+    4,
+    0,
+    0
+   ],
+   "draw|under 2": [
+    4,
+    0,
+    0
+   ],
+   "draw|2 to 6": [
+    1,
+    3,
+    0
+   ],
+   "draw|over 6": [
+    4,
+    0,
+    0
+   ],
+   "low pair|under 2": [
+    4,
+    0,
+    0
+   ],
+   "low pair|2 to 6": [
+    2,
+    2,
+    0
+   ],
+   "low pair|over 6": [
+    4,
+    0,
+    0
+   ],
+   "middle pair|under 2": [
+    4,
+    0,
+    0
+   ],
+   "middle pair|2 to 6": [
+    2,
+    2,
+    0
+   ],
+   "middle pair|over 6": [
+    4,
+    0,
+    0
+   ],
+   "top pair|under 2": [
+    4,
+    0,
+    0
+   ],
+   "top pair|2 to 6": [
+    1,
+    3,
+    0
+   ],
+   "top pair|over 6": [
+    4,
+    0,
+    0
+   ],
+   "overpair|under 2": [
+    4,
+    0,
+    0
+   ],
+   "overpair|2 to 6": [
+    1,
+    3,
+    0
+   ],
+   "overpair|over 6": [
+    3,
+    1,
+    0
+   ],
+   "two pair|under 2": [
+    4,
+    0,
+    0
+   ],
+   "two pair|2 to 6": [
+    0,
+    4,
+    0
+   ],
+   "two pair|over 6": [
+    4,
+    0,
+    0
+   ],
+   "trips or better|under 2": [
+    4,
+    0,
+    0
+   ],
+   "trips or better|2 to 6": [
+    2,
+    2,
+    0
+   ],
+   "trips or better|over 6": [
+    3,
+    1,
+    0
+   ]
+  }
+ },
+ "flop, in position, first to act": {
+  "names": [
+   "equity"
+  ],
+  "labels": [
+   [
+    "under 20%",
+    "20-35%",
+    "35-50%",
+    "50-65%",
+    "65-80%",
+    "80%+"
+   ]
+  ],
+  "cells": {
+   "under 20%": [
+    2,
+    2,
+    0
+   ],
+   "20-35%": [
+    2,
+    2,
+    0
+   ],
+   "35-50%": [
+    2,
+    2,
+    0
+   ],
+   "50-65%": [
+    2,
+    2,
+    0
+   ],
+   "65-80%": [
+    2,
+    2,
+    0
+   ],
+   "80%+": [
+    1,
+    3,
+    0
+   ]
+  }
+ }
+}
