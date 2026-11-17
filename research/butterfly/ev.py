@@ -40,9 +40,10 @@ ROWS = []; KINDS = []
 for s, q, fi in SITS:
     m = sit_mask(s, q, fi); idx = np.where(m)[0]; hm = m[dec]; groups = GROUPS_FIRST if fi else GROUPS_FACE; nm = sit_name(s, q, fi)
     if m.sum() < 20: continue
-    few = [c for g_ in FEW.get(nm, []) for c in groups[g_]]; every = [c for cs in groups.values() for c in cs]; spot_cols = [c for c in every if c in SPOTF]
+    fewn = FEW.get(nm) or FEW.get(sit_name(s, 1 - q, fi), [])                             # a situation the first study did not finish takes the other seat's
+    few = [c for g_ in fewn for c in groups[g_]]; every = [c for cs in groups.values() for c in cs]; spot_cols = [c for c in every if c in SPOTF]
     ways = [] if PRELIM else [('the solver\'s own labels', kind), ('rows alone', learnt_rows(m)), ('the rulebook, nothing fitted', rule), ('heuristics and made class, no chart', learn(spot_cols + ['row', 'row_share', 'flush_outs', 'straight_outs', 'pocket'], hm)),
-            ('the chart alone', learn(CHART, hm)), (f'the chart and its {len(FEW.get(nm, []))} heuristics', learn(CHART + few, hm)), ('the chart and every heuristic', learn(CHART + every, hm))]
+            ('the chart alone', learn(CHART, hm)), (f'the chart and its {len(fewn)} heuristics', learn(CHART + few, hm)), ('the chart and every heuristic', learn(CHART + every, hm))]
     if PRELIM: ways = [('the solver\'s own labels', kind), ('rows alone', learnt_rows(m)), ('the rulebook, nothing fitted', rule), ('always check or fold', np.zeros(len(w), dtype=int)), ('always act', np.full(len(w), 2))]
     say(f'\n## {nm} ({m.sum()} decisions)\n'); say('| the call | right | EV lost: mean | median | P90 | P95 | decisions losing over 1% pot |'); say('|---|---|---|---|---|---|---|')
     for name, pred in ways:
