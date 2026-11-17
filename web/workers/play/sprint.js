@@ -81,7 +81,7 @@ function decoys(real) {
 }
 function butterflyQ(c) {
   const real = butterflyOf(c, c.me === 0 ? [c.mine, c.his] : [c.his, c.mine]); const order = shuffled([0, 1, 2]); const all = [real, ...decoys(real)];
-  return { id: 'butterfly', ask: 'Which butterfly is this spot? (out of position on the left)', charts: order.map((k) => all[k]), options: ['A', 'B', 'C'], answer: order.indexOf(0), why: 'The other two have the ranges on the wrong sides, or each range a row stronger than it is.' };
+  return { id: 'butterfly', ask: 'Which butterfly is this spot?', charts: order.map((k) => all[k]), options: ['A', 'B', 'C'], answer: order.indexOf(0), why: 'The other two have the ranges on the wrong sides, or each range a row stronger than it is.' };
 }
 
 /** Everything the questions read at hero's decision. */

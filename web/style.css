@@ -548,8 +548,8 @@ body.paged{overflow:hidden;height:100dvh}
 .sprint .ask{font:500 15px/21px var(--sans);color:var(--ink)}
 .sprint .opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
 .sprint .opt{min-height:46px;padding:8px 10px;border-radius:5px;border-color:var(--line-strong);background:var(--bg);font:500 13px/18px var(--sans);color:var(--ink)}
-.sprint .opt.right{border-color:var(--ok);box-shadow:inset 0 0 0 1px var(--ok);color:var(--ink)}
-.sprint .opt.wrong{border-color:var(--danger);box-shadow:inset 0 0 0 1px var(--danger)}
+.sprint .opt.right{border-color:var(--ok);background:color-mix(in srgb,var(--ok) 22%,var(--bg))}
+.sprint .opt.wrong{border-color:var(--danger);background:color-mix(in srgb,var(--danger) 20%,var(--bg))}
 .sprint .opt.rest{opacity:.45}
 .sprint .charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .sprint .chart{display:flex;flex-direction:column;gap:2px;padding:6px 6px 8px;align-items:stretch}
@@ -559,13 +559,6 @@ body.paged{overflow:hidden;height:100dvh}
 .sprint .chart .wing.me{justify-content:flex-end}
 .sprint .chart .wing i{display:block;height:100%;background:var(--ink)}
 .sprint .chart .code{font:400 8px/9px var(--mono);text-align:center;color:var(--ink-3)}
-.sprint .was{font:400 13px/19px var(--mono);color:var(--ink-2)}
-.sprint .was b{font-weight:500;color:var(--ink)}
-.sprint .was span{color:var(--ink-3)}
-.sprint .because{font:400 13px/19px var(--sans);color:var(--ink-2)}
-.sprint .because b{font-weight:600;color:var(--danger)}
-.sprint .because.good b{color:var(--ok)}
-.sprint .primary{min-height:42px;border-radius:5px}
 .dock .note{margin:0;font:400 13px/18px var(--sans);color:var(--ink-3);text-align:center}
 .dock .after{display:flex;align-items:center;gap:14px}
 .dock .after .primary{flex:1;min-height:52px;padding:10px 14px;border-radius:5px}
