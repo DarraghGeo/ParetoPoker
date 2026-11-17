@@ -1,5 +1,6 @@
 <!-- The strategy along the range, lowest equity to highest, one column a hand: one bar, a row for each made hand (each in its
-     place on the same scale), the ladder of both ranges, or the butterfly (both ranges back to back in rows by made hand).
+     place on the same scale), the ladder of both ranges, or the butterfly (both ranges back to back in rows by made hand,
+     out of position's always on the left and in position's on the right).
      Slide a thumb along it and the hand under it is picked. -->
 <script>
   import Ladder from '../common/Ladder.svelte';
@@ -54,7 +55,7 @@
 </script>
 {#snippet column(h)}<button type="button" data-hand={h.name} aria-pressed={h.name === game.hand} aria-label={h.name}><b style="height:100%;background:{bands(h.row.hand.strategy, strata)}"></b></button>{/snippet}
 {#if !hands}<div class="strip" {...events}></div>
-{:else if form === 'butterfly'}<div class="fly" {...events}>{#each fly as r (r.lv)}
+{:else if form === 'butterfly'}<div class="fly" class:ip={game.decision.seat === 'ip'} {...events}>{#each fly as r (r.lv)}
   <div class="frow"><div class="wing me"><div class="strip" style="width:{r.mine.toFixed(2)}%">{#each r.hero as h}<button type="button" data-hand={h.name} aria-pressed={h.name === game.hand} aria-label={h.name} style="flex:{h.w} 1 0"><b style="height:100%;background:{bands(h.row.hand.strategy, strata)}"></b></button>{/each}{#if r.points}<svg class="eq" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points={r.points} /></svg>{/if}</div></div><span class="code" title="{r.name}: {pct(r.share)}% of the range to act, {pct(r.hisShare)}% of the other{r.shown ? `. Line: ${LINE_NAMES[r.shown]}, ${pct(r.from)} to ${pct(r.to)}%` : ''}">{r.code}</span><div class="wing him"><i style="width:{r.his.toFixed(2)}%"></i></div></div>
 {/each}</div>
 {:else if form === 'ladder'}<Ladder hero={hands.hero} villain={hands.villain} seat={game.decision.seat} cell={column} {...events} />

@@ -1,12 +1,15 @@
 <!-- A player's range, brought up by a tap on his cards: a small card over the table with two pages to slide between, the
-     range as a 13x13 chart and the butterfly (his range against the other's, in rows by made hand). A tap outside closes it.
+     range as a 13x13 chart and the butterfly (both ranges in rows by made hand, out of position's always on the left). A tap outside closes it.
      Once the hand is over the hands carry what the solver does with each at the player's last decision (`actions`, and a
      `mix` on each hand), and both pages are drawn in the actions' colours. -->
 <script>
   import RangeChart from '../common/RangeChart.svelte';
   import { COLORS, bands, spelled, strataOf } from '../../lib/actions.js';
   import { ROWS, rowOf } from '../../lib/study/butterfly.js';
-  let { title, against, mine, his, board, marked = null, villain = false, actions = null, onclose } = $props();
+  let { title, against, mine, his, board, seat, marked = null, actions = null, onclose } = $props();
+  // the butterfly always has out of position on the left and in position on the right; the player looked at is drawn in
+  // ink (or his strategy's colours) and the other faded, whichever side he is on
+  const left = $derived(seat === 'oop');
   const strata = $derived(actions ? strataOf(actions) : null);
   let page = $state(0);
   /** The butterfly's rows, strongest first: how much of each range sits in each, as a share of the widest bar. */
@@ -21,11 +24,12 @@
   const turned = (ev) => { page = Math.round(ev.currentTarget.scrollLeft / Math.max(1, ev.currentTarget.clientWidth)); };
 </script>
 <button type="button" class="peek-out" aria-label="Close the range" onclick={onclose}></button>
-<section class="peek" class:villain aria-label="{title}'s range">
+<section class="peek" aria-label="{title}'s range">
   <div class="slides" onscroll={turned}>
-    <div class="slide"><RangeChart {title} hands={mine} {marked} {villain} {strata} /></div>
-    <div class="slide"><p class="cap"><span>{title}</span><span>{against}</span></p>
-      <div class="pfly">{#each rows as r (r.code)}<div class="frow" title="{r.name}: {Math.round(100 * r.mine)}% of this range, {Math.round(100 * r.his)}% of the other"><div class="wing me"><i style="width:{r.w.toFixed(1)}%{strata && r.mix ? `;background:${bands(r.mix, strata).replace('to top', 'to left')}` : ''}"></i></div><span class="code">{r.code}</span><div class="wing him"><i style="width:{r.v.toFixed(1)}%"></i></div></div>{/each}</div></div>
+    <div class="slide"><RangeChart {title} hands={mine} {marked} {strata} /></div>
+    <div class="slide"><p class="cap"><span>{left ? title : against}</span><span>{left ? against : title}</span></p>
+      <div class="pfly">{#each rows as r (r.code)}{@const own = `width:${r.w.toFixed(1)}%${strata && r.mix ? `;background:${bands(r.mix, strata).replace('to top', left ? 'to left' : 'to right')}` : ''}`}{@const other = `width:${r.v.toFixed(1)}%`}
+        <div class="frow" title="{r.name}: {Math.round(100 * r.mine)}% of this range, {Math.round(100 * r.his)}% of the other"><div class="wing me"><i class={left ? 'on' : 'off'} style={left ? own : other}></i></div><span class="code">{r.code}</span><div class="wing him"><i class={left ? 'off' : 'on'} style={left ? other : own}></i></div></div>{/each}</div></div>
   </div>
   {#if actions}<p class="keys">{#each actions as a, k}<span><i style="background:var({COLORS[strata[k]]})"></i>{a.kind === 'call' ? 'Call' : spelled(a)}</span>{/each}<span class="when">solver, last decision</span></p>{/if}
   <div class="dots" aria-hidden="true"><i class:on={page === 0}></i><i class:on={page === 1}></i></div>

@@ -342,6 +342,11 @@ header .board{min-width:0;flex:0 1 auto}
 .fly .strip button[aria-pressed="true"]::before,.fly .strip button[aria-pressed="true"]::after{content:none}
 .fly .strip{position:relative}
 .fly .eq{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:3}
+.fly.ip .wing.me{order:3;justify-content:flex-start}
+.fly.ip .wing.him{order:1;justify-content:flex-end}
+.fly.ip .code{order:2}
+.fly.ip .strip{flex-direction:row-reverse}
+.fly.ip .eq{transform:scaleX(-1)}
 .fly .eq polyline{fill:none;stroke:var(--ink);stroke-width:1;vector-effect:non-scaling-stroke;stroke-linejoin:round}
 .stripbox:has(.fly){height:auto}
 #strip{touch-action:pan-y;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
@@ -451,11 +456,9 @@ body.paged{overflow:hidden;height:100dvh}
 .pfly .wing{display:flex;height:100%;min-width:0}
 .pfly .wing.me{justify-content:flex-end}
 .pfly .wing i{display:block;height:100%}
-.pfly .wing.me i{background:var(--ink)}
-.pfly .wing.him i{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
+.pfly .wing i.on{background:var(--ink)}
+.pfly .wing i.off{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
 .pfly .code{font:500 12px/14px var(--mono);text-align:center;color:var(--ink-2);letter-spacing:.02em}
-.peek.villain .pfly .wing.me i{background:color-mix(in srgb,var(--ink) 28%,var(--bg))}
-.peek.villain .pfly .wing.him i{background:var(--ink)}
 .peek .keys{margin:8px 0 0;display:flex;flex-wrap:wrap;gap:4px 12px;font:400 11px/14px var(--mono);color:var(--ink-2)}
 .peek .keys span{display:inline-flex;align-items:center;gap:5px}
 .peek .keys i{width:9px;height:9px;border-radius:2px}

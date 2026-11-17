@@ -118,8 +118,8 @@
           <div class="grades" class:over={!!st?.result}>{#if graded}{#key graded.key}<Grade grade={graded} onopen={explainGraded} />{/key}{/if}</div>
         </div>
         <Seat name="You" tag={names[st?.seat ?? 'ip']} cards={st?.hero ?? null} behind={st ? st.behind[me] : config.stack} clock={clockOf('hero')} bank={game.bank.hero} dealer={st ? st.seat === 'ip' : true} hero onpeek={() => (peek = 'hero')} />
-        {#if looked && peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={withMix(looked.hands)} his={withMix(looked.other)} board={looked.board} actions={looked.actions} marked={peek === 'hero' ? cellOf(st.hero) : st.villain ? cellOf(st.villain) : null} onclose={() => (peek = null)} />
-        {:else if peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={listOf(peeked)} his={listOf(other(peeked))} board={held.board} marked={peek === 'hero' ? cellOf(held.hero) : null} villain={peek === 'villain'} onclose={() => (peek = null)} />{/if}
+        {#if looked && peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={withMix(looked.hands)} his={withMix(looked.other)} seat={peeked} board={looked.board} actions={looked.actions} marked={peek === 'hero' ? cellOf(st.hero) : st.villain ? cellOf(st.villain) : null} onclose={() => (peek = null)} />
+        {:else if peeked}<RangePeek title="{peek === 'hero' ? 'You' : 'Villain'} {names[peeked]}" against="{peek === 'hero' ? 'Villain' : 'You'} {names[other(peeked)]}" mine={listOf(peeked)} his={listOf(other(peeked))} board={held.board} seat={peeked} marked={peek === 'hero' ? cellOf(held.hero) : null} onclose={() => (peek = null)} />{/if}
       </div>
       <Moves {game} {config} />
     {/if}
