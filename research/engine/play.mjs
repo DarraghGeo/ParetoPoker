@@ -16,7 +16,7 @@ import { decide, readSpot } from './engine.mjs';
 //   Arms: rules (exact equity), read (equity read off the chart), cells (the solved answers by equity band, rules where they have none), noisy (exact equity up to 10 points off).
 const CELLS = process.env.CELLS ? JSON.parse(readFileSync(process.env.CELLS, 'utf8')) : null;
 let ENGINE_ARMS = CELLS ? { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, cells: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 }, rulesFill: { rule: 'engine', eq: 'exact', fill: true } } : { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, rulesFill: { rule: 'engine', eq: 'exact', fill: true }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 } };
-if (process.env.FILLS) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; ENGINE_ARMS.rules = { rule: 'engine', eq: 'exact' }; for (const x of process.env.FILLS.split(',')) ENGINE_ARMS[`fill${Math.round(100 * x)}`] = { rule: 'engine', eq: 'exact', fill: +x }; }   // FILLS=0.9,1,1.1: the balance rule at these multiples of the minimum defence
+if (process.env.FILLS) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; for (const x of process.env.FILLS.split(',')) ENGINE_ARMS[`fill${x.endsWith('a') ? 'All' : ''}${Math.round(100 * parseFloat(x))}`] = { rule: 'engine', eq: 'exact', fill: parseFloat(x), everywhere: x.endsWith('a') }; }   // 1a: out of position before the river as well   // FILLS=0.9,1,1.1: the balance rule at these multiples of the minimum defence
 
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
 const RK = Array.from({ length: 52 }, (_, c) => fs.rankOf(c)); const SU = Array.from({ length: 52 }, (_, c) => fs.suitOf(c)); const ACE = Math.max(...RK); const LOW = Math.min(...RK);
@@ -282,7 +282,7 @@ for (let done = 0; done < +count;) {
           const [e, he] = equities(F, board, w, hs, arm, dice[name]); const mineH = [], hisH = [];
           for (const c of F.order) { if (w[c] > 0) mineH.push({ c, weight: w[c], equity: e[c], draw: F.come[c] >= 8, topPairPlus: F.lv[c] >= 4 }); else P[c * k + quiet] = 1; if (hs[c] > 0) hisH.push({ weight: hs[c], equity: he[c], topPairPlus: F.lv[c] >= 4 }); }
           const reads = readSpot(mineH, hisH); let t = 0, all = 0;
-          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null, fillToDefence: arm.fill ?? false }, mineH) : mineH.map(() => [1, 0, 0]);
+          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null, fillToDefence: arm.fill ?? false, fillEverywhere: !!arm.everywhere }, mineH) : mineH.map(() => [1, 0, 0]);
           mineH.forEach((h, i) => { const [q, cl, ag] = out[i]; const c = h.c;
             if (toCall > 0) { P[c * k + quiet] += q; P[c * k + ci] += cl; P[c * k + (ri >= 0 ? ri : ci)] += ag; }
             else { P[c * k + xi] += q + cl; P[c * k + (bi >= 0 ? bi : xi)] += ag; if (bi >= 0) { t += h.weight * ag; all += h.weight; } } });

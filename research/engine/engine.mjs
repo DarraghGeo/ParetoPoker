@@ -74,7 +74,7 @@ export function decide(view, hands) {
     const solved = byCells(view, at, equity, draw); if (solved) return solved;
     const a = byRules(view, at, equity, draw); return [a === 0 ? 1 : 0, a === 1 ? 1 : 0, a === 2 ? 1 : 0];
   });
-  if (view.fillToDefence && at.kind !== 'first' && (view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
+  if (view.fillToDefence && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
   return out;
 }
 
