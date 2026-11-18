@@ -52,6 +52,10 @@ function byRules(view, at, e, draw) {
     if (R.drawsCallRaise && raised && street !== 'river' && draw) return 1;                                                  // strong draws do not fold to a raise, where asked
     return e >= at.price + over ? 1 : 0;
   }
+  const FD = R.flopDeep; if (street === 'flop' && FD && view.depth >= FD.at) {      // flopDeep: with many pots behind (a single-raised pot), flop bets by seat and role
+    if (view.aggressor && !ip && FD.oopRaiser) return FD.oopRaiser === 'ahead' && reads.ahead && (e >= R.flopOopValue || draw) ? 2 : 0;
+    if (view.aggressor && ip && FD.ipRaiser !== undefined) return e >= FD.ipRaiser || draw ? 2 : 0;
+    if (!view.aggressor && ip && FD.ipCaller !== undefined) return e >= FD.ipCaller || draw ? 2 : 0; }
   if (street === 'flop' && R.role?.flop) return view.aggressor || (reads.ahead && (e >= R.flopOopValue || draw)) ? 2 : 0;      // by role: the last raiser before the flop bets everything, the caller only when ahead
   if (street === 'flop' && ip && R.flopIpFrom !== undefined) return e >= R.flopIpFrom || draw ? 2 : 0;      // in position on the flop: a threshold in place of betting everything
   if (street === 'flop') return ip || (reads.ahead && (e >= R.flopOopValue || draw)) ? 2 : 0;
