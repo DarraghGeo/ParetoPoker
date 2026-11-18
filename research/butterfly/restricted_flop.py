@@ -236,6 +236,13 @@ if __name__ == '__main__':
                 sig, plan = lay(sp, h, tabs[h]); groups = {kd: [kd] for kd in KINDS}; groups.update({'all of ' + s_: [kd for kd in KINDS if kd[0] == s_] for s_ in STREETS}); groups['every table'] = list(KINDS)
                 for g, kds in groups.items(): mix = dict(norm[h]); mix.update({nid: sig[nid] for nid, kd, _, _ in plan if kd in kds}); out[h][g] = 100 * sp.walk(1 - h, mix, 'reply')[0] / sp.P0 - reply[h]
             res[d['spot']] = out; json.dump(res, open(f, 'w')); print(f"  {d['spot']} {time.time() - t0:.0f} s", file=log, flush=True)
+    elif job.startswith('evlost'):                   # evlost:<flops solved on>: what the tables give up over the whole hand to an opponent who does not adjust (the solver's own play), beside their exploitability
+        ntr = job.split(':')[1]; part = os.environ.get('PART', ''); f = os.path.join(STORE, f'flop-evlost-n{ntr}{CT}{TAGF}{part}.json'); res = json.load(open(f)) if os.path.exists(f) else {}; tabs = [{k: np.array(v) for k, v in json.load(open(os.path.join(STORE, f'flop-{h}-n{ntr}{CT}{TAGF}.json')))['tables'].items()} for h in (0, 1)]
+        for j, d in enumerate(te):
+            if d['spot'] in res or (part and j % int(part.split('of')[1]) != int(part.split('of')[0][1:])): continue
+            sp = Flop(d); reply, _, norm = equilibrium(sp, rounds, True); out = []
+            for h in (0, 1): sig = lay(sp, h, tabs[h])[0]; fair = sp.walk(h, norm[h], 'values', norm[1 - h])[0]; got = sp.walk(h, sig, 'values', norm[1 - h])[0]; out.append(dict(lost=100 * (fair - got) / sp.P0, exploitable=100 * sp.walk(1 - h, sig, 'reply')[0] / sp.P0 - reply[h]))
+            res[d['spot']] = out; json.dump(res, open(f, 'w')); print(f"  {d['spot']} lost {[round(o['lost'], 2) for o in out]} exploitable {[round(o['exploitable'], 1) for o in out]} {time.time() - t0:.0f} s", file=log, flush=True)
     elif job == 'alone':
         base = load_base(); f = os.path.join(STORE, f"flop-alone{CT}{TAGF}{os.environ.get('PART', '')}.json"); res = json.load(open(f)) if os.path.exists(f) else {}
         part = os.environ.get('PART', '')
