@@ -291,6 +291,22 @@ if __name__ == '__main__':
                     a = {k: (st[k] if kind(sp.tn[k], h, 'T') == kd else v) for k, v in nt[h].items()}; b = {k: (sr[k] if kind(sp.rv[k[0]][k[1]], h, 'R') == kd else v) for k, v in nr[h].items()}; row[h][kd] = g(a, b)
             res[d['spot']] = row; print(f"  {d['spot']} {[round(row[h]['tables'], 1) for h in (0, 1)]} {time.time() - t0:.0f} s", file=log, flush=True)
         json.dump(res, open(os.path.join(STORE, f'turn-ablate-{var}.json'), 'w'))
+    elif job.startswith('poolcheck'):                # is sharing a table costly even across near-identical spots? poolcheck:<cards|depths|flops>
+        import copy
+        what = job.split(':')[1]; order = sorted(te, key=lambda d: d['behind'] / d['pot']); d0 = order[len(order) // 2]; OPT = VARIANTS[os.environ.get('VAR', 'true+spr')]; flop = d0['board'].split()[:3]; ds = []
+        if what == 'cards':
+            for card in [c for c in DECK if c not in flop][::9][:6]:
+                d = copy.deepcopy(d0); d['board'] = ' '.join(flop + [card]); d['hands'] = [h for h in d['hands'] if card not in (h['h'][:2], h['h'][2:])]; d['vr'] = [v for v in d['vr'] if card not in (v[0][:2], v[0][2:])]; d['spot'] += '|' + card; ds.append(d)
+        elif what == 'depths':
+            for x in (0.75, 1.5, 3, 6):
+                d = copy.deepcopy(d0); d['behind'] = round(x * d['pot'], 2); d['spot'] += f'|{x}'; ds.append(d)
+        elif what == 'same': ds = [copy.deepcopy(d0) for _ in range(3)]
+        else: ds = [d for d in rows if d['pre'] == d0['pre'] and abs(d['behind'] / d['pot'] - d0['behind'] / d0['pot']) < 0.3][:6]
+        sps = [Turn(d) for d in ds]; vals = [equilibrium(sp, 500) for sp in sps]; res = dict(what=what, base=d0['spot'], spots=[d['spot'] + ' ' + d['board'] for d in ds], alone=[], pooled=[])
+        for h in (0, 1):
+            al = [100 * sp.walk(1 - h, *lay(sp, h, solve([sp], h, rounds, OPT), OPT)[:2], 'reply')[0] / sp.P0 - v[h] for sp, v in zip(sps, vals)]; tab = solve(sps, h, rounds, OPT); po = [100 * sp.walk(1 - h, *lay(sp, h, tab, OPT)[:2], 'reply')[0] / sp.P0 - v[h] for sp, v in zip(sps, vals)]
+            res['alone'].append(al); res['pooled'].append(po); print(f"  {what} seat {h}: alone {np.mean(al):.1f} {[round(x, 1) for x in al]} | one shared table {np.mean(po):.1f} {[round(x, 1) for x in po]} | {time.time() - t0:.0f} s", file=log, flush=True)
+        json.dump(res, open(os.path.join(STORE, f"turn-poolcheck-{what}{os.environ.get('TAG', '')}.json"), 'w'))
     elif job.startswith('diverge'):                    # one spot, one thing changed at a time: stack depth, the turn card, the bet size, the shape of a range
         import copy
         order = sorted(te, key=lambda d: d['behind'] / d['pot']); d0 = [order[1], order[len(order) // 2], order[-2]][int(job.split(':')[1])]; shared = [json.load(open(os.path.join(STORE, f'turn-{h}-true+spr.json')))['tables'] for h in (0, 1)]; OPT = VARIANTS['true+spr']; res = []
