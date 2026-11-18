@@ -172,7 +172,7 @@ def solve(spots, hero, rounds, log=None, keep=None):
         if keep and t % 20 == 0: np.savez(keep, t=t, best=best[0], **{'b|' + kd: v for kd, v in best[1].items()}, **{'r|' + kd: v for kd, v in reg.items()}, **{'a|' + kd: v for kd, v in avg.items()}, **{'c|' + kd: v for kd, v in cur.items()})
     av = {k: np.where(v.sum(1, keepdims=True) > 0, v / np.maximum(v.sum(1, keepdims=True), 1e-12), 1 / KINDS[k]) for k, v in avg.items()}
     ga = float(np.mean([100 * sp.walk(1 - hero, lay(sp, hero, av)[0], 'reply')[0] / sp.P0 for sp in spots])); return av if ga < best[0] else best[1]
-def equilibrium(sp, rounds):
+def equilibrium(sp, rounds, strategies=False):
     """Both players free (CFR+). Returns, for each seat p: what the free player wins against p's equilibrium play, and what it wins when both play it (the game's value to it), percent of the pot."""
     sig = [dict(), dict()]
     for p in (0, 1):
@@ -184,7 +184,7 @@ def equilibrium(sp, rounds):
             for k, (q, mine) in vals.items(): v = (q * sig[p][k]).sum(-1); reg[p][k] = np.maximum(reg[p][k] + q - v[..., None], 0); tot = reg[p][k].sum(-1, keepdims=True); sig[p][k] = np.where(tot > 0, reg[p][k] / np.maximum(tot, 1e-12), 1 / q.shape[-1]).astype(np.float32); avs[p][k] += t * mine[..., None] * sig[p][k]
     norm = [{k: np.where(v.sum(-1, keepdims=True) > 0, v / np.maximum(v.sum(-1, keepdims=True), 1e-12), 1 / v.shape[-1]).astype(np.float32) for k, v in a.items()} for a in avs]
     reply = [100 * sp.walk(1 - p, norm[p], 'reply')[0] / sp.P0 for p in (0, 1)]; value = [100 * sp.walk(1 - p, norm[1 - p], 'values', norm[p])[0] / sp.P0 for p in (0, 1)]
-    return reply, value
+    return (reply, value, norm) if strategies else (reply, value)
 if __name__ == '__main__':
     job = sys.argv[1]; rounds = int(sys.argv[2]) if len(sys.argv) > 2 else 300; n_tr = int(sys.argv[3]) if len(sys.argv) > 3 else 8; n_te = int(sys.argv[4]) if len(sys.argv) > 4 else 6; rows = []; log = sys.stderr; t0 = time.time()
     for text in open(os.path.join(STORE, 'flop-roots.jsonl')):
@@ -209,6 +209,15 @@ if __name__ == '__main__':
         for d in te:
             if d['spot'] in r['scored'] or d['spot'] not in base: continue
             sp = Flop(d); r['scored'][d['spot']] = 100 * sp.walk(1 - hero, lay(sp, hero, tab)[0], 'reply')[0] / sp.P0; json.dump(r, open(f, 'w')); print(f"  {d['spot']} {r['scored'][d['spot']] - base[d['spot']][hero]:.1f} {time.time() - t0:.0f} s", file=log, flush=True)
+    elif job.startswith('ablate'):                   # ablate:<flops solved on>: the solver's own play everywhere but one table (or one street's tables), so each table's cost shows on its own
+        ntr = job.split(':')[1]; f = os.path.join(STORE, f'flop-ablate-n{ntr}{CT}{TAGF}.json'); res = json.load(open(f)) if os.path.exists(f) else {}; tabs = [{k: np.array(v) for k, v in json.load(open(os.path.join(STORE, f'flop-{h}-n{ntr}{CT}{TAGF}.json')))['tables'].items()} for h in (0, 1)]
+        for d in te:
+            if d['spot'] in res: continue
+            sp = Flop(d); reply, _, norm = equilibrium(sp, rounds, True); out = [{}, {}]
+            for h in (0, 1):
+                sig, plan = lay(sp, h, tabs[h]); groups = {kd: [kd] for kd in KINDS}; groups.update({'all of ' + s_: [kd for kd in KINDS if kd[0] == s_] for s_ in STREETS}); groups['every table'] = list(KINDS)
+                for g, kds in groups.items(): mix = dict(norm[h]); mix.update({nid: sig[nid] for nid, kd, _, _ in plan if kd in kds}); out[h][g] = 100 * sp.walk(1 - h, mix, 'reply')[0] / sp.P0 - reply[h]
+            res[d['spot']] = out; json.dump(res, open(f, 'w')); print(f"  {d['spot']} {time.time() - t0:.0f} s", file=log, flush=True)
     elif job == 'alone':
         base = json.load(open(os.path.join(STORE, f'flop-base{TAGF}.json'))); f = os.path.join(STORE, f"flop-alone{CT}{TAGF}{os.environ.get('PART', '')}.json"); res = json.load(open(f)) if os.path.exists(f) else {}
         part = os.environ.get('PART', '')
