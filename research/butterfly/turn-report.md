@@ -15,6 +15,7 @@ Exploitability on the 16 turn spots not solved on, percent of the pot as the tur
 | the range held | 10.1 | 9.0 | 19.0 | 8.9 | 8.7 | 14.2 | 9.5 |
 | the range held + stack depth, twenty bands of five points | 10.4 | 9.1 | 18.8 | 8.6 | 8.6 | 12.3 | 9.5 |
 | the range held + stack depth, solved on 60 spots | 10.2 | 9.3 | 18.0 | 8.4 | 8.4 | 11.2 | 9.3 |
+| true+spr+top | 9.6 | 9.2 | 15.3 | 8.8 | 8.4 | 16.1 | 9.2 |
 
 ## Inside our cells: how the unrestricted solve plays the kinds of hand a cell holds (30 turn spots)
 
