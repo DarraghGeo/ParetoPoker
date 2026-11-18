@@ -277,7 +277,8 @@ let a0 = (+seed * 2654435761) >>> 0; const rnd = () => { a0 = (a0 + 0x6d2b79f5) 
 const pool = PRESETS.filter((p) => p.action !== 'Limped' && (!process.env.ACTIONS || process.env.ACTIONS.split(',').includes(p.action))); const TREE = process.env.TREE === 'three' ? { betSizes: [[0.33, 0.75, 1.5], [0.33, 0.75, 1.5], [0.33, 0.75, 1.5]], maxRaises: 1 } : process.env.TREE === 'raise' ? { betSizes: [[0.33], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 } : process.env.TREE === 'small' ? { betSizes: [[0.33], [0.33, 0.75], [0.75]], maxRaises: 1 } : { betSizes: [[0.33], [0.75], [0.75]], maxRaises: 1 };
 const out = new URL(`./out/play${process.env.ARMS ? `-${process.env.ARMS}` : ''}${process.env.TAG ? `-${process.env.TAG}` : ''}.jsonl`, import.meta.url); writeFileSync(out, '', { flag: 'a' });
 for (let done = 0; done < +count;) {
-  const p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; const b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
+  let p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; let b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
+  if (process.env.SPOT) { const [name, cards] = process.env.SPOT.split(':'); p = PRESETS.find((x) => `${x.action}-${x.oop}-${x.ip}` === name); b = cards.match(/../g); }     // SPOT=4BP-CO-BU:2dKsKd: one named spot
   let spot; try { spot = fs.defineSpot({ board: b.join(''), pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; }
   if (spot.estimate.bytes > +(process.env.MAXMB ?? 600) * 2 ** 20) continue;
   const t0 = Date.now(); const nodes = treeOf(fs, spot); const counts = Array.from(spot.runouts.counts); const R = spot.runouts; const pot = spot.potUnits / spot.chipScale;
