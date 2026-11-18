@@ -48,6 +48,8 @@ if (process.env.RAISE) {   // RAISE=1: raising before the river, every other fix
 if (process.env.SOLVED) {  // SOLVED=1 CELLS=<file>: the solved answers by equity band at some decisions, the fixed rules at the others
   for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, { rules: after, cellsFacingTurn: { ...after, cells: true, cellsWhere: (st, f) => st === 4 && f }, cellsFacing: { ...after, cells: true, cellsWhere: (st, f) => f }, cellsTurn: { ...after, cells: true, cellsWhere: (st) => st === 4 }, cellsEverywhere: { ...after, cells: true, cellsWhere: () => true }, cellsAlone: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' } }); }
+const COMPOSITION = {};
+if (process.env.COMP) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; ENGINE_ARMS.engine = NOW; ENGINE_ARMS.solution = { ...NOW, only: () => false }; }
 const FACE = {};           // FACING=1: facing a turn bet or raise, the engine's answers beside the solution's for the same hands, by equity band
 if (process.env.FACING || process.env.BETTING) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const x = JSON.parse(process.env.EXTRA ?? '{}'); ENGINE_ARMS.after = { ...NOW, ...x, patch: { ...NOW.patch, ...(x.patch ?? {}) } }; }   // EXTRA: changes to the current rules for this look
 if (process.env.FACEFIX) { // FACEFIX=1: versions of facing a turn bet, every other fix on
@@ -309,6 +311,11 @@ for (let done = 0; done < +count;) {
         n.edges.forEach((edge, a) => { const next = new Float64Array(N); let t = 0; for (let c = 0; c < N; c++) if (his[c] > 0 && at[c] >= 0) { next[c] = his[c] * view.probs[at[c] * k + a]; t += next[c]; } if (t > 1e-9) { any++; walk(edge.child, board, bIndex, F, mine, next); } });
         return; }
       const toCall = n.invested[1 - seat] - n.invested[seat]; const street = board.length; const fi = kinds.indexOf('fold'), ci = kinds.indexOf('call'), xi = kinds.indexOf('check'); const bi = kinds.indexOf('bet') >= 0 ? kinds.indexOf('bet') : kinds.indexOf('allin'); const ri = kinds.indexOf('raise') >= 0 ? kinds.indexOf('raise') : toCall > 0 ? kinds.indexOf('allin') : -1;
+      if (process.env.COMP) {      // COMP=1: what the seat's range is made of at each kind of decision, weak / middle / strong by equity, for each arm (one arm plays the solution throughout)
+        let raised = false; for (let at = n; at.parent >= 0 && nodes[at.parent].kind !== 'chance'; at = nodes[at.parent]) { const par = nodes[at.parent]; if (seatOf(par) === seat && ['bet', 'raise', 'allin'].includes(par.edges[at.via].kind)) raised = true; }
+        const all = new Float64Array(N); for (const c of F.order) all[c] = Math.max(...mine.map((w) => w[c])) > 0 ? 1 : 0; const e = equities(F, board, all, his, { eq: 'exact' }, rnd)[0]; let ht = 0; for (const c of F.order) ht += his[c];
+        const key = `${seat === 1 ? 'ip' : 'oop'} ${'FTR'[street - 3]} ${toCall > 0 ? (raised ? 'facing a raise' : 'facing a bet') : 'first'}`;
+        NAMES.forEach((name, j) => { const D = ((COMPOSITION[name] ??= {})[key] ??= [0, 0, 0, 0]); for (const c of F.order) { const x = mine[j][c] * ht; if (x > 0) { D[e[c] < 0.35 ? 0 : e[c] < 0.65 ? 1 : 2] += x; D[3] += x * e[c]; } } }); }
       const probsBy = NAMES.map((name, j) => {
         const P = new Float32Array(N * k); const w = mine[j];
         if (ARMS[name].rule === 'user2') {
@@ -399,6 +406,7 @@ for (let done = 0; done < +count;) {
     row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries((process.env.ARMS === 'engine' ? NAMES.filter((x) => !['read', 'noisy', 'afterNoisy'].includes(x)) : [NAMES[0], NAMES[2]]).filter(Boolean).map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
     row.freq[side] = { solution: sol.map(([t, all]) => +(t / (all || 1)).toFixed(3)), ...Object.fromEntries(NAMES.map((n) => [n, tally[n].map(([t, all]) => +(t / (all || 1)).toFixed(3))])) };
   }
+  if (process.env.COMP) row.composition = COMPOSITION;
   if (process.env.FACING || process.env.BETTING) row.facing = FACE;
   row.seconds = Math.round((Date.now() - t0) / 1000); appendFileSync(out, JSON.stringify(row) + '\n');
   console.error(`${done}/${count} ${row.spot} ${row.board} ${row.seconds}s | oop ${JSON.stringify(row.loss.oop)} | ip ${JSON.stringify(row.loss.ip)}`);
