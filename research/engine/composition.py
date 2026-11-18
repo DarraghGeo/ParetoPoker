@@ -5,9 +5,10 @@ for t in open(sys.argv[1]):
     r = json.loads(t)
     if 'composition' not in r: continue
     C = r['composition']; print(f"\n## {r['spot']} {r['board']} ({seat})\n"); print('| decision | weak / middle / strong: engine | solution | average equity: engine | solution | reaches it: engine against solution |'); print('|---|---|---|---|---|---|')
-    for key in sorted(C['engine'], key=lambda k: ('FTR'.index(k.split()[1]), k)):
-        if not key.startswith(seat) or key not in C['solution']: continue
+    tot = sum(sum(v[:3]) for k, v in C['solution'].items() if k.startswith(seat + ' F'))
+    for key in sorted(C['solution'], key=lambda k: ('FTR'.index(k.split()[1]), -sum(C['solution'][k][:3]))):
+        if not key.startswith(seat) or key not in C['engine']: continue
         a, b = C['engine'][key], C['solution'][key]; ta, tb = sum(a[:3]), sum(b[:3])
-        if ta <= 0 or tb <= 0: continue
-        f = lambda x, tot: ' / '.join(f'{100 * v / tot:.0f}' for v in x[:3]); k = key.split()
-        print(f"| {ST[k[1]]}, {' '.join(k[2:])} | {f(a, ta)} | {f(b, tb)} | {100 * a[3] / ta:.0f}% | {100 * b[3] / tb:.0f}% | {ta / tb:.2f}x |")
+        if ta <= 0 or tb <= 0 or tb < 0.03 * tot: continue                 # lines the solution takes at least 3% as often as it sees the flop
+        f = lambda x, t_: ' / '.join(f'{100 * v / t_:.0f}' for v in x[:3]); k = key.split(' after '); kk = k[0].split()
+        print(f"| {ST[kk[1]]}, {' '.join(kk[2:])}, after {k[1]} | {f(a, ta)} | {f(b, tb)} | {100 * a[3] / ta:.0f}% | {100 * b[3] / tb:.0f}% | {ta / tb:.2f}x |")

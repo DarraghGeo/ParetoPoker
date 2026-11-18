@@ -314,7 +314,8 @@ for (let done = 0; done < +count;) {
       if (process.env.COMP) {      // COMP=1: what the seat's range is made of at each kind of decision, weak / middle / strong by equity, for each arm (one arm plays the solution throughout)
         let raised = false; for (let at = n; at.parent >= 0 && nodes[at.parent].kind !== 'chance'; at = nodes[at.parent]) { const par = nodes[at.parent]; if (seatOf(par) === seat && ['bet', 'raise', 'allin'].includes(par.edges[at.via].kind)) raised = true; }
         const all = new Float64Array(N); for (const c of F.order) all[c] = Math.max(...mine.map((w) => w[c])) > 0 ? 1 : 0; const e = equities(F, board, all, his, { eq: 'exact' }, rnd)[0]; let ht = 0; for (const c of F.order) ht += his[c];
-        const key = `${seat === 1 ? 'ip' : 'oop'} ${'FTR'[street - 3]} ${toCall > 0 ? (raised ? 'facing a raise' : 'facing a bet') : 'first'}`;
+        const path = []; for (let a2 = n; a2.parent >= 0; a2 = nodes[a2.parent]) { const par = nodes[a2.parent]; path.unshift(par.kind === 'chance' ? '|' : par.edges[a2.via].kind === 'check' ? 'x' : par.edges[a2.via].kind[0]); }      // the line so far: x check, b bet, c call, r raise, a all-in, | a new card
+        const key = `${seat === 1 ? 'ip' : 'oop'} ${'FTR'[street - 3]} ${toCall > 0 ? (raised ? 'facing a raise' : 'facing a bet') : 'first'} after ${path.join('') || 'nothing'}`;
         NAMES.forEach((name, j) => { const D = ((COMPOSITION[name] ??= {})[key] ??= [0, 0, 0, 0]); for (const c of F.order) { const x = mine[j][c] * ht; if (x > 0) { D[e[c] < 0.35 ? 0 : e[c] < 0.65 ? 1 : 2] += x; D[3] += x * e[c]; } } }); }
       const probsBy = NAMES.map((name, j) => {
         const P = new Float32Array(N * k); const w = mine[j];
