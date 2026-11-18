@@ -44,14 +44,15 @@ function byRules(view, at, e, draw) {
     const raiseFrom = size > 1 ? R.riverRaiseFromOverbet : R.riverRaiseFrom;
     if (street === 'river' && canRaise && !raised && e >= raiseFrom) return 2;
     if (street !== 'river' && canRaise && !raised && R.earlyRaiseFrom?.[street] !== undefined && e >= R.earlyRaiseFrom[street]) return 2;   // raising before the river, where asked
-    if (R.flopIpRaisesLeads && street === 'flop' && ip && canRaise && !raised && e >= at.price + over) return 2;                 // in position against a flop lead: every hand that continues raises
+    if (R.flopIpRaisesLeads && street === 'flop' && ip && (!R.role?.leads || view.aggressor) && canRaise && !raised && e >= at.price + over) return 2;                 // in position against a flop lead: every hand that continues raises
     const band = R.earlyRaiseBand?.[street]?.[seat]; if (band && canRaise && !raised && e >= band[0] && e < band[1]) return 2;    // a band of equity that raises before the river, where asked
     if (R.drawsCallRaise && raised && street !== 'river' && draw) return 1;                                                  // strong draws do not fold to a raise, where asked
     return e >= at.price + over ? 1 : 0;
   }
+  if (street === 'flop' && R.role?.flop) return view.aggressor || (reads.ahead && (e >= R.flopOopValue || draw)) ? 2 : 0;      // by role: the last raiser before the flop bets everything, the caller only when ahead
   if (street === 'flop' && ip && R.flopIpFrom !== undefined) return e >= R.flopIpFrom || draw ? 2 : 0;      // in position on the flop: a threshold in place of betting everything
   if (street === 'flop') return ip || (reads.ahead && (e >= R.flopOopValue || draw)) ? 2 : 0;
-  if (street === 'turn' && !ip && R.turnOopNeedsAhead && !reads.ahead) return 0;      // out of position on the turn: bet only when ahead in top pair or better, where asked
+  if (street === 'turn' && (R.role?.turn ? !view.aggressor : !ip) && R.turnOopNeedsAhead && !reads.ahead) return 0;      // out of position on the turn: bet only when ahead in top pair or better, where asked
   if (street === 'turn') return e >= R.turnBetFrom || (draw && !R.turnNoDrawBets) ? 2 : 0;
   if (!ip && reads.hisStrong >= R.checkAllIfHisStrong) return 0;
   const bluffUnder = Math.max(0, reads.hisWeak - R.riverBluffUnderWeakLess[seat]);
