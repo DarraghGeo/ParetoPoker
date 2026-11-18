@@ -130,11 +130,20 @@ def lay(sp, hero, tab, opts):
     """The tables laid over a spot. opts = (true, spr): `true` reads the place and the weak share from the range the player
     holds at each decision, as its own tables have shaped it (else from its range as the turn starts); `spr` adds the
     stacks behind in pots at the decision (under 1.5, 1.5 to 4, over 4)."""
-    true, spr, drw, vs = opts[:4]; nut = len(opts) > 4 and opts[4]; fdraw = len(opts) > 5 and opts[5]; st, sr, plan = {}, {}, []; w = sp.w[hero]; C = len(sp.cards); opp = 1 - hero
+    true, spr, drw, vs = opts[:4]; nut = len(opts) > 4 and opts[4]; fdraw = len(opts) > 5 and opts[5]; top = len(opts) > 6 and opts[6]; st, sr, plan = {}, {}, []; w = sp.w[hero]; C = len(sp.cards); opp = 1 - hero
     if nut and not hasattr(sp, '_hs'):            # his share of strong hands (80%+ against my range) as the turn starts: on the turn, and on each river card
         wo = sp.w[opp]; wc = wo[None, :] * sp.A[opp]; sp._hs = [None, None]
         for q in (0, 1): wq = sp.w[q]; wcq = wq[None, :] * sp.A[q]; sp._hs[q] = (float(wq[sp.eqt[q] >= .8].sum() / wq.sum()), (wcq * (sp.eqr[q] >= .8)).sum(1) / np.maximum(wcq.sum(1), 1e-12))
     if vs: et, er = eq_store(sp); ot, orv = et[opp], er[opp]
+    if top and not hasattr(sp, '_top'):            # each hand's equity against the strongest third of his range as the turn starts (on the turn, and on each river card), in three bands
+        sp._top = [None, None]
+        for q in (0, 1):
+            o_ = 1 - q; wo_ = sp.w[o_].astype(np.float32); order = np.argsort(-sp.eqt[o_], kind='stable'); cum = np.cumsum(wo_[order]) / wo_.sum(); mt = np.zeros(len(wo_), np.float32); mt[order[cum <= 1 / 3 + 1e-9]] = 1; ht = (wo_ * mt)[None, :] * sp.A[o_]
+            wr = wo_[None, :] * sp.A[o_]; er_ = np.where(sp.A[o_] > 0, sp.eqr[o_], -1); od = np.argsort(-er_, axis=1, kind='stable'); cw = np.cumsum(np.take_along_axis(wr, od, 1), 1) / np.maximum(wr.sum(1, keepdims=True), 1e-12); mk = np.zeros_like(wr); np.put_along_axis(mk, od, (cw <= 1 / 3 + 1e-9).astype(np.float32), 1); hr = wr * mk
+            if q == 0: f = lambda X, r, sub: np.einsum('cij,cj->' + sub, X, r)
+            else: f = lambda X, r, sub: np.einsum('cij,ci->' + sub.replace('i', 'j'), X, r)
+            win, tie = (sp.W, sp.T) if q == 0 else (sp.L, sp.T); et_ = (f(win, ht, 'i') + 0.5 * f(tie, ht, 'i')) / np.maximum(f(sp.V, ht, 'i'), 1e-9); err = (f(win, hr, 'ci') + 0.5 * f(tie, hr, 'ci')) / np.maximum(f(sp.V, hr, 'ci'), 1e-9)
+            sp._top[q] = (np.digitize(et_, [.15, .4]), np.digitize(err, [.15, .4]))
     if not hasattr(sp, '_frozen'): sp._frozen = {}
     if hero not in sp._frozen: sp._frozen[hero] = sp.cells(hero, False)
     ct0, cr0 = sp._frozen[hero]
@@ -160,8 +169,9 @@ def lay(sp, hero, tab, opts):
             for a, (_, c) in enumerate(acts): river(key, c, mine, his * orv[(key, k)][..., a] if vs else his)
             return
         E = versus_r(his) if vs else sp.eqr[hero]
-        if true or vs or nut: Wt = w[None, :] * (mine if true else 1) * sp.A[hero]; pl, wk = place_rows(E, Wt); cells = pl * 3 + wk[:, None]
+        if true or vs or nut or top: Wt = w[None, :] * (mine if true else 1) * sp.A[hero]; pl, wk = place_rows(E, Wt); cells = pl * 3 + wk[:, None]
         else: cells = cr0
+        if top: cells = pl * 3 + sp._top[hero][1]
         if nut and inv[opp] <= inv[hero]: cells = pl * 3 + np.digitize((Wt * (E >= .8)).sum(1) / np.maximum(Wt.sum(1), 1e-12) - sp._hs[opp][1], [-.05, .05])[:, None]      # first to act: who has more strong hands, in place of the weak share
         if spr: cells = cells * ND + depth(inv)
         kd = kind(node, hero, 'R'); na = len(acts); x = strat(kd, cells, na); sr[(key, k)] = x; plan.append(('r', (key, k), kd, cells, na))
@@ -177,8 +187,9 @@ def lay(sp, hero, tab, opts):
             for a, (_, c) in enumerate(acts): turn(c, mine, his * ot[k][:, a] if vs else his)
             return
         E = versus_t(his) if vs else sp.eqt[hero]
-        if true or vs or nut: Wt = (w * (mine if true else 1))[None, :]; pl, wk = place_rows(E[None, :], Wt); cells = pl[0] * 3 + wk[0]
+        if true or vs or nut or top: Wt = (w * (mine if true else 1))[None, :]; pl, wk = place_rows(E[None, :], Wt); cells = pl[0] * 3 + wk[0]
         else: cells = ct0
+        if top: cells = pl[0] * 3 + sp._top[hero][0]
         if nut and inv[opp] <= inv[hero]: cells = pl[0] * 3 + int(np.digitize(float((Wt[0] * (E >= .8)).sum() / max(Wt[0].sum(), 1e-12)) - sp._hs[opp][0], [-.05, .05]))
         if spr: cells = cells * ND + depth(inv)
         if drw: cells = cells * 3 + sp.draw3[hero]
@@ -191,7 +202,9 @@ def lay(sp, hero, tab, opts):
 VARIANTS = {'frozen': (False, False, False, False), 'true': (True, False, False, False), 'spr': (False, True, False, False), 'true+spr': (True, True, False, False), 'true+spr+draw': (True, True, True, False),
             'true+spr+vs': (True, True, False, True), 'true+vs': (True, False, False, True), 'true+spr+draw+vs': (True, True, True, True),
             # nut: first to act, who has more strong hands in place of the weak share; fdraw: a strong draw or not, on the turn's facing-a-bet table only
-            'true+spr+nut': (True, True, False, False, True, False), 'true+spr+fdraw': (True, True, False, False, False, True), 'true+spr+nut+fdraw': (True, True, False, False, True, True), 'true+spr+nut+fdraw+vs': (True, True, False, True, True, True)}
+            'true+spr+nut': (True, True, False, False, True, False), 'true+spr+fdraw': (True, True, False, False, False, True), 'true+spr+nut+fdraw': (True, True, False, False, True, True), 'true+spr+nut+fdraw+vs': (True, True, False, True, True, True),
+            # top: in place of the weak share, the hand's equity against the strongest third of his range (three bands), on both streets
+            'true+spr+top': (True, True, False, False, False, False, True), 'true+spr+top+fdraw': (True, True, False, False, False, True, True)}
 def eq_store(sp):
     """The unrestricted solve's strategies for a spot (both players), solved once and kept on disk: the 'sound opponent' whose ranges the tables may assume."""
     if hasattr(sp, '_eq'): return sp._eq
