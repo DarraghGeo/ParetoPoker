@@ -358,7 +358,13 @@ for (let done = 0; done < +count;) {
             const view = solved.strategyAt(id, bIndex); const at = new Int32Array(N).fill(-1); Array.from(view.combos).forEach((c, i) => { at[c] = i; }); const sb = mineH.map((h) => (at[h.c] >= 0 ? 1 - view.probs[at[h.c] * k + xi] : 0));
             let target = 0; mineH.forEach((h, i) => { target += h.weight * (arm.subBet === 'hands' ? out[i][2] : sb[i]); }); const idx = mineH.map((h, i) => i); const give = (order, room) => { for (const i of order) { if (room <= 1e-12) break; const free = 1 - out[i][2]; const take = Math.min(free, room / mineH[i].weight); out[i] = [1 - out[i][2] - take, 0, out[i][2] + take]; room -= take * mineH[i].weight; } };
             mineH.forEach((h, i) => { out[i] = [1, 0, 0]; }); const down = [...idx].sort((x, y) => mineH[y].equity - mineH[x].equity);
-            if (arm.subBet === 'mixed') mineH.forEach((h, i) => { out[i] = [1 - sb[i], 0, sb[i]]; });
+            if (arm.subBet === 'gain') {       // the hands that gain most by betting against a textbook opponent: he continues with the strongest 1 / (1 + bet) of his range and folds the rest
+              const c = 1 / (1 + bet); let ht = 0; for (const x of F.order) ht += hs[x]; const top = new Float64Array(N); let room = c * ht;
+              for (const x of [...F.order].filter((y) => hs[y] > 0).sort((p, q) => he[q] - he[p])) { if (room <= 1e-12) break; const t = Math.min(hs[x], room); top[x] = t; room -= t; }
+              const eCont = equities(F, board, w, top, { eq: 'exact' }, dice[name])[0];
+              const gain = mineH.map((h) => { const ec = eCont[h.c]; const ef = Math.min(1, Math.max(0, (h.equity - c * ec) / (1 - c))); return (1 - c) * (1 - ef) + c * bet * (2 * ec - 1); });
+              give([...idx].sort((x, y) => gain[y] - gain[x]), target); }
+            else if (arm.subBet === 'mixed') mineH.forEach((h, i) => { out[i] = [1 - sb[i], 0, sb[i]]; });
             else if (arm.subBet === 'hands' || arm.subBet === 'pure') give([...idx].sort((x, y) => sb[y] - sb[x] || mineH[y].equity - mineH[x].equity), target);
             else if (arm.subBet === 'top') give(down, target); else { give(down, target * 2 / 3); give([...down].reverse(), target / 3); } }
           if (process.env.BETTING && toCall <= 0 && bi >= 0 && street === +(process.env.BETTING_STREET ?? 4) && reads) {      // BETTING=1: first to act, the engine's bets beside the solution's for the same hands, by equity band and decision
