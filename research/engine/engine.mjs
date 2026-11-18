@@ -65,7 +65,7 @@ function byCells(view, at, e, draw) {
 /**
  * view: { street 3|4|5, ip, toCall, size (the bet faced, or the bet on offer, in pots), raised (we already bet or raised this
  *         street), canRaise, deep (a single-raised pot), reads: { ahead, hisStrong, hisWeak, rangeEquity }, cells?, rules? }
- * hands: [{ equity, draw, weight }]; view.fillToDefence turns the balance rule on
+ * hands: [{ equity, draw, weight }]; view.fillToDefence turns the balance rule on (true, or a number that scales the minimum defence: 0.9, 1.1)
  * Returns for each hand [quiet, call, bet or raise], summing to 1.
  */
 export function decide(view, hands) {
@@ -74,7 +74,7 @@ export function decide(view, hands) {
     const solved = byCells(view, at, equity, draw); if (solved) return solved;
     const a = byRules(view, at, equity, draw); return [a === 0 ? 1 : 0, a === 1 ? 1 : 0, a === 2 ? 1 : 0];
   });
-  if (view.fillToDefence && at.kind !== 'first' && (view.ip || at.street === 'river')) fillToDefence(hands, out, 1 / (1 + at.size));
+  if (view.fillToDefence && at.kind !== 'first' && (view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
   return out;
 }
 
