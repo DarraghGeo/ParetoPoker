@@ -4,7 +4,9 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 
 | shared tables | flops solved on | scoring flops | OOP: mean | median | worst | IP: mean | median | worst | both |
 |---|---|---|---|---|---|---|---|---|---|
+| adv+pot-bal | 24 | 20 | 10.9 | 10.7 | 13.9 | 8.7 | 7.9 | 15.4 | 9.8 |
 | bal | 24 | 20 | 11.8 | 11.3 | 16.7 | 9.2 | 8.6 | 14.8 | 10.5 |
+| fdraw+pot-bal | 24 | 20 | 11.4 | 10.7 | 15.5 | 8.4 | 7.9 | 14.9 | 9.9 |
 | place, strongest third, depth | 6 | 5 | 12.5 | 10.6 | 18.4 | 13.0 | 11.9 | 22.8 | 12.7 |
 | place, strongest third, depth | 12 | 20 | 11.4 | 11.1 | 16.6 | 10.0 | 7.9 | 18.2 | 10.7 |
 | pot-bal | 24 | 20 | 10.9 | 10.4 | 14.3 | 8.5 | 8.0 | 14.2 | 9.7 |
