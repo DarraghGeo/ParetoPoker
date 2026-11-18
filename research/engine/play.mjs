@@ -16,6 +16,10 @@ import { decide, readSpot } from './engine.mjs';
 //   Arms: rules (exact equity), read (equity read off the chart), cells (the solved answers by equity band, rules where they have none), noisy (exact equity up to 10 points off).
 const CELLS = process.env.CELLS ? JSON.parse(readFileSync(process.env.CELLS, 'utf8')) : null;
 let ENGINE_ARMS = CELLS ? { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, cells: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 }, rulesFill: { rule: 'engine', eq: 'exact', fill: true } } : { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, rulesFill: { rule: 'engine', eq: 'exact', fill: true }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 } };
+if (process.env.WHERE) {   // WHERE=1: the engine at one kind of decision at a time, the solution's play elsewhere, to find where a perfect answer makes its gain
+  const base = { rule: 'engine', eq: 'exact', fill: 0.9 }; for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k];
+  Object.assign(ENGINE_ARMS, { all: base, betFlop: { ...base, only: (st, facing) => st === 3 && !facing }, betTurn: { ...base, only: (st, facing) => st === 4 && !facing }, betRiver: { ...base, only: (st, facing) => st === 5 && !facing },
+    faceFlop: { ...base, only: (st, facing) => st === 3 && facing }, faceTurn: { ...base, only: (st, facing) => st === 4 && facing }, faceRiver: { ...base, only: (st, facing) => st === 5 && facing } }); }
 if (process.env.FILLS) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; for (const x of process.env.FILLS.split(',')) ENGINE_ARMS[`fill${x.endsWith('a') ? 'All' : ''}${Math.round(100 * parseFloat(x))}`] = { rule: 'engine', eq: 'exact', fill: parseFloat(x), everywhere: x.endsWith('a') }; }   // 1a: out of position before the river as well   // FILLS=0.9,1,1.1: the balance rule at these multiples of the minimum defence
 
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
@@ -276,7 +280,12 @@ for (let done = 0; done < +count;) {
           if (toCall <= 0 && b1 >= 0) { tally[name][street - 3][0] += t; tally[name][street - 3][1] += all; }
           return P; }
         if (ARMS[name].rule === 'engine') {
-          const arm = ARMS[name]; let raised = false; for (let at = n; at.parent >= 0 && nodes[at.parent].kind !== 'chance'; at = nodes[at.parent]) { const par = nodes[at.parent]; if (seatOf(par) === seat && ['bet', 'raise', 'allin'].includes(par.edges[at.via].kind)) raised = true; }
+          const arm = ARMS[name];
+          if (arm.only && !arm.only(street, toCall > 0)) {      // the solution's own play where this arm leaves the engine out
+            const view = solved.strategyAt(id, bIndex); const at = new Int32Array(N).fill(-1); Array.from(view.combos).forEach((c, i) => { at[c] = i; });
+            for (const c of F.order) { if (at[c] >= 0) for (let a = 0; a < k; a++) P[c * k + a] = view.probs[at[c] * k + a]; else P[c * k + (toCall > 0 ? (fi >= 0 ? fi : ci) : xi)] = 1; }
+            return P; }
+          let raised = false; for (let at = n; at.parent >= 0 && nodes[at.parent].kind !== 'chance'; at = nodes[at.parent]) { const par = nodes[at.parent]; if (seatOf(par) === seat && ['bet', 'raise', 'allin'].includes(par.edges[at.via].kind)) raised = true; }
           const bet = bi >= 0 ? (nodes[n.edges[bi].child].invested[seat] - n.invested[seat]) / n.pot : 0; const quiet = toCall > 0 ? (fi >= 0 ? fi : ci) : xi;
           let hs = his; if (arm.versus === 'start') { hs = Float64Array.from(start[1 - hero]); for (let c = 0; c < N; c++) if (board.includes(CA(c)) || board.includes(CB(c))) hs[c] = 0; }
           const [e, he] = equities(F, board, w, hs, arm, dice[name]); const mineH = [], hisH = [];

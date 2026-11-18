@@ -4,6 +4,7 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 
 | shared tables | flops solved on | scoring flops | OOP: mean | median | worst | IP: mean | median | worst | both |
 |---|---|---|---|---|---|---|---|---|---|
+| adv+eq+pot-bal | 24 | 20 | 19.7 | 20.7 | 32.4 | 19.1 | 20.4 | 26.5 | 19.4 |
 | adv+pot-bal | 24 | 20 | 10.9 | 10.7 | 13.9 | 8.7 | 7.9 | 15.4 | 9.8 |
 | bal | 24 | 20 | 11.8 | 11.3 | 16.7 | 9.2 | 8.6 | 14.8 | 10.5 |
 | fdraw+pot-bal | 24 | 20 | 11.4 | 10.7 | 15.5 | 8.4 | 7.9 | 14.9 | 9.9 |
