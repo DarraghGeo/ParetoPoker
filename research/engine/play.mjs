@@ -291,7 +291,7 @@ for (let done = 0; done < +count;) {
     const runs = process.env.NODECOMP ? Object.fromEntries(NAMES.map((n) => [n, fresh()])) : { ...Object.fromEntries(NAMES.map((n) => [n, fresh()])), flop: fresh(), flopTurn: fresh() }; const W = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, writer(r)]));
     const dice = Object.fromEntries(NAMES.map((n, i) => { let s = (977 * (i + 1) + done * 31 + hero) >>> 0; return [n, () => { s = (s + 0x6d2b79f5) >>> 0; let t = s; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }]; }));
     const tally = Object.fromEntries(NAMES.map((n) => [n, [[0, 0], [0, 0], [0, 0]]])); const sol = [[0, 0], [0, 0], [0, 0]];
-    const walk = (id, board, bIndex, F, mine, his) => {
+    const startRange = {}; const walk = (id, board, bIndex, F, mine, his) => {
       const n = nodes[id];
       if (n.kind === 'chance') {
         const next = board.length - 2; const w = R.width[next];
@@ -345,7 +345,12 @@ for (let done = 0; done < +count;) {
             const view = solved.strategyAt(id, bIndex); const at = new Int32Array(N).fill(-1); Array.from(view.combos).forEach((c, i) => { at[c] = i; }); let ht = 0; for (const c of F.order) ht += his[c];
             const size = toCall / (n.pot - toCall); const key = `${seat === 1 ? 'ip' : 'oop'} ${raised ? 'facing a raise' : 'facing a bet'}`; const D = (FACE[key] ??= { bands: Array.from({ length: 6 }, () => [0, 0, 0, 0, 0, 0, 0]), w: 0, mdf: 0, price: 0 });
             mineH.forEach((h, i) => { if (at[h.c] < 0) return; const wt = h.weight * ht; const b = h.equity < 0.2 ? 0 : h.equity < 0.35 ? 1 : h.equity < 0.5 ? 2 : h.equity < 0.65 ? 3 : h.equity < 0.8 ? 4 : 5; const sp = (a) => (a >= 0 ? view.probs[at[h.c] * k + a] : 0); const row = D.bands[b];
-              row[0] += wt; row[1] += wt * out[i][0]; row[2] += wt * sp(fi); row[3] += wt * out[i][2]; row[4] += wt * sp(ri); row[5] += wt * (h.draw ? 1 : 0); row[6] += wt * (h.draw ? sp(fi) : 0); D.w += wt; D.mdf += wt / (1 + size); D.price += wt * size / (1 + 2 * size); }); }
+              row[0] += wt; row[1] += wt * out[i][0]; row[2] += wt * sp(fi); row[3] += wt * out[i][2]; row[4] += wt * sp(ri); row[5] += wt * (h.draw ? 1 : 0); row[6] += wt * (h.draw ? sp(fi) : 0); D.w += wt; D.mdf += wt / (1 + size); D.price += wt * size / (1 + 2 * size); });
+            if (process.env.FACING_NODES) {      // one record a decision: what the solution continues with over the engine's range there, beside what a player could read
+              const price = size / (1 + 2 * size); let w0 = 0, eng = 0, sol = 0, eq = 0, over = 0, over10 = 0, half = 0, strong = 0, weak = 0, dr = 0; const line = []; for (let a2 = n; a2.parent >= 0; a2 = nodes[a2.parent]) { const par = nodes[a2.parent]; line.unshift(par.kind === 'chance' ? '|' : par.edges[a2.via].kind[0]); }
+              mineH.forEach((h, i) => { if (at[h.c] < 0) return; const x = h.weight; w0 += x; eng += x * (1 - out[i][0]); sol += x * (1 - (fi >= 0 ? view.probs[at[h.c] * k + fi] : 0)); eq += x * h.equity; if (h.equity >= price) over += x; if (h.equity >= price + 0.1) over10 += x; if (h.equity >= 0.5) half += x; if (h.equity >= 0.8) strong += x; if (h.equity < 0.2) weak += x; if (h.draw) dr += x; });
+              let start = 0; for (const c of F.order) start += startRange[c] ?? 0;
+              if (w0 > 0) (D.nodes ??= []).push({ line: line.join(''), card: board[board.length - 1], rank: RK[board[board.length - 1]], suit: SU[board[board.length - 1]], size: +size.toFixed(2), reach: w0 * ht, eng: eng / w0, sol: sol / w0, eq: eq / w0, over: over / w0, over10: over10 / w0, half: half / w0, strong: strong / w0, weak: weak / w0, draws: dr / w0, his: ht }); } }
           mineH.forEach((h, i) => { const [q, cl, ag] = out[i]; const c = h.c;
             if (toCall > 0) { P[c * k + quiet] += q; P[c * k + ci] += cl; P[c * k + (ri >= 0 ? ri : ci)] += ag; }
             else { P[c * k + xi] += q + cl; P[c * k + (bi >= 0 ? bi : xi)] += ag; if (bi >= 0) { t += h.weight * ag; all += h.weight; } } });
