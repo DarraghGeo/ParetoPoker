@@ -43,6 +43,7 @@ function byRules(view, at, e, draw) {
     if (size > 1) over += R.callOverOverbet;
     const raiseFrom = size > 1 ? R.riverRaiseFromOverbet : R.riverRaiseFrom;
     if (street === 'river' && canRaise && !raised && e >= raiseFrom) return 2;
+    if (street !== 'river' && canRaise && !raised && R.earlyRaiseFrom?.[street] !== undefined && e >= R.earlyRaiseFrom[street]) return 2;   // raising before the river, where asked
     return e >= at.price + over ? 1 : 0;
   }
   if (street === 'flop' && ip && R.flopIpFrom !== undefined) return e >= R.flopIpFrom || draw ? 2 : 0;      // in position on the flop: a threshold in place of betting everything
@@ -78,6 +79,7 @@ export function decide(view, hands) {
   if (at.kind === 'first' && at.street === 'flop' && view.ip && view.flopBalance) balanceTurnBets(hands, out, at.size, view.flopBalance);
   if (at.kind === 'first' && at.street === 'turn' && view.turnBalance) balanceTurnBets(hands, out, at.size, view.turnBalance);
   if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).valueFrom(at.size));
+  if (at.kind === 'facing a bet' && at.street !== 'river' && view.canRaise && view.raiseDraws?.[at.street]) hands.forEach((h, i) => { if (!h.draw) return; const o = out[i]; const move = view.raiseDraws[at.street] * (o[0] + o[1]); const fromFold = Math.min(o[0], move); o[0] -= fromFold; o[1] -= move - fromFold; o[2] += move; });   // strong draws raise this share of the time
   if (view.fillToDefence && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
   return out;
 }
