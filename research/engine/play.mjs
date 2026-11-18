@@ -10,7 +10,7 @@ import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { PRESETS } from '../../web/lib/study/presets.js';
 import { readFileSync } from 'node:fs';
-import { decide, readSpot } from './engine.mjs';
+import { decide, readSpot, RULES } from './engine.mjs';
 // The engine (engine.mjs) played over the whole hand in one seat, the solution in the other: what it gives up, and what a perfect answer wins against it.
 //   ARMS=engine TREE=raise [CELLS=<solved tables json>] node research/engine/play.mjs [spots] [seed]   -> out/play-engine.jsonl
 //   Arms: rules (exact equity), read (equity read off the chart), cells (the solved answers by equity band, rules where they have none), noisy (exact equity up to 10 points off).
@@ -20,6 +20,10 @@ if (process.env.WHERE) {   // WHERE=1: the engine at one kind of decision at a t
   const base = { rule: 'engine', eq: 'exact', fill: 0.9 }; for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k];
   Object.assign(ENGINE_ARMS, { all: base, betFlop: { ...base, only: (st, facing) => st === 3 && !facing }, betTurn: { ...base, only: (st, facing) => st === 4 && !facing }, betRiver: { ...base, only: (st, facing) => st === 5 && !facing },
     faceFlop: { ...base, only: (st, facing) => st === 3 && facing }, faceTurn: { ...base, only: (st, facing) => st === 4 && facing }, faceRiver: { ...base, only: (st, facing) => st === 5 && facing } }); }
+if (process.env.TURN) {    // TURN=1: versions of the turn betting rule, the engine at turn bets only and the solution's play elsewhere
+  const base = { rule: 'engine', eq: 'exact', fill: 0.9, only: (st, facing) => st === 4 && !facing }; for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k];
+  Object.assign(ENGINE_ARMS, process.env.TURN === '2' ? { value65: { ...base, turnFrom: 0.65 }, value65check25: { ...base, turn: { check: 0.25 }, turnFrom: 0.65 }, value75: { ...base, turnFrom: 0.75 }, value75check25: { ...base, turn: { check: 0.25 }, turnFrom: 0.75 }, value75bluff1: { ...base, turn: { ratio: 1 }, turnFrom: 0.75 }, check50: { ...base, turn: { check: 0.5 } } }
+    : { plain: base, bluff1: { ...base, turn: { ratio: 1 } }, bluff2: { ...base, turn: { ratio: 2 } }, bluff1check25: { ...base, turn: { ratio: 1, check: 0.25 } }, value65bluff1: { ...base, turn: { ratio: 1 }, turnFrom: 0.65 }, value65bluff2: { ...base, turn: { ratio: 2 }, turnFrom: 0.65 } }); }
 if (process.env.FILLS) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; for (const x of process.env.FILLS.split(',')) ENGINE_ARMS[`fill${x.endsWith('a') ? 'All' : ''}${Math.round(100 * parseFloat(x))}`] = { rule: 'engine', eq: 'exact', fill: parseFloat(x), everywhere: x.endsWith('a') }; }   // 1a: out of position before the river as well   // FILLS=0.9,1,1.1: the balance rule at these multiples of the minimum defence
 
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
@@ -291,7 +295,7 @@ for (let done = 0; done < +count;) {
           const [e, he] = equities(F, board, w, hs, arm, dice[name]); const mineH = [], hisH = [];
           for (const c of F.order) { if (w[c] > 0) mineH.push({ c, weight: w[c], equity: e[c], draw: F.come[c] >= 8, topPairPlus: F.lv[c] >= 4 }); else P[c * k + quiet] = 1; if (hs[c] > 0) hisH.push({ weight: hs[c], equity: he[c], topPairPlus: F.lv[c] >= 4 }); }
           const reads = readSpot(mineH, hisH); let t = 0, all = 0;
-          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null, fillToDefence: arm.fill ?? false, fillEverywhere: !!arm.everywhere }, mineH) : mineH.map(() => [1, 0, 0]);
+          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null, turnBalance: arm.turn ?? null, rules: arm.turnFrom ? { ...RULES, turnBetFrom: arm.turnFrom } : undefined, fillToDefence: arm.fill ?? false, fillEverywhere: !!arm.everywhere }, mineH) : mineH.map(() => [1, 0, 0]);
           mineH.forEach((h, i) => { const [q, cl, ag] = out[i]; const c = h.c;
             if (toCall > 0) { P[c * k + quiet] += q; P[c * k + ci] += cl; P[c * k + (ri >= 0 ? ri : ci)] += ag; }
             else { P[c * k + xi] += q + cl; P[c * k + (bi >= 0 ? bi : xi)] += ag; if (bi >= 0) { t += h.weight * ag; all += h.weight; } } });

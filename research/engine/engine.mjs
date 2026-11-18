@@ -74,10 +74,19 @@ export function decide(view, hands) {
     const solved = byCells(view, at, equity, draw); if (solved) return solved;
     const a = byRules(view, at, equity, draw); return [a === 0 ? 1 : 0, a === 1 ? 1 : 0, a === 2 ? 1 : 0];
   });
+  if (at.kind === 'first' && at.street === 'turn' && view.turnBalance) balanceTurnBets(hands, out, at.size, view.turnBalance);
   if (view.fillToDefence && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
   return out;
 }
 
+/** Balance when betting the turn: the hands that bet keep back a share to check (`check`), and the weakest hands that would
+ *  check bet as bluffs, `ratio` x bet / (1 + bet) of a bluff for each bet made. */
+function balanceTurnBets(hands, out, size, { ratio = 0, check = 0 }) {
+  let betting = 0; hands.forEach((h, i) => { if (out[i][2] > 0) { const keep = out[i][2] * check; out[i][2] -= keep; out[i][0] += keep; betting += h.weight * out[i][2]; } });
+  let room = ratio * (size / (1 + size)) * betting;
+  const order = hands.map((h, i) => i).filter((i) => out[i][0] === 1).sort((x, y) => hands[x].equity - hands[y].equity);
+  for (const i of order) { if (room <= 1e-9) break; const take = Math.min(1, room / hands[i].weight); out[i][0] -= take; out[i][2] += take; room -= take * hands[i].weight; }
+}
 /** Balance when facing a bet or raise: if the range continues less than the minimum defence, 1 / (1 + bet), the next-best
  *  hands by equity call until it does. In position on any street, and on the river in either seat. */
 function fillToDefence(hands, out, defence) {
