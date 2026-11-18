@@ -28,6 +28,10 @@ if (process.env.RIVER) {   // RIVER=1: versions of the river betting rule, the e
   const base = { rule: 'engine', eq: 'exact', fill: 0.9, only: (st, facing) => st === 5 && !facing }; for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k];
   Object.assign(ENGINE_ARMS, process.env.RIVER === '2' ? JSON.parse(process.env.RIVER_ARMS).reduce((o, [n, river, extra]) => ({ ...o, [n]: { ...base, river, ...extra } }), {})
     : { plain: base, check25: { ...base, river: { check: 0.25 } }, check50: { ...base, river: { check: 0.5 } }, noBluffs: { ...base, river: { ratio: 0 } }, ratio1: { ...base, river: { ratio: 1 } }, ratio1check25: { ...base, river: { ratio: 1, check: 0.25 } }, value85: { ...base, valueUp: 0.05 } }); }
+if (process.env.COMBO) {   // COMBO=1: the rules as they were (with the defence fill) against the rules with every fix found so far
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const before = { rule: 'engine', eq: 'exact', fill: 0.9 };
+  const after = { ...before, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  Object.assign(ENGINE_ARMS, { before, after, plain: { rule: 'engine', eq: 'exact' }, afterNoisy: { ...after, noise: 0.1 } }); }
 if (process.env.FILLS) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; for (const x of process.env.FILLS.split(',')) ENGINE_ARMS[`fill${x.endsWith('a') ? 'All' : ''}${Math.round(100 * parseFloat(x))}`] = { rule: 'engine', eq: 'exact', fill: parseFloat(x), everywhere: x.endsWith('a') }; }   // 1a: out of position before the river as well   // FILLS=0.9,1,1.1: the balance rule at these multiples of the minimum defence
 
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
@@ -299,7 +303,8 @@ for (let done = 0; done < +count;) {
           const [e, he] = equities(F, board, w, hs, arm, dice[name]); const mineH = [], hisH = [];
           for (const c of F.order) { if (w[c] > 0) mineH.push({ c, weight: w[c], equity: e[c], draw: F.come[c] >= 8, topPairPlus: F.lv[c] >= 4 }); else P[c * k + quiet] = 1; if (hs[c] > 0) hisH.push({ weight: hs[c], equity: he[c], topPairPlus: F.lv[c] >= 4 }); }
           const reads = readSpot(mineH, hisH); let t = 0, all = 0;
-          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null, turnBalance: arm.turn ?? null, riverBalance: arm.river ?? null, rules: arm.turnFrom || arm.valueUp ? { ...RULES, turnBetFrom: arm.turnFrom ?? RULES.turnBetFrom, valueFrom: (x) => RULES.valueFrom(x) + (arm.valueUp ?? 0) } : undefined, fillToDefence: arm.fill ?? false, fillEverywhere: !!arm.everywhere }, mineH) : mineH.map(() => [1, 0, 0]);
+          const tb = arm.turnBySeat?.[seat === 1 ? 'ip' : 'oop']; const turnFrom = tb?.from ?? arm.turnFrom;
+          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null, turnBalance: tb ? { check: tb.check } : arm.turn ?? null, riverBalance: arm.river ?? null, rules: turnFrom || arm.valueUp ? { ...RULES, turnBetFrom: turnFrom ?? RULES.turnBetFrom, valueFrom: (x) => RULES.valueFrom(x) + (arm.valueUp ?? 0) } : undefined, fillToDefence: arm.fill ?? false, fillEverywhere: !!arm.everywhere }, mineH) : mineH.map(() => [1, 0, 0]);
           mineH.forEach((h, i) => { const [q, cl, ag] = out[i]; const c = h.c;
             if (toCall > 0) { P[c * k + quiet] += q; P[c * k + ci] += cl; P[c * k + (ri >= 0 ? ri : ci)] += ag; }
             else { P[c * k + xi] += q + cl; P[c * k + (bi >= 0 ? bi : xi)] += ag; if (bi >= 0) { t += h.weight * ag; all += h.weight; } } });
@@ -322,7 +327,7 @@ for (let done = 0; done < +count;) {
     };
     const b0 = Array.from(spot.board); walk(0, b0, 0, facts(b0), NAMES.map(() => start[hero]), start[1 - hero]);
     const lossOf = (r) => +(100 * (solved.ev(hero) - r.snapshot().ev(hero)) / pot - noise[hero]).toFixed(3); const side = hero ? 'ip' : 'oop';
-    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries((process.env.ARMS === 'engine' ? NAMES.filter((x) => !['read', 'noisy'].includes(x)) : [NAMES[0], NAMES[2]]).filter(Boolean).map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
+    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries((process.env.ARMS === 'engine' ? NAMES.filter((x) => !['read', 'noisy', 'afterNoisy'].includes(x)) : [NAMES[0], NAMES[2]]).filter(Boolean).map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
     row.freq[side] = { solution: sol.map(([t, all]) => +(t / (all || 1)).toFixed(3)), ...Object.fromEntries(NAMES.map((n) => [n, tally[n].map(([t, all]) => +(t / (all || 1)).toFixed(3))])) };
   }
   row.seconds = Math.round((Date.now() - t0) / 1000); appendFileSync(out, JSON.stringify(row) + '\n');
