@@ -45,6 +45,7 @@ function byRules(view, at, e, draw) {
     if (street === 'river' && canRaise && !raised && e >= raiseFrom) return 2;
     return e >= at.price + over ? 1 : 0;
   }
+  if (street === 'flop' && ip && R.flopIpFrom !== undefined) return e >= R.flopIpFrom || draw ? 2 : 0;      // in position on the flop: a threshold in place of betting everything
   if (street === 'flop') return ip || (reads.ahead && (e >= R.flopOopValue || draw)) ? 2 : 0;
   if (street === 'turn') return e >= R.turnBetFrom || draw ? 2 : 0;
   if (!ip && reads.hisStrong >= R.checkAllIfHisStrong) return 0;
@@ -74,13 +75,14 @@ export function decide(view, hands) {
     const solved = byCells(view, at, equity, draw); if (solved) return solved;
     const a = byRules(view, at, equity, draw); return [a === 0 ? 1 : 0, a === 1 ? 1 : 0, a === 2 ? 1 : 0];
   });
+  if (at.kind === 'first' && at.street === 'flop' && view.ip && view.flopBalance) balanceTurnBets(hands, out, at.size, view.flopBalance);
   if (at.kind === 'first' && at.street === 'turn' && view.turnBalance) balanceTurnBets(hands, out, at.size, view.turnBalance);
   if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).valueFrom(at.size));
   if (view.fillToDefence && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
   return out;
 }
 
-/** Balance when betting the turn: the hands that bet keep back a share to check (`check`), and the weakest hands that would
+/** Balance when betting the turn (and, where asked, in position on the flop): the hands that bet keep back a share to check (`check`), and the weakest hands that would
  *  check bet as bluffs, `ratio` x bet / (1 + bet) of a bluff for each bet made. */
 function balanceTurnBets(hands, out, size, { ratio = 0, check = 0 }) {
   let betting = 0; hands.forEach((h, i) => { if (out[i][2] > 0) { const keep = out[i][2] * check; out[i][2] -= keep; out[i][0] += keep; betting += h.weight * out[i][2]; } });
