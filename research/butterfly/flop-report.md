@@ -1,6 +1,6 @@
 # The flop runs together (20 scoring flops with the game's value known)
 
-Exploitability over the whole hand from the flop, percent of the pot as the flop starts. One bet size and one raise a street; each flop on a sample of turn and river cards.
+Exploitability over the whole hand from the flop, percent of the pot as the flop starts. One bet size and one raise a street; each flop on a sample of 4 turn cards with 5 river cards each.
 
 | shared tables | flops solved on | scoring flops | OOP: mean | median | worst | IP: mean | median | worst | both |
 |---|---|---|---|---|---|---|---|---|---|
@@ -23,7 +23,7 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 | 7h Kc Ad | 3BP-SB-BU | 3.9 | 61% | 13.2 | 6.3 | - | - |
 | 7d 4s Ts | SRP-BB-BU | 17.7 | 48% | 7.3 | 11.2 | - | - |
 | 3h 3d 4c | 3BP-SB-BU | 3.9 | 52% | 6.6 | 11.6 | - | - |
-| 7s 6d 6c | SRP-BB-CO | 17.7 | 48% | 10.5 | 7.7 | - | - |
+| 7s 6d 6c | SRP-BB-CO | 17.7 | 48% | 10.5 | 7.7 | 11.8 | 9.0 |
 | Ks Jc 3h | SRP-BB-BU | 17.7 | 44% | 9.5 | 8.6 | 5.3 | 7.9 |
 | 4c Qs Jh | SRP-BB-CO | 17.7 | 44% | 6.5 | 10.1 | - | - |
 | 6c Td Qd | SRP-BB-CO | 17.7 | 46% | 16.1 | 0.2 | - | - |
@@ -33,7 +33,7 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 | Ah 4h Jc | SRP-BB-BU | 17.7 | 46% | 10.5 | 2.2 | - | - |
 | 2d 7h 6s | SRP-BB-UTG | 17.7 | 51% | 12.6 | -0.4 | - | - |
 
-On the 9 flops also solved alone: alone 7.4 / 7.1, shared 11.6 / 12.3.
+On the 10 flops also solved alone: alone 7.8 / 7.3, shared 11.5 / 11.8.
 
 ## What goes with a high figure
 

@@ -8,7 +8,7 @@ import { gunzipSync } from 'node:zlib';
 import { fs } from '../proof/lib.mjs';
 import { bothEquities } from '../../src/solver/equity.js';
 const [set = 'fullhand', out = 'store.jsonl', from = '0', to = '9999'] = process.argv.slice(2);
-const DIR = `/home/user/poker-huerosolver/bench/solves/${set === 'fullhand' ? 'fullhand' : set === 'turn-real' ? 'handselector-turn' : 'handselector-river-real'}/`;   // turn-real: the turn spots built from the flop library's street ends
+const DIR = `${process.env.HUERO || '/home/user/poker-huerosolver'}/bench/solves/${set === 'fullhand' ? 'fullhand' : set === 'turn-real' ? 'handselector-turn' : 'handselector-river-real'}/`;   // turn-real: the turn spots built from the flop library's street ends
 const N = fs.COMBOS; const CARD = new Map(); for (let c = 0; c < 52; c++) CARD.set(fs.formatCards([c]).trim(), c);
 const COMBO = new Map(); for (let c = 0; c < N; c++) { const a = fs.COMBO_CARDS[2 * c], b = fs.COMBO_CARDS[2 * c + 1]; COMBO.set(a * 52 + b, c); COMBO.set(b * 52 + a, c); }
 const cardsOf = (t) => { const o = []; const s = t.replace(/\s/g, ''); for (let i = 0; i < s.length; i += 2) o.push(CARD.get(s.slice(i, i + 2))); return o; };

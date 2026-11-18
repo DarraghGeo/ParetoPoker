@@ -6,3 +6,4 @@ cache-v-decisions.json
 exploit.jsonl
 restricted-tables.json
 guide/river-*.html
+__pycache__/
