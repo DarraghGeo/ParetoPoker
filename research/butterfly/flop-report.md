@@ -7,6 +7,7 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 | bal | 24 | 20 | 11.4 | 10.9 | 19.7 | 9.3 | 9.3 | 17.4 | 10.3 |
 | place, strongest third, depth | 6 | 5 | 12.2 | 11.3 | 16.4 | 13.5 | 13.6 | 21.3 | 12.8 |
 | place, strongest third, depth | 12 | 20 | 10.6 | 10.5 | 17.5 | 9.5 | 9.4 | 22.9 | 10.1 |
+| pot-bal | 24 | 20 | 11.6 | 11.2 | 20.6 | 7.7 | 8.2 | 11.4 | 9.7 |
 
 ## Flop by flop (shared tables solved on 12 flops: place, strongest third, depth)
 

@@ -9,7 +9,7 @@
 # Flops: poker-huerosolver's full hands (store.mjs fullhand, the flop roots), solved on some, scored on others.
 #   STORE=<dir> python3 research/butterfly/restricted_flop.py <job> [rounds] [flops to solve on] [flops to score on]
 #     job: check (one flop, both players free: does it settle?) | base (the game's value on the scoring flops) | <seat 0/1> | alone
-import os, sys, json, re, time, warnings, glob
+import os, sys, json, re, time, warnings, glob, zlib
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']
 _src = open(os.path.join(HERE, 'restricted_turn.py')).read(); exec(_src[_src.index('RANKS = '):_src.index('def street(')].replace("HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']; ", ''))     # RANKS, DECK, score7, has_draw, EDGES
@@ -36,7 +36,7 @@ class Flop:
         self.name = d['spot']; self.board = d['board'].split(); self.P0 = d['pot']; self.S = d['behind']; two = lambda h: (h[:2], h[2:])
         cut = lambda xs: [x for x in xs if x[1] >= MINW * max(y[1] for y in xs)]; hs = cut([(h['h'], h['w']) for h in d['hands']]); vs = cut([(x[0], x[1]) for x in d['vr']])
         self.hands = [[h for h, _ in hs], [h for h, _ in vs]]; self.w = [np.array([x for _, x in hs], np.float32), np.array([x for _, x in vs], np.float32)]; n0, n1 = len(hs), len(vs)
-        rng = np.random.default_rng(abs(hash(self.name)) % (2 ** 31) + seed); free = [c for c in DECK if c not in self.board]; self.tc = list(rng.choice(free, K, replace=False)); self.rc = [list(rng.choice([c for c in free if c != t], M, replace=False)) for t in self.tc]
+        rng = np.random.default_rng(zlib.crc32(self.name.encode()) + seed); free = [c for c in DECK if c not in self.board]; self.tc = list(rng.choice(free, K, replace=False)); self.rc = [list(rng.choice([c for c in free if c != t], M, replace=False)) for t in self.tc]
         V0 = np.array([[not (set(two(a)) & set(two(b))) for b in self.hands[1]] for a in self.hands[0]], np.float32); self.V0 = V0
         self.At = [np.array([[t not in two(h) for h in self.hands[p]] for t in self.tc], np.float32) for p in (0, 1)]                                       # (K, n)
         self.Ar = [np.array([[[t not in two(h) and r not in two(h) for h in self.hands[p]] for r in self.rc[k]] for k, t in enumerate(self.tc)], np.float32) for p in (0, 1)]     # (K, M, n)
@@ -221,6 +221,7 @@ if __name__ == '__main__':
             reply, value = equilibrium(Flop(d), rounds); res[d['spot']] = reply; json.dump(res, open(f, 'w')); print(f"  {d['spot']} {[round(x, 1) for x in reply]} exploitable for {[round(a_ - b_, 2) for a_, b_ in zip(reply, value)]} {time.time() - t0:.0f} s", file=log, flush=True)
     elif job.startswith('score'):                    # score:<seat>:<flops solved on>: the saved tables on every scoring flop the game's value is known for
         _, hero, ntr = job.split(':'); hero = int(hero); f = os.path.join(STORE, f'flop-{hero}-n{ntr}{CT}{TAGF}.json'); r = json.load(open(f)); base = load_base(); tab = {k: np.array(v) for k, v in r['tables'].items()}
+        if os.environ.get('RESCORE'): r['scored'] = {}
         for d in te:
             if d['spot'] in r['scored'] or d['spot'] not in base: continue
             sp = Flop(d); r['scored'][d['spot']] = 100 * sp.walk(1 - hero, lay(sp, hero, tab)[0], 'reply')[0] / sp.P0; json.dump(r, open(f, 'w')); print(f"  {d['spot']} {r['scored'][d['spot']] - base[d['spot']][hero]:.1f} {time.time() - t0:.0f} s", file=log, flush=True)
