@@ -132,7 +132,9 @@ def is_bet(kd, streets='FT'): return kd[0] in streets and ' facing ' in kd and '
 #   fdraw: facing a bet on the flop or turn, a strong draw or not; adv: first to act on the flop or turn, the range's equity (under 45%, 45-55%, over 55%)
 #   pot: every table by the pot before the flop (single-raised or 3-bet, read from the stacks behind as the flop starts)
 #   tilt: on the flop and turn, how the hand's equity is spread over the next card: flat, tilted up or tilted down
-CELLS = set(filter(None, os.environ.get('CELLS', '').split('+'))); BASE = 6 * 3 * ND
+CELLS = set(filter(None, os.environ.get('CELLS', '').split('+')))
+if 'nodepth' in CELLS: DEPTHS = []; ND = 1                 # nodepth: the tables without the stacks-behind column
+BASE = 6 * 3 * ND
 def n_cells(kd): return BASE * (2 if 'fdraw' in CELLS and is_bet(kd) else 1) * (3 if 'adv' in CELLS and is_first(kd) else 1) * (2 if 'pot' in CELLS else 1) * (3 if 'tilt' in CELLS and kd[0] in 'FT' else 1)
 def kind(node, hero, lvl): p, acts, inv, (bets, size) = node; return STREETS[lvl] + (' first' if inv[1 - hero] <= inv[hero] else f' facing {bet_name(lvl, size)}' if bets == 1 else f' facing {RNAME[bets - 2]}')
 def lay(sp, hero, tab):
