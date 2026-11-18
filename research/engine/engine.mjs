@@ -87,7 +87,8 @@ export function decide(view, hands) {
   if (exact && (!exact.seat || exact.seat === at.seat) && at.kind !== 'first' && (exact.raises || at.kind === 'facing a bet')) { let total = 0; hands.forEach((h) => { total += h.weight; }); const times = exact.times + (exact.perEquity ?? 0) * (view.reads.rangeEquity - (exact.around ?? 0.5)); let room = Math.max(0, Math.min(1, times / (1 + at.size))) * total;
     for (const i of hands.map((h, j) => j).sort((x, y) => hands[y].equity - hands[x].equity)) { const take = Math.max(0, Math.min(1, room / hands[i].weight)); const r = Math.min(out[i][2], take); out[i] = [1 - take, take - r, r]; room -= take * hands[i].weight; }
     return out; }
-  if (view.fillToDefence && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
+  const fill = view.fillBy?.[at.street]?.[at.seat] ?? (view.fillToDefence === true ? 1 : view.fillToDefence);     // fillBy: the multiple for one street and seat (0 turns the fill off there)
+  if (fill && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, fill / (1 + at.size)));
   return out;
 }
 
