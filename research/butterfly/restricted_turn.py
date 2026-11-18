@@ -291,6 +291,15 @@ if __name__ == '__main__':
                     a = {k: (st[k] if kind(sp.tn[k], h, 'T') == kd else v) for k, v in nt[h].items()}; b = {k: (sr[k] if kind(sp.rv[k[0]][k[1]], h, 'R') == kd else v) for k, v in nr[h].items()}; row[h][kd] = g(a, b)
             res[d['spot']] = row; print(f"  {d['spot']} {[round(row[h]['tables'], 1) for h in (0, 1)]} {time.time() - t0:.0f} s", file=log, flush=True)
         json.dump(res, open(os.path.join(STORE, f'turn-ablate-{var}.json'), 'w'))
+    elif job.startswith('floor'):                    # one deep spot solved alone for many rounds: does the figure keep falling, and does a version of the cells lower it? floor:<variant>
+        order = sorted(te, key=lambda d: d['behind'] / d['pot']); d0 = order[len(order) // 2]; var = job.split(':')[1]; OPT = VARIANTS[var]; sp = Turn(d0); vals = equilibrium(sp, 600); out = {}
+        for h in (0, 1):
+            best = []; tab = None
+            for stage in (300, 600, 1200, 2400):           # each stage a fresh solve of that many rounds
+                if stage > rounds: break
+                tab = solve([sp], h, stage, OPT); best.append((stage, 100 * sp.walk(1 - h, *lay(sp, h, tab, OPT)[:2], 'reply')[0] / sp.P0 - vals[h])); print(f"  {var} seat {h}: {[(a_, round(b_, 1)) for a_, b_ in best]} | {time.time() - t0:.0f} s", file=log, flush=True)
+            out[h] = best
+        json.dump(out, open(os.path.join(STORE, f"turn-floor-{var}{'-b20' if NB == 20 else ''}.json"), 'w'))
     elif job.startswith('poolcheck'):                # is sharing a table costly even across near-identical spots? poolcheck:<cards|depths|flops>
         import copy
         what = job.split(':')[1]; order = sorted(te, key=lambda d: d['behind'] / d['pot']); d0 = order[len(order) // 2]; OPT = VARIANTS[os.environ.get('VAR', 'true+spr')]; flop = d0['board'].split()[:3]; ds = []
