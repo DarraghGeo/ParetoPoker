@@ -14,6 +14,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']
 _src = open(os.path.join(HERE, 'restricted_turn.py')).read(); exec(_src[_src.index('RANKS = '):_src.index('def street(')].replace("HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']; ", ''))     # RANKS, DECK, score7, has_draw, EDGES
 exec(_src[_src.index('def place_rows('):_src.index('def lay(')])
+_an = open(os.path.join(HERE, 'analyse.py')).read(); exec(_an[_an.index('def cards(text)'):_an.index('def mono(')])       # cards, straight_top, row_of: the eight hand rows of the chart
 RANKS = '23456789TJQKA'; DECK = [r + s for r in RANKS for s in 'cdhs']; K = int(os.environ.get('K', 5)); M = int(os.environ.get('M', 6)); BETS = [[float(x) for x in st.split(',')] for st in os.environ.get('SIZES', '0.33|0.75|0.75').split('|')]; RAISES = int(os.environ.get('RAISES', 1)); DEPTHS = [1.5, 4]; ND = 3; MINW = float(os.environ.get('MINW', 0.15))
 def street(P, base, S, sizes):
     """One street's tree: a bet of each size in `sizes` (shares of the pot; sizes the stack cuts to the same amount are one bet), then up to RAISES raises, each to three times. A decision is (player, actions, invested, (bets so far, the size faced))."""
@@ -134,9 +135,15 @@ def is_bet(kd, streets='FT'): return kd[0] in streets and ' facing ' in kd and '
 #   tilt: on the flop and turn, how the hand's equity is spread over the next card: flat, tilted up or tilted down
 CELLS = set(filter(None, os.environ.get('CELLS', '').split('+')))
 if 'nodepth' in CELLS: DEPTHS = []; ND = 1                 # nodepth: the tables without the stacks-behind column
-BASE = 6 * 3 * ND
+BASE = 8 if 'rows' in CELLS else 6 * 3 * ND            # rows: the hand's row alone (nothing, draw, low / middle / top pair, overpair, two pair, trips or better) in place of the three columns
 def n_cells(kd): return BASE * (2 if 'fdraw' in CELLS and is_bet(kd) else 1) * (3 if 'adv' in CELLS and is_first(kd) else 1) * (2 if 'pot' in CELLS else 1) * (3 if 'tilt' in CELLS and kd[0] in 'FT' else 1)
 def kind(node, hero, lvl): p, acts, inv, (bets, size) = node; return STREETS[lvl] + (' first' if inv[1 - hero] <= inv[hero] else f' facing {bet_name(lvl, size)}' if bets == 1 else f' facing {RNAME[bets - 2]}')
+def hand_rows(sp):
+    """Each hand's row on the flop (n), on each sampled turn card (K, n) and on each sampled river card (K, M, n)."""
+    two = lambda h: cards(h); B = cards(''.join(sp.board)); out = []
+    for p in (0, 1):
+        hs = [two(h) for h in sp.hands[p]]; out.append([np.array([row_of(h, B) for h in hs]), np.array([[row_of(h, B + cards(t)) for h in hs] for t in sp.tc]), np.array([[[row_of(h, B + cards(t) + cards(r)) for h in hs] for r in sp.rc[k]] for k, t in enumerate(sp.tc)])])
+    return out
 def lay(sp, hero, tab):
     """The tables laid over a flop: at each of the player's decisions the cells are read from the range it holds there."""
     sig = {}; plan = []; w = sp.w[hero]
@@ -153,6 +160,9 @@ def lay(sp, hero, tab):
             return
         E = sp.eq[hero][lvl]; Wt = EXP[lvl](w) * mine * sp.A[hero][lvl]; rows = E.reshape(-1, E.shape[-1]); pl, _ = place_rows(np.broadcast_to(rows, (Wt.reshape(-1, Wt.shape[-1]).shape)), Wt.reshape(-1, Wt.shape[-1]))
         cells = (pl.reshape(Wt.shape) * 3 + sp.top[hero][lvl]) * ND + int(np.digitize((sp.S - max(inv)) / (sp.P0 + inv[0] + inv[1]), DEPTHS)); kd = kind(node, hero, lvl); na = len(acts)
+        if 'rows' in CELLS:
+            if not hasattr(sp, 'rows'): sp.rows = hand_rows(sp)
+            cells = np.broadcast_to(sp.rows[hero][lvl], Wt.shape).copy()
         if 'fdraw' in CELLS and is_bet(kd): cells = cells * 2 + sp.sdraw[hero][lvl]
         if 'adv' in CELLS and is_first(kd): tot = np.maximum(Wt.sum(-1, keepdims=True), 1e-12); cells = cells * 3 + np.digitize((Wt * E).sum(-1, keepdims=True) / tot, [.45, .55])
         if 'pot' in CELLS: cells = cells * 2 + int(sp.S / sp.P0 > 8)
