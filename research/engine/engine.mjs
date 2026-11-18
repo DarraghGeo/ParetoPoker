@@ -83,7 +83,7 @@ export function decide(view, hands) {
   if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).valueFrom(at.size));
   if (at.kind === 'facing a bet' && at.street !== 'river' && view.canRaise && view.raiseDraws?.[at.street]) hands.forEach((h, i) => { if (!h.draw) return; const o = out[i]; const move = view.raiseDraws[at.street] * (o[0] + o[1]); const fromFold = Math.min(o[0], move); o[0] -= fromFold; o[1] -= move - fromFold; o[2] += move; });   // strong draws raise this share of the time
   const exact = view.defendExactly?.[at.street];     // continue with exactly this multiple of the minimum defence, the best hands by equity (raises kept)
-  if (exact && at.kind !== 'first' && (exact.raises || at.kind === 'facing a bet')) { let total = 0; hands.forEach((h) => { total += h.weight; }); let room = Math.min(1, exact.times / (1 + at.size)) * total;
+  if (exact && (!exact.seat || exact.seat === at.seat) && at.kind !== 'first' && (exact.raises || at.kind === 'facing a bet')) { let total = 0; hands.forEach((h) => { total += h.weight; }); let room = Math.min(1, exact.times / (1 + at.size)) * total;
     for (const i of hands.map((h, j) => j).sort((x, y) => hands[y].equity - hands[x].equity)) { const take = Math.max(0, Math.min(1, room / hands[i].weight)); const r = Math.min(out[i][2], take); out[i] = [1 - take, take - r, r]; room -= take * hands[i].weight; }
     return out; }
   if (view.fillToDefence && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));

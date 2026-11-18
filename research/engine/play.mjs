@@ -16,6 +16,8 @@ import { decide, readSpot, RULES } from './engine.mjs';
 //   Arms: rules (exact equity), read (equity read off the chart), cells (the solved answers by equity band, rules where they have none), noisy (exact equity up to 10 points off).
 const CELLS = process.env.CELLS ? JSON.parse(readFileSync(process.env.CELLS, 'utf8')) : null;
 let ENGINE_ARMS = CELLS ? { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, cells: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 }, rulesFill: { rule: 'engine', eq: 'exact', fill: true } } : { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, rulesFill: { rule: 'engine', eq: 'exact', fill: true }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 } };
+// the rules with every fix adopted so far: the defence fill, the turn and river betting fixes, and in position facing a turn bet the whole minimum defence by equity
+const NOW = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05, exact: { turn: { times: 1, seat: 'ip' } } };
 if (process.env.WHERE) {   // WHERE=1: the engine at one kind of decision at a time, the solution's play elsewhere, to find where a perfect answer makes its gain
   const base = { rule: 'engine', eq: 'exact', fill: 0.9 }; for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k];
   Object.assign(ENGINE_ARMS, { all: base, betFlop: { ...base, only: (st, facing) => st === 3 && !facing }, betTurn: { ...base, only: (st, facing) => st === 4 && !facing }, betRiver: { ...base, only: (st, facing) => st === 5 && !facing },
@@ -33,31 +35,31 @@ if (process.env.COMBO) {   // COMBO=1: the rules as they were (with the defence 
   const after = { ...before, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
   Object.assign(ENGINE_ARMS, { before, after, plain: { rule: 'engine', eq: 'exact' }, afterNoisy: { ...after, noise: 0.1 } }); }
 if (process.env.FLOP) {    // FLOP=1: versions of the in-position flop bet, every other fix on, the engine everywhere
-  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, process.env.FLOP === '2' ? JSON.parse(process.env.FLOP_ARMS).reduce((o, [n, extra]) => ({ ...o, [n]: { ...after, ...extra } }), {})
     : { betAll: after, solverFlop: { ...after, only: (st) => st !== 3 }, value60draws: { ...after, flopFrom: 0.6 }, value60drawsBluffs: { ...after, flopFrom: 0.6, flop: { ratio: 2 } }, betAllHalf: { ...after, flop: { check: 0.5 } }, value50draws: { ...after, flopFrom: 0.5 } }); }
 if (process.env.EXCEPT) {  // EXCEPT=1: every fix on and the engine everywhere but one kind of decision, where the solution plays: what each kind of decision still costs
-  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, { all: after, notTurnBets: { ...after, only: (st, f) => !(st === 4 && !f) }, notTurnFacing: { ...after, only: (st, f) => !(st === 4 && f) }, notRiverBets: { ...after, only: (st, f) => !(st === 5 && !f) }, notRiverFacing: { ...after, only: (st, f) => !(st === 5 && f) }, notFlopFacing: { ...after, only: (st, f) => !(st === 3 && f) }, notTurn: { ...after, only: (st) => st !== 4 }, notRiver: { ...after, only: (st) => st !== 5 } }); }
 if (process.env.RAISE) {   // RAISE=1: raising before the river, every other fix on, the engine everywhere
-  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, process.env.RAISE === '2' ? JSON.parse(process.env.RAISE_ARMS).reduce((o, [n, extra]) => ({ ...o, [n]: { ...after, ...extra } }), {})
     : { noRaises: after, turn85: { ...after, early: { turn: 0.85 } }, turn85draws: { ...after, early: { turn: 0.85 }, draws: { turn: 0.5 } }, turn75draws: { ...after, early: { turn: 0.75 }, draws: { turn: 0.5 } }, both85: { ...after, early: { flop: 0.85, turn: 0.85 } }, both85draws: { ...after, early: { flop: 0.85, turn: 0.85 }, draws: { flop: 0.5, turn: 0.5 } } }); }
 if (process.env.SOLVED) {  // SOLVED=1 CELLS=<file>: the solved answers by equity band at some decisions, the fixed rules at the others
-  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, { rules: after, cellsFacingTurn: { ...after, cells: true, cellsWhere: (st, f) => st === 4 && f }, cellsFacing: { ...after, cells: true, cellsWhere: (st, f) => f }, cellsTurn: { ...after, cells: true, cellsWhere: (st) => st === 4 }, cellsEverywhere: { ...after, cells: true, cellsWhere: () => true }, cellsAlone: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' } }); }
 const FACE = {};           // FACING=1: facing a turn bet or raise, the engine's answers beside the solution's for the same hands, by equity band
-if (process.env.FACING) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; ENGINE_ARMS.after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 }; }
+if (process.env.FACING) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; ENGINE_ARMS.after = NOW; }
 if (process.env.FACEFIX) { // FACEFIX=1: versions of facing a turn bet, every other fix on
-  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   const T = (ip, oop) => ({ callOver: { ...RULES.callOver, turn: { ip, oop } } });
   Object.assign(ENGINE_ARMS, process.env.FACEFIX === '2' ? JSON.parse(process.env.FACE_ARMS).reduce((o, [n, patch, extra]) => ({ ...o, [n]: { ...after, patch, ...extra } }), {})
     : { asNow: after, ipTighter: { ...after, patch: T(0.10, 0.10) }, oopLooser: { ...after, patch: T(0, 0) }, swapped: { ...after, patch: T(0.10, 0) }, swappedDraws: { ...after, patch: { ...T(0.10, 0), drawsCallRaise: true } }, swappedDrawsRaise: { ...after, patch: { ...T(0.10, 0), drawsCallRaise: true, earlyRaiseBand: { turn: { ip: [0.5, 0.8] } } } } }); }
 if (process.env.SUB) {     // SUB=1: is it the hands or the frequency? Facing a turn bet, one of them is taken from the solution
-  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, { asNow: after, solverHands: { ...after, sub: 'hands' }, solverFrequency: { ...after, sub: 'freq' }, solverNoRaises: { ...after, sub: 'noraise' }, solverAll: { ...after, only: (st, f) => !(st === 4 && f) } }); }
 if (process.env.EXACT) {   // EXACT=1: facing a turn bet, continue with a set multiple of the minimum defence, the best hands by equity
-  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05 };
+  for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, process.env.EXACT === '2' ? JSON.parse(process.env.EXACT_ARMS).reduce((o, [n, exact]) => ({ ...o, [n]: { ...after, exact } }), {})
     : { asNow: after, turn90: { ...after, exact: { turn: { times: 0.9 } } }, turn90raises: { ...after, exact: { turn: { times: 0.9, raises: true } } }, turn80: { ...after, exact: { turn: { times: 0.8 } } }, turn100: { ...after, exact: { turn: { times: 1 } } }, flopTurn90: { ...after, exact: { flop: { times: 0.9 }, turn: { times: 0.9 } } } }); }
 if (process.env.FILLS) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; for (const x of process.env.FILLS.split(',')) ENGINE_ARMS[`fill${x.endsWith('a') ? 'All' : ''}${Math.round(100 * parseFloat(x))}`] = { rule: 'engine', eq: 'exact', fill: parseFloat(x), everywhere: x.endsWith('a') }; }   // 1a: out of position before the river as well   // FILLS=0.9,1,1.1: the balance rule at these multiples of the minimum defence
