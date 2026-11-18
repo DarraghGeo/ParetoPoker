@@ -75,6 +75,7 @@ export function decide(view, hands) {
     const a = byRules(view, at, equity, draw); return [a === 0 ? 1 : 0, a === 1 ? 1 : 0, a === 2 ? 1 : 0];
   });
   if (at.kind === 'first' && at.street === 'turn' && view.turnBalance) balanceTurnBets(hands, out, at.size, view.turnBalance);
+  if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).valueFrom(at.size));
   if (view.fillToDefence && at.kind !== 'first' && (view.fillEverywhere || view.ip || at.street === 'river')) fillToDefence(hands, out, Math.min(1, (view.fillToDefence === true ? 1 : view.fillToDefence) / (1 + at.size)));
   return out;
 }
@@ -84,6 +85,16 @@ export function decide(view, hands) {
 function balanceTurnBets(hands, out, size, { ratio = 0, check = 0 }) {
   let betting = 0; hands.forEach((h, i) => { if (out[i][2] > 0) { const keep = out[i][2] * check; out[i][2] -= keep; out[i][0] += keep; betting += h.weight * out[i][2]; } });
   let room = ratio * (size / (1 + size)) * betting;
+  const order = hands.map((h, i) => i).filter((i) => out[i][0] === 1).sort((x, y) => hands[x].equity - hands[y].equity);
+  for (const i of order) { if (room <= 1e-9) break; const take = Math.min(1, room / hands[i].weight); out[i][0] -= take; out[i][2] += take; room -= take * hands[i].weight; }
+}
+/** Balance when betting the river: value bets keep back a share to check (`check`); with `ratio` given, the rule's own bluffs
+ *  are replaced by the weakest hands, `ratio` x bet / (1 + bet) of a bluff for each value bet made. */
+function balanceRiverBets(hands, out, size, { ratio, check = 0 }, valueFrom) {
+  let value = 0; hands.forEach((h, i) => { if (!(out[i][2] > 0)) return;
+    if (h.equity >= valueFrom) { const keep = out[i][2] * check; out[i][2] -= keep; out[i][0] += keep; value += h.weight * out[i][2]; }
+    else if (ratio !== undefined) { out[i][0] += out[i][2]; out[i][2] = 0; } });
+  if (ratio === undefined) return; let room = ratio * (size / (1 + size)) * value;
   const order = hands.map((h, i) => i).filter((i) => out[i][0] === 1).sort((x, y) => hands[x].equity - hands[y].equity);
   for (const i of order) { if (room <= 1e-9) break; const take = Math.min(1, room / hands[i].weight); out[i][0] -= take; out[i][2] += take; room -= take * hands[i].weight; }
 }
