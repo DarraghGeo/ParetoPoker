@@ -51,7 +51,8 @@ function byRules(view, at, e, draw) {
   }
   if (street === 'flop' && ip && R.flopIpFrom !== undefined) return e >= R.flopIpFrom || draw ? 2 : 0;      // in position on the flop: a threshold in place of betting everything
   if (street === 'flop') return ip || (reads.ahead && (e >= R.flopOopValue || draw)) ? 2 : 0;
-  if (street === 'turn') return e >= R.turnBetFrom || draw ? 2 : 0;
+  if (street === 'turn' && !ip && R.turnOopNeedsAhead && !reads.ahead) return 0;      // out of position on the turn: bet only when ahead in top pair or better, where asked
+  if (street === 'turn') return e >= R.turnBetFrom || (draw && !R.turnNoDrawBets) ? 2 : 0;
   if (!ip && reads.hisStrong >= R.checkAllIfHisStrong) return 0;
   const bluffUnder = Math.max(0, reads.hisWeak - R.riverBluffUnderWeakLess[seat]);
   return e >= R.valueFrom(size) || e < bluffUnder ? 2 : 0;

@@ -49,7 +49,7 @@ if (process.env.SOLVED) {  // SOLVED=1 CELLS=<file>: the solved answers by equit
   for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, { rules: after, cellsFacingTurn: { ...after, cells: true, cellsWhere: (st, f) => st === 4 && f }, cellsFacing: { ...after, cells: true, cellsWhere: (st, f) => f }, cellsTurn: { ...after, cells: true, cellsWhere: (st) => st === 4 }, cellsEverywhere: { ...after, cells: true, cellsWhere: () => true }, cellsAlone: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' } }); }
 const FACE = {};           // FACING=1: facing a turn bet or raise, the engine's answers beside the solution's for the same hands, by equity band
-if (process.env.FACING) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; ENGINE_ARMS.after = NOW; }
+if (process.env.FACING || process.env.BETTING) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; ENGINE_ARMS.after = NOW; }
 if (process.env.FACEFIX) { // FACEFIX=1: versions of facing a turn bet, every other fix on
   for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   const T = (ip, oop) => ({ callOver: { ...RULES.callOver, turn: { ip, oop } } });
@@ -336,7 +336,7 @@ for (let done = 0; done < +count;) {
           for (const c of F.order) { if (w[c] > 0) mineH.push({ c, weight: w[c], equity: e[c], draw: F.come[c] >= 8, topPairPlus: F.lv[c] >= 4 }); else P[c * k + quiet] = 1; if (hs[c] > 0) hisH.push({ weight: hs[c], equity: he[c], topPairPlus: F.lv[c] >= 4 }); }
           const reads = readSpot(mineH, hisH); let t = 0, all = 0;
           const tb = arm.turnBySeat?.[seat === 1 ? 'ip' : 'oop']; const turnFrom = tb?.from ?? arm.turnFrom;
-          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: useCells ? CELLS : null, turnBalance: tb ? { check: tb.check } : arm.turn ?? null, riverBalance: arm.river ?? null, flopBalance: arm.flop ?? null, raiseDraws: arm.draws ?? null, fillBy: arm.fillBy ?? null, defendExactly: arm.exact ?? null, rules: turnFrom || arm.valueUp || arm.flopFrom !== undefined || arm.early || arm.patch ? { ...RULES, ...(arm.patch ?? {}), flopIpFrom: arm.flopFrom, earlyRaiseFrom: arm.early, turnBetFrom: turnFrom ?? RULES.turnBetFrom, valueFrom: (x) => RULES.valueFrom(x) + (arm.valueUp ?? 0) } : undefined, fillToDefence: arm.fill ?? false, fillEverywhere: !!arm.everywhere }, mineH) : mineH.map(() => [1, 0, 0]);
+          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: useCells ? CELLS : null, turnBalance: tb ? { check: tb.check, ratio: tb.ratio ?? 0 } : arm.turn ?? null, riverBalance: arm.river ?? null, flopBalance: arm.flop ?? null, raiseDraws: arm.draws ?? null, fillBy: arm.fillBy ?? null, defendExactly: arm.exact ?? null, rules: turnFrom || arm.valueUp || arm.flopFrom !== undefined || arm.early || arm.patch ? { ...RULES, ...(arm.patch ?? {}), flopIpFrom: arm.flopFrom, earlyRaiseFrom: arm.early, turnBetFrom: turnFrom ?? RULES.turnBetFrom, valueFrom: (x) => RULES.valueFrom(x) + (arm.valueUp ?? 0) } : undefined, fillToDefence: arm.fill ?? false, fillEverywhere: !!arm.everywhere }, mineH) : mineH.map(() => [1, 0, 0]);
           if (arm.sub && toCall > 0 && street === 4) {     // facing a turn bet: the solution's hands at the engine's frequency ('hands'), the engine's hands at the solution's frequency ('freq'), or the solution's folds and calls with its raises as calls ('noraise')
             const view = solved.strategyAt(id, bIndex); const at = new Int32Array(N).fill(-1); Array.from(view.combos).forEach((c, i) => { at[c] = i; }); const cont = mineH.map((h) => (at[h.c] >= 0 && fi >= 0 ? 1 - view.probs[at[h.c] * k + fi] : at[h.c] >= 0 ? 1 : 0));
             if (arm.sub === 'noraise') mineH.forEach((h, i) => { out[i] = [1 - cont[i], cont[i], 0]; });
@@ -353,6 +353,13 @@ for (let done = 0; done < +count;) {
               mineH.forEach((h, i) => { if (at[h.c] < 0) return; const x = h.weight; w0 += x; eng += x * (1 - out[i][0]); sol += x * (1 - (fi >= 0 ? view.probs[at[h.c] * k + fi] : 0)); eq += x * h.equity; if (h.equity >= price) over += x; if (h.equity >= price + 0.1) over10 += x; if (h.equity >= 0.5) half += x; if (h.equity >= 0.8) strong += x; if (h.equity < 0.2) weak += x; if (h.draw) dr += x; });
               let start = 0; for (const c of F.order) start += startRange[c] ?? 0;
               if (w0 > 0) (D.nodes ??= []).push({ line: line.join(''), card: board[board.length - 1], rank: RK[board[board.length - 1]], suit: SU[board[board.length - 1]], size: +size.toFixed(2), reach: w0 * ht, eng: eng / w0, sol: sol / w0, eq: eq / w0, over: over / w0, over10: over10 / w0, half: half / w0, strong: strong / w0, weak: weak / w0, draws: dr / w0, his: ht }); } }
+          if (process.env.BETTING && toCall <= 0 && bi >= 0 && street === +(process.env.BETTING_STREET ?? 4) && reads) {      // BETTING=1: first to act, the engine's bets beside the solution's for the same hands, by equity band and decision
+            const view = solved.strategyAt(id, bIndex); const at = new Int32Array(N).fill(-1); Array.from(view.combos).forEach((c, i) => { at[c] = i; }); let ht = 0; for (const c of F.order) ht += his[c];
+            const line = []; for (let a2 = n; a2.parent >= 0; a2 = nodes[a2.parent]) { const par = nodes[a2.parent]; line.unshift(par.kind === 'chance' ? '|' : par.edges[a2.via].kind[0]); }
+            const key = `${seat === 1 ? 'ip' : 'oop'} ${line.join('')}`; const D = (FACE[key] ??= { bands: Array.from({ length: 6 }, () => [0, 0, 0, 0, 0]), w: 0, nodes: [] }); let w0 = 0, eng = 0, sol = 0;
+            mineH.forEach((h, i) => { if (at[h.c] < 0) return; const wt = h.weight * ht; const b = h.equity < 0.2 ? 0 : h.equity < 0.35 ? 1 : h.equity < 0.5 ? 2 : h.equity < 0.65 ? 3 : h.equity < 0.8 ? 4 : 5; const sb = 1 - view.probs[at[h.c] * k + xi]; const row = D.bands[b];
+              row[0] += wt; row[1] += wt * out[i][2]; row[2] += wt * sb; row[3] += wt * (h.draw ? 1 : 0); row[4] += wt * (h.draw ? sb : 0); D.w += wt; w0 += h.weight; eng += h.weight * out[i][2]; sol += h.weight * sb; });
+            if (w0 > 0) D.nodes.push({ reach: w0 * ht, eng: eng / w0, sol: sol / w0, eq: reads.rangeEquity, hisStrong: reads.hisStrong, hisWeak: reads.hisWeak, ahead: reads.ahead ? 1 : 0 }); }
           mineH.forEach((h, i) => { const [q, cl, ag] = out[i]; const c = h.c;
             if (toCall > 0) { P[c * k + quiet] += q; P[c * k + ci] += cl; P[c * k + (ri >= 0 ? ri : ci)] += ag; }
             else { P[c * k + xi] += q + cl; P[c * k + (bi >= 0 ? bi : xi)] += ag; if (bi >= 0) { t += h.weight * ag; all += h.weight; } } });
@@ -378,7 +385,7 @@ for (let done = 0; done < +count;) {
     row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries((process.env.ARMS === 'engine' ? NAMES.filter((x) => !['read', 'noisy', 'afterNoisy'].includes(x)) : [NAMES[0], NAMES[2]]).filter(Boolean).map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
     row.freq[side] = { solution: sol.map(([t, all]) => +(t / (all || 1)).toFixed(3)), ...Object.fromEntries(NAMES.map((n) => [n, tally[n].map(([t, all]) => +(t / (all || 1)).toFixed(3))])) };
   }
-  if (process.env.FACING) row.facing = FACE;
+  if (process.env.FACING || process.env.BETTING) row.facing = FACE;
   row.seconds = Math.round((Date.now() - t0) / 1000); appendFileSync(out, JSON.stringify(row) + '\n');
   console.error(`${done}/${count} ${row.spot} ${row.board} ${row.seconds}s | oop ${JSON.stringify(row.loss.oop)} | ip ${JSON.stringify(row.loss.ip)}`);
 }
