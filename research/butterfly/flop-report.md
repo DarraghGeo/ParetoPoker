@@ -4,6 +4,7 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 
 | shared tables | flops solved on | scoring flops | OOP: mean | median | worst | IP: mean | median | worst | both |
 |---|---|---|---|---|---|---|---|---|---|
+| bal | 24 | 20 | 11.4 | 10.9 | 19.7 | 9.3 | 9.3 | 17.4 | 10.3 |
 | place, strongest third, depth | 6 | 5 | 12.2 | 11.3 | 16.4 | 13.5 | 13.6 | 21.3 | 12.8 |
 | place, strongest third, depth | 12 | 20 | 10.6 | 10.5 | 17.5 | 9.5 | 9.4 | 22.9 | 10.1 |
 
@@ -12,12 +13,12 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 | flop | pot | stacks behind | OOP range equity | OOP | IP | alone: OOP | IP |
 |---|---|---|---|---|---|---|---|
 | 8h Td 5s | 3BP-SB-BU | 3.9 | 51% | 13.5 | 22.9 | 7.3 | 10.8 |
-| Jc Qs 3s | 3BP-SB-BU | 3.9 | 55% | 12.8 | 18.7 | - | - |
+| Jc Qs 3s | 3BP-SB-BU | 3.9 | 55% | 12.8 | 18.7 | 1.7 | 11.9 |
 | 5c 8h 6s | 3BP-SB-BU | 3.9 | 48% | 4.9 | 20.8 | - | - |
 | 5d 2s 5c | 3BP-SB-BU | 3.9 | 51% | 17.5 | 7.9 | 13.0 | 3.0 |
 | Ks 3s 6c | 3BP-SB-BU | 3.9 | 56% | 13.6 | 11.7 | 8.7 | 4.4 |
 | 3s 9d Jd | SRP-BB-BU | 17.7 | 47% | 10.5 | 12.0 | 9.1 | 6.6 |
-| 2s Js Qs | SRP-BB-BU | 17.7 | 47% | 5.9 | 14.2 | - | - |
+| 2s Js Qs | SRP-BB-BU | 17.7 | 47% | 5.9 | 14.2 | 5.1 | 10.7 |
 | Kh 7c Jc | SRP-BB-UTG | 17.7 | 40% | 7.9 | 11.9 | 4.6 | 4.1 |
 | 7h Kc Ad | 3BP-SB-BU | 3.9 | 61% | 13.2 | 6.3 | - | - |
 | 7d 4s Ts | SRP-BB-BU | 17.7 | 48% | 7.3 | 11.2 | - | - |
@@ -32,7 +33,7 @@ Exploitability over the whole hand from the flop, percent of the pot as the flop
 | Ah 4h Jc | SRP-BB-BU | 17.7 | 46% | 10.5 | 2.2 | - | - |
 | 2d 7h 6s | SRP-BB-UTG | 17.7 | 51% | 12.6 | -0.4 | - | - |
 
-On the 7 flops also solved alone: alone 8.5 / 5.9, shared 12.2 / 11.1.
+On the 9 flops also solved alone: alone 7.4 / 7.1, shared 11.6 / 12.3.
 
 ## What goes with a high figure
 

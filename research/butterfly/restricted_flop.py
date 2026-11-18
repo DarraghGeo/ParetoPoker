@@ -9,7 +9,7 @@
 # Flops: poker-huerosolver's full hands (store.mjs fullhand, the flop roots), solved on some, scored on others.
 #   STORE=<dir> python3 research/butterfly/restricted_flop.py <job> [rounds] [flops to solve on] [flops to score on]
 #     job: check (one flop, both players free: does it settle?) | base (the game's value on the scoring flops) | <seat 0/1> | alone
-import os, sys, json, re, time
+import os, sys, json, re, time, warnings
 import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']
 _src = open(os.path.join(HERE, 'restricted_turn.py')).read(); exec(_src[_src.index('RANKS = '):_src.index('def street(')].replace("HERE = os.path.dirname(os.path.abspath(__file__)); STORE = os.environ['STORE']; ", ''))     # RANKS, DECK, score7, has_draw, EDGES
@@ -95,12 +95,35 @@ class Flop:
     def decisions(self, p): return [(len(key), key + (k,)) for key, ns in self.tree.items() for k, n in enumerate(ns) if isinstance(n[0], int) and n[0] == p]
     def node(self, nid): return self.tree[nid[:-1]][nid[-1]]
     def shape(self, p, lvl): return ((len(self.w[p]),), (K, len(self.w[p])), (K, M, len(self.w[p])))[lvl]
+def runouts(sp):
+    """Each hand's equity against the other's starting range on every pair of cards still to come, (49, 49, hands) per seat: from all runouts, kept on disk."""
+    f = os.path.join(STORE, 'tilt', f"{sp.name.replace(':', '_')}-w{MINW}.npz"); free = [c for c in DECK if c not in sp.board]
+    if os.path.exists(f): z = np.load(f); return [z['a'], z['b']], free
+    two = lambda h: (h[:2], h[2:]); P = [np.full((49, 49, len(sp.w[p])), np.nan, np.float32) for p in (0, 1)]; cards = [np.array([two(h) for h in sp.hands[p]]) for p in (0, 1)]
+    for i, t in enumerate(free):
+        for j in range(i + 1, 49):
+            r = free[j]; al = [((cards[p] != t) & (cards[p] != r)).all(1) for p in (0, 1)]; sc = [np.array([score7(list(two(h)) + sp.board + [t, r]) if a else 0 for h, a in zip(sp.hands[p], al[p])]) for p in (0, 1)]
+            cmp = np.sign(sc[0][:, None] - sc[1][None, :]); V = sp.V0 * al[0][:, None] * al[1][None, :]; g = [((cmp > 0) + 0.5 * (cmp == 0)) * V, ((cmp < 0) + 0.5 * (cmp == 0)) * V]
+            for p, (win, den) in enumerate(((g[0] @ sp.w[1], V @ sp.w[1]), (sp.w[0] @ g[1], sp.w[0] @ V))): P[p][i, j] = P[p][j, i] = np.where(al[p] & (den > 0), win / np.maximum(den, 1e-12), np.nan)
+    os.makedirs(os.path.dirname(f), exist_ok=True); tmp = f[:-4] + f'.{os.getpid()}.npz'; np.savez(tmp, a=P[0], b=P[1]); os.replace(tmp, f); return P, free
+TILT = float(os.environ.get('TILT', 0.1))
+def lean(e):
+    """How a hand's equity is spread over the next card, e (cards, hands): 0 flat, 1 tilted up (a few cards lift it), 2 tilted down (a few cards sink it)."""
+    with warnings.catch_warnings(): warnings.simplefilter('ignore'); lo, md, hi = np.nan_to_num(np.nanquantile(e, [.1, .5, .9], axis=0))
+    return np.where((hi - md) - (md - lo) > TILT, 1, np.where((md - lo) - (hi - md) > TILT, 2, 0))
+def tilts(sp):
+    P, free = runouts(sp); out = []
+    for p in (0, 1):
+        with warnings.catch_warnings(): warnings.simplefilter('ignore'); et = np.nanmean(P[p], axis=1)
+        out.append([lean(et), np.stack([lean(P[p][free.index(t)]) for t in sp.tc]), None])
+    return out
 STREETS = 'FTR'; KINDS = {f'{s} {k}': a for s in STREETS for k, a in (('first', 2), ('facing a bet', 3), ('facing a raise', 2))}
 # CELLS: what the tables read beside the hand's place, its equity against his strongest third and the stacks behind.
 #   fdraw: facing a bet on the flop or turn, a strong draw or not; adv: first to act on the flop or turn, the range's equity (under 45%, 45-55%, over 55%)
 #   pot: every table by the pot before the flop (single-raised or 3-bet, read from the stacks behind as the flop starts)
+#   tilt: on the flop and turn, how the hand's equity is spread over the next card: flat, tilted up or tilted down
 CELLS = set(filter(None, os.environ.get('CELLS', '').split('+'))); BASE = 6 * 3 * ND
-def n_cells(kd): return BASE * (2 if 'fdraw' in CELLS and kd in ('F facing a bet', 'T facing a bet') else 1) * (3 if 'adv' in CELLS and kd in ('F first', 'T first') else 1) * (2 if 'pot' in CELLS else 1)
+def n_cells(kd): return BASE * (2 if 'fdraw' in CELLS and kd in ('F facing a bet', 'T facing a bet') else 1) * (3 if 'adv' in CELLS and kd in ('F first', 'T first') else 1) * (2 if 'pot' in CELLS else 1) * (3 if 'tilt' in CELLS and kd[0] in 'FT' else 1)
 def kind(node, hero, lvl): p, acts, inv = node; return STREETS[lvl] + (' first' if inv[1 - hero] <= inv[hero] else ' facing a raise' if len(acts) == 2 else ' facing a bet')
 def lay(sp, hero, tab):
     """The tables laid over a flop: at each of the player's decisions the cells are read from the range it holds there."""
@@ -121,6 +144,9 @@ def lay(sp, hero, tab):
         if 'fdraw' in CELLS and kd in ('F facing a bet', 'T facing a bet'): cells = cells * 2 + sp.sdraw[hero][lvl]
         if 'adv' in CELLS and kd in ('F first', 'T first'): tot = np.maximum(Wt.sum(-1, keepdims=True), 1e-12); cells = cells * 3 + np.digitize((Wt * E).sum(-1, keepdims=True) / tot, [.45, .55])
         if 'pot' in CELLS: cells = cells * 2 + int(sp.S / sp.P0 > 8)
+        if 'tilt' in CELLS and lvl < 2:
+            if not hasattr(sp, 'tilt'): sp.tilt = tilts(sp)
+            cells = cells * 3 + sp.tilt[hero][lvl]
         t = tab[kd][cells]; x = np.zeros(cells.shape + (na,), np.float32); x[..., :min(na, t.shape[-1])] = t[..., :na]
         if na < t.shape[-1]: x[..., na - 1] += t[..., na:].sum(-1)
         nid = key + (k,); sig[(lvl, nid)] = x; plan.append(((lvl, nid), kd, cells, na))
@@ -187,7 +213,7 @@ if __name__ == '__main__':
         base = json.load(open(os.path.join(STORE, f'flop-base{TAGF}.json'))); f = os.path.join(STORE, f"flop-alone{CT}{TAGF}{os.environ.get('PART', '')}.json"); res = json.load(open(f)) if os.path.exists(f) else {}
         part = os.environ.get('PART', '')
         for j, d in enumerate(te):
-            if d['spot'] in res or d['spot'] not in base or (part and j % int(part.split('of')[1]) != int(part.split('of')[0][1:])): continue
+            if d['spot'] in res or d['spot'] not in base or (os.environ.get('ONLY') and d['spot'] not in os.environ['ONLY'].split(',')) or (part and j % int(part.split('of')[1]) != int(part.split('of')[0][1:])): continue
             sp = Flop(d); res[d['spot']] = [100 * sp.walk(1 - h, lay(sp, h, solve([sp], h, rounds))[0], 'reply')[0] / sp.P0 - base[d['spot']][h] for h in (0, 1)]; json.dump(res, open(f, 'w')); print(f"  {d['spot']} alone {[round(x, 1) for x in res[d['spot']]]} {time.time() - t0:.0f} s", file=log, flush=True)
     else:
         hero = int(job); S_tr = [Flop(d) for d in tr]; print(f'  flops ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, log, os.path.join(STORE, f'flop-{hero}-n{n_tr}{CT}{TAGF}-state.npz'))
