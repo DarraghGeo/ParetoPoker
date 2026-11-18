@@ -98,7 +98,7 @@ export function decide(view, hands) {
     out.forEach((o, i) => { const fold = o[0], r = FD2.ipRaiseShare; out[i] = [fold * (1 - r), (1 - fold) * (1 - r), r]; }); }
   const RR = (view.rules ?? RULES).raises; const leadRule = (view.rules ?? RULES).flopIpRaisesLeads && at.street === 'flop' && view.ip && view.aggressor;
   const quietFlop = RR?.callerInPositionCallsFlop && at.street === 'flop' && view.ip && !view.aggressor;
-  if (RR && at.kind === 'facing a bet' && view.canRaise && !leadRule && !quietFlop && !deepRaise) balanceRaises(hands, out, view.raiseSize, RR.bluffRatio ?? 1, at.street);
+  if (RR && at.kind === 'facing a bet' && view.canRaise && !leadRule && !quietFlop && !deepRaise) balanceRaises(hands, out, view.raiseSize, RR.bluffRatio ?? 1, at.street, RR.bluffsPerValue?.[at.street], RR.valueShare?.[at.street]);
   const exact = [].concat(view.defendExactly?.[at.street] ?? []).find((x) => !x.seat || x.seat === at.seat);   // `perEquity`: the multiple moves by this much for each point the range's own equity is above `around`     // continue with exactly this multiple of the minimum defence, the best hands by equity (raises kept)
   if (exact && (!exact.seat || exact.seat === at.seat) && at.kind !== 'first' && (exact.raises || at.kind === 'facing a bet')) { let total = 0; hands.forEach((h) => { total += h.weight; }); const times = exact.times + (exact.perEquity ?? 0) * (view.reads.rangeEquity - (exact.around ?? 0.5)); let room = Math.max(0, Math.min(1, times / (1 + at.size))) * total;
     hands.forEach((h, i) => { room -= h.weight * out[i][2]; });       // raises, value and bluff, are kept and count toward the defence
@@ -130,8 +130,10 @@ function balanceRiverBets(hands, out, size, { ratio, check = 0 }, valueFrom) {
 /** Bluff raises beside the value raises: `ratio` x r / (1 + r) of a bluff raise for each value raise, r the raise beyond the
  *  call as a share of the pot it is made into. Taken from the hands that would fold: strong draws first before the river,
  *  then the best of the rest. */
-function balanceRaises(hands, out, raiseSize, ratio, street) {
-  let value = 0; hands.forEach((h, i) => { value += h.weight * out[i][2]; }); let room = ratio * (raiseSize / (1 + raiseSize)) * value; if (!(room > 1e-12)) return;
+function balanceRaises(hands, out, raiseSize, ratio, street, perValue, valueShare) {
+  if (valueShare !== undefined) hands.forEach((h, i) => { const back = out[i][2] * (1 - valueShare); out[i][2] -= back; out[i][1] += back; });     // valueShare: value raises only this share of the time and calls the rest, so the calling range keeps strong hands
+  let value = 0; hands.forEach((h, i) => { value += h.weight * out[i][2]; });
+  let room = (perValue !== undefined ? perValue : ratio * (raiseSize / (1 + raiseSize))) * value; if (!(room > 1e-12)) return;       // perValue: this many bluff raises for each value raise, in place of the ratio
   const order = hands.map((h, i) => i).filter((i) => out[i][0] > 0).sort((x, y) => (street !== 'river' ? (hands[y].draw ? 1 : 0) - (hands[x].draw ? 1 : 0) : 0) || hands[y].equity - hands[x].equity);
   for (const i of order) { if (room <= 1e-12) break; const take = Math.min(out[i][0], room / hands[i].weight); out[i][0] -= take; out[i][2] += take; room -= take * hands[i].weight; }
 }
