@@ -147,6 +147,10 @@ def lay(sp, hero, tab, opts):
             else: f = lambda X, r, sub: np.einsum('cij,ci->' + sub.replace('i', 'j'), X, r)
             win, tie = (sp.W, sp.T) if q == 0 else (sp.L, sp.T); et_ = (f(win, ht, 'i') + 0.5 * f(tie, ht, 'i')) / np.maximum(f(sp.V, ht, 'i'), 1e-9); err = (f(win, hr, 'ci') + 0.5 * f(tie, hr, 'ci')) / np.maximum(f(sp.V, hr, 'ci'), 1e-9)
             sp._top[q] = (np.digitize(et_, [.15, .4]), np.digitize(err, [.15, .4]))
+    if vol in ('sd', 'sd+top') and not hasattr(sp, '_sd'):   # showdown value now (the share of his starting range the hand beats with no river dealt) and draw equity (its equity less that), in three bands
+        sp._sd = [None, None]; two = lambda h: (h[:2], h[2:]); sc = [np.array([score7(list(two(h)) + list(sp.board)) for h in sp.hands[q]]) for q in (0, 1)]; ok = np.array([[not (set(two(a)) & set(two(b))) for b in sp.hands[1]] for a in sp.hands[0]], np.float32); cmp = np.sign(sc[0][:, None] - sc[1][None, :])
+        for q in (0, 1):
+            g = (((cmp > 0) if q == 0 else (cmp < 0)) + 0.5 * (cmp == 0)) * ok; now = (g @ sp.w[1] / np.maximum(ok @ sp.w[1], 1e-12)) if q == 0 else (sp.w[0] @ g / np.maximum(sp.w[0] @ ok, 1e-12)); sp._sd[q] = (now, np.digitize(sp.eqt[q] - now, SDB))
     if not hasattr(sp, '_frozen'): sp._frozen = {}
     if hero not in sp._frozen: sp._frozen[hero] = sp.cells(hero, False)
     ct0, cr0 = sp._frozen[hero]
@@ -190,11 +194,13 @@ def lay(sp, hero, tab, opts):
             for a, (_, c) in enumerate(acts): turn(c, mine, his * ot[k][:, a] if vs else his)
             return
         E = versus_t(his) if vs else sp.eqt[hero]
-        if true or vs or nut or top: Wt = (w * (mine if true else 1))[None, :]; pl, wk = place_rows((sp._hs2[hero] if hs2 else E)[None, :], Wt); cells = pl[0] * 3 + wk[0]
+        if true or vs or nut or top: Wt = (w * (mine if true else 1))[None, :]; pl, wk = place_rows((sp._hs2[hero] if hs2 else sp._sd[hero][0] if vol in ('sd', 'sd+top') else E)[None, :], Wt); cells = pl[0] * 3 + wk[0]
         else: cells = ct0
         if top: cells = pl[0] * 3 + sp._top[hero][0]
         if vol == 'replace': cells = pl[0] * 3 + sp._vol[hero]
         if vol == 'add': cells = cells * 3 + sp._vol[hero]
+        if vol == 'sd': cells = pl[0] * 3 + sp._sd[hero][1]
+        if vol == 'sd+top': cells = cells * 3 + sp._sd[hero][1]
         if nut and inv[opp] <= inv[hero]: cells = pl[0] * 3 + int(np.digitize(float((Wt[0] * (E >= .8)).sum() / max(Wt[0].sum(), 1e-12)) - sp._hs[opp][0], [-.05, .05]))
         if spr: cells = cells * ND + depth(inv)
         if drw: cells = cells * 3 + sp.draw3[hero]
@@ -211,7 +217,10 @@ VARIANTS = {'frozen': (False, False, False, False), 'true': (True, False, False,
             # top: in place of the weak share, the hand's equity against the strongest third of his range (three bands), on both streets
             'true+spr+top': (True, True, False, False, False, False, True), 'true+spr+top+fdraw': (True, True, False, False, False, True, True),
             # hs2: the turn's places ranked by E[HS2] in place of equity; vol: how uneven the hand's strength is across river cards, in place of the turn's column or beside it
-            'true+spr+top+hs2': (True, True, False, False, False, False, True, True, None), 'true+spr+vol': (True, True, False, False, False, False, True, False, 'replace'), 'true+spr+top+vol': (True, True, False, False, False, False, True, False, 'add')}
+            'true+spr+top+hs2': (True, True, False, False, False, False, True, True, None), 'true+spr+vol': (True, True, False, False, False, False, True, False, 'replace'), 'true+spr+top+vol': (True, True, False, False, False, False, True, False, 'add'),
+            # sd: the turn's places ranked by showdown value now, and the hand's draw equity (three bands) in place of the turn's column (sd) or beside it (sd+top)
+            'true+spr+sd': (True, True, False, False, False, False, True, False, 'sd'), 'true+spr+sd+top': (True, True, False, False, False, False, True, False, 'sd+top')}
+SDB = [float(x) for x in os.environ.get('SDB', '-0.04,0.06').split(',')]
 def eq_store(sp):
     """The unrestricted solve's strategies for a spot (both players), solved once and kept on disk: the 'sound opponent' whose ranges the tables may assume."""
     if hasattr(sp, '_eq'): return sp._eq
@@ -227,7 +236,7 @@ def eq_store(sp):
     sp._eq = (nt, nr); return sp._eq
 
 def solve(spots, hero, rounds, opts, log=None):
-    draw = opts; nc = {kd: NB * 3 * (ND if opts[1] else 1) * (3 if opts[2] and kd[0] == 'T' else 1) * (2 if len(opts) > 5 and opts[5] and kd == 'T facing a bet' else 1) * (3 if len(opts) > 8 and opts[8] == 'add' and kd[0] == 'T' else 1) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
+    draw = opts; nc = {kd: NB * 3 * (ND if opts[1] else 1) * (3 if opts[2] and kd[0] == 'T' else 1) * (2 if len(opts) > 5 and opts[5] and kd == 'T facing a bet' else 1) * (3 if len(opts) > 8 and opts[8] in ('add', 'sd+top') and kd[0] == 'T' else 1) for kd in KINDS}; reg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((nc[kd], a)) for kd, a in KINDS.items()}; cur = {kd: np.full((nc[kd], a), 1 / a) for kd, a in KINDS.items()}; best = (1e9, None); t0 = time.time()
     for t in range(1, rounds + 1):
         add = {kd: np.zeros_like(v) for kd, v in reg.items()}; own = {kd: np.zeros(nc[kd]) for kd in KINDS}; total = 0.0
         for sp in spots:
