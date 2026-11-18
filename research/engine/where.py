@@ -3,7 +3,9 @@
 import json, sys
 seat = sys.argv[2] if len(sys.argv) > 2 else 'ip'; G = (('weak (under 35%)', (0, 1)), ('middle (35-65%)', (2, 3)), ('strong (65%+)', (4, 5))); ST = dict(F='flop', T='turn', R='river')
 for t in open(sys.argv[1]):
-    r = json.loads(t); print(f"\n## {r['spot']} {r['board']} ({seat}: gives up {r['loss'][seat]['after']:.1f}%, a perfect answer wins {r['br'][seat]['after']:.0f}%)\n"); print('| decision | share of hands there | engine | solution | weak: engine / solution | middle | strong |'); print('|---|---|---|---|---|---|---|')
+    r = json.loads(t)
+    if 'facing' not in r or 'after' not in r['loss'][seat]: continue
+    print(f"\n## {r['spot']} {r['board']} ({seat}: gives up {r['loss'][seat]['after']:.1f}%, a perfect answer wins {r['br'][seat]['after']:.0f}%)\n"); print('| decision | share of hands there | engine | solution | weak: engine / solution | middle | strong |'); print('|---|---|---|---|---|---|---|')
     for key in sorted(r['facing'], key=lambda k: ('FTR'.index(k.split()[1]), k)):
         if not key.startswith(seat): continue
         D = r['facing'][key]; w = D['w']; s_, kind = key.split()[1], ' '.join(key.split()[2:])
