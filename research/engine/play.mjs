@@ -344,9 +344,9 @@ for (let done = 0; done < +count;) {
             else { let target = 0; mineH.forEach((h, i) => { target += h.weight * (arm.sub === 'hands' ? 1 - out[i][0] : cont[i]); });
               const order = mineH.map((h, i) => i).sort((x, y) => (arm.sub === 'hands' ? cont[y] - cont[x] : 0) || mineH[y].equity - mineH[x].equity);     // pure continues first, then the mixes by how often, then by equity
               for (const i of order) { const take = Math.max(0, Math.min(1, target / mineH[i].weight)); out[i] = [1 - take, take, 0]; target -= take * mineH[i].weight; } } }
-          if (process.env.FACING && toCall > 0 && street === +(process.env.FACING_STREET ?? 4)) {
+          if (process.env.FACING && toCall > 0 && (process.env.FACING_STREET === 'all' || street === +(process.env.FACING_STREET ?? 4))) {
             const view = solved.strategyAt(id, bIndex); const at = new Int32Array(N).fill(-1); Array.from(view.combos).forEach((c, i) => { at[c] = i; }); let ht = 0; for (const c of F.order) ht += his[c];
-            const size = toCall / (n.pot - toCall); const key = `${seat === 1 ? 'ip' : 'oop'} ${raised ? 'facing a raise' : 'facing a bet'}`; const D = (FACE[key] ??= { bands: Array.from({ length: 6 }, () => [0, 0, 0, 0, 0, 0, 0]), w: 0, mdf: 0, price: 0 });
+            const size = toCall / (n.pot - toCall); const key = `${seat === 1 ? 'ip' : 'oop'} ${process.env.FACING_STREET === 'all' ? 'FTR'[street - 3] + ' ' : ''}${raised ? 'facing a raise' : 'facing a bet'}`; const D = (FACE[key] ??= { bands: Array.from({ length: 6 }, () => [0, 0, 0, 0, 0, 0, 0]), w: 0, mdf: 0, price: 0 });
             mineH.forEach((h, i) => { if (at[h.c] < 0) return; const wt = h.weight * ht; const b = h.equity < 0.2 ? 0 : h.equity < 0.35 ? 1 : h.equity < 0.5 ? 2 : h.equity < 0.65 ? 3 : h.equity < 0.8 ? 4 : 5; const sp = (a) => (a >= 0 ? view.probs[at[h.c] * k + a] : 0); const row = D.bands[b];
               row[0] += wt; row[1] += wt * out[i][0]; row[2] += wt * sp(fi); row[3] += wt * out[i][2]; row[4] += wt * sp(ri); row[5] += wt * (h.draw ? 1 : 0); row[6] += wt * (h.draw ? sp(fi) : 0); D.w += wt; D.mdf += wt / (1 + size); D.price += wt * size / (1 + 2 * size); });
             if (process.env.FACING_NODES) {      // one record a decision: what the solution continues with over the engine's range there, beside what a player could read
@@ -367,10 +367,10 @@ for (let done = 0; done < +count;) {
             else if (arm.subBet === 'mixed') mineH.forEach((h, i) => { out[i] = [1 - sb[i], 0, sb[i]]; });
             else if (arm.subBet === 'hands' || arm.subBet === 'pure') give([...idx].sort((x, y) => sb[y] - sb[x] || mineH[y].equity - mineH[x].equity), target);
             else if (arm.subBet === 'top') give(down, target); else { give(down, target * 2 / 3); give([...down].reverse(), target / 3); } }
-          if (process.env.BETTING && toCall <= 0 && bi >= 0 && street === +(process.env.BETTING_STREET ?? 4) && reads) {      // BETTING=1: first to act, the engine's bets beside the solution's for the same hands, by equity band and decision
+          if (process.env.BETTING && toCall <= 0 && bi >= 0 && (process.env.BETTING_STREET === 'all' || street === +(process.env.BETTING_STREET ?? 4)) && reads) {      // BETTING=1: first to act, the engine's bets beside the solution's for the same hands, by equity band and decision
             const view = solved.strategyAt(id, bIndex); const at = new Int32Array(N).fill(-1); Array.from(view.combos).forEach((c, i) => { at[c] = i; }); let ht = 0; for (const c of F.order) ht += his[c];
             const line = []; for (let a2 = n; a2.parent >= 0; a2 = nodes[a2.parent]) { const par = nodes[a2.parent]; line.unshift(par.kind === 'chance' ? '|' : par.edges[a2.via].kind[0]); }
-            const key = `${seat === 1 ? 'ip' : 'oop'} ${line.join('')}`; const D = (FACE[key] ??= { bands: Array.from({ length: 6 }, () => [0, 0, 0, 0, 0]), w: 0, nodes: [] }); let w0 = 0, eng = 0, sol = 0;
+            const key = process.env.BETTING_STREET === 'all' ? `${seat === 1 ? 'ip' : 'oop'} ${'FTR'[street - 3]} first` : `${seat === 1 ? 'ip' : 'oop'} ${line.join('')}`; const D = (FACE[key] ??= { bands: Array.from({ length: 6 }, () => [0, 0, 0, 0, 0]), w: 0, nodes: [] }); let w0 = 0, eng = 0, sol = 0;
             mineH.forEach((h, i) => { if (at[h.c] < 0) return; const wt = h.weight * ht; const b = h.equity < 0.2 ? 0 : h.equity < 0.35 ? 1 : h.equity < 0.5 ? 2 : h.equity < 0.65 ? 3 : h.equity < 0.8 ? 4 : 5; const sb = 1 - view.probs[at[h.c] * k + xi]; const row = D.bands[b];
               row[0] += wt; row[1] += wt * out[i][2]; row[2] += wt * sb; row[3] += wt * (h.draw ? 1 : 0); row[4] += wt * (h.draw ? sb : 0); D.w += wt; w0 += h.weight; eng += h.weight * out[i][2]; sol += h.weight * sb; });
             if (w0 > 0) D.nodes.push({ reach: w0 * ht, eng: eng / w0, sol: sol / w0, eq: reads.rangeEquity, hisStrong: reads.hisStrong, hisWeak: reads.hisWeak, ahead: reads.ahead ? 1 : 0 }); }
