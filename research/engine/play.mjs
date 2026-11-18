@@ -16,8 +16,8 @@ import { decide, readSpot, RULES } from './engine.mjs';
 //   Arms: rules (exact equity), read (equity read off the chart), cells (the solved answers by equity band, rules where they have none), noisy (exact equity up to 10 points off).
 const CELLS = process.env.CELLS ? JSON.parse(readFileSync(process.env.CELLS, 'utf8')) : null;
 let ENGINE_ARMS = CELLS ? { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, cells: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 }, rulesFill: { rule: 'engine', eq: 'exact', fill: true } } : { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, rulesFill: { rule: 'engine', eq: 'exact', fill: true }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 } };
-// the rules with every fix adopted so far: the defence fill, the turn and river betting fixes, and in position facing a turn bet the whole minimum defence by equity
-const NOW = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05, exact: { turn: { times: 1, seat: 'ip' } } };
+// the rules with every fix adopted so far: the defence fill, the turn and river betting fixes, and in position facing a turn bet the whole minimum defence by equity; in position against a flop lead every continuing hand raises
+const NOW = { rule: 'engine', eq: 'exact', fill: 0.9, turnBySeat: { ip: { from: 0.75, check: 0.25 }, oop: { from: 0.5, check: 0.5 } }, river: { ratio: 1 }, valueUp: 0.05, exact: { turn: { times: 1, seat: 'ip' } }, patch: { flopIpRaisesLeads: true } };
 if (process.env.WHERE) {   // WHERE=1: the engine at one kind of decision at a time, the solution's play elsewhere, to find where a perfect answer makes its gain
   const base = { rule: 'engine', eq: 'exact', fill: 0.9 }; for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k];
   Object.assign(ENGINE_ARMS, { all: base, betFlop: { ...base, only: (st, facing) => st === 3 && !facing }, betTurn: { ...base, only: (st, facing) => st === 4 && !facing }, betRiver: { ...base, only: (st, facing) => st === 5 && !facing },

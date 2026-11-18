@@ -44,6 +44,7 @@ function byRules(view, at, e, draw) {
     const raiseFrom = size > 1 ? R.riverRaiseFromOverbet : R.riverRaiseFrom;
     if (street === 'river' && canRaise && !raised && e >= raiseFrom) return 2;
     if (street !== 'river' && canRaise && !raised && R.earlyRaiseFrom?.[street] !== undefined && e >= R.earlyRaiseFrom[street]) return 2;   // raising before the river, where asked
+    if (R.flopIpRaisesLeads && street === 'flop' && ip && canRaise && !raised && e >= at.price + over) return 2;                 // in position against a flop lead: every hand that continues raises
     const band = R.earlyRaiseBand?.[street]?.[seat]; if (band && canRaise && !raised && e >= band[0] && e < band[1]) return 2;    // a band of equity that raises before the river, where asked
     if (R.drawsCallRaise && raised && street !== 'river' && draw) return 1;                                                  // strong draws do not fold to a raise, where asked
     return e >= at.price + over ? 1 : 0;
