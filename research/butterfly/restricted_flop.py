@@ -154,23 +154,24 @@ if __name__ == '__main__':
     for text in open(os.path.join(STORE, 'flop-roots.jsonl')):
         d = json.loads(text); d['flop'] = re.search(r'f\d+', d['spot']).group(0); rows.append(d)
     rng = np.random.default_rng(4); flops = sorted({d['flop'] for d in rows}); rng.shuffle(flops); held = set(flops[: len(flops) // 3]); rng.shuffle(rows); te = [x for x in rows if x['flop'] in held][:n_te]; tr = [x for x in rows if x['flop'] not in held][:n_tr]
+    TAGF = f'-k{K}m{M}'                                # results and saved states are kept by the sample and the number of flops, so runs do not pick up each other's
     if job == 'check':
         sp = Flop(te[0]); print(f"  {sp.name} {' '.join(sp.board)}: {len(sp.w[0])} and {len(sp.w[1])} hands, turn cards {sp.tc}, {len(sp.tree)} trees, {sum(len(v) for v in sp.tree.values())} nodes; ready {time.time() - t0:.0f} s", file=log, flush=True)
         for R in (50, 200, 600):
             if R > rounds: break
             t1 = time.time(); reply, value = equilibrium(sp, R); print(f"  {R} rounds: the reply wins {[round(x, 2) for x in reply]}, the game's value {[round(x, 2) for x in value]}, so exploitable for {[round(a - b, 2) for a, b in zip(reply, value)]} | {time.time() - t1:.0f} s", file=log, flush=True)
     elif job == 'base':
-        f = os.path.join(STORE, 'flop-base.json'); res = json.load(open(f)) if os.path.exists(f) else {}
+        f = os.path.join(STORE, f'flop-base{TAGF}.json'); res = json.load(open(f)) if os.path.exists(f) else {}
         for d in te:
             if d['spot'] in res: continue
             reply, value = equilibrium(Flop(d), rounds); res[d['spot']] = reply; json.dump(res, open(f, 'w')); print(f"  {d['spot']} {[round(x, 1) for x in reply]} {time.time() - t0:.0f} s", file=log, flush=True)
     elif job == 'alone':
-        base = json.load(open(os.path.join(STORE, 'flop-base.json'))); f = os.path.join(STORE, 'flop-alone.json'); res = json.load(open(f)) if os.path.exists(f) else {}
+        base = json.load(open(os.path.join(STORE, f'flop-base{TAGF}.json'))); f = os.path.join(STORE, f'flop-alone{TAGF}.json'); res = json.load(open(f)) if os.path.exists(f) else {}
         for d in te:
             if d['spot'] in res or d['spot'] not in base: continue
             sp = Flop(d); res[d['spot']] = [100 * sp.walk(1 - h, lay(sp, h, solve([sp], h, rounds))[0], 'reply')[0] / sp.P0 - base[d['spot']][h] for h in (0, 1)]; json.dump(res, open(f, 'w')); print(f"  {d['spot']} alone {[round(x, 1) for x in res[d['spot']]]} {time.time() - t0:.0f} s", file=log, flush=True)
     else:
-        hero = int(job); S_tr = [Flop(d) for d in tr]; print(f'  flops ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, log, os.path.join(STORE, f'flop-{hero}-state.npz'))
+        hero = int(job); S_tr = [Flop(d) for d in tr]; print(f'  flops ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, log, os.path.join(STORE, f'flop-{hero}-n{n_tr}{TAGF}-state.npz'))
         raw_tr = float(np.mean([100 * sp.walk(1 - hero, lay(sp, hero, tab)[0], 'reply')[0] / sp.P0 for sp in S_tr])); del S_tr; raw_te = {}
         for d in te: sp = Flop(d); raw_te[d['spot']] = 100 * sp.walk(1 - hero, lay(sp, hero, tab)[0], 'reply')[0] / sp.P0
-        json.dump(dict(rounds=rounds, solved_on=raw_tr, scored=raw_te, tables={k: v.tolist() for k, v in tab.items()}), open(os.path.join(STORE, f'flop-{hero}.json'), 'w')); print(f'  done {time.time() - t0:.0f} s', file=log, flush=True)
+        json.dump(dict(rounds=rounds, solved_on=raw_tr, scored=raw_te, tables={k: v.tolist() for k, v in tab.items()}), open(os.path.join(STORE, f'flop-{hero}-n{n_tr}{TAGF}.json'), 'w')); print(f'  done {time.time() - t0:.0f} s', file=log, flush=True)
