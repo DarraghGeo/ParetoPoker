@@ -41,6 +41,7 @@ class Flop:
         sc = [np.array([[[score7(list(two(h)) + self.board + [t, r]) for h in self.hands[p]] for r in self.rc[k]] for k, t in enumerate(self.tc)]) for p in (0, 1)]
         Vr = V0[None, None] * self.Ar[0][..., :, None] * self.Ar[1][..., None, :]; cmp = np.sign(sc[0][..., :, None] - sc[1][..., None, :]); self.W = ((cmp > 0) * Vr).astype(np.float32); self.T = ((cmp == 0) * Vr).astype(np.float32); self.L = ((cmp < 0) * Vr).astype(np.float32); self.Vr = Vr.astype(np.float32)
         self.Vt = (V0[None] * self.At[0][:, :, None] * self.At[1][:, None, :]).astype(np.float32); self.Z = float(self.w[0] @ V0 @ self.w[1]); self.A = [[np.ones(len(self.w[p]), np.float32), self.At[p], self.Ar[p]] for p in (0, 1)]
+        self.sdraw = [[np.array([has_draw(h, self.board, True) == 2 for h in self.hands[p]], int), np.array([[has_draw(h, self.board + [t], True) == 2 for h in self.hands[p]] for t in self.tc], int), None] for p in (0, 1)]       # a flush draw or eight or more cards to a straight: on the flop, on each turn card
         # the trees: the flop's, a turn for each way the flop can end, a river for each way that turn can end
         self.tree = {(): street(self.P0, 0.0, self.S, BETS[0])}
         for kf, n in enumerate(self.tree[()]):
@@ -94,7 +95,12 @@ class Flop:
     def decisions(self, p): return [(len(key), key + (k,)) for key, ns in self.tree.items() for k, n in enumerate(ns) if isinstance(n[0], int) and n[0] == p]
     def node(self, nid): return self.tree[nid[:-1]][nid[-1]]
     def shape(self, p, lvl): return ((len(self.w[p]),), (K, len(self.w[p])), (K, M, len(self.w[p])))[lvl]
-STREETS = 'FTR'; KINDS = {f'{s} {k}': a for s in STREETS for k, a in (('first', 2), ('facing a bet', 3), ('facing a raise', 2))}; NC = 6 * 3 * ND
+STREETS = 'FTR'; KINDS = {f'{s} {k}': a for s in STREETS for k, a in (('first', 2), ('facing a bet', 3), ('facing a raise', 2))}
+# CELLS: what the tables read beside the hand's place, its equity against his strongest third and the stacks behind.
+#   fdraw: facing a bet on the flop or turn, a strong draw or not; adv: first to act on the flop or turn, the range's equity (under 45%, 45-55%, over 55%)
+#   pot: every table by the pot before the flop (single-raised or 3-bet, read from the stacks behind as the flop starts)
+CELLS = set(filter(None, os.environ.get('CELLS', '').split('+'))); BASE = 6 * 3 * ND
+def n_cells(kd): return BASE * (2 if 'fdraw' in CELLS and kd in ('F facing a bet', 'T facing a bet') else 1) * (3 if 'adv' in CELLS and kd in ('F first', 'T first') else 1) * (2 if 'pot' in CELLS else 1)
 def kind(node, hero, lvl): p, acts, inv = node; return STREETS[lvl] + (' first' if inv[1 - hero] <= inv[hero] else ' facing a raise' if len(acts) == 2 else ' facing a bet')
 def lay(sp, hero, tab):
     """The tables laid over a flop: at each of the player's decisions the cells are read from the range it holds there."""
@@ -111,17 +117,21 @@ def lay(sp, hero, tab):
             for _, c in acts: go(key, c, mine)
             return
         E = sp.eq[hero][lvl]; Wt = EXP[lvl](w) * mine * sp.A[hero][lvl]; rows = E.reshape(-1, E.shape[-1]); pl, _ = place_rows(np.broadcast_to(rows, (Wt.reshape(-1, Wt.shape[-1]).shape)), Wt.reshape(-1, Wt.shape[-1]))
-        cells = (pl.reshape(Wt.shape) * 3 + sp.top[hero][lvl]) * ND + int(np.digitize((sp.S - max(inv)) / (sp.P0 + inv[0] + inv[1]), DEPTHS)); kd = kind(node, hero, lvl); na = len(acts); t = tab[kd][cells]; x = np.zeros(cells.shape + (na,), np.float32); x[..., :min(na, t.shape[-1])] = t[..., :na]
+        cells = (pl.reshape(Wt.shape) * 3 + sp.top[hero][lvl]) * ND + int(np.digitize((sp.S - max(inv)) / (sp.P0 + inv[0] + inv[1]), DEPTHS)); kd = kind(node, hero, lvl); na = len(acts)
+        if 'fdraw' in CELLS and kd in ('F facing a bet', 'T facing a bet'): cells = cells * 2 + sp.sdraw[hero][lvl]
+        if 'adv' in CELLS and kd in ('F first', 'T first'): tot = np.maximum(Wt.sum(-1, keepdims=True), 1e-12); cells = cells * 3 + np.digitize((Wt * E).sum(-1, keepdims=True) / tot, [.45, .55])
+        if 'pot' in CELLS: cells = cells * 2 + int(sp.S / sp.P0 > 8)
+        t = tab[kd][cells]; x = np.zeros(cells.shape + (na,), np.float32); x[..., :min(na, t.shape[-1])] = t[..., :na]
         if na < t.shape[-1]: x[..., na - 1] += t[..., na:].sum(-1)
         nid = key + (k,); sig[(lvl, nid)] = x; plan.append(((lvl, nid), kd, cells, na))
         for a, (_, c) in enumerate(acts): go(key, c, mine * x[..., a])
     go((), 0, np.ones(len(w), np.float32)); return sig, plan
 def solve(spots, hero, rounds, log=None, keep=None):
     """The least exploitable shared tables for `hero`. `keep`: a file the state is saved to every 20 rounds and taken up from."""
-    reg = {kd: np.zeros((NC, a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((NC, a)) for kd, a in KINDS.items()}; cur = {kd: np.full((NC, a), 1 / a) for kd, a in KINDS.items()}; best = [1e9, None]; t0 = time.time(); start = 1
+    reg = {kd: np.zeros((n_cells(kd), a)) for kd, a in KINDS.items()}; avg = {kd: np.zeros((n_cells(kd), a)) for kd, a in KINDS.items()}; cur = {kd: np.full((n_cells(kd), a), 1 / a) for kd, a in KINDS.items()}; best = [1e9, None]; t0 = time.time(); start = 1
     if keep and os.path.exists(keep): z = np.load(keep); start = int(z['t']) + 1; best = [float(z['best']), {kd: z['b|' + kd] for kd in KINDS}]; reg = {kd: z['r|' + kd] for kd in KINDS}; avg = {kd: z['a|' + kd] for kd in KINDS}; cur = {kd: z['c|' + kd] for kd in KINDS}
     for t in range(start, rounds + 1):
-        add = {kd: np.zeros_like(v) for kd, v in reg.items()}; own = {kd: np.zeros(NC) for kd in KINDS}; total = 0.0
+        add = {kd: np.zeros_like(v) for kd, v in reg.items()}; own = {kd: np.zeros(n_cells(kd)) for kd in KINDS}; total = 0.0
         for sp in spots:
             sig, plan = lay(sp, hero, cur); g, br = sp.walk(1 - hero, sig, 'reply'); _, vals = sp.walk(hero, sig, 'values', br); total += 100 * g / sp.P0; w0 = sp.w[hero] / (sp.Z * sp.P0)
             for nid, kd, cells, na in plan:
@@ -154,7 +164,7 @@ if __name__ == '__main__':
     for text in open(os.path.join(STORE, 'flop-roots.jsonl')):
         d = json.loads(text); d['flop'] = re.search(r'f\d+', d['spot']).group(0); rows.append(d)
     rng = np.random.default_rng(4); flops = sorted({d['flop'] for d in rows}); rng.shuffle(flops); held = set(flops[: len(flops) // 3]); rng.shuffle(rows); te = [x for x in rows if x['flop'] in held][:n_te]; tr = [x for x in rows if x['flop'] not in held][:n_tr]
-    TAGF = f'-k{K}m{M}'                                # results and saved states are kept by the sample and the number of flops, so runs do not pick up each other's
+    CT = ('-' + '+'.join(sorted(CELLS))) if CELLS else ''; TAGF = f'-k{K}m{M}'                                # results and saved states are kept by the sample and the number of flops, so runs do not pick up each other's
     if job == 'check':
         sp = Flop(te[0]); print(f"  {sp.name} {' '.join(sp.board)}: {len(sp.w[0])} and {len(sp.w[1])} hands, turn cards {sp.tc}, {len(sp.tree)} trees, {sum(len(v) for v in sp.tree.values())} nodes; ready {time.time() - t0:.0f} s", file=log, flush=True)
         for R in (50, 200, 600):
@@ -165,13 +175,19 @@ if __name__ == '__main__':
         for d in te:
             if d['spot'] in res: continue
             reply, value = equilibrium(Flop(d), rounds); res[d['spot']] = reply; json.dump(res, open(f, 'w')); print(f"  {d['spot']} {[round(x, 1) for x in reply]} {time.time() - t0:.0f} s", file=log, flush=True)
-    elif job == 'alone':
-        base = json.load(open(os.path.join(STORE, f'flop-base{TAGF}.json'))); f = os.path.join(STORE, f'flop-alone{TAGF}.json'); res = json.load(open(f)) if os.path.exists(f) else {}
+    elif job.startswith('score'):                    # score:<seat>:<flops solved on>: the saved tables on every scoring flop the game's value is known for
+        _, hero, ntr = job.split(':'); hero = int(hero); f = os.path.join(STORE, f'flop-{hero}-n{ntr}{CT}{TAGF}.json'); r = json.load(open(f)); base = json.load(open(os.path.join(STORE, f'flop-base{TAGF}.json'))); tab = {k: np.array(v) for k, v in r['tables'].items()}
         for d in te:
-            if d['spot'] in res or d['spot'] not in base: continue
+            if d['spot'] in r['scored'] or d['spot'] not in base: continue
+            sp = Flop(d); r['scored'][d['spot']] = 100 * sp.walk(1 - hero, lay(sp, hero, tab)[0], 'reply')[0] / sp.P0; json.dump(r, open(f, 'w')); print(f"  {d['spot']} {r['scored'][d['spot']] - base[d['spot']][hero]:.1f} {time.time() - t0:.0f} s", file=log, flush=True)
+    elif job == 'alone':
+        base = json.load(open(os.path.join(STORE, f'flop-base{TAGF}.json'))); f = os.path.join(STORE, f"flop-alone{CT}{TAGF}{os.environ.get('PART', '')}.json"); res = json.load(open(f)) if os.path.exists(f) else {}
+        part = os.environ.get('PART', '')
+        for j, d in enumerate(te):
+            if d['spot'] in res or d['spot'] not in base or (part and j % int(part.split('of')[1]) != int(part.split('of')[0][1:])): continue
             sp = Flop(d); res[d['spot']] = [100 * sp.walk(1 - h, lay(sp, h, solve([sp], h, rounds))[0], 'reply')[0] / sp.P0 - base[d['spot']][h] for h in (0, 1)]; json.dump(res, open(f, 'w')); print(f"  {d['spot']} alone {[round(x, 1) for x in res[d['spot']]]} {time.time() - t0:.0f} s", file=log, flush=True)
     else:
-        hero = int(job); S_tr = [Flop(d) for d in tr]; print(f'  flops ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, log, os.path.join(STORE, f'flop-{hero}-n{n_tr}{TAGF}-state.npz'))
+        hero = int(job); S_tr = [Flop(d) for d in tr]; print(f'  flops ready {time.time() - t0:.0f} s', file=log, flush=True); tab = solve(S_tr, hero, rounds, log, os.path.join(STORE, f'flop-{hero}-n{n_tr}{CT}{TAGF}-state.npz'))
         raw_tr = float(np.mean([100 * sp.walk(1 - hero, lay(sp, hero, tab)[0], 'reply')[0] / sp.P0 for sp in S_tr])); del S_tr; raw_te = {}
         for d in te: sp = Flop(d); raw_te[d['spot']] = 100 * sp.walk(1 - hero, lay(sp, hero, tab)[0], 'reply')[0] / sp.P0
-        json.dump(dict(rounds=rounds, solved_on=raw_tr, scored=raw_te, tables={k: v.tolist() for k, v in tab.items()}), open(os.path.join(STORE, f'flop-{hero}-n{n_tr}{TAGF}.json'), 'w')); print(f'  done {time.time() - t0:.0f} s', file=log, flush=True)
+        json.dump(dict(rounds=rounds, solved_on=raw_tr, scored=raw_te, tables={k: v.tolist() for k, v in tab.items()}), open(os.path.join(STORE, f'flop-{hero}-n{n_tr}{CT}{TAGF}.json'), 'w')); print(f'  done {time.time() - t0:.0f} s', file=log, flush=True)
