@@ -46,7 +46,8 @@ function byRules(view, at, e, draw) {
     if (street === 'river' && canRaise && !raised && e >= raiseFrom) return 2;
     if (street !== 'river' && canRaise && !raised && R.earlyRaiseFrom?.[street] !== undefined && e >= R.earlyRaiseFrom[street]) return 2;   // raising before the river, where asked
     if (R.flopIpRaisesLeads && street === 'flop' && ip && (!R.role?.leads || view.aggressor) && canRaise && !raised && e >= at.price + over) return 2;                 // in position against a flop lead: every hand that continues raises
-    if (street !== 'river' && canRaise && !raised && R.raises?.valueFrom?.[street] !== undefined && e >= R.raises.valueFrom[street]) return 2;      // raises: value raises before the river
+    const quiet = R.raises?.callerInPositionCallsFlop && street === 'flop' && ip && !view.aggressor;      // the caller in position does not raise a flop bet: the last raiser keeps betting, so strong hands call
+    if (!quiet && street !== 'river' && canRaise && !raised && R.raises?.valueFrom?.[street] !== undefined && e >= R.raises.valueFrom[street]) return 2;      // raises: value raises before the river
     const band = R.earlyRaiseBand?.[street]?.[seat]; if (band && canRaise && !raised && e >= band[0] && e < band[1]) return 2;    // a band of equity that raises before the river, where asked
     if (R.drawsCallRaise && raised && street !== 'river' && draw) return 1;                                                  // strong draws do not fold to a raise, where asked
     return e >= at.price + over ? 1 : 0;
@@ -88,7 +89,8 @@ export function decide(view, hands) {
   if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).valueFrom(at.size));
   if (at.kind === 'facing a bet' && at.street !== 'river' && view.canRaise && view.raiseDraws?.[at.street]) hands.forEach((h, i) => { if (!h.draw) return; const o = out[i]; const move = view.raiseDraws[at.street] * (o[0] + o[1]); const fromFold = Math.min(o[0], move); o[0] -= fromFold; o[1] -= move - fromFold; o[2] += move; });   // strong draws raise this share of the time
   const RR = (view.rules ?? RULES).raises; const leadRule = (view.rules ?? RULES).flopIpRaisesLeads && at.street === 'flop' && view.ip && view.aggressor;
-  if (RR && at.kind === 'facing a bet' && view.canRaise && !leadRule) balanceRaises(hands, out, view.raiseSize, RR.bluffRatio ?? 1, at.street);
+  const quietFlop = RR?.callerInPositionCallsFlop && at.street === 'flop' && view.ip && !view.aggressor;
+  if (RR && at.kind === 'facing a bet' && view.canRaise && !leadRule && !quietFlop) balanceRaises(hands, out, view.raiseSize, RR.bluffRatio ?? 1, at.street);
   const exact = [].concat(view.defendExactly?.[at.street] ?? []).find((x) => !x.seat || x.seat === at.seat);   // `perEquity`: the multiple moves by this much for each point the range's own equity is above `around`     // continue with exactly this multiple of the minimum defence, the best hands by equity (raises kept)
   if (exact && (!exact.seat || exact.seat === at.seat) && at.kind !== 'first' && (exact.raises || at.kind === 'facing a bet')) { let total = 0; hands.forEach((h) => { total += h.weight; }); const times = exact.times + (exact.perEquity ?? 0) * (view.reads.rangeEquity - (exact.around ?? 0.5)); let room = Math.max(0, Math.min(1, times / (1 + at.size))) * total;
     hands.forEach((h, i) => { room -= h.weight * out[i][2]; });       // raises, value and bluff, are kept and count toward the defence
