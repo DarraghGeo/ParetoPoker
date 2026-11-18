@@ -1,0 +1,86 @@
+// The study method as an engine. It decides from what a player can read at the table and nothing else:
+//   - each hand's equity (however the player gets it: exact, estimated, or off by some points),
+//   - whether the hand is a strong draw,
+//   - a few reads of the spot (seat, street, the price, who is ahead in top pair or better, his strong and weak shares).
+// Three layers:
+//   1. thresholds on equity against the price (RULES): what to memorise;
+//   2. reads that move the thresholds (ahead, his strong hands, the seat);
+//   3. optionally, a table of solved answers by equity band (`cells`), used where it has an answer.
+// No solver, no file access: it runs in a browser.
+
+export const RULES = {
+  // facing a bet: continue with equity at or over the price plus this much
+  callOver: { flop: { ip: 0.05, oop: 0.15 }, turn: { ip: 0, oop: 0.10 }, river: { ip: 0, oop: 0 } },
+  callOverBigTurnBetOop: 0.05,        // out of position on the turn, more again against over half the pot
+  callOverAfterOwnBet: 0.05,          // facing a raise of our own bet, before the river
+  callOverOverbet: 0.05,              // against more than the pot
+  riverRaiseFrom: 0.75, riverRaiseFromOverbet: 0.80,
+  // first to act
+  valueFrom: (size) => (size < 0.5 ? 0.75 : size < 1.1 ? 0.80 : 0.85),
+  flopOopValue: 0.70, turnBetFrom: 0.50,
+  aheadBy: 0.04,                      // top pair or better: our share at least this much over his
+  hisStrongAt: 0.80, hisWeakUnder: 0.30, checkAllIfHisStrong: 0.20,
+  riverBluffUnderWeakLess: { ip: 0.20, oop: 0.25 },
+};
+export const EQUITY_CUTS = [0.2, 0.35, 0.5, 0.65, 0.8];
+export const ADVANTAGE_CUTS = [0.45, 0.55];
+const STREET = { 3: 'flop', 4: 'turn', 5: 'river' }; const LETTER = { 3: 'F', 4: 'T', 5: 'R' };
+const band = (x, cuts) => { let k = 0; while (k < cuts.length && x >= cuts[k]) k++; return k; };
+
+/** Where a decision sits: which table, and the reads every hand shares. */
+function situation(view) {
+  const { street, ip, toCall, size, raised } = view; const seat = ip ? 'ip' : 'oop';
+  const kind = !(toCall > 0) ? 'first' : raised ? 'facing a raise' : 'facing a bet';
+  return { street: STREET[street], seat, kind, table: `${LETTER[street]} ${kind}`, size, price: toCall > 0 ? size / (1 + 2 * size) : 0 };
+}
+
+/** Layer 1 and 2: the written rules. Returns 0 the quiet action (check or fold), 1 call, 2 bet or raise. */
+function byRules(view, at, e, draw) {
+  const R = view.rules ?? RULES; const { ip, raised, canRaise, reads } = view; const { street, seat, size } = at;
+  if (at.kind !== 'first') {
+    let over = street === 'river' ? 0 : raised ? R.callOverAfterOwnBet : R.callOver[street][seat];
+    if (street === 'turn' && !ip && !raised && size > 0.5) over += R.callOverBigTurnBetOop;
+    if (size > 1) over += R.callOverOverbet;
+    const raiseFrom = size > 1 ? R.riverRaiseFromOverbet : R.riverRaiseFrom;
+    if (street === 'river' && canRaise && !raised && e >= raiseFrom) return 2;
+    return e >= at.price + over ? 1 : 0;
+  }
+  if (street === 'flop') return ip || (reads.ahead && (e >= R.flopOopValue || draw)) ? 2 : 0;
+  if (street === 'turn') return e >= R.turnBetFrom || draw ? 2 : 0;
+  if (!ip && reads.hisStrong >= R.checkAllIfHisStrong) return 0;
+  const bluffUnder = Math.max(0, reads.hisWeak - R.riverBluffUnderWeakLess[seat]);
+  return e >= R.valueFrom(size) || e < bluffUnder ? 2 : 0;
+}
+
+/** Layer 3: the solved answer for the hand's cell, or null where the table has none. */
+function byCells(view, at, e, draw) {
+  const rows = view.cells?.[at.seat]?.[at.table]; if (!rows) return null;
+  let cell = band(e, EQUITY_CUTS) * 2 + (at.street !== 'river' && draw ? 1 : 0);
+  if (at.kind === 'first' && at.street !== 'river') cell = cell * 3 + band(view.reads.rangeEquity, ADVANTAGE_CUTS);
+  cell = cell * 2 + (view.deep ? 1 : 0);
+  const row = rows[cell]; if (!row || row.every((x) => Math.abs(x - 1 / row.length) < 1e-9)) return null;
+  return at.kind === 'first' ? [row[0], 0, row[1]] : row.length === 3 ? row : [row[0], row[1], 0];
+}
+
+/**
+ * view: { street 3|4|5, ip, toCall, size (the bet faced, or the bet on offer, in pots), raised (we already bet or raised this
+ *         street), canRaise, deep (a single-raised pot), reads: { ahead, hisStrong, hisWeak, rangeEquity }, cells?, rules? }
+ * hands: [{ equity, draw }]
+ * Returns for each hand [quiet, call, bet or raise], summing to 1.
+ */
+export function decide(view, hands) {
+  const at = situation(view);
+  return hands.map(({ equity, draw }) => {
+    const solved = byCells(view, at, equity, draw); if (solved) return solved;
+    const a = byRules(view, at, equity, draw); return [a === 0 ? 1 : 0, a === 1 ? 1 : 0, a === 2 ? 1 : 0];
+  });
+}
+
+/** The reads of the spot from both ranges as the player sees them: weights, equities and who holds top pair or better. */
+export function readSpot(mine, his) {
+  const R = RULES; let mt = 0, ht = 0, strong = 0, weak = 0, topMe = 0, topHim = 0, eq = 0;
+  for (const h of mine) { mt += h.weight; eq += h.weight * h.equity; if (h.topPairPlus) topMe += h.weight; }
+  for (const h of his) { ht += h.weight; if (h.equity >= R.hisStrongAt) strong += h.weight; if (h.equity < R.hisWeakUnder) weak += h.weight; if (h.topPairPlus) topHim += h.weight; }
+  if (!(mt > 0) || !(ht > 0)) return null;
+  return { ahead: topMe / mt - topHim / ht > R.aheadBy, hisStrong: strong / ht, hisWeak: weak / ht, rangeEquity: eq / mt };
+}

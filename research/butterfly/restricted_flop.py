@@ -135,9 +135,10 @@ def is_bet(kd, streets='FT'): return kd[0] in streets and ' facing ' in kd and '
 #   tilt: on the flop and turn, how the hand's equity is spread over the next card: flat, tilted up or tilted down
 CELLS = set(filter(None, os.environ.get('CELLS', '').split('+')))
 if 'nodepth' in CELLS: DEPTHS = []; ND = 1                 # nodepth: the tables without the stacks-behind column
-BASE = 8 if 'rows' in CELLS else 6 * 3 * ND            # rows: the hand's row alone (nothing, draw, low / middle / top pair, overpair, two pair, trips or better) in place of the three columns
+BASE = 8 if 'rows' in CELLS else 12 if 'eq' in CELLS else 6 * 3 * ND            # eq: the hand's equity in six bands (cuts at 20, 35, 50, 65, 80%) by a strong draw or not, in place of the three columns            # rows: the hand's row alone (nothing, draw, low / middle / top pair, overpair, two pair, trips or better) in place of the three columns
 def n_cells(kd): return BASE * (2 if 'fdraw' in CELLS and is_bet(kd) else 1) * (3 if 'adv' in CELLS and is_first(kd) else 1) * (2 if 'pot' in CELLS else 1) * (3 if 'tilt' in CELLS and kd[0] in 'FT' else 1)
 def kind(node, hero, lvl): p, acts, inv, (bets, size) = node; return STREETS[lvl] + (' first' if inv[1 - hero] <= inv[hero] else f' facing {bet_name(lvl, size)}' if bets == 1 else f' facing {RNAME[bets - 2]}')
+EQCUTS = [.2, .35, .5, .65, .8]
 def hand_rows(sp):
     """Each hand's row on the flop (n), on each sampled turn card (K, n) and on each sampled river card (K, M, n)."""
     two = lambda h: cards(h); B = cards(''.join(sp.board)); out = []
@@ -160,6 +161,7 @@ def lay(sp, hero, tab):
             return
         E = sp.eq[hero][lvl]; Wt = EXP[lvl](w) * mine * sp.A[hero][lvl]; rows = E.reshape(-1, E.shape[-1]); pl, _ = place_rows(np.broadcast_to(rows, (Wt.reshape(-1, Wt.shape[-1]).shape)), Wt.reshape(-1, Wt.shape[-1]))
         cells = (pl.reshape(Wt.shape) * 3 + sp.top[hero][lvl]) * ND + int(np.digitize((sp.S - max(inv)) / (sp.P0 + inv[0] + inv[1]), DEPTHS)); kd = kind(node, hero, lvl); na = len(acts)
+        if 'eq' in CELLS: cells = np.broadcast_to(np.digitize(E, EQCUTS) * 2 + (sp.sdraw[hero][lvl] if lvl < 2 else 0), Wt.shape).copy()
         if 'rows' in CELLS:
             if not hasattr(sp, 'rows'): sp.rows = hand_rows(sp)
             cells = np.broadcast_to(sp.rows[hero][lvl], Wt.shape).copy()
