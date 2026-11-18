@@ -163,8 +163,11 @@ if __name__ == '__main__':
     job = sys.argv[1]; rounds = int(sys.argv[2]) if len(sys.argv) > 2 else 300; n_tr = int(sys.argv[3]) if len(sys.argv) > 3 else 8; n_te = int(sys.argv[4]) if len(sys.argv) > 4 else 6; rows = []; log = sys.stderr; t0 = time.time()
     for text in open(os.path.join(STORE, 'flop-roots.jsonl')):
         d = json.loads(text); d['flop'] = re.search(r'f\d+', d['spot']).group(0); rows.append(d)
-    rng = np.random.default_rng(4); flops = sorted({d['flop'] for d in rows}); rng.shuffle(flops); held = set(flops[: len(flops) // 3]); rng.shuffle(rows); te = [x for x in rows if x['flop'] in held][:n_te]; tr = [x for x in rows if x['flop'] not in held][:n_tr]
-    CT = ('-' + '+'.join(sorted(CELLS))) if CELLS else ''; TAGF = f'-k{K}m{M}'                                # results and saved states are kept by the sample and the number of flops, so runs do not pick up each other's
+    rng = np.random.default_rng(4); flops = sorted({d['flop'] for d in rows}); rng.shuffle(flops); held = set(flops[: len(flops) // 3]); rng.shuffle(rows); te = [x for x in rows if x['flop'] in held][:n_te]; pool = [x for x in rows if x['flop'] not in held]
+    if os.environ.get('BAL'):                           # the flops solved on: as many 3-bet pots as single-raised ones
+        a_ = [x for x in pool if x['action'] == '3BP']; b_ = [x for x in pool if x['action'] != '3BP']; pool = [x for pair in zip(a_, b_) for x in pair]
+    tr = pool[:n_tr]
+    CT = (('-' + '+'.join(sorted(CELLS))) if CELLS else '') + ('-bal' if os.environ.get('BAL') else ''); TAGF = f'-k{K}m{M}'                                # results and saved states are kept by the sample and the number of flops, so runs do not pick up each other's
     if job == 'check':
         sp = Flop(te[0]); print(f"  {sp.name} {' '.join(sp.board)}: {len(sp.w[0])} and {len(sp.w[1])} hands, turn cards {sp.tc}, {len(sp.tree)} trees, {sum(len(v) for v in sp.tree.values())} nodes; ready {time.time() - t0:.0f} s", file=log, flush=True)
         for R in (50, 200, 600):
