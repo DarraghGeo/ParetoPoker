@@ -49,7 +49,7 @@ if (process.env.SOLVED) {  // SOLVED=1 CELLS=<file>: the solved answers by equit
   for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, { rules: after, cellsFacingTurn: { ...after, cells: true, cellsWhere: (st, f) => st === 4 && f }, cellsFacing: { ...after, cells: true, cellsWhere: (st, f) => f }, cellsTurn: { ...after, cells: true, cellsWhere: (st) => st === 4 }, cellsEverywhere: { ...after, cells: true, cellsWhere: () => true }, cellsAlone: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' } }); }
 const FACE = {};           // FACING=1: facing a turn bet or raise, the engine's answers beside the solution's for the same hands, by equity band
-if (process.env.FACING || process.env.BETTING) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; ENGINE_ARMS.after = NOW; }
+if (process.env.FACING || process.env.BETTING) { for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const x = JSON.parse(process.env.EXTRA ?? '{}'); ENGINE_ARMS.after = { ...NOW, ...x, patch: { ...NOW.patch, ...(x.patch ?? {}) } }; }   // EXTRA: changes to the current rules for this look
 if (process.env.FACEFIX) { // FACEFIX=1: versions of facing a turn bet, every other fix on
   for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   const T = (ip, oop) => ({ callOver: { ...RULES.callOver, turn: { ip, oop } } });
