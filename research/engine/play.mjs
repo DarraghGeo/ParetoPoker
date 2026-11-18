@@ -15,7 +15,7 @@ import { decide, readSpot } from './engine.mjs';
 //   ARMS=engine TREE=raise [CELLS=<solved tables json>] node research/engine/play.mjs [spots] [seed]   -> out/play-engine.jsonl
 //   Arms: rules (exact equity), read (equity read off the chart), cells (the solved answers by equity band, rules where they have none), noisy (exact equity up to 10 points off).
 const CELLS = process.env.CELLS ? JSON.parse(readFileSync(process.env.CELLS, 'utf8')) : null;
-const ENGINE_ARMS = CELLS ? { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, cells: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 }, cellsNoisy: { rule: 'engine', eq: 'exact', cells: true, versus: 'start', noise: 0.1 } } : { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 } };
+const ENGINE_ARMS = CELLS ? { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, cells: { rule: 'engine', eq: 'exact', cells: true, versus: 'start' }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 }, rulesFill: { rule: 'engine', eq: 'exact', fill: true } } : { rules: { rule: 'engine', eq: 'exact' }, read: { rule: 'engine' }, rulesFill: { rule: 'engine', eq: 'exact', fill: true }, noisy: { rule: 'engine', eq: 'exact', noise: 0.1 } };
 
 const N = fs.COMBOS; const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const seatOf = (n) => (n.seat === 'ip' || n.seat === 1 ? 1 : 0);
 const RK = Array.from({ length: 52 }, (_, c) => fs.rankOf(c)); const SU = Array.from({ length: 52 }, (_, c) => fs.suitOf(c)); const ACE = Math.max(...RK); const LOW = Math.min(...RK);
@@ -281,7 +281,7 @@ for (let done = 0; done < +count;) {
           const [e, he] = equities(F, board, w, hs, arm, dice[name]); const mineH = [], hisH = [];
           for (const c of F.order) { if (w[c] > 0) mineH.push({ c, weight: w[c], equity: e[c], draw: F.come[c] >= 8, topPairPlus: F.lv[c] >= 4 }); else P[c * k + quiet] = 1; if (hs[c] > 0) hisH.push({ weight: hs[c], equity: he[c], topPairPlus: F.lv[c] >= 4 }); }
           const reads = readSpot(mineH, hisH); let t = 0, all = 0;
-          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null }, mineH) : mineH.map(() => [1, 0, 0]);
+          const out = reads ? decide({ street, ip: seat === 1, toCall, size: toCall > 0 ? toCall / (n.pot - toCall) : bet, raised, canRaise: ri >= 0, deep: p.stack / p.pot > 8, reads, cells: arm.cells ? CELLS : null, fillToDefence: !!arm.fill }, mineH) : mineH.map(() => [1, 0, 0]);
           mineH.forEach((h, i) => { const [q, cl, ag] = out[i]; const c = h.c;
             if (toCall > 0) { P[c * k + quiet] += q; P[c * k + ci] += cl; P[c * k + (ri >= 0 ? ri : ci)] += ag; }
             else { P[c * k + xi] += q + cl; P[c * k + (bi >= 0 ? bi : xi)] += ag; if (bi >= 0) { t += h.weight * ag; all += h.weight; } } });
@@ -304,7 +304,7 @@ for (let done = 0; done < +count;) {
     };
     const b0 = Array.from(spot.board); walk(0, b0, 0, facts(b0), NAMES.map(() => start[hero]), start[1 - hero]);
     const lossOf = (r) => +(100 * (solved.ev(hero) - r.snapshot().ev(hero)) / pot - noise[hero]).toFixed(3); const side = hero ? 'ip' : 'oop';
-    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries([NAMES[0], NAMES[2]].filter(Boolean).map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
+    row.loss[side] = Object.fromEntries(Object.entries(runs).map(([n, r]) => [n, lossOf(r)])); row.br[side] = Object.fromEntries((process.env.ARMS === 'engine' ? NAMES.filter((x) => !['read', 'noisy'].includes(x)) : [NAMES[0], NAMES[2]]).filter(Boolean).map((n) => [n, +(100 * runs[n].solver.exploitability() / pot * 2).toFixed(2)]));
     row.freq[side] = { solution: sol.map(([t, all]) => +(t / (all || 1)).toFixed(3)), ...Object.fromEntries(NAMES.map((n) => [n, tally[n].map(([t, all]) => +(t / (all || 1)).toFixed(3))])) };
   }
   row.seconds = Math.round((Date.now() - t0) / 1000); appendFileSync(out, JSON.stringify(row) + '\n');

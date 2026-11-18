@@ -65,15 +65,26 @@ function byCells(view, at, e, draw) {
 /**
  * view: { street 3|4|5, ip, toCall, size (the bet faced, or the bet on offer, in pots), raised (we already bet or raised this
  *         street), canRaise, deep (a single-raised pot), reads: { ahead, hisStrong, hisWeak, rangeEquity }, cells?, rules? }
- * hands: [{ equity, draw }]
+ * hands: [{ equity, draw, weight }]; view.fillToDefence turns the balance rule on
  * Returns for each hand [quiet, call, bet or raise], summing to 1.
  */
 export function decide(view, hands) {
   const at = situation(view);
-  return hands.map(({ equity, draw }) => {
+  const out = hands.map(({ equity, draw }) => {
     const solved = byCells(view, at, equity, draw); if (solved) return solved;
     const a = byRules(view, at, equity, draw); return [a === 0 ? 1 : 0, a === 1 ? 1 : 0, a === 2 ? 1 : 0];
   });
+  if (view.fillToDefence && at.kind !== 'first' && (view.ip || at.street === 'river')) fillToDefence(hands, out, 1 / (1 + at.size));
+  return out;
+}
+
+/** Balance when facing a bet or raise: if the range continues less than the minimum defence, 1 / (1 + bet), the next-best
+ *  hands by equity call until it does. In position on any street, and on the river in either seat. */
+function fillToDefence(hands, out, defence) {
+  let total = 0, cont = 0; hands.forEach((h, i) => { total += h.weight; cont += h.weight * (1 - out[i][0]); });
+  let short = defence * total - cont; if (!(short > 1e-9)) return;
+  const order = hands.map((h, i) => i).filter((i) => out[i][0] > 0).sort((x, y) => hands[y].equity - hands[x].equity);
+  for (const i of order) { if (short <= 1e-9) break; const take = Math.min(out[i][0], short / hands[i].weight); out[i][0] -= take; out[i][1] += take; short -= take * hands[i].weight; }
 }
 
 /** The reads of the spot from both ranges as the player sees them: weights, equities and who holds top pair or better. */
