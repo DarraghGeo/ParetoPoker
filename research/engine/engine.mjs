@@ -29,7 +29,8 @@ const band = (x, cuts) => { let k = 0; while (k < cuts.length && x >= cuts[k]) k
 
 /** Where a decision sits: which table, and the reads every hand shares. */
 function situation(view) {
-  const { street, ip, toCall, size, raised } = view; const seat = ip ? 'ip' : 'oop';
+  const { ip, toCall, size, raised } = view; const seat = ip ? 'ip' : 'oop'; const shallow = (view.rules ?? RULES).shallowAsRiver;
+  const street = shallow && view.street === 4 && view.depth < shallow ? 5 : view.street;      // a turn with little behind is played by the river rules, where asked
   const kind = !(toCall > 0) ? 'first' : raised ? 'facing a raise' : 'facing a bet';
   return { street: STREET[street], seat, kind, table: `${LETTER[street]} ${kind}`, size, price: toCall > 0 ? size / (1 + 2 * size) : 0 };
 }
