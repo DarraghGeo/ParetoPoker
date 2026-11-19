@@ -63,7 +63,7 @@ function byRules(view, at, e, draw) {
   if (street === 'turn') return e >= R.turnBetFrom || (draw && !R.turnNoDrawBets) ? 2 : 0;
   if (!ip && reads.hisStrong >= R.checkAllIfHisStrong) return 0;
   const bluffUnder = Math.max(0, reads.hisWeak - R.riverBluffUnderWeakLess[seat]);
-  const valueLine = R.riverShallowValue && view.depth < R.riverShallowValue.under ? R.riverShallowValue.from : R.valueFrom(size);       // with little behind the bet is all-in or close, he cannot raise, and thinner hands bet
+  const valueLine = (R.riverShallowValue && view.depth < R.riverShallowValue.under ? R.riverShallowValue.from : R.valueFrom(size)) + (view.deep ? R.deepRiverValueUp ?? 0 : 0);       // with little behind the bet is all-in or close, he cannot raise, and thinner hands bet
   return e >= valueLine || e < bluffUnder ? 2 : 0;
 }
 
@@ -91,7 +91,7 @@ export function decide(view, hands) {
   });
   if (at.kind === 'first' && at.street === 'flop' && view.ip && view.flopBalance) balanceTurnBets(hands, out, at.size, view.flopBalance);
   if (at.kind === 'first' && at.street === 'turn' && view.turnBalance) balanceTurnBets(hands, out, at.size, view.turnBalance);
-  if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).riverShallowValue && view.depth < (view.rules ?? RULES).riverShallowValue.under ? (view.rules ?? RULES).riverShallowValue.from : (view.rules ?? RULES).valueFrom(at.size));
+  if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).riverShallowValue && view.depth < (view.rules ?? RULES).riverShallowValue.under ? (view.rules ?? RULES).riverShallowValue.from : (view.rules ?? RULES).valueFrom(at.size) + (view.deep ? (view.rules ?? RULES).deepRiverValueUp ?? 0 : 0));
   if (at.kind === 'facing a bet' && at.street !== 'river' && view.canRaise && view.raiseDraws?.[at.street]) hands.forEach((h, i) => { if (!h.draw) return; const o = out[i]; const move = view.raiseDraws[at.street] * (o[0] + o[1]); const fromFold = Math.min(o[0], move); o[0] -= fromFold; o[1] -= move - fromFold; o[2] += move; });   // strong draws raise this share of the time
   const FD2 = (view.rules ?? RULES).flopDeep; const deepFlopIp = FD2 && at.street === 'flop' && view.ip && view.depth >= FD2.at; let deepRaise = false;
   if (deepFlopIp && at.kind === 'first' && FD2.ipBetShare !== undefined) out.forEach((o, i) => { out[i] = [1 - FD2.ipBetShare, 0, FD2.ipBetShare]; });       // checked to: the whole range, strong, middle and weak alike, bets this share of the time
