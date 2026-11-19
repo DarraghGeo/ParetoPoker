@@ -39,3 +39,4 @@ K93 1.3/0.8 17/15 | KK2 2.0/1.4 15/18 | Q73 2.1/1.5 19/26 | AA2 1.4/1.4 15/24 | 
 - A flop lab (SUB=flop, thinned ranges) is too slow to be useful: over 3 minutes a spot.
 - Leak-finder, IP on the short boards: AK6 and Q73 are the flop bet when checked to (solution there: 17 and 14); AA2 is turn bets (16). The solution bets the flop merged at 37-58% on every board except where the last raiser is clearly ahead (AA2: 100%).
 - r6 (5 short boards): in position on the flop checked to, range bet only as the last raiser with range equity 58%+, otherwise every hand bets 40%: IP Q73 26 -> 15, AK6 24 -> 20, KK2 16 -> 21, others unchanged; mean 20.4 -> 18.5. ADOPTED (flopIpMerged share 0.4). It overrides the deep-pot half.
+- r7 (5 short boards): five in-position turn-bet variants (check a quarter, bluffs at the full ratio, value from 65, draws betting again) all within a point of now. Short boards IP now: K93 15, KK2 21, Q73 15, AA2 22, AK6 20. Left as is.
