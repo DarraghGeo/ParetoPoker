@@ -57,7 +57,7 @@ if (process.env.FACEFIX) { // FACEFIX=1: versions of facing a turn bet, every ot
   const T = (ip, oop) => ({ callOver: { ...RULES.callOver, turn: { ip, oop } } });
   Object.assign(ENGINE_ARMS, process.env.FACEFIX === '2' ? JSON.parse(process.env.FACE_ARMS).reduce((o, [n, patch, extra]) => ({ ...o, [n]: { ...after, patch, ...extra } }), {})
     : { asNow: after, ipTighter: { ...after, patch: T(0.10, 0.10) }, oopLooser: { ...after, patch: T(0, 0) }, swapped: { ...after, patch: T(0.10, 0) }, swappedDraws: { ...after, patch: { ...T(0.10, 0), drawsCallRaise: true } }, swappedDrawsRaise: { ...after, patch: { ...T(0.10, 0), drawsCallRaise: true, earlyRaiseBand: { turn: { ip: [0.5, 0.8] } } } } }); }
-if (process.env.SUB) {     // SUB=1: is it the hands or the frequency? Facing a turn bet, one of them is taken from the solution
+if (process.env.SUBTEST) {     // SUBTEST=1: is it the hands or the frequency? Facing a turn bet, one of them is taken from the solution
   for (const k of Object.keys(ENGINE_ARMS)) delete ENGINE_ARMS[k]; const after = NOW;
   Object.assign(ENGINE_ARMS, { asNow: after, solverHands: { ...after, sub: 'hands' }, solverFrequency: { ...after, sub: 'freq' }, solverNoRaises: { ...after, sub: 'noraise' }, solverAll: { ...after, only: (st, f) => !(st === 4 && f) } }); }
 if (process.env.EXACT) {   // EXACT=1: facing a turn bet, continue with a set multiple of the minimum defence, the best hands by equity
