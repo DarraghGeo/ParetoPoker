@@ -22,3 +22,4 @@ K93 1.3/0.8 17/15 | KK2 2.0/1.4 15/18 | Q73 2.1/1.5 19/26 | AA2 1.4/1.4 15/24 | 
 - Stated rules on file (see the review in the chat): bet share = value + bluffs, out of position net of his; defence in position MDF, out of position MDF x min(1, 2 x range equity); fold order by equity against his calling range plus swing.
 
 ## Log
+- r1 (6 boards, stopped): book bets (share = value + bluffs net of his, hands by bet gain) and book defence (MDF in position, MDF x 2 x range equity out, kept by top + draw on flop and turn) as wholesale replacements are both WORSE: mean exploit 17/26 now, 19/37 book bets, 20/31 book defence; book bets give up 9-11% in position on K93 and AA2 (it stops betting the whole range as the last raiser). Not adopted. Also: 862 in position went 42 -> 47 after the flop exact + keep rule adopted on QJ5 alone: every adoption needs all boards.
