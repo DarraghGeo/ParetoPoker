@@ -37,3 +37,5 @@ K93 1.3/0.8 17/15 | KK2 2.0/1.4 15/18 | Q73 2.1/1.5 19/26 | AA2 1.4/1.4 15/24 | 
 - r5 (all 9 boards, current rules): OUT OF POSITION IS UNDER 20% ON ALL NINE (15-19). In position: K93 15, KK2 16, Q73 26, AA2 22, AK6 24, 862 42, QJ5 31, A66 33, T76 30 (mean 26.4, was 29.1). Gives up 1.8/1.7.
 - River value 10 points tighter takes 2-5 points off the single-raised IP seats for 0.2-0.6 more given up: ADOPTED for deep (single-raised) pots only (deepRiverValueUp 0.1).
 - A flop lab (SUB=flop, thinned ranges) is too slow to be useful: over 3 minutes a spot.
+- Leak-finder, IP on the short boards: AK6 and Q73 are the flop bet when checked to (solution there: 17 and 14); AA2 is turn bets (16). The solution bets the flop merged at 37-58% on every board except where the last raiser is clearly ahead (AA2: 100%).
+- r6 (5 short boards): in position on the flop checked to, range bet only as the last raiser with range equity 58%+, otherwise every hand bets 40%: IP Q73 26 -> 15, AK6 24 -> 20, KK2 16 -> 21, others unchanged; mean 20.4 -> 18.5. ADOPTED (flopIpMerged share 0.4). It overrides the deep-pot half.
