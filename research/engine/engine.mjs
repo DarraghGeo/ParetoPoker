@@ -63,7 +63,8 @@ function byRules(view, at, e, draw) {
   if (street === 'turn') return e >= R.turnBetFrom || (draw && !R.turnNoDrawBets) ? 2 : 0;
   if (!ip && reads.hisStrong >= R.checkAllIfHisStrong) return 0;
   const bluffUnder = Math.max(0, reads.hisWeak - R.riverBluffUnderWeakLess[seat]);
-  return e >= R.valueFrom(size) || e < bluffUnder ? 2 : 0;
+  const valueLine = R.riverShallowValue && view.depth < R.riverShallowValue.under ? R.riverShallowValue.from : R.valueFrom(size);       // with little behind the bet is all-in or close, he cannot raise, and thinner hands bet
+  return e >= valueLine || e < bluffUnder ? 2 : 0;
 }
 
 /** Layer 3: the solved answer for the hand's cell, or null where the table has none. */
@@ -90,7 +91,7 @@ export function decide(view, hands) {
   });
   if (at.kind === 'first' && at.street === 'flop' && view.ip && view.flopBalance) balanceTurnBets(hands, out, at.size, view.flopBalance);
   if (at.kind === 'first' && at.street === 'turn' && view.turnBalance) balanceTurnBets(hands, out, at.size, view.turnBalance);
-  if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).valueFrom(at.size));
+  if (at.kind === 'first' && at.street === 'river' && view.riverBalance) balanceRiverBets(hands, out, at.size, view.riverBalance, (view.rules ?? RULES).riverShallowValue && view.depth < (view.rules ?? RULES).riverShallowValue.under ? (view.rules ?? RULES).riverShallowValue.from : (view.rules ?? RULES).valueFrom(at.size));
   if (at.kind === 'facing a bet' && at.street !== 'river' && view.canRaise && view.raiseDraws?.[at.street]) hands.forEach((h, i) => { if (!h.draw) return; const o = out[i]; const move = view.raiseDraws[at.street] * (o[0] + o[1]); const fromFold = Math.min(o[0], move); o[0] -= fromFold; o[1] -= move - fromFold; o[2] += move; });   // strong draws raise this share of the time
   const FD2 = (view.rules ?? RULES).flopDeep; const deepFlopIp = FD2 && at.street === 'flop' && view.ip && view.depth >= FD2.at; let deepRaise = false;
   if (deepFlopIp && at.kind === 'first' && FD2.ipBetShare !== undefined) out.forEach((o, i) => { out[i] = [1 - FD2.ipBetShare, 0, FD2.ipBetShare]; });       // checked to: the whole range, strong, middle and weak alike, bets this share of the time
@@ -100,7 +101,7 @@ export function decide(view, hands) {
   const quietFlop = RR?.callerInPositionCallsFlop && at.street === 'flop' && view.ip && !view.aggressor;
   if (RR && at.kind === 'facing a bet' && view.canRaise && !leadRule && !quietFlop && !deepRaise) balanceRaises(hands, out, view.raiseSize, RR.bluffRatio ?? 1, at.street, RR.bluffsPerValue?.[at.street], RR.valueShare?.[at.street]);
   const exact = [].concat(view.defendExactly?.[at.street] ?? []).find((x) => (!x.seat || x.seat === at.seat) && (!x.deepOnly || view.deep));   // `perEquity`: the multiple moves by this much for each point the range's own equity is above `around`     // continue with exactly this multiple of the minimum defence, the best hands by equity (raises kept)
-  if (exact && (!exact.seat || exact.seat === at.seat) && at.kind !== 'first' && (exact.raises || at.kind === 'facing a bet')) { let total = 0; hands.forEach((h) => { total += h.weight; }); const times = (exact.times + (exact.perEquity ?? 0) * (view.reads.rangeEquity - (exact.around ?? 0.5))) * (exact.byRangeEquity ? Math.min(1, 2 * view.reads.rangeEquity) : 1); let room = Math.max(0, Math.min(1, times / (1 + at.size))) * total;
+  if (exact && (!exact.seat || exact.seat === at.seat) && at.kind !== 'first' && (exact.raises || at.kind === 'facing a bet')) { let total = 0; hands.forEach((h) => { total += h.weight; }); const times = (exact.times + (exact.perEquity ?? 0) * (view.reads.rangeEquity - (exact.around ?? 0.5))) * (exact.byRangeEquity ? Math.min(1, 2 * view.reads.rangeEquity) : 1); let room = Math.max(0, Math.min(1, exact.line ? exact.line[0] + exact.line[1] * view.reads.rangeEquity : times / (1 + at.size))) * total;
     hands.forEach((h, i) => { room -= h.weight * out[i][2]; });       // raises, value and bluff, are kept and count toward the defence
     for (const i of hands.map((h, j) => j).sort((x, y) => (hands[y].rank ?? hands[y].equity) - (hands[x].rank ?? hands[x].equity))) { const r = out[i][2]; const take = Math.max(0, Math.min(1 - r, room / hands[i].weight)); out[i] = [1 - r - take, take, r]; room -= take * hands[i].weight; }
     return out; }
