@@ -97,6 +97,8 @@ export function decide(view, hands) {
   if (deepFlopIp && at.kind === 'first' && FD2.ipBetShare !== undefined) out.forEach((o, i) => { out[i] = [1 - FD2.ipBetShare, 0, FD2.ipBetShare]; });       // checked to: the whole range, strong, middle and weak alike, bets this share of the time
   if (deepFlopIp && at.kind === 'facing a bet' && view.canRaise && FD2.ipRaiseShare !== undefined) { deepRaise = true;                                      // facing a bet: every hand raises this share of the time, and otherwise folds or calls as the rules say
     out.forEach((o, i) => { const fold = o[0], r = FD2.ipRaiseShare; out[i] = [fold * (1 - r), (1 - fold) * (1 - r), r]; }); }
+  const FM = (view.rules ?? RULES).flopIpMerged;      // in position on the flop, checked to: the last raiser with a clear equity edge bets everything; otherwise a merged range (every hand alike) bets a set share
+  if (FM && at.street === 'flop' && view.ip && at.kind === 'first') { const all = view.aggressor && view.reads.rangeEquity >= FM.rangeBetFrom; out.forEach((o, i) => { out[i] = all ? [0, 0, 1] : [1 - FM.share, 0, FM.share]; }); }
   const RR = (view.rules ?? RULES).raises; const leadRule = (view.rules ?? RULES).flopIpRaisesLeads && at.street === 'flop' && view.ip && view.aggressor;
   const quietFlop = RR?.callerInPositionCallsFlop && at.street === 'flop' && view.ip && !view.aggressor;
   if (RR && at.kind === 'facing a bet' && view.canRaise && !leadRule && !quietFlop && !deepRaise) balanceRaises(hands, out, view.raiseSize, RR.bluffRatio ?? 1, at.street, RR.bluffsPerValue?.[at.street], RR.valueShare?.[at.street]);
