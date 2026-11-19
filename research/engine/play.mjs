@@ -284,10 +284,19 @@ const out = new URL(`./out/play${process.env.ARMS ? `-${process.env.ARMS}` : ''}
 for (let done = 0; done < +count;) {
   let p = pool[rand(pool.length)]; const deck = 'AKQJT98765432', suits = 'shdc'; let b = []; while (b.length < 3) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
   if (process.env.SPOT) { const [name, cards] = process.env.SPOT.split(':'); p = PRESETS.find((x) => `${x.action}-${x.oop}-${x.ip}` === name); b = cards.match(/../g); }     // SPOT=4BP-CO-BU:2dKsKd: one named spot
-  let spot; try { spot = fs.defineSpot({ board: b.join(''), pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...TREE }); } catch { continue; }
+  if (process.env.SUB) {      // SUB=river|turn: a spot that starts on that street, pot 100, a random stack, the two ranges of a random matchup reshaped by hand row (as sweep.mjs does)
+    const n5 = process.env.SUB === 'river' ? 5 : 4; b = []; while (b.length < n5) { const c = deck[rand(13)] + suits[rand(4)]; if (!b.includes(c)) b.push(c); }
+    const stacks = (process.env.SUBSTACKS ?? '40,75,125,250,500').split(',').map(Number); const stack = stacks[rand(stacks.length)]; const tree = { betSizes: n5 === 5 ? [[0.75]] : [[0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 }; let base; try { base = fs.defineSpot({ board: b.join(''), pot: 100, stack, oop: p.ranges.oop, ip: p.ranges.ip, ...tree }); } catch { continue; }
+    const F0 = facts(Array.from(base.board)); const SH = ['as dealt', 'capped', 'polar', 'condensed', 'random', 'random', 'strong', 'weak']; const text = []; const shapes = [];
+    for (const sd of [0, 1]) { const shape = SH[rand(SH.length)]; shapes.push(shape); const kf = new Float64Array(8).fill(1);
+      if (shape === 'capped') { kf[7] = 0.1; kf[6] = 0.2; kf[5] = 0.5; } else if (shape === 'polar') { kf[2] = 0.2; kf[3] = 0.15; kf[4] = 0.4; } else if (shape === 'condensed') { kf[0] = 0.15; kf[7] = 0.3; kf[6] = 0.5; } else if (shape === 'strong') { kf[0] = 0.3; kf[2] = 0.5; } else if (shape === 'weak') { kf[7] = 0.4; kf[6] = 0.5; kf[5] = 0.6; kf[4] = 0.7; } else if (shape === 'random') for (let r0 = 0; r0 < 8; r0++) kf[r0] = 0.05 + 0.95 * rnd();
+      const pl = base.players[sd]; const parts = []; Array.from(pl.combos).forEach((c, i) => { const x = (pl.weights.length === N ? pl.weights[c] : pl.weights[i]) * (F0.lv[c] >= 0 ? kf[F0.lv[c]] : 0); if (x > 0.005) parts.push(`${fs.formatCard(CA(c))}${fs.formatCard(CB(c))}:${x.toFixed(3)}`); }); text.push(parts.join(',')); }
+    if (text[0].length < 40 || text[1].length < 40) continue;
+    p = { action: `${process.env.SUB} ${stack}`, oop: p.oop, ip: p.ip, line: p.line, pot: 100, stack, ranges: { oop: text[0], ip: text[1] }, tree, shapes }; }
+  let spot; try { spot = fs.defineSpot({ board: b.join(''), pot: p.pot, stack: p.stack, oop: p.ranges.oop, ip: p.ranges.ip, ...(p.tree ?? TREE) }); } catch { continue; }
   if (spot.estimate.bytes > +(process.env.MAXMB ?? 600) * 2 ** 20) continue;
   const t0 = Date.now(); const nodes = treeOf(fs, spot); const counts = Array.from(spot.runouts.counts); const R = spot.runouts; const pot = spot.potUnits / spot.chipScale;
-  const solve = fs.createRun(spot, { isomorphism: false, workers: 4 }); let ex = 9; while (ex > 0.15 && solve.completed < 1500) { solve.step(10); ex = solve.exploitabilityPercent(); }
+  const solve = fs.createRun(spot, { isomorphism: false, workers: process.env.SUB ? 1 : 4 }); let ex = 9; while (ex > 0.15 && solve.completed < 1500) { solve.step(10); ex = solve.exploitabilityPercent(); }
   const solved = solve.snapshot(); done++;
   const raiserSeat = (p.line ?? '').split(',').pop().trim().split(' ')[0] === p.oop ? 1 : 0;   // the seat that put in the last raise before the flop (the other one called)
   const fresh = () => { const r = fs.createRun(spot, { analysisOnly: true, isomorphism: false }); copySolved(solved, r, nodes, counts, 0); copySolved(solved, r, nodes, counts, 1); return r; };
@@ -302,7 +311,7 @@ for (let done = 0; done < +count;) {
     const startRange = {}; const walk = (id, board, bIndex, F, mine, his) => {
       const n = nodes[id];
       if (n.kind === 'chance') {
-        const next = board.length - 2; const w = R.width[next];
+        const next = board.length - spot.board.length + 1; const w = R.width[next];
         for (let k = R.childStart[next][bIndex]; k < R.childStart[next][bIndex + 1]; k++) {
           const cards = Array.from(R.cards[next].subarray(k * w, k * w + w)); const card = cards.find((c) => !board.includes(c)); const drop = (r) => { const o = Float64Array.from(r); for (let c = 0; c < N; c++) if (CA(c) === card || CB(c) === card) o[c] = 0; return o; };
           const nb = [...board, card]; walk(n.edges[0].child, nb, k, facts(nb), mine.map(drop), drop(his));
