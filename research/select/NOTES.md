@@ -33,3 +33,8 @@ instead of nothing, do simple selection rules appear, and what makes a hand bett
 4. Turn exploitability run took 8 minutes a spot (strategy copies rebuilt for every arm); cached, now 11 s.
 5. Tried for the draw bonus when facing a turn bet: 5, 10 and 20 points (and "draws fold last", which was worse than
    plain equity). 10 chosen; 10 and 20 are level in position.
+6. Turn exploitability: equity order (22 / 17 with the two rules) is worse than a random pick inside seven classes
+   (15 / 15); the floor with hands inside a 0.5% band is 14 / 11. Strict order caps the passive ranges.
+7. Amounts-off arms first ran with a guard that treated "bluff x0" as no change; fixed and rerun (11 / 10).
+8. Flop collection hit the background time limit at 16 of 19 boards (three single-raised boards missing); not rerun.
+9. Write-up: `hand-selection.md`.

@@ -54,7 +54,7 @@ def main(path):
         s = spread[(sit, name, gname)]; row = []
         for f in FEATS:
             e = eff.get((sit, name, gname, f))
-            if e and e[1] > 0 and e[2] >= 20: row.append((f, e[0] / e[1]))
+            if e and e[1] > 0 and e[2] >= 8: row.append((f, e[0] / e[1]))
         row.sort(key=lambda x: -abs(x[1]))
         print(f'{sit} | {name} | {gname} | spread within group {s[0] / s[1]:.1f} | ' + ', '.join(f'{f} {x:+.1f}' for f, x in row))
 
