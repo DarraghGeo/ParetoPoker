@@ -154,3 +154,50 @@ opponent wins, % of the pot, out of position / in position.
 
 Tools: `category.py`, `deep.py`, `lookup.py`, `split.py`, `cellspots.py`, `facing.py`, `facing_inside.py`,
 `export_lookup.py`, and the `LOOKUP` arms in `exploit.mjs`.
+
+## 5. Which actual hands: selection by what is on the cards
+
+Sections 1-3 say how much of a category acts. This section holds that amount fixed (the solver's share for the category
+in each spot where it mixes, 10-90%) and asks which hands fill it, using only features visible on the cards
+(`which.py`). Loss per hand in % of the pot; "random" is picking any hands of the category; the best possible pick is
+0.00-0.02 everywhere.
+
+**Out of position, first to act: which hands bet**
+
+| Category | Random | Pick | Loss with that pick | Worst pick |
+|---|---|---|---|---|
+| Trips+ | 0.36 | The ones holding a card of the flush suit, when three of a suit are out; otherwise any | 0.27 | Pocket-pair sets first: 0.42 |
+| Two pair | 0.28 | Any (lowest side cards marginally) | 0.23 | 0.43 |
+| Top pair | 0.24 | Best kicker | 0.12 | Worst kicker: 0.41 |
+| Mid pair | 0.33 | Highest cards (kicker, pair rank) | 0.13 | 0.54 |
+| Low pair | 0.37 | **Lowest** cards | 0.17 | Highest cards: 0.51 |
+| Air | 0.94 | **Lowest high card**; no ace | 0.36 | Ace-high first: 1.37 |
+
+Out of position a random pick is already inside the 0.5 tolerance for every made-hand category. Only air needs a rule.
+Missed draws were not better bluffs than other air (0.82 against 0.94 random).
+
+**In position, checked to: which hands bet**
+
+| Category | Random | Pick | Loss with that pick | Worst pick |
+|---|---|---|---|---|
+| Trips+ | 3.40 | Strongest first (nut flush over low flush, top set over bottom set) | 0.03 | Weakest first: 7.7 |
+| Two pair | 1.14 | Strongest first | 0.38 | 1.9 |
+| Top pair | 0.79 | Best kicker | 0.12 | Worst kicker: 1.33 |
+| Mid pair | 0.58 | Best kicker / higher pair | 0.16 | 0.95 |
+| Low pair | 0.97 | **Lowest** cards | 0.33 | Highest: 1.25 |
+| Air | 1.76 | **Lowest high card**; no ace | 0.43 | Ace-high first: 2.9 |
+
+**Facing a bet: which hands continue**
+
+| Category | Random | Ranked by strength inside the category | Visible shortcuts |
+|---|---|---|---|
+| Trips+ | 7.6-7.7 | 0.00-0.01 | Holding the flush-suit card: 4.4-4.8 (not enough; rank them) |
+| Two pair | 0.8-0.9 | 0.01-0.02 | Pairing the top board card: 0.29 |
+| Top pair | 0.6-0.7 | 0.01 | Best kicker 0.40; holding a flush-suit card 0.25 (in position) |
+| Mid pair | 0.5-0.6 | 0.01-0.02 | Holding a flush-suit card 0.27-0.32; best kicker 0.23 (in position) |
+| Low pair | 0.5-0.6 | 0.02 | Holding a flush-suit card 0.31-0.32 |
+| Air | 0.6-1.0 | 0.02-0.07 | Highest card / an ace: 0.29-0.35 |
+
+Facing a bet, "strength inside the category" is the hand's rank among his betting hands: how many of them it beats
+after removing the hands your own cards make impossible. Kicker and the flush-suit card are the visible parts of that,
+and each gets about halfway from random to exact.
