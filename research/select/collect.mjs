@@ -14,7 +14,7 @@ import { evaluator } from '../../src/explain/best.js';
 import { PRESETS } from '../../web/lib/study/presets.js';
 
 const [street = 'river', from = '0', to = '99999'] = process.argv.slice(2); const STORE = process.env.STORE; const N = fs.COMBOS;
-import { facts, CA, CB, RK, nameOf } from './facts.mjs';
+import { facts, madeType, CA, CB, RK, nameOf } from './facts.mjs';
 /** On the river, each hand's equity against a weighted range, his hands that share a card left out. */
 function riverEquity(F, mine, his) {
   const hs = []; for (let c = 0; c < N; c++) if (his[c] > 0 && F.lv[c] >= 0) hs.push(c); const e = new Float32Array(N);
@@ -46,11 +46,16 @@ for (let i = +from; i < Math.min(rows.length, +to); i++) {
     const bets = kinds.map((x, a) => (x === 'bet' ? a : -1)).filter((a) => a >= 0);
     if (toCall <= 0 && bets.length) { const a = bets[Math.floor(bets.length / 2)]; const child = nodes[n.edges[a].child]; if (child.kind === 'decision') { const v2 = sol.strategyAt(child.id, 0); const k2 = v2.actions.length; const at2 = new Int32Array(N).fill(-1); Array.from(v2.combos).forEach((c, j) => { at2[c] = j; }); const fi = child.edges.findIndex((x) => x.kind === 'fold');
       const folds = Float64Array.from(f.his, (w, v) => (at2[v] >= 0 && fi >= 0 ? w * v2.probs[at2[v] * k2 + fi] : 0)); const conts = Float64Array.from(f.his, (w, v) => w - folds[v]); ub.folds = unblock(f.his, folds); ub.calls = unblock(f.his, conts); } }
+    // his replies, as weights over his hands: to our middle bet (fold, call, raise) and, after our check, his bets
+    const reply = (childId, pick) => { const child = nodes[childId]; if (!child || child.kind !== 'decision') return null; const v2 = sol.strategyAt(child.id, 0); const k2 = v2.actions.length; const at2 = new Int32Array(N).fill(-1); Array.from(v2.combos).forEach((c, j) => { at2[c] = j; }); const idx = child.edges.map((x, j) => (pick(x.kind) ? j : -1)).filter((j) => j >= 0); return Float64Array.from(f.his, (w, v) => (at2[v] < 0 ? 0 : w * idx.reduce((t, j) => t + v2.probs[at2[v] * k2 + j], 0))); };
+    const X = {}; const share = (part) => (part ? r4(part.reduce((x, y) => x + y, 0) / ht) : null);
+    if (F.river && toCall <= 0) { const mid = bets.length ? n.edges[bets[Math.floor(bets.length / 2)]].child : -1; X.calls = reply(mid, (x) => x === 'call'); X.raises = reply(mid, (x) => x === 'raise' || x === 'allin'); const ci = kinds.indexOf('check'); X.betsAfter = ci >= 0 ? reply(n.edges[ci].child, (x) => x === 'bet' || x === 'allin') : null; }
+    const U = Object.fromEntries(Object.entries(X).filter(([, part]) => part).map(([name, part]) => [name, { ub: unblock(f.his, part), eq: riverEquity(F, f.mine, part) }]));
     const beaten = (() => { const hs = []; let all = 0; for (let v = 0; v < N; v++) if (f.his[v] > 0) { hs.push(v); all += f.his[v]; } return (c) => { let b = 0; for (const v of hs) b += F.str[c] > F.str[v] ? f.his[v] : F.str[c] === F.str[v] ? f.his[v] / 2 : 0; return all > 0 ? b / all : 0; }; })();
     const hands = []; for (let c = 0; c < N; c++) { const w = f.mine[c]; if (!(w > mt * 1e-5) || at[c] < 0 || F.lv[c] < 0) continue;
-      hands.push({ h: nameOf(c), w: r4(w / mt), p: Array.from({ length: k }, (_, a) => r4(view.probs[at[c] * k + a])), v: vals.map((x) => r4(100 * x[c] / n.pot)), e: r4(e[c]), now: r4(beaten(c)), row: F.lv[c], come: F.come[c], fd: F.fd[c], kick: F.kick[c], pair: CA(c) >> 2 === CB(c) >> 2 ? 1 : 0, hi: Math.max(RK[CA(c)], RK[CB(c)]), ubStrong: r4(ub.strong(c)), ubWeak: r4(ub.weak(c)), ubFolds: ub.folds ? r4(ub.folds(c)) : null, ubCalls: ub.calls ? r4(ub.calls(c)) : null }); }
+      hands.push({ h: nameOf(c), w: r4(w / mt), p: Array.from({ length: k }, (_, a) => r4(view.probs[at[c] * k + a])), v: vals.map((x) => r4(100 * x[c] / n.pot)), e: r4(e[c]), now: r4(beaten(c)), row: F.lv[c], come: F.come[c], fd: F.fd[c], kick: F.kick[c], pair: CA(c) >> 2 === CB(c) >> 2 ? 1 : 0, hi: Math.max(RK[CA(c)], RK[CB(c)]), ubStrong: r4(ub.strong(c)), ubWeak: r4(ub.weak(c)), ubFolds: ub.folds ? r4(ub.folds(c)) : null, ubCalls: ub.calls ? r4(ub.calls(c)) : null, sub: madeType(board, CA(c), CB(c)), ...Object.fromEntries(Object.entries(U).flatMap(([name, u]) => [[`ub_${name}`, r4(u.ub(c))], [`e_${name}`, r4(u.eq[c])]])) }); }
     let line = []; for (let a2 = n; a2.parent >= 0; a2 = nodes[a2.parent]) line.unshift(nodes[a2.parent].edges[a2.via].kind[0] === 'c' && nodes[a2.parent].edges[a2.via].kind === 'check' ? 'x' : nodes[a2.parent].edges[a2.via].kind[0]);
-    appendFileSync(out, JSON.stringify({ spot: d.spot, pre: d.pre, pot0: d.pot, street, board: d.board, seat: me, line: line.join(''), role: d.role, potNow: r4(n.pot), toCall: r4(toCall), behind: r4(d.behind - Math.max(n.invested[0], n.invested[1])), kinds, adds: adds.map(r4), exploit: r4(ex), hisStrong: r4(strong.reduce((x, y) => x + y, 0) / ht), hisWeak: r4(weak.reduce((x, y) => x + y, 0) / ht), hands }) + '\n');
+    appendFileSync(out, JSON.stringify({ spot: d.spot, pre: d.pre, pot0: d.pot, street, board: d.board, seat: me, line: line.join(''), role: d.role, potNow: r4(n.pot), toCall: r4(toCall), behind: r4(d.behind - Math.max(n.invested[0], n.invested[1])), kinds, adds: adds.map(r4), exploit: r4(ex), hisStrong: r4(strong.reduce((x, y) => x + y, 0) / ht), hisWeak: r4(weak.reduce((x, y) => x + y, 0) / ht), hisCalls: share(X.calls), hisRaises: share(X.raises), hisBetsAfter: share(X.betsAfter), hands }) + '\n');
   }
   console.error(`${i + 1}/${rows.length} ${d.spot} ${Date.now() - t0} ms, ${ex.toFixed(3)}`);
 }

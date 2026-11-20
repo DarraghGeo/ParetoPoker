@@ -20,3 +20,11 @@ export function facts(board) {
   }
   return { lv, come, str, kick, fd, river };
 }
+
+/** The made hand a player holds with the board, by name: quads, full, flush, straight, set (a pocket pair with one on the board), trips, twopair, pair, high. */
+export function madeType(board, a, b) {
+  const cards = [...board, a, b]; const n = new Uint8Array(16); const su = [0, 0, 0, 0]; const have = new Uint8Array(16); for (const c of cards) { n[RK[c]]++; su[fs.suitOf(c)]++; have[RK[c]] = 1; }
+  const counts = Array.from(n).filter((x) => x > 0).sort((x, y) => y - x);
+  if (counts[0] === 4) return 'quads'; if (counts[0] === 3 && counts[1] >= 2) return 'full'; if (su.some((x) => x >= 5)) return 'flush'; if (straightTop(have) >= 0) return 'straight';
+  if (counts[0] === 3) return RK[a] === RK[b] ? 'set' : 'trips'; if (counts[0] === 2 && counts[1] === 2) return 'twopair'; return counts[0] === 2 ? 'pair' : 'high';
+}
