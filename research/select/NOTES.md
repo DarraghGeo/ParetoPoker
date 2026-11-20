@@ -38,3 +38,15 @@ instead of nothing, do simple selection rules appear, and what makes a hand bett
 7. Amounts-off arms first ran with a guard that treated "bluff x0" as no change; fixed and rerun (11 / 10).
 8. Flop collection hit the background time limit at 16 of 19 boards (three single-raised boards missing); not rerun.
 9. Write-up: `hand-selection.md`.
+
+## River by hand category (second request)
+
+10. Re-collected the 300 rivers with made-hand type, his replies to a middle bet (calls, raises) and his bets after a
+    check, each as a blocker and as an equity.
+11. Category alone is not a policy key: "always check" and "best action per category" score the same out of position.
+    Category x strength here x nut advantage: 0.30 mean loss out of position; category x strength: 0.78 in position.
+12. Facing a bet, strength x bet size gives 0.12-0.13 with or without the category.
+13. Lookup played on held-out rivers: pure 22 / 26 exploitable; with counted bluffs and a fill to 90% of minimum defence
+    11 / 11. The leak-finder put the leak in the facing-a-bet table (11 / 20 alone), not the betting table (7 / 11).
+14. A raise missing from a node first counted as an infinite loss in `facing.py`; a missing raise now counts as a call.
+15. Write-up: `river-categories.md`.
