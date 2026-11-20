@@ -2,7 +2,8 @@
 // precise hand selection needs to be. Spots: the roots of the owner's stored river and turn solves (ranges as play left
 // them), solved again here. Values: take the action, then play as well as the hand can against his solved strategy
 // (src/explain/best.js), so an action a hand never takes is priced fairly.
-//   STORE=<dir> node research/select/collect.mjs <river|turn> [from] [to]   -> STORE/select-<street>.jsonl
+//   STORE=<dir> node research/select/collect.mjs <river|turn|flop> [from] [to]   (flop: the engine's nineteen boards, one small bet a street and a raise)
+//      -> STORE/select-<street>.jsonl
 // One line a decision: the pot, the price, the actions, and for each hand its weight, how often the solution takes each
 // action, each action's value in % of the pot, and what a player can see of the hand.
 import { appendFileSync, readFileSync, writeFileSync } from 'node:fs';
@@ -10,26 +11,10 @@ import * as fs from 'poker-flopsolve';
 import { treeOf, equityVs } from '../../src/solver/flopsolve.js';
 import { frameAt } from '../../src/explain/account.js';
 import { evaluator } from '../../src/explain/best.js';
+import { PRESETS } from '../../web/lib/study/presets.js';
 
 const [street = 'river', from = '0', to = '99999'] = process.argv.slice(2); const STORE = process.env.STORE; const N = fs.COMBOS;
-const CA = (c) => fs.COMBO_CARDS[2 * c]; const CB = (c) => fs.COMBO_CARDS[2 * c + 1]; const RK = Array.from({ length: 52 }, (_, c) => fs.rankOf(c)); const SU = Array.from({ length: 52 }, (_, c) => fs.suitOf(c)); const ACE = Math.max(...RK); const LOW = Math.min(...RK);
-const HIGHER = fs.evaluateCards(fs.parseCards('AsAh2c7d9h')) > fs.evaluateCards(fs.parseCards('3s4h2c7d9h')) ? 1 : -1; const nameOf = (c) => fs.formatCard(CA(c)) + fs.formatCard(CB(c));
-const straightTop = (have) => { for (let top = ACE; top >= LOW + 3; top--) { let ok = true; for (let k = 0; k < 5 && ok; k++) { const r = top - k; ok = r < LOW ? have[ACE] : have[r]; } if (ok) return top; } return -1; };
-/** Each hand on a board: its row (0 nothing, 1 draw, 2 low pair, 3 middle pair, 4 top pair, 5 overpair, 6 two pair, 7 trips or better), strength now, outs-like count, kicker and what it holds of the board's suits. */
-function facts(board) {
-  const lv = new Int8Array(N).fill(-1); const come = new Float32Array(N); const str = new Float64Array(N); const kick = new Int8Array(N); const fd = new Uint8Array(N); const river = board.length === 5;
-  const bs = [0, 0, 0, 0]; const br = new Uint8Array(16); const taken = new Uint8Array(52); for (const c of board) { bs[SU[c]]++; br[RK[c]]++; taken[c] = 1; }
-  const tops = [...new Set(board.map((c) => RK[c]))].sort((x, y) => y - x); const top = tops[0]; const second = tops[1] ?? -1; const have = new Uint8Array(16); for (const c of board) have[RK[c]] = 1; const boardStraight = straightTop(have);
-  for (let c = 0; c < N; c++) {
-    const a = CA(c), b = CB(c); if (taken[a] || taken[b]) continue; const ra = RK[a], rb = RK[b]; str[c] = HIGHER * fs.evaluateCards([...board, a, b]); const h = Uint8Array.from(have); h[ra] = 1; h[rb] = 1; const st = straightTop(h); let level = 0;
-    const flush = [SU[a], SU[b]].some((s) => bs[s] < 5 && bs[s] + (SU[a] === s) + (SU[b] === s) >= 5); const trips = br[ra] + 1 + (ra === rb) >= 3 || br[rb] + 1 + (ra === rb) >= 3;
-    if (flush || st > boardStraight || trips) level = 7; else if (ra !== rb && br[ra] && br[rb]) level = 6; else if (ra === rb) level = ra > top ? 5 : ra >= second ? 3 : 2;
-    else if (br[ra] || br[rb]) { const hit = br[ra] ? ra : rb; level = hit === top ? 4 : hit === second ? 3 : 2; kick[c] = br[ra] ? rb : ra; } else kick[c] = Math.max(ra, rb);
-    if (!river && level < 7) { const f = [SU[a], SU[b]].some((s) => bs[s] + (SU[a] === s) + (SU[b] === s) === 4); let outs = 0; for (let r = LOW; r <= ACE; r++) if (!h[r]) { h[r] = 1; if (straightTop(h) > st) outs += 4; h[r] = 0; } fd[c] = f ? 1 : 0; come[c] = (f ? 9 : 0) + outs; if (level === 0 && (f || outs >= 8)) level = 1; }
-    lv[c] = level;
-  }
-  return { lv, come, str, kick, fd, river };
-}
+import { facts, CA, CB, RK, nameOf } from './facts.mjs';
 /** On the river, each hand's equity against a weighted range, his hands that share a card left out. */
 function riverEquity(F, mine, his) {
   const hs = []; for (let c = 0; c < N; c++) if (his[c] > 0 && F.lv[c] >= 0) hs.push(c); const e = new Float32Array(N);
@@ -41,12 +26,14 @@ function unblock(his, part) {
   const cardAll = new Float64Array(52), cardPart = new Float64Array(52); let all = 0, p = 0; for (let v = 0; v < N; v++) if (his[v] > 0) { all += his[v]; p += part[v]; cardAll[CA(v)] += his[v]; cardAll[CB(v)] += his[v]; cardPart[CA(v)] += part[v]; cardPart[CB(v)] += part[v]; }
   const base = all > 0 ? p / all : 0; return (c) => { const a = CA(c), b = CB(c); const la = all - cardAll[a] - cardAll[b] + his[c]; const lp = p - cardPart[a] - cardPart[b] + part[c]; return base > 1e-9 && la > 1e-9 ? lp / la / base : 1; };
 }
-const rows = []; for (const t of readFileSync(`${STORE}/${street}-real.jsonl`, 'utf8').split('\n')) { if (!t.includes('"line":"r|"') || !t.includes('"seat":0')) continue; const d = JSON.parse(t); if (d.line === 'r|' && d.seat === 0 && d.toCall === 0) rows.push(d); }
-const out = `${STORE}/select-${street}.jsonl`; if (+from === 0) writeFileSync(out, ''); const r4 = (x) => +x.toFixed(4); const tree = street === 'river' ? { betSizes: [[0.33, 0.75, 1.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 } : { betSizes: [[0.33, 0.75, 1.5], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 };
+const FLOPS = '4BP-SB-BU:3sKs9c 4BP-CO-BU:2dKsKd 4BP-UTG-CO:7s3cQc 3BP-UTG-HJ:2cAcAh 3BP-SB-BB:6hKdAh SRP-UTG-HJ:2s6d8h SRP-UTG-HJ:JdQs5h SRP-UTG-CO:As6c6h SRP-BB-HJ:7hTd6d 4BP-SB-BU:QhQsAs 4BP-SB-CO:8sAhTd 3BP-SB-BB:QcQh7c 3BP-BB-UTG:2hQh7d 3BP-BB-HJ:JsTh8s Squeeze-BB-BU:3h3dAc SRP-BB-HJ:5sQh9d SRP-UTG-CO:Ac2s4h SRP-UTG-CO:Ac7sKc SRP-BB-UTG:KsAsQh'.split(' ');   // the engine's nineteen boards
+const rows = []; if (street === 'flop') for (const x of FLOPS) { const [name, cards] = x.split(':'); const q = PRESETS.find((y) => `${y.action}-${y.oop}-${y.ip}` === name); const raiser = (q.line ?? '').split(',').pop().trim().split(' ')[0] === q.oop ? 'oop' : 'ip'; rows.push({ spot: x, pre: name, board: cards.match(/../g).join(' '), pot: q.pot, behind: q.stack, role: raiser, ranges: q.ranges }); }
+else for (const t of readFileSync(`${STORE}/${street}-real.jsonl`, 'utf8').split('\n')) { if (!t.includes('"line":"r|"') || !t.includes('"seat":0')) continue; const d = JSON.parse(t); if (d.line === 'r|' && d.seat === 0 && d.toCall === 0) rows.push(d); }
+const out = `${STORE}/select-${street}.jsonl`; if (+from === 0) writeFileSync(out, ''); const r4 = (x) => +x.toFixed(4); const tree = street === 'river' ? { betSizes: [[0.33, 0.75, 1.5]], raiseSizes: [{ times: 3 }], maxRaises: 2 } : street === 'turn' ? { betSizes: [[0.33, 0.75, 1.5], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 } : { betSizes: [[0.33], [0.75], [0.75]], raiseSizes: [{ times: 3 }], maxRaises: 2 };
 for (let i = +from; i < Math.min(rows.length, +to); i++) {
   const d = rows[i]; const text = (xs, f) => xs.filter(f).map((x) => `${Array.isArray(x) ? x[0] : x.h}:${(Array.isArray(x) ? x[1] : x.w).toFixed(5)}`).join(',');
-  let spot; try { spot = fs.defineSpot({ board: d.board.replace(/ /g, ''), pot: d.pot, stack: d.behind, oop: text(d.hands, (h) => h.w > 1e-5), ip: text(d.vr, (v) => v[1] > 1e-5), ...tree }); } catch (err) { console.error(d.spot, String(err).slice(0, 80)); continue; }
-  const t0 = Date.now(); const run = fs.createRun(spot, { isomorphism: false, workers: street === 'river' ? 1 : 2 }); let ex = 9; const goal = street === 'river' ? 0.05 : 0.15; while (ex > goal && run.completed < 4000) { run.step(20); ex = run.exploitabilityPercent(); }
+  let spot; try { spot = fs.defineSpot({ board: d.board.replace(/ /g, ''), pot: d.pot, stack: d.behind, oop: d.ranges ? d.ranges.oop : text(d.hands, (h) => h.w > 1e-5), ip: d.ranges ? d.ranges.ip : text(d.vr, (v) => v[1] > 1e-5), ...tree }); } catch (err) { console.error(d.spot, String(err).slice(0, 80)); continue; }
+  const t0 = Date.now(); const run = fs.createRun(spot, { isomorphism: false, workers: street === 'river' ? 1 : street === 'turn' ? 2 : 4 }); let ex = 9; const goal = street === 'river' ? 0.05 : 0.15; while (ex > goal && run.completed < (street === 'flop' ? 1500 : 4000)) { run.step(20); ex = run.exploitabilityPercent(); }
   const sol = run.snapshot(); const nodes = treeOf(fs, spot); const valuesOf = evaluator(fs, sol, nodes); const board = Array.from(spot.board); const F = facts(board); const start = [0, 1].map((s) => frameAt(fs, sol, nodes, 0, [])).map((f, s) => (s === f.me ? f.mine : f.his)); const total = [0, 1].map((s) => start[s].reduce((x, y) => x + y, 0));
   for (const n of nodes) {
     if (n.kind !== 'decision' || n.round !== 0) continue; const f = frameAt(fs, sol, nodes, n.id, []); if (!f) continue; const me = f.me; let mt = 0, ht = 0; for (let c = 0; c < N; c++) { mt += f.mine[c]; ht += f.his[c]; }

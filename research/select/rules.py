@@ -35,9 +35,14 @@ def assign(d, rule):
     aggressive = [a for a in range(k) if a != passive and d['kinds'][a] != 'fold'][::-1]
     for a in aggressive:                                          # the biggest bet or raise first: the strongest value, the weakest bluffs
         for i, w in fill(value, V[a], left).items(): P[i][a] += w
+    if rule.startswith('near') and d['toCall'] > 0:          # folds first, so the bluff raises are the best of the hands that would not call
+        f = d['kinds'].index('fold'); order = bottom
+        if rule.startswith('nearDraw'): bonus = float(rule[8:] or 10) / 100; order = sorted(idx, key=lambda i: hs[i]['e'] + (bonus if hs[i].get('come', 0) >= 8 else 0))   # a hand with eight outs or more counts as that many points stronger
+        for i, w in fill(order, T[f], left).items(): P[i][f] += w
+        bluffs = [i for i in order if left[i] > 0]
     for a in aggressive:
         for i, w in fill(bluffs, T[a] - V[a], left).items(): P[i][a] += w
-    if d['toCall'] > 0:
+    if d['toCall'] > 0 and not rule.startswith('near'):
         f = d['kinds'].index('fold')
         for i, w in fill(bottom, T[f], left).items(): P[i][f] += w
     for i in idx: P[i][passive] += left[i]
@@ -45,7 +50,7 @@ def assign(d, rule):
 
 
 def main(path):
-    rules = ['solver', 'equity', 'blockers', 'unblockFolds', 'random']; acc = collections.defaultdict(lambda: collections.Counter())
+    rules = ['solver', 'equity', 'blockers', 'unblockFolds', 'near', 'nearDraw5', 'nearDraw10', 'nearDraw20', 'random']; acc = collections.defaultdict(lambda: collections.Counter())
     for t in open(path):
         d = json.loads(t); sit = ('first' if d['toCall'] <= 0 else 'facing') + (' oop' if d['seat'] == 0 else ' ip')
         for rule in rules:
@@ -65,4 +70,4 @@ def main(path):
         print(f"| {sit} | {rule} | {c['loss'] / c['w']:.2f} | " + ' | '.join(f"{100 * c[f'over{e}'] / c['w']:.0f}%" for e in (0.5, 1, 2, 5)) + f' | {parts} |')
 
 
-main(sys.argv[1])
+if __name__ == "__main__" and sys.argv[-1] != "x": main(sys.argv[1])
